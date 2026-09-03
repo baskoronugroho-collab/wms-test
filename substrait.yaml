@@ -9,3 +9,7 @@ database: oceanbase
 
 services:
   object-storage: {}
+
+# Skill/plugin version this app was last deployed with — stamped by
+# /substrait:deploy; do not edit by hand.
+scaffold_version: 2026.08.30.104958
