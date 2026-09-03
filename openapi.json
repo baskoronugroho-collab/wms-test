@@ -1,0 +1,6300 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Ninja Kilat WMS",
+    "description": "Warehouse management for Ninja Van's GrabMart Kilat fulfilment: inbound and putaway, guided picking, weekly stock opname, barcode and license-plate registration, and an isolated training mode.",
+    "version": "0.1.0",
+    "contact": {
+      "name": "Ninja Van — Kilat fulfilment"
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "summary": "Readiness probe — reports liveness and database connectivity",
+        "description": "Readiness probe.\n\nReports database state without failing on it: a database blip should show up\nin the payload, not take the pod out of rotation on its own.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "summary": "Who the signed-in user is, their role, and the sites they may work at",
+        "description": "The frontend asks \"who am I?\" here — the browser never sees the SSO headers.",
+        "operationId": "whoami_api_me_get",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/brands": {
+      "get": {
+        "tags": [
+          "master data"
+        ],
+        "summary": "List every brand Ninja fulfils for",
+        "operationId": "list_brands_api_brands_get",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Brand"
+                  },
+                  "title": "Response List Brands Api Brands Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "master data"
+        ],
+        "summary": "Onboard a new brand and set its default identity mode",
+        "operationId": "create_brand_api_brands_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrandIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Brand"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/skus": {
+      "get": {
+        "tags": [
+          "master data"
+        ],
+        "summary": "Search a brand's SKUs by name or code",
+        "operationId": "list_skus_api_skus_get",
+        "parameters": [
+          {
+            "name": "brand_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Brand Id"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkuList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "master data"
+        ],
+        "summary": "Create one SKU under a brand",
+        "operationId": "create_sku_api_skus_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkuIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sku"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/skus/import": {
+      "post": {
+        "tags": [
+          "master data"
+        ],
+        "summary": "Bulk-import a brand's SKUs from CSV — preview by default, commit on request",
+        "description": "Bulk import from CSV. Preview by default; pass commit=true to apply.\n\nColumn names are matched loosely rather than pinned to one file's exact\nshape — the Wardah source is an OCR artefact with a trailing formula row and\nno stable SKU-code column, and hard-coding it would contradict G5 (onboarding\na brand should be configuration, not code).",
+        "operationId": "import_skus_api_skus_import_post",
+        "parameters": [
+          {
+            "name": "brand_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Brand Id"
+            }
+          },
+          {
+            "name": "commit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Commit"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_skus_api_skus_import_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/barcodes/check": {
+      "get": {
+        "tags": [
+          "master data"
+        ],
+        "summary": "Live check while a staffer bulk-scans under one locked SKU",
+        "description": "Live check while a staffer bulk-scans under one locked SKU.\n\nA repeated scan of the same barcode is the normal case — a carton of 40\nidentical units — so it is 'already registered', not an error (M1.3.4).",
+        "operationId": "check_barcode_api_barcodes_check_get",
+        "parameters": [
+          {
+            "name": "barcode",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Barcode"
+            }
+          },
+          {
+            "name": "sku_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Sku Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BarcodeCheck"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/barcodes/register": {
+      "post": {
+        "tags": [
+          "master data"
+        ],
+        "summary": "Bind a batch of scanned barcodes to one pre-selected SKU",
+        "description": "Bind a batch of scanned barcodes to one pre-selected SKU.\n\nA barcode may resolve to exactly one SKU — enforced by the unique index, not\nonly by this check (M1.3.7).",
+        "operationId": "register_barcodes_api_barcodes_register_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BarcodeRegisterIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BarcodeRegisterResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/barcodes/{barcode}": {
+      "delete": {
+        "tags": [
+          "master data"
+        ],
+        "summary": "Unbinding DELETEs the row and writes the audit trail (PRD §11)",
+        "description": "Unbinding DELETEs the row and writes the audit trail (PRD §11).",
+        "operationId": "unbind_barcode_api_barcodes__barcode__delete",
+        "parameters": [
+          {
+            "name": "barcode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Barcode"
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Reason"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sites": {
+      "get": {
+        "tags": [
+          "locations"
+        ],
+        "summary": "List the stations and hubs the user may work at",
+        "operationId": "list_sites_api_sites_get",
+        "parameters": [
+          {
+            "name": "include_training",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Include Training"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Site"
+                  },
+                  "title": "Response List Sites Api Sites Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "locations"
+        ],
+        "summary": "Register a new station, hub, or training site",
+        "operationId": "create_site_api_sites_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Site"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sites/{site_id}/racks/generate": {
+      "post": {
+        "tags": [
+          "locations"
+        ],
+        "summary": "Build the standard layout in one action, so opening station 8 takes a",
+        "description": "Build the standard layout in one action, so opening station 8 takes a\nminute rather than an afternoon (M2.1.5).",
+        "operationId": "generate_racks_api_sites__site_id__racks_generate_post",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateRacksIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sites/{site_id}/rack-map": {
+      "get": {
+        "tags": [
+          "locations"
+        ],
+        "summary": "The one dense screen in the product: the whole station at a glance",
+        "description": "The one dense screen in the product: the whole station at a glance.",
+        "operationId": "rack_map_api_sites__site_id__rack_map_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RackMap"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/slots/suggest": {
+      "get": {
+        "tags": [
+          "locations"
+        ],
+        "summary": "Recommend a basket size and a free location",
+        "description": "Recommend a basket size and a free location.\n\nSlotting rules (PRD §7.3): fast movers to levels 2-3, slow movers to level 5\nwhich sits at ~2.0 m and needs a step stool.",
+        "operationId": "suggest_slot_api_slots_suggest_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "sku_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Sku Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlotSuggestion"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/slots": {
+      "post": {
+        "tags": [
+          "locations"
+        ],
+        "summary": "Give a SKU its basket at a site — one SKU per basket, one basket per SKU",
+        "description": "Bind a SKU to a basket. One SKU per basket, one slot per SKU per site —\nboth enforced by unique constraint, not only by this check (M2.2.2).",
+        "operationId": "assign_slot_api_slots_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SlotIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Slot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/slots/{slot_id}/relocate": {
+      "post": {
+        "tags": [
+          "locations"
+        ],
+        "summary": "Moving a SKU is an explicit action that writes movements, not an edit",
+        "description": "Moving a SKU is an explicit action that writes movements, not an edit\n(M2.2.3). Stock follows the SKU to the new basket.",
+        "operationId": "relocate_slot_api_slots__slot_id__relocate_post",
+        "parameters": [
+          {
+            "name": "slot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Slot Id"
+            }
+          },
+          {
+            "name": "basket_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Basket Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Slot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scan/resolve": {
+      "get": {
+        "tags": [
+          "scanning"
+        ],
+        "summary": "Resolve any scanned code to either a SKU (Mode A) or one physical unit (Mode B)",
+        "operationId": "resolve_api_scan_resolve_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Whatever the scanner produced",
+              "title": "Code"
+            },
+            "description": "Whatever the scanner produced"
+          },
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanResolved"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receipts": {
+      "post": {
+        "tags": [
+          "inbound"
+        ],
+        "summary": "Open an inbound receipt against a brand delivery or a hub transfer",
+        "operationId": "open_receipt_api_receipts_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiptIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receipts/{receipt_id}/scan": {
+      "post": {
+        "tags": [
+          "inbound"
+        ],
+        "summary": "Scan a unit into a receipt and be told which basket it goes in",
+        "description": "The receiving scan loop — the core interaction, tuned for the burst.\n\nNever dead-ends: an unknown barcode or a SKU with no basket both return an\noutcome the UI can offer a way out of, rather than an error (M3.3.4/5).",
+        "operationId": "scan_into_receipt_api_receipts__receipt_id__scan_post",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Receipt Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiptScanIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptScanResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receipts/{receipt_id}/complete": {
+      "post": {
+        "tags": [
+          "inbound"
+        ],
+        "summary": "Close a receipt and start the 24-hour discrepancy clock",
+        "operationId": "complete_receipt_api_receipts__receipt_id__complete_post",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Receipt Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receipts/{receipt_id}/summary": {
+      "get": {
+        "tags": [
+          "inbound"
+        ],
+        "summary": "What a receipt took in, with expected-versus-received variance",
+        "operationId": "receipt_summary_api_receipts__receipt_id__summary_get",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Receipt Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plates/ranges": {
+      "post": {
+        "tags": [
+          "plates (Mode B)"
+        ],
+        "summary": "Mint a block of sequential, unbound plates and materialise them",
+        "description": "Mint a block of sequential, unbound plates and materialise them.\n\nA plate exists from the moment it is issued: issuing 5,000 creates 5,000\nrows, so a scan of any of them is a known object rather than a guess.",
+        "operationId": "issue_range_api_plates_ranges_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlateRangeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlateRange"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plates/stock": {
+      "get": {
+        "tags": [
+          "plates (Mode B)"
+        ],
+        "summary": "How many unbound license plates a site has left",
+        "operationId": "plate_stock_api_plates_stock_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlateStock"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plates/bind": {
+      "post": {
+        "tags": [
+          "plates (Mode B)"
+        ],
+        "summary": "Bind a freshly-applied license plate to a SKU and put the unit away in one action",
+        "description": "Apply-then-scan. Binding and putaway are one action, never two (M1.4.2.8).\n\nThe staffer sticks a label on the item and scans it; the scan resolves the\nSKU, the SKU resolves the basket, and the screen shows where to put it. The\nsame unit is never scanned twice.",
+        "operationId": "bind_plate_api_plates_bind_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlateBindIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlateBindResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plates/{code}/unbind": {
+      "post": {
+        "tags": [
+          "plates (Mode B)"
+        ],
+        "summary": "Release a license plate so the label can be peeled and reused",
+        "description": "Undo — peel the label and rebind it cleanly (M1.4.2.6).",
+        "operationId": "unbind_plate_api_plates__code__unbind_post",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Code"
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "undo",
+              "title": "Reason"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plates/{code}": {
+      "get": {
+        "tags": [
+          "plates (Mode B)"
+        ],
+        "summary": "Where one license-plated unit is, and its history",
+        "operationId": "get_plate_api_plates__code__get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Code"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plate"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pos/orders": {
+      "post": {
+        "tags": [
+          "outbound"
+        ],
+        "summary": "The POS creates an order here",
+        "description": "The POS creates an order here. The dummy generator uses the same endpoint,\nso switching to live Hiryu is configuration rather than a rewrite (§9.3).\n\nDeliberately unauthenticated at the user level — this is a machine-to-machine\ncall. Once §9.1 is settled it is gated by POS_SHARED_SECRET.",
+        "operationId": "receive_order_api_pos_orders_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pick-tasks": {
+      "get": {
+        "tags": [
+          "outbound"
+        ],
+        "summary": "Pick tasks waiting at a station",
+        "operationId": "list_tasks_api_pick_tasks_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "ready",
+              "title": "Status"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickTaskList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pick-tasks/{task_id}/claim": {
+      "post": {
+        "tags": [
+          "outbound"
+        ],
+        "summary": "A claimed task is invisible to other pickers (M5.2.2)",
+        "description": "A claimed task is invisible to other pickers (M5.2.2).\n\nThe conditional UPDATE is the lock: two pickers racing for the same task,\nexactly one wins, decided by the database rather than by timing.",
+        "operationId": "claim_task_api_pick_tasks__task_id__claim_post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickTask"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pick-lines/{line_id}/confirm": {
+      "post": {
+        "tags": [
+          "outbound"
+        ],
+        "summary": "Confirm a pick by scanning — blocks the wrong shade before it reaches the bag",
+        "description": "The shade-confusion gate. Shade 07 versus 08 is caught here and nowhere else.\n\nA wrong scan is blocking, with no staff-level override — an override that\nexists gets used, and then the gate has no value (M5.2.5, and E13 in §15).",
+        "operationId": "confirm_pick_api_pick_lines__line_id__confirm_post",
+        "parameters": [
+          {
+            "name": "line_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Line Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickConfirmIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickConfirmResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pick-tasks/{task_id}/complete": {
+      "post": {
+        "tags": [
+          "outbound"
+        ],
+        "summary": "Finish a pick task and hand the order to the packing station",
+        "operationId": "complete_task_api_pick_tasks__task_id__complete_post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickTask"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/opname/plans": {
+      "post": {
+        "tags": [
+          "stock opname"
+        ],
+        "summary": "Create a stock-count plan over a site's baskets",
+        "operationId": "create_plan_api_opname_plans_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpnamePlanIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpnamePlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/opname/plans/{plan_id}": {
+      "get": {
+        "tags": [
+          "stock opname"
+        ],
+        "summary": "A count plan's progress, and every basket in it",
+        "operationId": "plan_detail_api_opname_plans__plan_id__get",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpnamePlanDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/opname/sessions": {
+      "post": {
+        "tags": [
+          "stock opname"
+        ],
+        "summary": "Claim a basket to count it",
+        "description": "Claim a basket to count it.\n\nThe UNIQUE(plan_id, basket_id) index is the claim: two staff racing for the\nsame basket, exactly one wins, and the loser is told who holds it. This is\nthe direct answer to concurrent staff on one station (M6.2.2).\n\nThe expected quantity is deliberately NOT returned. Showing it invites\nconfirming the number instead of counting it (M6.2.3).",
+        "operationId": "claim_basket_api_opname_sessions_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpnameSessionIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpnameSession"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/opname/sessions/{session_id}/scan": {
+      "post": {
+        "tags": [
+          "stock opname"
+        ],
+        "summary": "Scan a unit into the count",
+        "description": "Scan a unit into the count.\n\nA foreign SKU is recorded, not rejected — finding the wrong product in a\nbasket is a real and common outcome, and a system that refuses to hear it\njust loses the information (M6.2.5).",
+        "operationId": "count_scan_api_opname_sessions__session_id__scan_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpnameScanIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpnameScanResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/opname/sessions/{session_id}/finish": {
+      "post": {
+        "tags": [
+          "stock opname"
+        ],
+        "summary": "Reveal expected vs counted",
+        "description": "Reveal expected vs counted — and only now.\n\nNOTE (flagged in review): prompting for a recount AFTER showing the expected\nnumber defeats the blind count. The recount prompt is returned as a flag and\nthe client should ask before revealing. Left as-is pending a decision on the\ninteraction; see §15 E19.",
+        "operationId": "finish_session_api_opname_sessions__session_id__finish_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpnameFinishIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpnameFinishResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/opname/plans/{plan_id}/variance-report": {
+      "get": {
+        "tags": [
+          "stock opname"
+        ],
+        "summary": "Sorted by rupiah value, so a supervisor triages the top of the list rather",
+        "description": "Sorted by rupiah value, so a supervisor triages the top of the list rather\nthan reading all 118 rows (M6.3.2).",
+        "operationId": "variance_report_api_opname_plans__plan_id__variance_report_get",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VarianceReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/opname/adjustments/approve": {
+      "post": {
+        "tags": [
+          "stock opname"
+        ],
+        "summary": "Counting never moves stock by itself",
+        "description": "Counting never moves stock by itself. A supervisor reviews and approves,\nand only then does the ledger change (M6.3.3).",
+        "operationId": "approve_adjustments_api_opname_adjustments_approve_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustmentIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inventory": {
+      "get": {
+        "tags": [
+          "inventory"
+        ],
+        "summary": "On-hand stock at a site, by SKU and location",
+        "operationId": "inventory_api_inventory_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "brand_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Brand Id"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "default": 200,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inventory/find": {
+      "get": {
+        "tags": [
+          "inventory"
+        ],
+        "summary": "Scan or type anything and be told where it is",
+        "description": "Scan or type anything and be told where it is. After the guided flows,\nthe most-used screen in the product (M7.2).",
+        "operationId": "find_api_inventory_find_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Code"
+            }
+          },
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanResolved"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inventory/low-stock": {
+      "get": {
+        "tags": [
+          "inventory"
+        ],
+        "summary": "Feeds replenishment (M4.6)",
+        "description": "Feeds replenishment (M4.6) — it suggests, a human decides.",
+        "operationId": "low_stock_api_inventory_low_stock_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "threshold",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "title": "Threshold"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/movements": {
+      "get": {
+        "tags": [
+          "inventory"
+        ],
+        "summary": "The append-only stock ledger — what moved, when, and who moved it",
+        "description": "The immutable ledger. Answers 'where did this stock go'.",
+        "operationId": "movements_api_movements_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "sku_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sku Id"
+            }
+          },
+          {
+            "name": "location_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Location Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovementList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/training/scenarios": {
+      "get": {
+        "tags": [
+          "training"
+        ],
+        "summary": "The training fixture library",
+        "operationId": "list_scenarios_api_training_scenarios_get",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/training/reset": {
+      "post": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Restore a training site to a known state, deterministically",
+        "description": "Back to a known state. The same reset always produces the same warehouse.",
+        "operationId": "reset_api_training_reset_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrainingActionIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainingResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/training/load": {
+      "post": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Load a named fixture, and print what it created",
+        "description": "Load a named fixture, and print what it created — so a trainer knows what\nthe right answer is supposed to be (M8.3.3).",
+        "operationId": "load_scenario_api_training_load_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrainingActionIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainingResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/training/orders/generate": {
+      "post": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Test orders, through the same endpoint the real POS will use",
+        "description": "Test orders, through the same endpoint the real POS will use.\n\nTraining sites only. An earlier draft allowed this against any site, which\nwould have had a test order consume real stock and push a wrong number to\nGrab (PRD §9.3.4).",
+        "operationId": "generate_orders_api_training_orders_generate_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateOrdersIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratedOrders"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/training/barcode-sheet": {
+      "get": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Printable test barcodes, so training works with no physical stock (M8.4.4)",
+        "description": "Printable test barcodes, so training works with no physical stock (M8.4.4).",
+        "operationId": "barcode_sheet_api_training_barcode_sheet_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "default": 120,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BarcodeSheet"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/training/activity": {
+      "get": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Who has actually practised, and who has clicked past it (M8.4.3)",
+        "description": "Who has actually practised, and who has clicked past it (M8.4.3).",
+        "operationId": "activity_api_training_activity_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "actor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Actor"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActivityReport": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rows"
+        ],
+        "title": "ActivityReport"
+      },
+      "ActivityRow": {
+        "properties": {
+          "actor_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Email"
+          },
+          "flow": {
+            "type": "string",
+            "title": "Flow"
+          },
+          "event": {
+            "type": "string",
+            "title": "Event"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "actor_email",
+          "flow",
+          "event",
+          "created_at"
+        ],
+        "title": "ActivityRow"
+      },
+      "AdjustmentIn": {
+        "properties": {
+          "session_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Session Ids"
+          },
+          "reason_code": {
+            "type": "string",
+            "title": "Reason Code",
+            "default": "count_correction"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_ids"
+        ],
+        "title": "AdjustmentIn"
+      },
+      "BarcodeCheck": {
+        "properties": {
+          "barcode": {
+            "type": "string",
+            "title": "Barcode"
+          },
+          "state": {
+            "type": "string",
+            "title": "State",
+            "description": "new | already_this_sku | conflict"
+          },
+          "conflict_sku_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conflict Sku Id"
+          },
+          "conflict_sku_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conflict Sku Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "barcode",
+          "state"
+        ],
+        "title": "BarcodeCheck"
+      },
+      "BarcodeRegisterIn": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "barcodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Barcodes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id",
+          "barcodes"
+        ],
+        "title": "BarcodeRegisterIn"
+      },
+      "BarcodeRegisterResult": {
+        "properties": {
+          "registered": {
+            "type": "integer",
+            "title": "Registered"
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/BarcodeCheck"
+            },
+            "type": "array",
+            "title": "Checks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "registered",
+          "skipped",
+          "checks"
+        ],
+        "title": "BarcodeRegisterResult"
+      },
+      "BarcodeSheet": {
+        "properties": {
+          "site_code": {
+            "type": "string",
+            "title": "Site Code"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/BarcodeSheetRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_code",
+          "rows",
+          "note"
+        ],
+        "title": "BarcodeSheet"
+      },
+      "BarcodeSheetRow": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "type": "string",
+            "title": "Sku Name"
+          },
+          "barcode": {
+            "type": "string",
+            "title": "Barcode"
+          },
+          "location_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id",
+          "sku_name",
+          "barcode",
+          "location_code"
+        ],
+        "title": "BarcodeSheetRow"
+      },
+      "Body_import_skus_api_skus_import_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_skus_api_skus_import_post"
+      },
+      "Brand": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "identity_mode": {
+            "type": "string",
+            "title": "Identity Mode"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "identity_mode",
+          "active"
+        ],
+        "title": "Brand"
+      },
+      "BrandIn": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "identity_mode": {
+            "type": "string",
+            "title": "Identity Mode",
+            "default": "sku_barcode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "BrandIn"
+      },
+      "GenerateOrdersIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "default": 1
+          },
+          "max_lines": {
+            "type": "integer",
+            "title": "Max Lines",
+            "default": 4
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id"
+        ],
+        "title": "GenerateOrdersIn"
+      },
+      "GenerateRacksIn": {
+        "properties": {
+          "rack_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Rack Codes",
+            "default": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G"
+            ]
+          },
+          "level_count": {
+            "type": "integer",
+            "title": "Level Count",
+            "default": 5
+          },
+          "positions_per_level": {
+            "type": "integer",
+            "title": "Positions Per Level",
+            "default": 3
+          },
+          "basket_size": {
+            "type": "string",
+            "title": "Basket Size",
+            "default": "M"
+          },
+          "open_shelf_levels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Open Shelf Levels",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "GenerateRacksIn"
+      },
+      "GeneratedOrders": {
+        "properties": {
+          "created": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Created"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "created",
+          "message"
+        ],
+        "title": "GeneratedOrders"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Health": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "database": {
+            "type": "boolean",
+            "title": "Database"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "database"
+        ],
+        "title": "Health"
+      },
+      "InventoryList": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/InventoryRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rows",
+          "total"
+        ],
+        "title": "InventoryList"
+      },
+      "InventoryRow": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "type": "string",
+            "title": "Sku Name"
+          },
+          "brand_code": {
+            "type": "string",
+            "title": "Brand Code"
+          },
+          "location_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Code"
+          },
+          "qty_on_hand": {
+            "type": "integer",
+            "title": "Qty On Hand"
+          },
+          "qty_allocated": {
+            "type": "integer",
+            "title": "Qty Allocated"
+          },
+          "available": {
+            "type": "integer",
+            "title": "Available"
+          },
+          "expiry_tier": {
+            "type": "string",
+            "title": "Expiry Tier"
+          },
+          "last_counted_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Counted At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id",
+          "sku_name",
+          "brand_code",
+          "location_code",
+          "qty_on_hand",
+          "qty_allocated",
+          "available",
+          "expiry_tier"
+        ],
+        "title": "InventoryRow"
+      },
+      "LevelRow": {
+        "properties": {
+          "level_id": {
+            "type": "integer",
+            "title": "Level Id"
+          },
+          "level_no": {
+            "type": "integer",
+            "title": "Level No"
+          },
+          "is_open_shelf": {
+            "type": "boolean",
+            "title": "Is Open Shelf"
+          },
+          "positions": {
+            "items": {
+              "$ref": "#/components/schemas/LocationCell"
+            },
+            "type": "array",
+            "title": "Positions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "level_id",
+          "level_no",
+          "is_open_shelf",
+          "positions"
+        ],
+        "title": "LevelRow"
+      },
+      "LocationCell": {
+        "properties": {
+          "location_id": {
+            "type": "integer",
+            "title": "Location Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "position_no": {
+            "type": "integer",
+            "title": "Position No"
+          },
+          "basket_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basket Id"
+          },
+          "basket_size": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basket Size"
+          },
+          "sku_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Name"
+          },
+          "expiry_tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Tier"
+          },
+          "qty_on_hand": {
+            "type": "integer",
+            "title": "Qty On Hand",
+            "default": 0
+          },
+          "state": {
+            "type": "string",
+            "title": "State",
+            "description": "free | occupied | empty_slot"
+          }
+        },
+        "type": "object",
+        "required": [
+          "location_id",
+          "code",
+          "position_no",
+          "state"
+        ],
+        "title": "LocationCell"
+      },
+      "Me": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale"
+          },
+          "default_site_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Site Id"
+          },
+          "sites": {
+            "items": {
+              "$ref": "#/components/schemas/SiteBrief"
+            },
+            "type": "array",
+            "title": "Sites"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "name",
+          "role",
+          "locale",
+          "default_site_id",
+          "sites"
+        ],
+        "title": "Me"
+      },
+      "MovementList": {
+        "properties": {
+          "movements": {
+            "items": {
+              "$ref": "#/components/schemas/MovementRow"
+            },
+            "type": "array",
+            "title": "Movements"
+          }
+        },
+        "type": "object",
+        "required": [
+          "movements"
+        ],
+        "title": "MovementList"
+      },
+      "MovementRow": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Name"
+          },
+          "location_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Code"
+          },
+          "qty_delta": {
+            "type": "integer",
+            "title": "Qty Delta"
+          },
+          "movement_type": {
+            "type": "string",
+            "title": "Movement Type"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "actor_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Email"
+          },
+          "plate_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plate Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "sku_id",
+          "sku_name",
+          "location_code",
+          "qty_delta",
+          "movement_type",
+          "reason_code",
+          "actor_email"
+        ],
+        "title": "MovementRow"
+      },
+      "Ok": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "title": "Ok"
+      },
+      "OpnameBasket": {
+        "properties": {
+          "basket_id": {
+            "type": "integer",
+            "title": "Basket Id"
+          },
+          "location_code": {
+            "type": "string",
+            "title": "Location Code"
+          },
+          "sku_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Name"
+          },
+          "photo_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Key"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "pending | counting | finished"
+          },
+          "claimed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed By"
+          },
+          "variance": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "basket_id",
+          "location_code",
+          "sku_id",
+          "sku_name",
+          "photo_key",
+          "status"
+        ],
+        "title": "OpnameBasket"
+      },
+      "OpnameFinishIn": {
+        "properties": {
+          "manual_qty": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Qty"
+          }
+        },
+        "type": "object",
+        "title": "OpnameFinishIn"
+      },
+      "OpnameFinishResult": {
+        "properties": {
+          "qty_expected": {
+            "type": "integer",
+            "title": "Qty Expected"
+          },
+          "qty_counted": {
+            "type": "integer",
+            "title": "Qty Counted"
+          },
+          "variance": {
+            "type": "integer",
+            "title": "Variance"
+          },
+          "foreign_items": {
+            "type": "integer",
+            "title": "Foreign Items"
+          },
+          "missing_plates": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Plates",
+            "default": []
+          },
+          "needs_recount": {
+            "type": "boolean",
+            "title": "Needs Recount"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "qty_expected",
+          "qty_counted",
+          "variance",
+          "foreign_items",
+          "needs_recount",
+          "message"
+        ],
+        "title": "OpnameFinishResult"
+      },
+      "OpnamePlan": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "total_baskets": {
+            "type": "integer",
+            "title": "Total Baskets"
+          },
+          "counted": {
+            "type": "integer",
+            "title": "Counted"
+          },
+          "variances": {
+            "type": "integer",
+            "title": "Variances"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "site_id",
+          "name",
+          "status",
+          "total_baskets",
+          "counted",
+          "variances"
+        ],
+        "title": "OpnamePlan"
+      },
+      "OpnamePlanDetail": {
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/OpnamePlan"
+          },
+          "baskets": {
+            "items": {
+              "$ref": "#/components/schemas/OpnameBasket"
+            },
+            "type": "array",
+            "title": "Baskets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "plan",
+          "baskets"
+        ],
+        "title": "OpnamePlanDetail"
+      },
+      "OpnamePlanIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "rack_codes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rack Codes"
+          },
+          "brand_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Id"
+          },
+          "expiry_tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Tier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id"
+        ],
+        "title": "OpnamePlanIn"
+      },
+      "OpnameScanIn": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "OpnameScanIn"
+      },
+      "OpnameScanResult": {
+        "properties": {
+          "accepted": {
+            "type": "boolean",
+            "title": "Accepted"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "counted | foreign_item | out_of_place | unknown | duplicate"
+          },
+          "qty_counted": {
+            "type": "integer",
+            "title": "Qty Counted"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "accepted",
+          "outcome",
+          "qty_counted",
+          "message"
+        ],
+        "title": "OpnameScanResult"
+      },
+      "OpnameSession": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "plan_id": {
+            "type": "integer",
+            "title": "Plan Id"
+          },
+          "basket_id": {
+            "type": "integer",
+            "title": "Basket Id"
+          },
+          "location_code": {
+            "type": "string",
+            "title": "Location Code"
+          },
+          "sku_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Name"
+          },
+          "photo_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Key"
+          },
+          "identity_mode": {
+            "type": "string",
+            "title": "Identity Mode"
+          },
+          "qty_counted": {
+            "type": "integer",
+            "title": "Qty Counted"
+          },
+          "claimed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed By"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "expected_plates": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Plates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "plan_id",
+          "basket_id",
+          "location_code",
+          "sku_id",
+          "sku_name",
+          "photo_key",
+          "identity_mode",
+          "qty_counted",
+          "claimed_by",
+          "status"
+        ],
+        "title": "OpnameSession"
+      },
+      "OpnameSessionIn": {
+        "properties": {
+          "plan_id": {
+            "type": "integer",
+            "title": "Plan Id"
+          },
+          "basket_id": {
+            "type": "integer",
+            "title": "Basket Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "plan_id",
+          "basket_id"
+        ],
+        "title": "OpnameSessionIn"
+      },
+      "OrderAccepted": {
+        "properties": {
+          "order_id": {
+            "type": "integer",
+            "title": "Order Id"
+          },
+          "external_ref": {
+            "type": "string",
+            "title": "External Ref"
+          },
+          "pick_task_id": {
+            "type": "integer",
+            "title": "Pick Task Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "short_lines": {
+            "type": "integer",
+            "title": "Short Lines"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id",
+          "external_ref",
+          "pick_task_id",
+          "status",
+          "short_lines",
+          "message"
+        ],
+        "title": "OrderAccepted"
+      },
+      "OrderIn": {
+        "properties": {
+          "external_ref": {
+            "type": "string",
+            "title": "External Ref"
+          },
+          "site_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Code"
+          },
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Id"
+          },
+          "brand_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Code"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/OrderLineIn"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "is_test": {
+            "type": "boolean",
+            "title": "Is Test",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "external_ref",
+          "lines"
+        ],
+        "title": "OrderIn"
+      },
+      "OrderLineIn": {
+        "properties": {
+          "sku_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Code"
+          },
+          "barcode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Barcode"
+          },
+          "sku_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Id"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quantity"
+        ],
+        "title": "OrderLineIn"
+      },
+      "PickConfirmIn": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "qty": {
+            "type": "integer",
+            "title": "Qty",
+            "default": 1
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "PickConfirmIn"
+      },
+      "PickConfirmResult": {
+        "properties": {
+          "accepted": {
+            "type": "boolean",
+            "title": "Accepted"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "picked | wrong_sku | plate_error | short | error"
+          },
+          "expected_sku_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Sku Name"
+          },
+          "scanned_sku_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scanned Sku Name"
+          },
+          "qty_picked": {
+            "type": "integer",
+            "title": "Qty Picked",
+            "default": 0
+          },
+          "line_complete": {
+            "type": "boolean",
+            "title": "Line Complete",
+            "default": false
+          },
+          "task_complete": {
+            "type": "boolean",
+            "title": "Task Complete",
+            "default": false
+          },
+          "next_line": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PickLine"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "accepted",
+          "outcome",
+          "message"
+        ],
+        "title": "PickConfirmResult"
+      },
+      "PickLine": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "sequence_no": {
+            "type": "integer",
+            "title": "Sequence No"
+          },
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "type": "string",
+            "title": "Sku Name"
+          },
+          "photo_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Key"
+          },
+          "location_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Id"
+          },
+          "location_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Code"
+          },
+          "rack_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rack Code"
+          },
+          "level_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level No"
+          },
+          "qty_required": {
+            "type": "integer",
+            "title": "Qty Required"
+          },
+          "qty_picked": {
+            "type": "integer",
+            "title": "Qty Picked"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "identity_mode": {
+            "type": "string",
+            "title": "Identity Mode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sequence_no",
+          "sku_id",
+          "sku_name",
+          "photo_key",
+          "location_id",
+          "location_code",
+          "rack_code",
+          "level_no",
+          "qty_required",
+          "qty_picked",
+          "status",
+          "identity_mode"
+        ],
+        "title": "PickLine"
+      },
+      "PickTask": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "order_id": {
+            "type": "integer",
+            "title": "Order Id"
+          },
+          "external_ref": {
+            "type": "string",
+            "title": "External Ref"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "claimed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed By"
+          },
+          "is_test": {
+            "type": "boolean",
+            "title": "Is Test"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PickLine"
+            },
+            "type": "array",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "order_id",
+          "external_ref",
+          "site_id",
+          "status",
+          "claimed_by",
+          "is_test",
+          "lines"
+        ],
+        "title": "PickTask"
+      },
+      "PickTaskList": {
+        "properties": {
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/PickTask"
+            },
+            "type": "array",
+            "title": "Tasks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tasks"
+        ],
+        "title": "PickTaskList"
+      },
+      "Plate": {
+        "properties": {
+          "plate_code": {
+            "type": "string",
+            "title": "Plate Code"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "sku_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Name"
+          },
+          "location_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Code"
+          },
+          "expiry_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Date"
+          },
+          "bound_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bound At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "plate_code",
+          "state",
+          "site_id",
+          "sku_id",
+          "sku_name",
+          "location_code",
+          "expiry_date",
+          "bound_at"
+        ],
+        "title": "Plate"
+      },
+      "PlateBindIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "plate_code": {
+            "type": "string",
+            "title": "Plate Code"
+          },
+          "expiry_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Date"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "sku_id",
+          "plate_code"
+        ],
+        "title": "PlateBindIn"
+      },
+      "PlateBindResult": {
+        "properties": {
+          "accepted": {
+            "type": "boolean",
+            "title": "Accepted"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "bound | already_bound | wrong_site | unknown_plate | no_slot"
+          },
+          "plate_code": {
+            "type": "string",
+            "title": "Plate Code"
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Sku"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Code"
+          },
+          "bound_count": {
+            "type": "integer",
+            "title": "Bound Count",
+            "default": 0
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "accepted",
+          "outcome",
+          "plate_code",
+          "message"
+        ],
+        "title": "PlateBindResult"
+      },
+      "PlateRange": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "prefix": {
+            "type": "string",
+            "title": "Prefix"
+          },
+          "seq_from": {
+            "type": "integer",
+            "title": "Seq From"
+          },
+          "seq_to": {
+            "type": "integer",
+            "title": "Seq To"
+          },
+          "codes_sample": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Codes Sample"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "site_id",
+          "prefix",
+          "seq_from",
+          "seq_to",
+          "codes_sample"
+        ],
+        "title": "PlateRange"
+      },
+      "PlateRangeIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "default": 1000
+          },
+          "prefix": {
+            "type": "string",
+            "title": "Prefix",
+            "default": "NJ"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id"
+        ],
+        "title": "PlateRangeIn"
+      },
+      "PlateStock": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "unbound": {
+            "type": "integer",
+            "title": "Unbound"
+          },
+          "in_stock": {
+            "type": "integer",
+            "title": "In Stock"
+          },
+          "low": {
+            "type": "boolean",
+            "title": "Low"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "unbound",
+          "in_stock",
+          "low"
+        ],
+        "title": "PlateStock"
+      },
+      "RackMap": {
+        "properties": {
+          "site": {
+            "$ref": "#/components/schemas/SiteBrief"
+          },
+          "racks": {
+            "items": {
+              "$ref": "#/components/schemas/RackMapRack"
+            },
+            "type": "array",
+            "title": "Racks"
+          },
+          "slotted": {
+            "type": "integer",
+            "title": "Slotted"
+          },
+          "free": {
+            "type": "integer",
+            "title": "Free"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site",
+          "racks",
+          "slotted",
+          "free"
+        ],
+        "title": "RackMap"
+      },
+      "RackMapRack": {
+        "properties": {
+          "rack_id": {
+            "type": "integer",
+            "title": "Rack Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/LevelRow"
+            },
+            "type": "array",
+            "title": "Levels"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rack_id",
+          "code",
+          "levels"
+        ],
+        "title": "RackMapRack"
+      },
+      "Receipt": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "brand_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Id"
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "opened_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opened By"
+          },
+          "opened_at": {
+            "type": "string",
+            "title": "Opened At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "banner": {
+            "type": "string",
+            "title": "Banner"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "site_id",
+          "brand_id",
+          "source_type",
+          "status",
+          "opened_by",
+          "opened_at",
+          "banner"
+        ],
+        "title": "Receipt"
+      },
+      "ReceiptIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "brand_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Id"
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type",
+            "default": "from_brand"
+          },
+          "transfer_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transfer Reference"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id"
+        ],
+        "title": "ReceiptIn"
+      },
+      "ReceiptScanIn": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "qty": {
+            "type": "integer",
+            "title": "Qty",
+            "default": 1
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "ReceiptScanIn"
+      },
+      "ReceiptScanResult": {
+        "properties": {
+          "accepted": {
+            "type": "boolean",
+            "title": "Accepted"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "put_away | unknown_barcode | no_slot | over_capacity | error"
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Sku"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Code"
+          },
+          "location_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Id"
+          },
+          "qty_in_basket": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qty In Basket"
+          },
+          "session_total": {
+            "type": "integer",
+            "title": "Session Total",
+            "default": 0
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "accepted",
+          "outcome",
+          "message"
+        ],
+        "title": "ReceiptScanResult"
+      },
+      "ReceiptSummary": {
+        "properties": {
+          "receipt": {
+            "$ref": "#/components/schemas/Receipt"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/ReceiptSummaryLine"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "total_units": {
+            "type": "integer",
+            "title": "Total Units"
+          },
+          "discrepancy_deadline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discrepancy Deadline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "receipt",
+          "lines",
+          "total_units"
+        ],
+        "title": "ReceiptSummary"
+      },
+      "ReceiptSummaryLine": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "type": "string",
+            "title": "Sku Name"
+          },
+          "qty_expected": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qty Expected"
+          },
+          "qty_received": {
+            "type": "integer",
+            "title": "Qty Received"
+          },
+          "variance": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id",
+          "sku_name",
+          "qty_expected",
+          "qty_received",
+          "variance"
+        ],
+        "title": "ReceiptSummaryLine"
+      },
+      "ScanResolved": {
+        "properties": {
+          "found": {
+            "type": "boolean",
+            "title": "Found"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "sku_barcode | unit_plate | unknown"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Sku"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "plate_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plate Code"
+          },
+          "plate_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plate State"
+          },
+          "slot_location_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slot Location Id"
+          },
+          "slot_location_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slot Location Code"
+          },
+          "qty_on_hand": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qty On Hand"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "found",
+          "kind",
+          "code"
+        ],
+        "title": "ScanResolved",
+        "description": "One endpoint for both identity modes.\n\nThe caller scans and the server decides what it was looking at, so the\nclient never has to know whether a brand is barcoded (PRD §5.1)."
+      },
+      "Scenario": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name_id": {
+            "type": "string",
+            "title": "Name Id"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "teaches": {
+            "type": "string",
+            "title": "Teaches"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "name_id",
+          "name_en",
+          "teaches"
+        ],
+        "title": "Scenario"
+      },
+      "ScenarioList": {
+        "properties": {
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/Scenario"
+            },
+            "type": "array",
+            "title": "Scenarios"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scenarios"
+        ],
+        "title": "ScenarioList"
+      },
+      "Site": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "site_type": {
+            "type": "string",
+            "title": "Site Type"
+          },
+          "is_training": {
+            "type": "boolean",
+            "title": "Is Training"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "site_type",
+          "is_training",
+          "active"
+        ],
+        "title": "Site"
+      },
+      "SiteBrief": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "site_type": {
+            "type": "string",
+            "title": "Site Type"
+          },
+          "is_training": {
+            "type": "boolean",
+            "title": "Is Training"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "site_type",
+          "is_training"
+        ],
+        "title": "SiteBrief"
+      },
+      "SiteIn": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "site_type": {
+            "type": "string",
+            "title": "Site Type",
+            "default": "darkstore"
+          },
+          "is_training": {
+            "type": "boolean",
+            "title": "Is Training",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "SiteIn"
+      },
+      "Sku": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "brand_id": {
+            "type": "integer",
+            "title": "Brand Id"
+          },
+          "brand_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Code"
+          },
+          "brand_sku_code": {
+            "type": "string",
+            "title": "Brand Sku Code"
+          },
+          "name_display": {
+            "type": "string",
+            "title": "Name Display"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "product_line": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Line"
+          },
+          "unit_size": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Size"
+          },
+          "price_idr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Idr"
+          },
+          "unit_cube_cm3": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Cube Cm3"
+          },
+          "expiry_tier": {
+            "type": "string",
+            "title": "Expiry Tier"
+          },
+          "identity_mode": {
+            "type": "string",
+            "title": "Identity Mode"
+          },
+          "label_placement_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Placement Note"
+          },
+          "photo_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "brand_id",
+          "brand_sku_code",
+          "name_display",
+          "expiry_tier",
+          "identity_mode"
+        ],
+        "title": "Sku"
+      },
+      "SkuIn": {
+        "properties": {
+          "brand_id": {
+            "type": "integer",
+            "title": "Brand Id"
+          },
+          "brand_sku_code": {
+            "type": "string",
+            "title": "Brand Sku Code"
+          },
+          "name_display": {
+            "type": "string",
+            "title": "Name Display"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "product_line": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Line"
+          },
+          "unit_size": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Size"
+          },
+          "price_idr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Idr"
+          },
+          "unit_cube_cm3": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Cube Cm3"
+          },
+          "expiry_tier": {
+            "type": "string",
+            "title": "Expiry Tier",
+            "default": "stable"
+          },
+          "identity_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Identity Mode"
+          },
+          "label_placement_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Placement Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "brand_id",
+          "brand_sku_code",
+          "name_display"
+        ],
+        "title": "SkuIn"
+      },
+      "SkuList": {
+        "properties": {
+          "skus": {
+            "items": {
+              "$ref": "#/components/schemas/Sku"
+            },
+            "type": "array",
+            "title": "Skus"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "skus",
+          "total"
+        ],
+        "title": "SkuList"
+      },
+      "Slot": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "type": "string",
+            "title": "Sku Name"
+          },
+          "basket_id": {
+            "type": "integer",
+            "title": "Basket Id"
+          },
+          "location_id": {
+            "type": "integer",
+            "title": "Location Id"
+          },
+          "location_code": {
+            "type": "string",
+            "title": "Location Code"
+          },
+          "basket_size": {
+            "type": "string",
+            "title": "Basket Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "site_id",
+          "sku_id",
+          "sku_name",
+          "basket_id",
+          "location_id",
+          "location_code",
+          "basket_size"
+        ],
+        "title": "Slot"
+      },
+      "SlotIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "basket_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basket Id"
+          },
+          "created_during_inbound": {
+            "type": "boolean",
+            "title": "Created During Inbound",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "sku_id"
+        ],
+        "title": "SlotIn"
+      },
+      "SlotSuggestion": {
+        "properties": {
+          "recommended_size": {
+            "type": "string",
+            "title": "Recommended Size"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "location_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Id"
+          },
+          "location_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recommended_size",
+          "reason",
+          "location_id",
+          "location_code"
+        ],
+        "title": "SlotSuggestion"
+      },
+      "TrainingActionIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "scenario": {
+            "type": "string",
+            "title": "Scenario",
+            "default": "clean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id"
+        ],
+        "title": "TrainingActionIn"
+      },
+      "TrainingResult": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "site_code": {
+            "type": "string",
+            "title": "Site Code"
+          },
+          "scenario": {
+            "type": "string",
+            "title": "Scenario"
+          },
+          "fixture": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Fixture"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "site_code",
+          "scenario",
+          "fixture",
+          "message"
+        ],
+        "title": "TrainingResult"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VarianceReport": {
+        "properties": {
+          "plan_id": {
+            "type": "integer",
+            "title": "Plan Id"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/VarianceRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "total_variance_units": {
+            "type": "integer",
+            "title": "Total Variance Units"
+          },
+          "total_variance_idr": {
+            "type": "integer",
+            "title": "Total Variance Idr"
+          }
+        },
+        "type": "object",
+        "required": [
+          "plan_id",
+          "rows",
+          "total_variance_units",
+          "total_variance_idr"
+        ],
+        "title": "VarianceReport"
+      },
+      "VarianceRow": {
+        "properties": {
+          "basket_id": {
+            "type": "integer",
+            "title": "Basket Id"
+          },
+          "location_code": {
+            "type": "string",
+            "title": "Location Code"
+          },
+          "sku_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Name"
+          },
+          "qty_expected": {
+            "type": "integer",
+            "title": "Qty Expected"
+          },
+          "qty_counted": {
+            "type": "integer",
+            "title": "Qty Counted"
+          },
+          "variance": {
+            "type": "integer",
+            "title": "Variance"
+          },
+          "value_idr": {
+            "type": "integer",
+            "title": "Value Idr"
+          },
+          "counted_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Counted By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "basket_id",
+          "location_code",
+          "sku_id",
+          "sku_name",
+          "qty_expected",
+          "qty_counted",
+          "variance",
+          "value_idr",
+          "counted_by"
+        ],
+        "title": "VarianceRow"
+      }
+    }
+  }
+}

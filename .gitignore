@@ -6,3 +6,6 @@ dist/
 .env
 .env.local
 !backend/.env.example
+
+# Substrait CLI link state
+.substrait/
