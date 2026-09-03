@@ -1,0 +1,11 @@
+description: >
+  Warehouse management for Ninja Van's GrabMart Kilat quick-commerce fulfilment.
+  Station staff receive brand stock, put it away into barcoded baskets on racks,
+  pick guided orders that arrive from the Hiryu POS, and run weekly stock counts.
+  Built for multi-brand, multi-station operation at 100+ SKUs per brand, with an
+  isolated training mode for new staff and for testing.
+
+database: oceanbase
+
+services:
+  object-storage: {}

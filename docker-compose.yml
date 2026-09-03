@@ -1,0 +1,46 @@
+# Local development only. The Substrait platform ignores this file.
+#
+# Runs MySQL 8 (same wire protocol as OceanBase, so the driver, the %s
+# placeholders and the Flyway migrations all run unchanged) plus a one-shot
+# Flyway container that applies backend/resources/db/migration.
+#
+#   docker compose up -d db
+#   docker compose run --rm migrate
+#   cd backend && ALLOW_ANONYMOUS_DEV=true \
+#     DATABASE_URL="mysql://root:root@localhost:3306/wms" \
+#     uvicorn main:app --reload
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wms
+    ports:
+      - "3306:3306"
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - wms_db:/var/lib/mysql
+
+  migrate:
+    image: flyway/flyway:10
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      -url=jdbc:mysql://db:3306/wms
+      -user=root
+      -password=root
+      -connectRetries=20
+      -locations=filesystem:/flyway/sql
+      migrate
+    volumes:
+      - ./backend/resources/db/migration:/flyway/sql
+
+volumes:
+  wms_db:
