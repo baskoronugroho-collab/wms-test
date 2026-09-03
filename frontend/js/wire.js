@@ -151,6 +151,8 @@
     }
 
     // A training site must be impossible to be in by accident.
+    // Some screens (the wrong-item stop, the blocked screen) deliberately ship
+    // no chrome header, so this has to place itself without one.
     if (SITE && SITE.is_training && !$('.wire-training')) {
       const b = document.createElement('div');
       b.className = 'wire-training banner banner--caution';
@@ -160,7 +162,8 @@
         'data-en="TRAINING MODE — not real stock, safe to get wrong">' +
         'MODE LATIHAN — barang tidak nyata, aman untuk salah</span>';
       const chrome = $('.chrome');
-      chrome.parentNode.insertBefore(b, chrome.nextSibling);
+      if (chrome && chrome.parentNode) chrome.parentNode.insertBefore(b, chrome.nextSibling);
+      else document.body.insertBefore(b, document.body.firstChild);
     }
   }
 
@@ -617,7 +620,11 @@
           code, qty: line.qty_required - line.qty_picked, idempotency_key: key(),
         });
         if (!r.accepted) {
-          CTX.set('wrong', { scanned: r.scanned_sku_name || code, expected: r.expected_sku_name });
+          CTX.set('wrong', {
+            scanned: r.scanned_sku_name || code,
+            expected: r.expected_sku_name,
+            location: line.location_code,
+          });
           zone.reject('Salah barang', r.message);
           setTimeout(() => go('08-salah-barang.html'), 900);
           return;
@@ -633,6 +640,7 @@
 
     async function finish() {
       try { await api('POST', '/pick-tasks/' + task.id + '/complete'); } catch { /* already done */ }
+      CTX.set('doneTask', task);
       CTX.del('task');
       go('09-pesanan-selesai.html');
     }
@@ -646,17 +654,52 @@
 
   screens['wrong-item'] = async () => {
     const w = CTX.get('wrong') || {};
-    const names = $$('.product__name');
-    if (names[0]) names[0].textContent = w.scanned || '—';
-    if (names[1]) names[1].textContent = w.expected || '—';
-    $$('a.btn').forEach(a => { a.href = '07-ambil-pesanan.html'; });
+
+    const cards = $$('.card-compare');
+    const fill = (card, name, code) => {
+      if (!card) return;
+      const n = $('.product__name', card);
+      if (n) n.textContent = name || '—';
+      const img = $('.card-compare__photo', card);
+      if (img) { img.src = 'assets/products/placeholder.svg'; img.alt = name || ''; }
+      const meta = $('.code--sm', card);
+      if (meta) meta.textContent = code || '';
+    };
+    fill(cards[0], w.scanned, '');
+    fill(cards[1], w.expected, w.location || '');
+
+    // The instruction names the basket, because that is where both items live.
+    const instr = $('.col p[style]');
+    if (instr) {
+      const id = 'Kembalikan barang itu, lalu ambil ' + (w.expected || 'yang benar') +
+        ' dari keranjang yang sama' + (w.location ? ' — ' + w.location : '') + '.';
+      const en = 'Put that item back, then take ' + (w.expected || 'the right one') +
+        ' from the same basket' + (w.location ? ' — ' + w.location : '') + '.';
+      bi(instr, id, en);
+    }
   };
 
   screens['pick-done'] = async () => {
-    $$('a.btn').forEach(a => {
-      if (/pesanan|order/i.test(a.textContent)) a.href = '07-ambil-pesanan.html';
-      else a.href = 'index.html';
-    });
+    const done = CTX.get('doneTask');
+    if (done) {
+      const tbody = $('.table tbody');
+      if (tbody) tbody.innerHTML = done.lines.map(l =>
+        '<tr><td class="td-code">' + esc(l.location_code || '') + '</td>' +
+        '<td>' + esc(l.sku_name) + '</td>' +
+        '<td class="td-qty">' + l.qty_picked + '</td></tr>').join('');
+
+      const eyebrow = $('.eyebrow');
+      const units = done.lines.reduce((n, l) => n + l.qty_picked, 0);
+      if (eyebrow) bi(eyebrow, units + ' barang · ' + done.lines.length + ' keranjang',
+                               units + ' items · ' + done.lines.length + ' baskets');
+
+      // The POS owns the packing ticket; until it is wired, show the order ref.
+      const ticket = $('.panel .code');
+      if (ticket) { ticket.textContent = done.external_ref; ticket.style.fontSize = '30px'; }
+      CTX.del('doneTask');
+    }
+    const handoff = $('button.btn--primary');
+    if (handoff) handoff.onclick = () => go('07-ambil-pesanan.html');
   };
 
   /* --- D: stock count --- */
