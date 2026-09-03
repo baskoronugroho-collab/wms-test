@@ -1,0 +1,88 @@
+/* Ninja Kilat WMS — design tokens.
+ *
+ * The one rule that matters: RED MEANS FAILURE AND NOTHING ELSE.
+ * Ninja Van's brand is red, but if red is also the button colour, the nav
+ * colour and the accent, staff stop seeing it — and then the red that means
+ * "you picked the wrong shade" carries no weight. Brand red appears once, in
+ * the header mark, and is never interactive.
+ */
+
+:root {
+  /* surfaces */
+  --paper:        #f4f4f2;
+  --surface:      #ffffff;
+  --surface-2:    #eceae5;
+  --rule:         #dedcd8;
+  --rule-strong:  #c5c2bb;
+
+  /* text */
+  --ink:          #17181a;
+  --ink-2:        #5e6064;
+  --ink-3:        #86888c;
+
+  /* semantic — separate from brand, and semantic always wins */
+  --action:       #1b3a5c;   /* buttons, focus, selection */
+  --action-ink:   #ffffff;
+  --accept:       #127a45;   /* scan accepted, task complete */
+  --accept-bg:    #e8f4ed;
+  --caution:      #8a5a05;   /* recorded, but a human should look */
+  --caution-bg:   #fbf1de;
+  --stop:         #c01d22;   /* wrong item, blocked. ONLY this. */
+  --stop-bg:      #fbeaea;
+  --brand:        #c01d22;   /* header mark only. never interactive. */
+
+  --radius: 4px;
+  --shadow: 0 1px 2px rgba(23,24,26,.06);
+  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:        #131416;
+    --surface:      #1c1d20;
+    --surface-2:    #26272b;
+    --rule:         #2f3034;
+    --rule-strong:  #45464c;
+
+    --ink:          #f0efec;
+    --ink-2:        #a8a7a3;
+    --ink-3:        #85837f;
+
+    --action:       #5e9bd1;
+    --action-ink:   #0d1116;
+    --accept:       #42c182;
+    --accept-bg:    #12291f;
+    --caution:      #dca33f;
+    --caution-bg:   #2c2413;
+    --stop:         #f2545b;
+    --stop-bg:      #2c1618;
+    --brand:        #f2545b;
+
+    --shadow: 0 1px 2px rgba(0,0,0,.45);
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper:        #131416;
+  --surface:      #1c1d20;
+  --surface-2:    #26272b;
+  --rule:         #2f3034;
+  --rule-strong:  #45464c;
+
+  --ink:          #f0efec;
+  --ink-2:        #a8a7a3;
+  --ink-3:        #85837f;
+
+  --action:       #5e9bd1;
+  --action-ink:   #0d1116;
+  --accept:       #42c182;
+  --accept-bg:    #12291f;
+  --caution:      #dca33f;
+  --caution-bg:   #2c2413;
+  --stop:         #f2545b;
+  --stop-bg:      #2c1618;
+  --brand:        #f2545b;
+
+  --shadow: 0 1px 2px rgba(0,0,0,.45);
+}

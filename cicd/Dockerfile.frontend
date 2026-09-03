@@ -1,0 +1,8 @@
+# Frontend image for Substrait: plain HTML/CSS/JS served by nginx on port 80.
+# No build step — the app is vanilla, which keeps the image tiny and means the
+# design project's own .html/.css/.js files can be dropped in unchanged.
+# Built from the REPO ROOT, so COPY paths are repo-relative.
+FROM nginx:1.27-alpine
+COPY frontend/ /usr/share/nginx/html/
+COPY cicd/nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
