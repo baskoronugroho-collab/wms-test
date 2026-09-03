@@ -1,5 +1,6 @@
 fastapi>=0.115
 uvicorn[standard]>=0.32
 asyncmy>=0.2.9          # OceanBase / MySQL-wire driver (NOT asyncpg/Postgres)
+python-multipart>=0.0.9 # required by the CSV upload on POST /api/skus/import
 httpx>=0.27             # POS outbox delivery
 google-cloud-storage>=2.18,<3   # object-storage: product + receipt photos
