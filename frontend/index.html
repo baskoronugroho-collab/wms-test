@@ -1,24 +1,50 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="light dark">
-<title>Kilat WMS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beranda — Ninja Kilat WMS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
-  <header class="bar" id="bar"></header>
-  <div class="trainingbar" id="trainbar" hidden></div>
-  <main id="main"></main>
+<div class="app" data-screen="home">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Station UT5" data-en="Station UT5">Station UT5</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user">Rina P. · UT5</span>
+    </header>
+    <main class="main">
+      <div class="col">
+        <span class="eyebrow">Ninja Kilat WMS · Station app</span>
+        <h1 class="h1" data-id="Pilih pekerjaan" data-en="Choose a task">Pilih pekerjaan</h1>
+      </div>
+      <nav class="home">
+        <a class="home__card" href="01-mulai-barang-masuk.html"><span class="eyebrow">Alur A</span><span class="home__title" data-id="Barang masuk" data-en="Inbound">Barang masuk</span><span class="note" data-id="Terima kiriman dan simpan ke keranjang" data-en="Receive a delivery into baskets">Terima kiriman dan simpan ke keranjang</span></a>
+        <a class="home__card" href="05-label-unit.html"><span class="eyebrow">Alur B</span><span class="home__title" data-id="Label unit" data-en="Unit labelling">Label unit</span><span class="note" data-id="Tempel stiker Ninja satu per satu" data-en="Apply one Ninja label per unit">Tempel stiker Ninja satu per satu</span></a>
+        <a class="home__card" href="07-ambil-pesanan.html"><span class="eyebrow">Alur C</span><span class="home__title" data-id="Ambil pesanan" data-en="Pick order">Ambil pesanan</span><span class="note" data-id="7 pesanan menunggu diambil" data-en="7 orders waiting to pick">7 pesanan menunggu diambil</span></a>
+        <a class="home__card" href="10-hitung-pilih-keranjang.html"><span class="eyebrow">Alur D</span><span class="home__title" data-id="Hitung stok" data-en="Stock count">Hitung stok</span><span class="note" data-id="24 keranjang belum dihitung minggu ini" data-en="24 baskets left this week">24 keranjang belum dihitung minggu ini</span></a>
+        <a class="home__card" href="13-peta-rak.html"><span class="eyebrow">Alur E</span><span class="home__title" data-id="Peta rak" data-en="Rack map">Peta rak</span><span class="note" data-id="Untuk supervisor: isi rak dan selisih" data-en="Supervisor: occupancy and variance">Untuk supervisor: isi rak dan selisih</span></a>
+      </nav>
+      <p class="note">Semua layar: <a href="03-barcode-tidak-dikenal.html">barcode tidak dikenal</a> · <a href="04-buat-keranjang.html">buat keranjang</a> · <a href="06-label-sudah-terpakai.html">label terpakai</a> · <a href="08-salah-barang.html">salah barang</a> · <a href="09-pesanan-selesai.html">pesanan selesai</a> · <a href="11-hitung-menghitung.html">menghitung</a> · <a href="12-hasil-hitung.html">hasil hitung</a> · <a href="14-terkunci.html">terkunci</a></p>
+    </main>
+</div>
+<script src="js/scan.js"></script>
+<script src="js/app.js"></script>
+<script src="js/wire.js"></script>
 
-  <script src="js/i18n.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/scan.js"></script>
-  <script src="js/app.js"></script>
 </body>
 </html>

@@ -1,88 +1,91 @@
-/* Ninja Kilat WMS — design tokens.
- *
- * The one rule that matters: RED MEANS FAILURE AND NOTHING ELSE.
- * Ninja Van's brand is red, but if red is also the button colour, the nav
- * colour and the accent, staff stop seeing it — and then the red that means
- * "you picked the wrong shade" carries no weight. Brand red appears once, in
- * the header mark, and is never interactive.
- */
+/* Ninja Kilat WMS — design tokens
+   Semantic colour is a separate system from brand colour, and semantic wins.
+   Red (--stop / --brand) is NEVER used for buttons, links, nav or accents. */
 
 :root {
-  /* surfaces */
-  --paper:        #f4f4f2;
-  --surface:      #ffffff;
-  --surface-2:    #eceae5;
-  --rule:         #dedcd8;
-  --rule-strong:  #c5c2bb;
+  color-scheme: light;
 
-  /* text */
-  --ink:          #17181a;
-  --ink-2:        #5e6064;
-  --ink-3:        #86888c;
+  --ground: #F4F4F2;
+  --surface: #FFFFFF;
+  --ink: #17181A;
+  --muted: #5E6064;
+  --rule: #DEDDD8;
 
-  /* semantic — separate from brand, and semantic always wins */
-  --action:       #1b3a5c;   /* buttons, focus, selection */
-  --action-ink:   #ffffff;
-  --accept:       #127a45;   /* scan accepted, task complete */
-  --accept-bg:    #e8f4ed;
-  --caution:      #8a5a05;   /* recorded, but a human should look */
-  --caution-bg:   #fbf1de;
-  --stop:         #c01d22;   /* wrong item, blocked. ONLY this. */
-  --stop-bg:      #fbeaea;
-  --brand:        #c01d22;   /* header mark only. never interactive. */
+  --action: #1B3A5C;
+  --action-ink: #FFFFFF;
+  --action-bg: #E8EDF3;
+  --action-line: #C9D4E0;
 
-  --radius: 4px;
-  --shadow: 0 1px 2px rgba(23,24,26,.06);
-  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --accept: #127A45;
+  --accept-ink: #FFFFFF;
+  --accept-bg: #E3F0E9;
+  --accept-line: #BEDDCB;
+
+  --caution: #8A5A05;
+  --caution-ink: #FFFFFF;
+  --caution-bg: #F6EDDA;
+  --caution-line: #E0C68C;
+
+  --stop: #C01D22;
+  --stop-ink: #FFFFFF;
+  --stop-bg: #FAE7E7;
+  --stop-line: #EEC2C3;
+
+  --brand: #C01D22;            /* header mark only, never interactive */
+
+  --font-ui: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-code: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --fs-eyebrow: 13px;
+  --fs-label: 15px;
+  --fs-body: 17px;
+  --fs-name: 26px;
+  --fs-instr: 32px;
+  --fs-code: 60px;
+  --fs-code-sm: 40px;
+  --fs-counter: 96px;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 14px;
+  --sp-4: 20px;
+  --sp-5: 28px;
+  --sp-6: 40px;
+
+  --radius: 2px;
+  --tap: 48px;
+  --btn-h: 64px;
+  --chrome-h: 64px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper:        #131416;
-    --surface:      #1c1d20;
-    --surface-2:    #26272b;
-    --rule:         #2f3034;
-    --rule-strong:  #45464c;
+[data-theme="dark"] {
+  color-scheme: dark;
 
-    --ink:          #f0efec;
-    --ink-2:        #a8a7a3;
-    --ink-3:        #85837f;
+  --ground: #131416;
+  --surface: #1C1D20;
+  --ink: #F0EFEC;
+  --muted: #A8A7A3;
+  --rule: #2F3034;
 
-    --action:       #5e9bd1;
-    --action-ink:   #0d1116;
-    --accept:       #42c182;
-    --accept-bg:    #12291f;
-    --caution:      #dca33f;
-    --caution-bg:   #2c2413;
-    --stop:         #f2545b;
-    --stop-bg:      #2c1618;
-    --brand:        #f2545b;
+  --action: #5E9BD1;
+  --action-ink: #0F1418;
+  --action-bg: #1A2430;
+  --action-line: #2C3E52;
 
-    --shadow: 0 1px 2px rgba(0,0,0,.45);
-  }
-}
+  --accept: #42C182;
+  --accept-ink: #0F1418;
+  --accept-bg: #16281F;
+  --accept-line: #264834;
 
-:root[data-theme="dark"] {
-  --paper:        #131416;
-  --surface:      #1c1d20;
-  --surface-2:    #26272b;
-  --rule:         #2f3034;
-  --rule-strong:  #45464c;
+  --caution: #DCA33F;
+  --caution-ink: #0F1418;
+  --caution-bg: #2A2113;
+  --caution-line: #4A3B1C;
 
-  --ink:          #f0efec;
-  --ink-2:        #a8a7a3;
-  --ink-3:        #85837f;
+  --stop: #F2545B;
+  --stop-ink: #0F1418;
+  --stop-bg: #2C1517;
+  --stop-line: #4C2326;
 
-  --action:       #5e9bd1;
-  --action-ink:   #0d1116;
-  --accept:       #42c182;
-  --accept-bg:    #12291f;
-  --caution:      #dca33f;
-  --caution-bg:   #2c2413;
-  --stop:         #f2545b;
-  --stop-bg:      #2c1618;
-  --brand:        #f2545b;
-
-  --shadow: 0 1px 2px rgba(0,0,0,.45);
+  --brand: #F2545B;
 }

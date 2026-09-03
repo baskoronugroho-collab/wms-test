@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Label sudah terpakai — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app" data-screen="label-bound">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Label unit · Mode B" data-en="Unit labelling · Mode B">Label unit · Mode B</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user">Dwi L. · UT5</span>
+    </header>
+    <main class="blocked" style="background:var(--stop-bg)">
+      <div class="blocked__head">
+        <span class="blocked__icon" style="border-radius:50%" aria-hidden="true">×</span>
+        <div class="col" style="gap:12px">
+          <span class="eyebrow" style="color:var(--stop);letter-spacing:.24em" data-id="Berhenti" data-en="Stop">Berhenti</span>
+          <span class="blocked__title" data-id="Stiker ini sudah terpakai" data-en="This sticker is already used">Stiker ini sudah terpakai</span>
+          <span class="code code--lg">NJ 0000041827</span>
+        </div>
+      </div>
+      <div class="panel" style="border:2px solid var(--stop);padding:26px">
+        <div class="col">
+          <span style="font-size:24px" data-id="Stiker ini sudah menempel di produk lain:" data-en="This sticker is already on another product:">Stiker ini sudah menempel di produk lain:</span>
+          <div class="product">
+            <img class="product__photo" src="assets/products/wdh-uvs-030.jpg" alt="UV Shield Airy Smooth Sunscreen SPF 50" onerror="this.src='assets/products/placeholder.svg'">
+            <div class="col" style="gap:8px">
+              <span class="product__meta">Wardah · 30 ml · WDH-UVS-030</span>
+              <span class="product__name">UV Shield Airy Smooth Sunscreen SPF 50 PA+++</span>
+            </div>
+          </div>
+          <span style="font-size:24px;font-weight:600" data-id="Ambil stiker baru dari gulungan, tempel di produk yang tadi, lalu pindai lagi." data-en="Take a fresh sticker from the roll, put it on the item, then scan again.">Ambil stiker baru dari gulungan, tempel di produk yang tadi, lalu pindai lagi.</span>
+        </div>
+      </div>
+      <div class="stats">
+        <a class="btn btn--primary btn--lg btn--grow" href="05-label-unit.html" data-id="Pindai stiker baru" data-en="Scan a new sticker">Pindai stiker baru</a>
+        <button class="btn btn--outline btn--lg" style="flex:0 0 340px" type="button" data-id="Panggil supervisor" data-en="Call your supervisor">Panggil supervisor</button>
+      </div>
+    </main>
+</div>
+<script src="js/scan.js"></script>
+<script src="js/app.js"></script>
+<script src="js/wire.js"></script>
+
+</body>
+</html>

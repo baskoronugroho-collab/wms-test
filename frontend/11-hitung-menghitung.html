@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hitung stok — menghitung — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app" data-screen="counting">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Hitung stok · UT5-A-3-02" data-en="Stock count · UT5-A-3-02">Hitung stok · UT5-A-3-02</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user">Siti N. · UT5</span>
+    </header>
+    <main class="main main--tight">
+      <div class="row-split">
+        <div class="col" style="flex:0 0 420px">
+          <div class="col" style="gap:8px">
+            <span class="eyebrow" data-id="Keranjang" data-en="Basket">Keranjang</span>
+            <span class="code code--lg">UT5-<span class="code__hl">A</span>-<span class="code__hl">3</span>-02</span>
+          </div>
+          <img class="product__photo product__photo--fill" src="assets/products/wdh-gll-07.jpg" alt="Glasting Liquid Lip 07 Rouge Flare" onerror="this.src='assets/products/placeholder.svg'">
+          <div class="col" style="gap:6px">
+            <span class="product__meta">Wardah · 3,5 g · WDH-GLL-07</span>
+            <span class="product__name">Glasting Liquid Lip <span class="product__shade">07</span> Rouge Flare</span>
+          </div>
+          <p class="panel note" style="padding:14px 16px;margin:0" data-id="Jumlah di sistem sengaja disembunyikan. Hitung apa yang benar-benar ada di keranjang." data-en="The system quantity is deliberately hidden. Count what is actually in the basket.">Jumlah di sistem sengaja disembunyikan. Hitung apa yang benar-benar ada di keranjang.</p>
+        </div>
+        <div class="col col--grow">
+          <div class="counter">
+            <button class="step step--minus" type="button" data-action="dec" aria-label="Kurangi">−</button>
+            <span class="counter__col">
+              <span class="eyebrow" data-id="Hitungan kamu" data-en="Your count">Hitungan kamu</span>
+              <span class="counter__num" data-field="count">9</span>
+            </span>
+            <button class="step step--plus" type="button" data-action="inc" aria-label="Tambah">+</button>
+          </div>
+          <div class="keypad">
+            <button class="keypad__key" type="button" data-key="1">1</button>
+            <button class="keypad__key" type="button" data-key="2">2</button>
+            <button class="keypad__key" type="button" data-key="3">3</button>
+            <button class="keypad__key" type="button" data-key="4">4</button>
+            <button class="keypad__key" type="button" data-key="5">5</button>
+            <button class="keypad__key" type="button" data-key="6">6</button>
+            <button class="keypad__key" type="button" data-key="7">7</button>
+            <button class="keypad__key" type="button" data-key="8">8</button>
+            <button class="keypad__key" type="button" data-key="9">9</button>
+            <button class="keypad__key keypad__key--word" type="button" data-key="del" data-id="Hapus" data-en="Delete">Hapus</button>
+            <button class="keypad__key" type="button" data-key="0">0</button>
+            <button class="keypad__key keypad__key--word" type="button" data-key="zero" data-id="Kosong (0)" data-en="Empty (0)">Kosong (0)</button>
+          </div>
+          <div class="stats">
+            <a class="btn btn--outline btn--lg" href="10-hitung-pilih-keranjang.html" style="flex:0 0 260px" data-id="Lewati keranjang ini" data-en="Skip this basket">Lewati keranjang ini</a>
+            <a class="btn btn--primary btn--lg btn--grow" href="12-hasil-hitung.html" data-id="Simpan hitungan" data-en="Save count">Simpan hitungan</a>
+          </div>
+        </div>
+      </div>
+    </main>
+</div>
+<script src="js/scan.js"></script>
+<script src="js/app.js"></script>
+<script src="js/wire.js"></script>
+</body>
+</html>

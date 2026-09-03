@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ambil pesanan — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app" data-screen="pick">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Ambil pesanan · GM-8841" data-en="Pick order · GM-8841">Ambil pesanan · GM-8841</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user">Agus S. · UT5</span>
+    </header>
+    <div class="progress">
+      <span class="progress__count">3 / 7</span>
+      <span class="note" data-id="barang diambil" data-en="items picked">barang diambil</span>
+      <span class="progress__bar"><span class="progress__seg is-done"></span><span class="progress__seg is-done"></span><span class="progress__seg is-done"></span><span class="progress__seg"></span><span class="progress__seg"></span><span class="progress__seg"></span><span class="progress__seg"></span></span>
+      <span class="code code--sm" style="color:var(--muted)">GrabMart Kilat · 14:26</span>
+    </div>
+    <main class="main">
+      <div class="row-split">
+        <div class="col col--grow">
+          <div class="col">
+            <span class="eyebrow" data-id="Pergi ke" data-en="Go to">Pergi ke</span>
+            <div class="instr">
+              <span class="instr__arrow" aria-hidden="true">→</span>
+              <span class="code code--xl">UT5-<span class="code__hl">A</span>-<span class="code__hl">3</span>-02</span>
+            </div>
+            <p class="lede" data-id="Rak A, tingkat 3, keranjang kedua." data-en="Rack A, level 3, second basket.">Rak A, tingkat 3, keranjang kedua.</p>
+          </div>
+          <div class="counter">
+            <div class="col" style="gap:6px">
+              <span class="eyebrow" data-id="Ambil" data-en="Take">Ambil</span>
+              <span class="lede" data-id="Sisa di keranjang: 12" data-en="Left in basket: 12">Sisa di keranjang: 12</span>
+            </div>
+            <span class="counter__num">2</span>
+          </div>
+          <div class="col">
+      <div class="scanzone" data-scan-label="Pindai barang yang kamu ambil" data-offline-msg="Tunggu koneksi kembali">
+        <span class="scanzone__state" data-id="Menunggu pindaian" data-en="Waiting for scan">Menunggu pindaian</span>
+        <span class="scanzone__prompt" data-id="Pindai barang yang kamu ambil" data-en="Scan the item you picked">Pindai barang yang kamu ambil</span>
+        <input class="scanzone__input" aria-label="Pindai barang yang kamu ambil">
+      </div>
+            <div class="stats">
+              <button class="btn btn--outline btn--lg btn--grow" type="button" data-action="undo"><span aria-hidden="true">↺</span><span data-id="Batalkan" data-en="Undo">Batalkan</span></button>
+              <button class="btn btn--lg btn--grow btn--caution" type="button" data-id="Barang tidak ada di keranjang" data-en="Item is not in the basket">Barang tidak ada di keranjang</button>
+            </div>
+          </div>
+        </div>
+        <div class="col" style="flex:0 0 420px">
+          <img class="product__photo product__photo--lg" src="assets/products/wdh-gll-07.jpg" alt="Glasting Liquid Lip 07 Rouge Flare" onerror="this.src='assets/products/placeholder.svg'">
+          <div class="col" style="gap:6px">
+            <span class="product__meta">Wardah · 3,5 g · WDH-GLL-07</span>
+            <span class="product__name">Glasting Liquid Lip <span class="product__shade">07</span> Rouge Flare</span>
+          </div>
+        </div>
+      </div>
+    </main>
+</div>
+<script src="js/scan.js"></script>
+<script src="js/app.js"></script>
+<script src="js/wire.js"></script>
+</body>
+</html>

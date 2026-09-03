@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Label unit — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app" data-screen="label-unit">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Label unit · Mode B" data-en="Unit labelling · Mode B">Label unit · Mode B</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user">Dwi L. · UT5</span>
+    </header>
+    <main class="main">
+      <div class="row-split">
+        <div class="col" style="flex:0 0 460px">
+          <span class="eyebrow" data-id="Produk terkunci" data-en="Product locked">Produk terkunci</span>
+          <div class="panel" style="padding:20px">
+            <div class="product">
+              <img class="product__photo" src="assets/products/wdh-cvm-04.jpg" alt="Colorfit Velvet Matte Lipstick 04 Dusty Rose" onerror="this.src='assets/products/placeholder.svg'">
+              <div class="col" style="gap:8px">
+                <span class="product__meta">Wardah · 2,5 g · WDH-CVM-04</span>
+                <span class="product__name">Colorfit Velvet Matte Lipstick <span class="product__shade">04</span> Dusty Rose</span>
+              </div>
+            </div>
+          </div>
+          <div class="notice notice--action">
+            <div class="col" style="gap:4px">
+              <span class="eyebrow eyebrow--action" data-id="Cara tempel stiker" data-en="How to apply the sticker">Cara tempel stiker</span>
+              <span style="font-size:18px" data-id="Tempel di badan kemasan, di bawah barcode brand. Jangan menutupi tanggal kadaluarsa." data-en="Stick it on the body of the pack, below the brand barcode. Do not cover the expiry date.">Tempel di badan kemasan, di bawah barcode brand. Jangan menutupi tanggal kadaluarsa.</span>
+            </div>
+          </div>
+          <button class="btn btn--outline btn--lg btn--block" type="button" data-action="undo"><span aria-hidden="true">↺</span><span data-id="Batalkan stiker terakhir" data-en="Undo last sticker">Batalkan stiker terakhir</span></button>
+        </div>
+        <div class="col col--grow">
+          <div class="col" style="gap:4px">
+            <span class="eyebrow" data-id="Sudah dilabeli" data-en="Labelled so far">Sudah dilabeli</span>
+            <span class="counter__num" data-field="count">128</span>
+            <span class="lede" data-id="dari 200 unit di kiriman ini" data-en="of 200 units in this delivery">dari 200 unit di kiriman ini</span>
+            <div class="bar" style="margin-top:12px"><div class="bar__fill" data-field="bar" style="width:64%"></div></div>
+          </div>
+          <div class="col">
+            <div class="notice" style="background:var(--accept-bg);border-color:var(--accept);align-items:center">
+              <span class="pill" style="color:var(--accept)"><span class="pill__mark">✓</span></span>
+              <span style="font-size:18px;color:var(--accept);font-weight:500" data-id="Stiker terakhir tercatat" data-en="Last sticker recorded">Stiker terakhir tercatat</span>
+              <span class="code code--sm" style="color:var(--accept)" data-field="last">NJ 0000041826</span>
+            </div>
+      <div class="scanzone" data-scan-label="Tempel stiker → pindai stikernya" data-offline-msg="Tunggu koneksi kembali">
+        <span class="scanzone__state" data-id="Menunggu pindaian" data-en="Waiting for scan">Menunggu pindaian</span>
+        <span class="scanzone__prompt" data-id="Tempel stiker → pindai stikernya" data-en="Apply the sticker → scan it">Tempel stiker → pindai stikernya</span>
+        <input class="scanzone__input" aria-label="Tempel stiker → pindai stikernya">
+      </div>
+            <button class="btn btn--primary btn--lg btn--block" type="button" data-id="Selesai labeli produk ini" data-en="Finish labelling this product">Selesai labeli produk ini</button>
+          </div>
+        </div>
+      </div>
+    </main>
+</div>
+<script src="js/scan.js"></script>
+<script src="js/app.js"></script>
+<script src="js/wire.js"></script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barang masuk — scan — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app" data-screen="inbound-scan">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Barang masuk · WRD-2609-02" data-en="Inbound · WRD-2609-02">Barang masuk · WRD-2609-02</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user">Rina P. · UT5</span>
+    </header>
+    <div class="banner banner--accept" role="status" data-region="result">
+      <span class="banner__icon banner__icon--round" aria-hidden="true">✓</span>
+      <span data-id="Diterima" data-en="Accepted">Diterima</span>
+      <span class="chrome__sep"></span>
+      <span class="banner__detail" data-field="product">Glasting Liquid Lip 07 Rouge Flare</span>
+    </div>
+    <main class="main">
+      <div class="row-split">
+        <div class="col" style="flex:0 0 380px">
+          <img class="product__photo product__photo--lg" src="assets/products/wdh-gll-07.jpg" alt="Glasting Liquid Lip 07 Rouge Flare" onerror="this.src='assets/products/placeholder.svg'">
+          <div class="col" style="gap:6px">
+            <span class="product__meta">Wardah · 3,5 g · WDH-GLL-07</span>
+            <span class="product__name">Glasting Liquid Lip <span class="product__shade">07</span> Rouge Flare</span>
+          </div>
+        </div>
+        <div class="col col--grow">
+          <div class="col">
+            <span class="eyebrow" data-id="Simpan di" data-en="Put away at">Simpan di</span>
+            <div class="instr">
+              <span class="instr__arrow" aria-hidden="true">→</span>
+              <span class="code code--xl">UT5-<span class="code__hl">A</span>-<span class="code__hl">3</span>-02</span>
+            </div>
+            <p class="lede" data-id="Rak A, tingkat 3 — posisi kedua dari kiri." data-en="Rack A, level 3 — second position from the left.">Rak A, tingkat 3 — posisi kedua dari kiri.</p>
+            <div class="stats">
+              <div class="stat">
+                <span class="stat__label" data-id="Isi keranjang sekarang" data-en="In this basket now">Isi keranjang sekarang</span>
+                <span class="stat__num" data-field="basket-qty">14</span>
+                <span class="stat__foot" data-id="Kapasitas 40" data-en="Capacity 40">Kapasitas 40</span>
+              </div>
+              <div class="stat">
+                <span class="stat__label" data-id="Sesi ini" data-en="This session">Sesi ini</span>
+                <span class="stat__num" data-field="session-qty">37</span>
+                <span class="stat__foot" data-id="dari 128 barang" data-en="of 128 items">dari 128 barang</span>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+      <div class="scanzone" data-scan-label="Pindai barang berikutnya" data-offline-msg="Tunggu koneksi kembali">
+        <span class="scanzone__state" data-id="Menunggu pindaian" data-en="Waiting for scan">Menunggu pindaian</span>
+        <span class="scanzone__prompt" data-id="Pindai barang berikutnya" data-en="Scan the next item">Pindai barang berikutnya</span>
+        <input class="scanzone__input" aria-label="Pindai barang berikutnya">
+      </div>
+            <div class="stats">
+              <button class="btn btn--outline btn--lg" type="button" data-action="undo"><span aria-hidden="true">↺</span><span data-id="Batalkan scan terakhir" data-en="Undo last scan">Batalkan scan terakhir</span></button>
+              <button class="btn btn--primary btn--lg btn--grow" type="button" data-id="Selesai terima kiriman" data-en="Finish this delivery">Selesai terima kiriman</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+</div>
+<script src="js/scan.js"></script>
+<script src="js/app.js"></script>
+<script src="js/wire.js"></script>
+</body>
+</html>

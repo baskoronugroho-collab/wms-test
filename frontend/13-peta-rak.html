@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peta rak — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app" data-screen="rack-map">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Peta rak · Station UT5" data-en="Rack map · Station UT5">Peta rak · Station UT5</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user">Budi H. · Supervisor</span>
+    </header>
+    <main class="main main--tight">
+      <div class="row-split">
+        <div class="col" style="flex:1 1 auto;min-width:0">
+          <div class="legend">
+            <h1 class="h2" data-id="7 rak · 5 tingkat · 175 posisi" data-en="7 racks · 5 levels · 175 positions">7 rak · 5 tingkat · 175 posisi</h1>
+            <span class="spacer"></span>
+            <span class="legend__item"><span class="legend__swatch cell is-free"></span><span data-id="Kosong" data-en="Free">Kosong</span></span>
+            <span class="legend__item"><span class="legend__swatch cell is-occ"></span><span data-id="Terisi" data-en="Occupied">Terisi</span></span>
+            <span class="legend__item"><span class="legend__swatch cell is-over"></span><span data-id="Lewah kapasitas" data-en="Over capacity">Lewah kapasitas</span></span>
+            <span class="legend__item"><span class="legend__swatch cell is-count"></span><span data-id="Perlu dihitung" data-en="Needs counting">Perlu dihitung</span></span>
+          </div>
+          <div class="rackmap" data-region="rackmap" aria-label="Peta rak"></div>
+        </div>
+        <div class="col" style="flex:0 0 340px">
+          <div class="panel">
+            <div class="panel__body">
+              <span class="eyebrow" data-id="Hari ini" data-en="Today">Hari ini</span>
+              <span class="kpi"><span data-id="Posisi terpakai" data-en="Positions in use">Posisi terpakai</span><span class="kpi__num" data-field="used">—</span></span>
+              <span class="kpi" style="color:var(--caution)"><span data-id="Lewah kapasitas" data-en="Over capacity">Lewah kapasitas</span><span class="kpi__num" data-field="over">—</span></span>
+              <span class="kpi" style="color:var(--action)"><span data-id="Perlu dihitung" data-en="Needs counting">Perlu dihitung</span><span class="kpi__num" data-field="tocount">—</span></span>
+            </div>
+          </div>
+          <div class="panel" style="flex:1 1 auto">
+            <div class="panel__head" style="color:var(--caution)" data-id="Selisih menunggu tanda tangan" data-en="Variance awaiting sign-off">Selisih menunggu tanda tangan</div>
+            <div class="varrow"><span class="varrow__top"><span class="code code--sm">UT5-A-3-02</span><span class="varrow__delta">−3</span></span><span class="note">Glasting Liquid Lip 07 · Siti N.</span></div>
+            <div class="varrow"><span class="varrow__top"><span class="code code--sm">UT5-C-5-04</span><span class="varrow__delta">+2</span></span><span class="note">UV Shield SPF 50 · Dwi L.</span></div>
+            <div class="varrow"><span class="varrow__top"><span class="code code--sm">UT5-B-1-05</span><span class="varrow__delta">−1</span></span><span class="note">Instaperfect Lip Matte 02 · Rina P.</span></div>
+            <div class="varrow"><span class="varrow__top"><span class="code code--sm">UT5-F-4-01</span><span class="varrow__delta">−2</span></span><span class="note">Lightening Day Cream · Agus S.</span></div>
+          </div>
+          <button class="btn btn--primary btn--lg btn--block" type="button" data-id="Tinjau 4 selisih" data-en="Review 4 variances">Tinjau 4 selisih</button>
+        </div>
+      </div>
+    </main>
+</div>
+<script src="js/scan.js"></script>
+<script src="js/app.js"></script>
+<script src="js/wire.js"></script>
+<script src="js/rack-map.js"></script>
+</body>
+</html>

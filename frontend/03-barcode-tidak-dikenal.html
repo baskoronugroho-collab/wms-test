@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barcode tidak dikenal — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app" data-screen="unknown-barcode">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Barang masuk · WRD-2609-02" data-en="Inbound · WRD-2609-02">Barang masuk · WRD-2609-02</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user">Rina P. · UT5</span>
+    </header>
+    <div class="banner banner--caution" role="alert">
+      <span class="banner__icon" aria-hidden="true">!</span>
+      <span data-id="Barcode tidak dikenal" data-en="Unknown barcode">Barcode tidak dikenal</span>
+    </div>
+    <main class="main">
+      <div class="row-split" style="align-items:center;flex:0 0 auto">
+        <div class="col" style="gap:8px">
+          <span class="eyebrow" data-id="Barcode yang dipindai" data-en="Scanned barcode">Barcode yang dipindai</span>
+          <span class="code code--lg">8992222 106742</span>
+        </div>
+        <p class="lede" style="max-width:520px" data-id="Barcode ini belum ada di sistem. Pilih satu dari tiga cara di bawah. Barangnya jangan dimasukkan ke keranjang dulu." data-en="This barcode is not in the system yet. Choose one of the three options below. Do not put the item in a basket yet.">Barcode ini belum ada di sistem. Pilih satu dari tiga cara di bawah. Barangnya jangan dimasukkan ke keranjang dulu.</p>
+      </div>
+      <div class="choices">
+        <div class="choice choice--primary">
+          <div class="col">
+            <span class="eyebrow eyebrow--action" data-id="Paling sering" data-en="Most common">Paling sering</span>
+            <span class="choice__title" data-id="Daftarkan ke produk" data-en="Register to a product">Daftarkan ke produk</span>
+            <span class="choice__body" data-id="Cari nama produknya, lihat fotonya, cocokkan. Barcode langsung terpakai untuk barang berikutnya." data-en="Search the product, check the photo, match it. The barcode works from the next item on.">Cari nama produknya, lihat fotonya, cocokkan. Barcode langsung terpakai untuk barang berikutnya.</span>
+          </div>
+          <a class="btn btn--primary btn--lg btn--block" href="04-buat-keranjang.html" data-id="Cari produk" data-en="Search product">Cari produk</a>
+        </div>
+        <div class="choice">
+          <div class="col">
+            <span class="eyebrow" style="color:var(--caution)" data-id="Kalau tidak yakin" data-en="If unsure">Kalau tidak yakin</span>
+            <span class="choice__title" data-id="Panggil supervisor" data-en="Call your supervisor">Panggil supervisor</span>
+            <span class="choice__body" data-id="Barang ditandai dan disimpan di rak transit. Supervisor menyelesaikan nanti." data-en="The item is flagged and parked on the transit shelf. Your supervisor finishes it later.">Barang ditandai dan disimpan di rak transit. Supervisor menyelesaikan nanti.</span>
+          </div>
+          <button class="btn btn--outline btn--lg btn--block" type="button" data-id="Tandai barang ini" data-en="Flag this item">Tandai barang ini</button>
+        </div>
+        <div class="choice">
+          <div class="col">
+            <span class="eyebrow" data-id="Terakhir" data-en="Last resort">Terakhir</span>
+            <span class="choice__title" data-id="Lewati barang ini" data-en="Skip this item">Lewati barang ini</span>
+            <span class="choice__body" data-id="Barang tidak dihitung masuk. Taruh di kotak abu-abu di ujung meja." data-en="The item is not received. Put it in the grey box at the end of the bench.">Barang tidak dihitung masuk. Taruh di kotak abu-abu di ujung meja.</span>
+          </div>
+          <a class="btn btn--lg btn--block" href="02-barang-masuk-scan.html" data-id="Lewati" data-en="Skip">Lewati</a>
+        </div>
+      </div>
+    </main>
+</div>
+<script src="js/scan.js"></script>
+<script src="js/app.js"></script>
+<script src="js/wire.js"></script>
+
+</body>
+</html>

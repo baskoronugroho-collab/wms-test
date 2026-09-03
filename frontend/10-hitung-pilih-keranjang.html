@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hitung stok — pilih keranjang — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app" data-screen="count-list">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Hitung stok · minggu 36" data-en="Stock count · week 36">Hitung stok · minggu 36</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user">Siti N. · UT5</span>
+    </header>
+    <main class="main main--tight">
+      <div class="row-split" style="flex:0 0 auto;align-items:flex-end">
+        <div class="col" style="gap:6px;flex:1 1 auto">
+          <span class="eyebrow" data-id="Urut sesuai jalan kaki" data-en="In walking order">Urut sesuai jalan kaki</span>
+          <h1 class="h1" data-id="Pilih keranjang untuk dihitung" data-en="Choose a basket to count">Pilih keranjang untuk dihitung</h1>
+        </div>
+        <span class="progress__count">18 / 42 <span class="note" data-id="keranjang selesai" data-en="baskets done">keranjang selesai</span></span>
+      </div>
+      <div class="list">
+        <div class="row row--next">
+          <span class="row__code code code--md">UT5-A-3-02</span>
+          <span class="row__name">Glasting Liquid Lip 07 Rouge Flare</span>
+          <span class="eyebrow eyebrow--action" data-id="Berikutnya" data-en="Next">Berikutnya</span>
+          <a class="btn btn--primary" href="11-hitung-menghitung.html" data-id="Mulai hitung" data-en="Start counting">Mulai hitung</a>
+        </div>
+        <div class="row">
+          <span class="row__code code code--md">UT5-A-3-05</span>
+          <span class="row__name">Colorfit Velvet Matte Lipstick 04 Dusty Rose</span>
+          
+          <a class="btn btn--outline" href="11-hitung-menghitung.html" data-id="Hitung" data-en="Count">Hitung</a>
+        </div>
+        <div class="row row--claimed">
+          <span class="row__code code code--md">UT5-B-1-05</span>
+          <span class="row__name">Instaperfect Mattesetter Lip Matte Paint 02</span>
+          <span class="row__state"><span class="code code--sm">!</span><span data-id="Sedang dihitung: Rina Puspita" data-en="Being counted: Rina Puspita">Sedang dihitung: Rina Puspita</span></span>
+          <span class="btn is-locked" aria-disabled="true" data-id="Terkunci" data-en="Locked">Terkunci</span>
+        </div>
+        <div class="row">
+          <span class="row__code code code--md">UT5-C-5-04</span>
+          <span class="row__name">UV Shield Airy Smooth Sunscreen SPF 50 PA+++</span>
+          
+          <a class="btn btn--outline" href="11-hitung-menghitung.html" data-id="Hitung" data-en="Count">Hitung</a>
+        </div>
+        <div class="row row--done">
+          <span class="row__code code code--md">UT5-D-2-01</span>
+          <span class="row__name">Lightening Day Cream SPF 30</span>
+          <span class="row__state"><span class="pill"><span class="pill__mark">✓</span></span><span data-id="Sudah dihitung · Dwi L." data-en="Counted · Dwi L.">Sudah dihitung · Dwi L.</span></span>
+          <span class="btn is-locked" aria-disabled="true" data-id="Selesai" data-en="Done">Selesai</span>
+        </div>
+        <div class="row">
+          <span class="row__code code code--md">UT5-G-1-03</span>
+          <span class="row__name">Colorfit Matte Lipstick 12 Deep Ruby</span>
+          
+          <a class="btn btn--outline" href="11-hitung-menghitung.html" data-id="Hitung" data-en="Count">Hitung</a>
+        </div>
+      </div>
+    </main>
+</div>
+<script src="js/scan.js"></script>
+<script src="js/app.js"></script>
+<script src="js/wire.js"></script>
+
+</body>
+</html>

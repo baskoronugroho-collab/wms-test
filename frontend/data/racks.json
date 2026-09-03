@@ -1,0 +1,912 @@
+[
+  {
+    "name": "UT5-A",
+    "levels": [
+      {
+        "n": 5,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "count"
+          },
+          {
+            "pos": 2,
+            "state": "free"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 4,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "count"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "free"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "count"
+          }
+        ]
+      },
+      {
+        "n": 3,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "over"
+          },
+          {
+            "pos": 5,
+            "state": "count"
+          }
+        ]
+      },
+      {
+        "n": 2,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "count"
+          },
+          {
+            "pos": 3,
+            "state": "free"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 1,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "free"
+          },
+          {
+            "pos": 2,
+            "state": "count"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "free"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "UT5-B",
+    "levels": [
+      {
+        "n": 5,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "free"
+          },
+          {
+            "pos": 2,
+            "state": "count"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "free"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 4,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "free"
+          }
+        ]
+      },
+      {
+        "n": 3,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "free"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "count"
+          },
+          {
+            "pos": 4,
+            "state": "free"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 2,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "free"
+          },
+          {
+            "pos": 3,
+            "state": "count"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "free"
+          }
+        ]
+      },
+      {
+        "n": 1,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "free"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "UT5-C",
+    "levels": [
+      {
+        "n": 5,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "free"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "over"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 4,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "free"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "count"
+          },
+          {
+            "pos": 5,
+            "state": "free"
+          }
+        ]
+      },
+      {
+        "n": 3,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "free"
+          },
+          {
+            "pos": 4,
+            "state": "count"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 2,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "count"
+          },
+          {
+            "pos": 2,
+            "state": "free"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 1,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "count"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "free"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "count"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "UT5-D",
+    "levels": [
+      {
+        "n": 5,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "count"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "free"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "count"
+          }
+        ]
+      },
+      {
+        "n": 4,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "free"
+          },
+          {
+            "pos": 5,
+            "state": "count"
+          }
+        ]
+      },
+      {
+        "n": 3,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "count"
+          },
+          {
+            "pos": 3,
+            "state": "free"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 2,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "free"
+          },
+          {
+            "pos": 2,
+            "state": "count"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "free"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 1,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "free"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "UT5-E",
+    "levels": [
+      {
+        "n": 5,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "free"
+          }
+        ]
+      },
+      {
+        "n": 4,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "free"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "count"
+          },
+          {
+            "pos": 4,
+            "state": "free"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 3,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "free"
+          },
+          {
+            "pos": 3,
+            "state": "count"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "free"
+          }
+        ]
+      },
+      {
+        "n": 2,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "over"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 1,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "free"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "count"
+          },
+          {
+            "pos": 5,
+            "state": "free"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "UT5-F",
+    "levels": [
+      {
+        "n": 5,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "free"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "count"
+          },
+          {
+            "pos": 5,
+            "state": "free"
+          }
+        ]
+      },
+      {
+        "n": 4,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "over"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "free"
+          },
+          {
+            "pos": 4,
+            "state": "count"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 3,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "count"
+          },
+          {
+            "pos": 2,
+            "state": "free"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 2,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "count"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "free"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "count"
+          }
+        ]
+      },
+      {
+        "n": 1,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "free"
+          },
+          {
+            "pos": 5,
+            "state": "count"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "UT5-G",
+    "levels": [
+      {
+        "n": 5,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "free"
+          },
+          {
+            "pos": 5,
+            "state": "count"
+          }
+        ]
+      },
+      {
+        "n": 4,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "count"
+          },
+          {
+            "pos": 3,
+            "state": "free"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 3,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "free"
+          },
+          {
+            "pos": 2,
+            "state": "count"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "free"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      },
+      {
+        "n": 2,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "occ"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "occ"
+          },
+          {
+            "pos": 4,
+            "state": "occ"
+          },
+          {
+            "pos": 5,
+            "state": "free"
+          }
+        ]
+      },
+      {
+        "n": 1,
+        "cells": [
+          {
+            "pos": 1,
+            "state": "free"
+          },
+          {
+            "pos": 2,
+            "state": "occ"
+          },
+          {
+            "pos": 3,
+            "state": "count"
+          },
+          {
+            "pos": 4,
+            "state": "free"
+          },
+          {
+            "pos": 5,
+            "state": "occ"
+          }
+        ]
+      }
+    ]
+  }
+]

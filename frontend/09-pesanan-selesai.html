@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pesanan selesai — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app" data-screen="pick-done">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Ambil pesanan · GM-8841" data-en="Pick order · GM-8841">Ambil pesanan · GM-8841</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user">Agus S. · UT5</span>
+    </header>
+    <div class="banner banner--accept" style="min-height:96px" role="status">
+      <span class="banner__icon banner__icon--round" style="width:48px;height:48px;font-size:26px;border-width:3px" aria-hidden="true">✓</span>
+      <span style="font-size:34px" data-id="Pesanan selesai diambil" data-en="Order picked">Pesanan selesai diambil</span>
+      <span class="spacer"></span>
+      <span class="code" style="font-size:28px">GM-8841</span>
+    </div>
+    <main class="main">
+      <div class="row-split">
+        <div class="col" style="flex:1 1 auto">
+          <span class="eyebrow" data-id="7 barang · 5 keranjang · 4 menit 12 detik" data-en="7 items · 5 baskets · 4 min 12 s">7 barang · 5 keranjang · 4 menit 12 detik</span>
+          <table class="table">
+            <tbody>
+              <tr><td class="td-code">UT5-A-3-02</td><td>Glasting Liquid Lip 07 Rouge Flare</td><td class="td-qty">2</td></tr>
+              <tr><td class="td-code">UT5-A-3-05</td><td>Colorfit Velvet Matte Lipstick 04 Dusty Rose</td><td class="td-qty">1</td></tr>
+              <tr><td class="td-code">UT5-C-5-04</td><td>UV Shield Airy Smooth Sunscreen SPF 50</td><td class="td-qty">2</td></tr>
+              <tr><td class="td-code">UT5-D-2-01</td><td>Lightening Day Cream SPF 30</td><td class="td-qty">1</td></tr>
+              <tr><td class="td-code">UT5-B-1-05</td><td>Instaperfect Mattesetter Lip Matte Paint 02</td><td class="td-qty">1</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="col col--grow" style="flex:0 0 460px">
+          <div class="panel" style="padding:24px">
+            <div class="col" style="gap:12px">
+              <span class="eyebrow" data-id="Nomor tiket packing" data-en="Packing ticket number">Nomor tiket packing</span>
+              <span class="code" style="font-size:56px">P-042</span>
+              <span class="note" data-id="Taruh keranjang di meja packing dan sebut nomor ini." data-en="Put the tote on the packing bench and call this number.">Taruh keranjang di meja packing dan sebut nomor ini.</span>
+            </div>
+          </div>
+          <div class="col">
+            <button class="btn btn--primary btn--lg btn--block" type="button" data-id="Serahkan ke meja packing" data-en="Hand off to packing">Serahkan ke meja packing</button>
+            <a class="btn btn--outline btn--lg btn--block" href="07-ambil-pesanan.html" data-id="Ambil pesanan berikutnya" data-en="Pick the next order">Ambil pesanan berikutnya</a>
+          </div>
+        </div>
+      </div>
+    </main>
+</div>
+<script src="js/scan.js"></script>
+<script src="js/app.js"></script>
+<script src="js/wire.js"></script>
+
+</body>
+</html>
