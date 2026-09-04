@@ -64,6 +64,20 @@ def health():
     return {"status": "ok", "database": db.ready()}
 
 
+@app.get("/api/health", response_model=models.Health, tags=["platform"])
+def api_health():
+    """The browser's heartbeat.
+
+    Same answer as /health, reachable through the ingress. Once a frontend/ is
+    shipped the ingress routes everything except /api to nginx, so a browser
+    asking for /health gets index.html back with a cheerful 200 — which would
+    make the connection indicator claim the app is up while the backend or the
+    database is down. The station app is online-only and blocks work loudly on a
+    dropped connection, so that heartbeat has to reach the backend.
+    """
+    return {"status": "ok", "database": db.ready()}
+
+
 @app.get("/api/me", response_model=models.Me, tags=["platform"])
 async def whoami(user: auth.User = Depends(auth.current_user)):
     """The frontend asks "who am I?" here — the browser never sees the SSO headers."""

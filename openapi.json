@@ -31,6 +31,28 @@
         }
       }
     },
+    "/api/health": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "summary": "The browser's heartbeat",
+        "description": "The browser's heartbeat.\n\nSame answer as /health, reachable through the ingress. Once a frontend/ is\nshipped the ingress routes everything except /api to nginx, so a browser\nasking for /health gets index.html back with a cheerful 200 — which would\nmake the connection indicator claim the app is up while the backend or the\ndatabase is down. The station app is online-only and blocks work loudly on a\ndropped connection, so that heartbeat has to reach the backend.",
+        "operationId": "api_health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me": {
       "get": {
         "tags": [
