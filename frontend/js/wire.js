@@ -475,6 +475,66 @@
     }
   };
 
+  screens['inbound-bulk-upload'] = async () => {
+    const fileInput = $('#fileInput');
+    const box = $('#resultBox');
+    const submit = $('#submitBtn');
+
+    function renderResult(r) {
+      box.style.display = 'block';
+      if (r.ok) {
+        box.className = 'panel banner banner--accept';
+        box.innerHTML = '<div class="col"><span>' + esc(r.message) + '</span></div>';
+      } else {
+        box.className = 'panel';
+        box.innerHTML = '<div class="col" style="gap:8px">' +
+          '<span class="banner__icon" aria-hidden="true">!</span>' +
+          '<span>' + esc(r.message) + '</span>' +
+          '<div class="list">' + r.errors.map(e =>
+            '<div class="row"><span class="row__name">' + esc(e.message) + '</span></div>'
+          ).join('') + '</div></div>';
+      }
+    }
+
+    submit.onclick = async () => {
+      const f = fileInput.files && fileInput.files[0];
+      if (!f) { say('Pilih file dulu.'); return; }
+      const fd = new FormData();
+      fd.append('file', f);
+      submit.setAttribute('aria-disabled', 'true');
+      try {
+        const res = await fetch('/api/stock-uploads', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || ('HTTP ' + res.status));
+        renderResult(data);
+        if (data.ok) fileInput.value = '';
+      } catch (e) { fail(e); } finally {
+        submit.removeAttribute('aria-disabled');
+      }
+    };
+  };
+
+  screens['stock-upload-list'] = async () => {
+    const body = $('#itemsBody');
+    const emptyNote = $('#emptyNote');
+    try {
+      const r = await api('GET', '/stock-uploads/items?site_id=' + SITE.id + '&limit=500');
+      if (!r.items.length) { emptyNote.style.display = 'block'; return; }
+      body.innerHTML = r.items.map(it =>
+        '<tr>' +
+        '<td class="td-code">' + esc(it.site_code) + '</td>' +
+        '<td class="td-code">' + esc(it.barcode) + '</td>' +
+        '<td>' + esc(it.brand_name) + '</td>' +
+        '<td>' + esc(it.sku_name) + '</td>' +
+        '<td class="td-code">' + esc(it.location_code) +
+          (it.location_was_blank ? ' <span class="note">(default)</span>' : '') + '</td>' +
+        '<td>' + esc(it.input_date_raw || '—') + '</td>' +
+        '<td>' + esc((it.uploaded_by || '—').split('@')[0]) + '</td>' +
+        '</tr>'
+      ).join('');
+    } catch (e) { fail(e); }
+  };
+
   /* --- B: labelling (Mode B) --- */
 
   screens['label-unit'] = async () => {
