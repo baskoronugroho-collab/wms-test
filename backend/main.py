@@ -64,7 +64,12 @@ def health():
     return {"status": "ok", "database": db.ready()}
 
 
-@app.get("/api/health", response_model=models.Health, tags=["platform"])
+@app.api_route(
+    "/api/health",
+    methods=["GET", "HEAD"],
+    response_model=models.Health,
+    tags=["platform"],
+)
 def api_health():
     """The browser's heartbeat.
 
@@ -74,6 +79,11 @@ def api_health():
     make the connection indicator claim the app is up while the backend or the
     database is down. The station app is online-only and blocks work loudly on a
     dropped connection, so that heartbeat has to reach the backend.
+
+    HEAD is declared explicitly. Plain Starlette adds HEAD to any GET route, but
+    FastAPI's APIRoute does not — and the frontend's heartbeat sends HEAD, so
+    without this it collects a 405 every 20 s and reports the app as offline
+    forever.
     """
     return {"status": "ok", "database": db.ready()}
 
