@@ -2822,6 +2822,261 @@
         }
       }
     },
+    "/api/stock-uploads/template": {
+      "get": {
+        "tags": [
+          "stock upload"
+        ],
+        "summary": "Download Template",
+        "operationId": "download_template_api_stock_uploads_template_get",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock-uploads": {
+      "post": {
+        "tags": [
+          "stock upload"
+        ],
+        "summary": "Upload Stock",
+        "operationId": "upload_stock_api_stock_uploads_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_stock_api_stock_uploads_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockUploadResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "stock upload"
+        ],
+        "summary": "List Uploads",
+        "operationId": "list_uploads_api_stock_uploads_get",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockUploadBatchList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock-uploads/items": {
+      "get": {
+        "tags": [
+          "stock upload"
+        ],
+        "summary": "List Uploaded Items",
+        "operationId": "list_uploaded_items_api_stock_uploads_items_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "upload_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Upload Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "default": 200,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockUploadItemList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/training/scenarios": {
       "get": {
         "tags": [
@@ -3433,6 +3688,20 @@
           "file"
         ],
         "title": "Body_import_skus_api_skus_import_post"
+      },
+      "Body_upload_stock_api_stock_uploads_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_stock_api_stock_uploads_post"
       },
       "Brand": {
         "properties": {
@@ -6139,6 +6408,237 @@
           "location_code"
         ],
         "title": "SlotSuggestion"
+      },
+      "StockUploadBatch": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "uploaded_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uploaded By"
+          },
+          "row_count": {
+            "type": "integer",
+            "title": "Row Count"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "filename",
+          "uploaded_by",
+          "row_count",
+          "created_at"
+        ],
+        "title": "StockUploadBatch"
+      },
+      "StockUploadBatchList": {
+        "properties": {
+          "uploads": {
+            "items": {
+              "$ref": "#/components/schemas/StockUploadBatch"
+            },
+            "type": "array",
+            "title": "Uploads"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uploads"
+        ],
+        "title": "StockUploadBatchList"
+      },
+      "StockUploadItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "upload_id": {
+            "type": "integer",
+            "title": "Upload Id"
+          },
+          "row_no": {
+            "type": "integer",
+            "title": "Row No"
+          },
+          "site_code": {
+            "type": "string",
+            "title": "Site Code"
+          },
+          "barcode": {
+            "type": "string",
+            "title": "Barcode"
+          },
+          "brand_name": {
+            "type": "string",
+            "title": "Brand Name"
+          },
+          "sku_name": {
+            "type": "string",
+            "title": "Sku Name"
+          },
+          "location_code": {
+            "type": "string",
+            "title": "Location Code"
+          },
+          "location_was_blank": {
+            "type": "boolean",
+            "title": "Location Was Blank"
+          },
+          "input_date_raw": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Date Raw"
+          },
+          "uploaded_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uploaded By"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "upload_id",
+          "row_no",
+          "site_code",
+          "barcode",
+          "brand_name",
+          "sku_name",
+          "location_code",
+          "location_was_blank",
+          "input_date_raw",
+          "uploaded_by",
+          "created_at"
+        ],
+        "title": "StockUploadItem"
+      },
+      "StockUploadItemList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StockUploadItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "StockUploadItemList"
+      },
+      "StockUploadResult": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "upload_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upload Id"
+          },
+          "rows_total": {
+            "type": "integer",
+            "title": "Rows Total"
+          },
+          "rows_committed": {
+            "type": "integer",
+            "title": "Rows Committed"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/StockUploadRowError"
+            },
+            "type": "array",
+            "title": "Errors",
+            "default": []
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "rows_total",
+          "rows_committed",
+          "message"
+        ],
+        "title": "StockUploadResult"
+      },
+      "StockUploadRowError": {
+        "properties": {
+          "row_no": {
+            "type": "integer",
+            "title": "Row No"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "row_no",
+          "message"
+        ],
+        "title": "StockUploadRowError"
       },
       "TrainingActionIn": {
         "properties": {
