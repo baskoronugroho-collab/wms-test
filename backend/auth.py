@@ -40,6 +40,62 @@ def _anon_allowed() -> bool:
     return os.getenv("ALLOW_ANONYMOUS_DEV", "false").lower() in ("1", "true", "yes")
 
 
+def _auto_domain() -> str:
+    """Domain whose staff are provisioned on first sign-in. Empty disables it."""
+    return os.getenv("AUTO_PROVISION_DOMAIN", "").strip().lower()
+
+
+# Where an auto-provisioned account lands: the training site, so a first
+# sign-in can look around without being able to touch real stock.
+_AUTO_SITE_CODE = "MAC-TRN"
+
+
+async def _auto_provision(email: str) -> dict | None:
+    """Create a staff account for a trusted domain, or return None.
+
+    Only reached for an email the users table has never seen — a deactivated
+    account is refused by the caller before we get here, so this can never
+    resurrect someone an admin has switched off.
+
+    The domain is checked against the SSO header the proxy injected, never
+    against anything the client can set. With SSO off the header is forgeable,
+    so provisioning is refused there too (the caller has already returned 401
+    for the anonymous case, and DEV mode never reaches this function).
+    """
+    domain = _auto_domain()
+    if not domain or "@" not in email:
+        return None
+    if email.rsplit("@", 1)[1].lower() != domain:
+        return None
+
+    site = await db.fetch_one(
+        "SELECT id FROM sites WHERE code = %s AND is_training = 1", (_AUTO_SITE_CODE,)
+    )
+    site_id = site["id"] if site else None
+
+    # Two first requests can race; the unique key on email decides the winner
+    # and both then read back the same row.
+    await db.execute(
+        "INSERT INTO users (email, name, role, default_site_id, locale, active) "
+        "VALUES (%s, %s, 'staff', %s, 'id', 1) "
+        "ON DUPLICATE KEY UPDATE users.id = users.id",
+        (email, email.split("@")[0].replace(".", " ").title(), site_id),
+    )
+    row = await db.fetch_one(
+        "SELECT id, email, name, role, default_site_id, locale FROM users "
+        "WHERE email = %s AND active = 1",
+        (email,),
+    )
+    # Access to the training site only. A live site stays an admin's decision.
+    if row and site_id:
+        await db.execute(
+            "INSERT INTO user_sites (user_id, site_id) VALUES (%s, %s) "
+            "ON DUPLICATE KEY UPDATE user_sites.user_id = user_sites.user_id",
+            (row["id"], site_id),
+        )
+    return row
+
+
 async def current_user(
     x_forwarded_email: str | None = Header(default=None),
 ) -> User:
@@ -55,14 +111,25 @@ async def current_user(
     if not db.ready():
         raise HTTPException(status_code=503, detail="Database not configured")
 
+    # Read the row regardless of `active`, so a deactivated account is told it
+    # is deactivated rather than silently falling through to provisioning and
+    # being recreated. That distinction is the whole point of the flag.
     row = await db.fetch_one(
-        "SELECT id, email, name, role, default_site_id, locale FROM users "
-        "WHERE email = %s AND active = 1",
+        "SELECT id, email, name, role, default_site_id, locale, active FROM users "
+        "WHERE email = %s",
         (email,),
     )
+    if row and not row["active"]:
+        raise HTTPException(
+            status_code=403,
+            detail=f"{email} has been deactivated. Ask an admin to restore access.",
+        )
+
     if not row:
-        # Known to Google, unknown to us. An admin maps the email to a role and
-        # a site before the person can do anything — we do not auto-provision.
+        row = await _auto_provision(email)
+
+    if not row:
+        # Known to Google, unknown to us, and not on a domain we provision for.
         raise HTTPException(
             status_code=403,
             detail=f"{email} is not registered in the WMS. Ask an admin to add you.",

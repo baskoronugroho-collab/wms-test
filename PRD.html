@@ -554,6 +554,17 @@ The Substrait platform's auth proxy injects `X-Forwarded-Email` and `X-Forwarded
 - Trustworthy **only while SSO is enabled** (the proxy strips client-sent values; with SSO off anyone can forge the header). The app must degrade to an explicit anonymous/dev mode when the header is absent, never to an implicit admin.
 - The browser never sees the header — the frontend asks `/api/me`.
 
+**Account creation — auto-provision, interim [DECIDED 4 Sep 2026].** Until the admin screen in **M7.6** exists, an email arriving on the SSO header from a configured trusted domain (`AUTO_PROVISION_DOMAIN`, set to `ninjavan.co`) and unknown to the `users` table is created as **`staff`, on the training site only**. Adding a colleague no longer needs a migration and a deploy, which does not survive a pilot across ten stations with staff turnover.
+
+Four constraints make that safe, and each is enforced in `auth.py`, not in the UI:
+
+- **The training site is the whole grant.** An auto-provisioned account gets `user_sites` for `MAC-TRN` and nothing else, so it can look around and practise but cannot see, pick from, or count a live site until an admin assigns one.
+- **`staff` is the ceiling.** Never supervisor, never admin. Role escalation stays a deliberate act.
+- **A deactivated account is refused, not recreated.** The lookup reads the row regardless of `active` and returns *"has been deactivated"* before provisioning is ever considered. Without that ordering, switching `active` to 0 would be undone by the person's next sign-in — which would make the flag worthless.
+- **The domain is checked against the proxy's header only.** With SSO off the header is forgeable, so the anonymous path returns 401 long before this code runs, and dev mode never reaches it.
+
+Setting `AUTO_PROVISION_DOMAIN` empty restores admin-adds-you-first. **This is interim**: it trades an access-control decision for pilot speed, and **M7.6 supersedes it**.
+
 Requires every station staffer to have a Ninja Google account usable on the shared station device. Flagged in §16.
 
 ### 5.5 One basket = one SKU **[FALLS OUT OF THE SPACE MODEL]**
@@ -968,6 +979,59 @@ Because one basket holds one SKU (§5.5), a count is always scoped to a single p
 
 ---
 
+### M8 — Training Mode *(All roles)*
+
+**Purpose.** A complete, isolated copy of the warehouse that behaves exactly like the real one and touches nothing real. It serves two audiences that turn out to want the same thing:
+
+- **New staff**, who need to make every mistake once before they make it on live stock. Turnover is high and the training target is 30 minutes to first unassisted pick (§17) — that target needs somewhere to be met.
+- **The development team**, who need to build and test all seven modules before the POS integration exists and before a single rack is installed.
+
+This also repairs a flaw in §9.3: a dummy order generator that consumes **real** stock is not a test harness, it is a way to corrupt a live balance. Test orders belong in a training site.
+
+#### M8.1 How isolation works
+- **M8.1.1** A site carries an `is_training` flag. A training site is a **full site** — its own racks, levels, locations, baskets, slot assignments, inventory, receipts, orders, pick tasks and opname plans.
+- **M8.1.2** Isolation is free, because every query in the system is already scoped by site id (§10.2.5). Training is not a parallel code path; it is a site with a flag, which is why it cannot drift from real behaviour.
+- **M8.1.3** **Master data is shared, not copied.** Training uses the real brands, the real SKU names and the real barcodes. A staffer practises finding *Glasting Liquid Lip 07 Rouge Flare*, not "Test Product 3". This is the whole point — the training is only worth anything if the confusable shades are the real confusable shades.
+
+#### M8.2 Guard rails
+These are hard rules enforced at the service layer, not conventions:
+- **M8.2.1** **A training site never pushes to the POS.** The push is suppressed at the outbound edge, so no route into it can leak.
+- **M8.2.2** Training sites are excluded from cross-site reporting, low-stock views and replenishment suggestions unless explicitly asked for.
+- **M8.2.3** Transfers may not cross the training boundary in either direction.
+- **M8.2.4** All movements at a training site are tagged, so a mis-scoped query is visible in the ledger rather than silent.
+- **M8.2.5** **Reset is impossible on a non-training site.** Not discouraged, not permission-gated — refused, on the site flag, in the service.
+
+#### M8.3 Reset and scenarios
+- **M8.3.1** **Reset** restores a training site to a known state in one action: stock back to fixture quantities, receipts and orders cleared, opname plans cleared, plates rebound. Deterministic — the same reset always produces the same warehouse.
+- **M8.3.2** **Scenarios** are named fixtures a trainer or a developer loads deliberately, each rehearsing one thing that goes wrong:
+
+  | Scenario | What it sets up | Teaches / tests |
+  |---|---|---|
+  | `clean` | Every basket matches its expected quantity | The happy path, first-day walkthrough |
+  | `variance` | Three baskets seeded short, one over | Opname counting and the variance reveal |
+  | `short_pick` | An order line whose basket is physically empty | E8, the most expensive real failure |
+  | `wrong_shade` | An order for Glasting 07 with 08 sitting in the 07 basket | The pick scan gate, and why it exists |
+  | `unknown_barcode` | Goods whose barcode is not registered | Inline registration during inbound |
+  | `no_slot` | A SKU with no basket at this site | Create-basket-during-inbound (M2.3) |
+  | `mode_b` | An unbarcoded brand with plates to apply | Labelling, binding, plate-level pick and opname |
+  | `contention` | Two claimable pick tasks, two claimable baskets | Concurrency (§10.2) with two staff on one station |
+
+- **M8.3.3** A scenario loads in seconds and prints the fixture it created, so a trainer knows what the answer is supposed to be.
+
+#### M8.4 In the interface
+- **M8.4.1** Training mode is **impossible to be in by accident**. The whole shell changes: a persistent banner, a distinct edge treatment on every screen, and the site name shown at all times.
+- **M8.4.2** Switching in or out is deliberate and never silent.
+- **M8.4.3** A staffer's training activity is recorded — flows completed, scans, errors hit — so a supervisor can see who has actually practised and who has clicked past it.
+- **M8.4.4** **Printable test barcode sheets.** Because training must work without physical stock, the WMS prints A4 sheets of the real SKU barcodes. A trainee scans the sheet and the system behaves exactly as if they had scanned the product. Sheets are marked as training material so they never end up in a real receiving lane.
+
+#### M8.5 Acceptance criteria
+- A reset returns a training site to an identical state every time.
+- No action taken in a training site changes any real balance or reaches the POS, verified by an automated test that fails the build.
+- The development team can exercise all seven modules end to end with no POS, no scanner and no stock.
+- A new staffer can complete a receive, a pick and a count in training before touching the floor.
+
+---
+
 ## 9. POS integration
 
 ### 9.1 Ownership of the stock number — the open integration decision
@@ -1004,7 +1068,7 @@ Required by the product owner for testing before Hiryu integration exists.
 - **9.3.1** An admin screen generates a synthetic order for a chosen site: pick N random SKUs that have stock, random quantities 1–3, submit through the same `POST /api/pos/orders` endpoint the real POS will use.
 - **9.3.2** A "generate a realistic burst" button creates several orders at once, to rehearse concurrent picking.
 - **9.3.3** Synthetic orders are tagged `is_test = true`, are visually marked throughout the UI, and are excluded from operational reporting.
-- **9.3.4** The generator is disabled in production by an environment flag.
+- **9.3.4** **The generator only targets training sites (M8).** An earlier draft allowed it against any site, which would have had a test order consume real stock and push a wrong number to Grab. Generating against a non-training site is refused by the service, not hidden by a flag.
 
 Building the real integration against the same endpoint the dummy uses means the switch to live Hiryu is configuration, not a rewrite.
 
@@ -1079,9 +1143,16 @@ The one query that must stay a single-row indexed lookup regardless of table siz
 
 Flyway migrations, MySQL dialect (OceanBase wire). Indicative, not final DDL.
 
+**Three constraints the engine imposes, which changed the design:**
+
+1. **MySQL has no partial indexes.** `UNIQUE(barcode) WHERE active` is Postgres and will not migrate. Uniqueness that should apply only to live rows is instead achieved by keeping **only live rows** in those tables: unbinding a barcode *deletes* it, and relocating a slot *updates* it. History is not lost — it lives in `stock_movements` and `audit_log`, which is where it belonged anyway.
+2. **No ENUM, no CHECK, no generated columns.** Status fields are `VARCHAR(32)` validated in the application. Changing an ENUM later is an `ALTER`, and on OceanBase a failed migration blocks every subsequent deploy until it is repaired — so V1 DDL stays conservative on purpose.
+3. **No `ON DELETE CASCADE`, and no adding a column and a foreign key in one `ALTER`.** Both are documented OceanBase gotchas. Nothing here is hard-deleted anyway.
+
 ```
 brands              id, code, name, active, created_at
-sites               id, code, name, address, type(hub|darkstore), active
+sites               id, code, name, address, type(hub|darkstore),
+                    is_training, active
 brand_sites         brand_id, site_id, active
 
 skus                id, brand_id, brand_sku_code, name_display, category,
@@ -1091,8 +1162,9 @@ skus                id, brand_id, brand_sku_code, name_display, category,
                     label_placement_note, active
                     UNIQUE(brand_id, brand_sku_code)
 
-barcodes            id, barcode, sku_id, registered_by, registered_at, active
-                    UNIQUE(barcode) WHERE active     -- Mode A: one barcode, one SKU
+barcodes            id, barcode, sku_id, registered_by, registered_at
+                    UNIQUE(barcode)   -- Mode A: one barcode, one SKU.
+                                      -- Unbind DELETEs the row + writes audit_log.
 
 -- Mode B ------------------------------------------------------------------
 plate_ranges        id, site_id, prefix, seq_from, seq_to, issued_by,
@@ -1112,10 +1184,12 @@ locations           id, level_id, position_no, code   UNIQUE(code)
 baskets             id, location_id, size(S|M|L), label_printed_at
                     UNIQUE(location_id)               -- one basket per location
 
-slot_assignments    id, sku_id, site_id, basket_id, active, created_by,
-                    created_during_inbound
-                    UNIQUE(basket_id) WHERE active        -- one SKU per basket
-                    UNIQUE(sku_id, site_id) WHERE active  -- one slot per SKU per site
+slot_assignments    id, sku_id, site_id, basket_id, created_by,
+                    created_during_inbound, updated_at
+                    UNIQUE(basket_id)          -- one SKU per basket
+                    UNIQUE(site_id, sku_id)    -- one slot per SKU per site
+                    -- the row IS the current slot; relocate UPDATEs basket_id
+                    -- and writes relocate_out/relocate_in movements
 
 inventory_balances  id, site_id, sku_id, location_id, qty_on_hand,
                     qty_allocated, version, updated_at
@@ -1162,8 +1236,15 @@ user_sites          user_id, site_id
 audit_log           id, actor_email, entity, entity_id, action, before_json,
                     after_json, created_at
 
-scan_events         id, idempotency_key, endpoint, result, created_at
+scan_events         id, idempotency_key, endpoint, response_json, created_at
                     UNIQUE(idempotency_key)
+                    -- a replay returns the stored response, never re-applies
+
+-- training (M8) -------------------------------------------------------------
+training_fixtures   id, site_id, scenario, payload_json, loaded_by, loaded_at
+training_activity   id, site_id, actor_email, flow, event, detail_json,
+                    created_at
+-- ---------------------------------------------------------------------------
 ```
 
 **Indexes that matter:** `barcodes(barcode)` — hit on every single scan, must be a single-row lookup. `inventory_balances(site_id, sku_id)`. `stock_movements(site_id, sku_id, created_at)`. `pick_lines(pick_task_id, sequence_no)`.
@@ -1240,6 +1321,14 @@ POST   /api/opname/adjustments/approve     supervisor
 GET    /api/inventory?site&brand&q
 GET    /api/inventory/find?barcode=
 GET    /api/movements?sku&location&from&to
+
+# training (M8) — every route refuses a non-training site
+GET    /api/training/scenarios             the fixture library
+POST   /api/training/reset                 site -> known state, deterministic
+POST   /api/training/load                  site + scenario
+POST   /api/training/orders/generate       test orders; training sites only
+GET    /api/training/barcode-sheet         printable test barcodes
+GET    /api/training/activity?site&who     who has actually practised
 ```
 
 Every endpoint declares a typed response model, so the OpenAPI spec Substrait harvests carries real field names and types — which is what lets other Ninja teams build against this app through the Substrait API Library.
@@ -1290,7 +1379,7 @@ services:
 
 | Phase | Scope | Exit criteria |
 |---|---|---|
-| **P0 — Foundations** | Substrait scaffold, schema + migrations, SSO, roles, i18n shell, scan hook, guided-task shell | A staffer can log in, see Indonesian, and scan into a test screen |
+| **P0 — Foundations** | Substrait scaffold, schema + migrations, SSO, roles, ledger, idempotency, **M8 training site + reset + scenarios**, i18n shell, scan hook, guided-task shell | A staffer can log in, see Indonesian, and scan into a training site that resets cleanly |
 | **P1 — Master data** | M1.1–M1.3 brand/SKU/barcode + CSV import + M2 locations/slots/rack map/labels | 118 Wardah SKUs imported, barcoded, slotted at one site, labels printed |
 | **P2 — Inbound** | M3 full flow, both scenarios, inline registration, inline basket creation | A 500-unit receipt completes with no typing and correct balances |
 | **P3 — Outbound** | M5 + §9.3 dummy order generator | A dummy order is picked end to end with a wrong-shade scan correctly blocked |

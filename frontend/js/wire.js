@@ -122,7 +122,10 @@
     NJW.me = ME; NJW.site = SITE;
 
     paintChrome();
-    NJW.startHeartbeat('/health', 20000);
+    // Must be /api/health, not /health: the ingress routes everything except
+    // /api to nginx, which answers /health with index.html and a 200 — a
+    // heartbeat that can never fail is worse than none.
+    NJW.startHeartbeat('/api/health', 20000);
     return true;
   }
 

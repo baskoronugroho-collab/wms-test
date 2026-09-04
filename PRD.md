@@ -219,6 +219,17 @@ The Substrait platform's auth proxy injects `X-Forwarded-Email` and `X-Forwarded
 - Trustworthy **only while SSO is enabled** (the proxy strips client-sent values; with SSO off anyone can forge the header). The app must degrade to an explicit anonymous/dev mode when the header is absent, never to an implicit admin.
 - The browser never sees the header — the frontend asks `/api/me`.
 
+**Account creation — auto-provision, interim [DECIDED 4 Sep 2026].** Until the admin screen in **M7.6** exists, an email arriving on the SSO header from a configured trusted domain (`AUTO_PROVISION_DOMAIN`, set to `ninjavan.co`) and unknown to the `users` table is created as **`staff`, on the training site only**. Adding a colleague no longer needs a migration and a deploy, which does not survive a pilot across ten stations with staff turnover.
+
+Four constraints make that safe, and each is enforced in `auth.py`, not in the UI:
+
+- **The training site is the whole grant.** An auto-provisioned account gets `user_sites` for `MAC-TRN` and nothing else, so it can look around and practise but cannot see, pick from, or count a live site until an admin assigns one.
+- **`staff` is the ceiling.** Never supervisor, never admin. Role escalation stays a deliberate act.
+- **A deactivated account is refused, not recreated.** The lookup reads the row regardless of `active` and returns *"has been deactivated"* before provisioning is ever considered. Without that ordering, switching `active` to 0 would be undone by the person's next sign-in — which would make the flag worthless.
+- **The domain is checked against the proxy's header only.** With SSO off the header is forgeable, so the anonymous path returns 401 long before this code runs, and dev mode never reaches it.
+
+Setting `AUTO_PROVISION_DOMAIN` empty restores admin-adds-you-first. **This is interim**: it trades an access-control decision for pilot speed, and **M7.6 supersedes it**.
+
 Requires every station staffer to have a Ninja Google account usable on the shared station device. Flagged in §16.
 
 ### 5.5 One basket = one SKU **[FALLS OUT OF THE SPACE MODEL]**
