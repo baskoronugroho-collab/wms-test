@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stok terunggah — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app" data-screen="stock-upload-list">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="15-unggah-massal-stok.html" data-id="Unggah massal" data-en="Bulk upload">Unggah massal</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Stok terunggah" data-en="Uploaded stock">Stok terunggah</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="chrome__user">Rina P. · UT5</span>
+    </header>
+    <main class="main">
+      <h1 class="h1" data-id="Semua stok yang sudah diunggah" data-en="All uploaded stock">Semua stok yang sudah diunggah</h1>
+      <div class="table" style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr>
+              <th data-id="Hub" data-en="Hub">Hub</th>
+              <th data-id="Barcode" data-en="Barcode">Barcode</th>
+              <th data-id="Brand" data-en="Brand">Brand</th>
+              <th data-id="Produk" data-en="Product">Produk</th>
+              <th data-id="Lokasi" data-en="Location">Lokasi</th>
+              <th data-id="Tgl input" data-en="Input date">Tgl input</th>
+              <th data-id="Diunggah oleh" data-en="Uploaded by">Diunggah oleh</th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody"></tbody>
+        </table>
+      </div>
+      <p class="lede" id="emptyNote" style="display:none" data-id="Belum ada stok yang diunggah." data-en="No uploaded stock yet.">Belum ada stok yang diunggah.</p>
+      <div class="col" style="margin-top:20px">
+        <a class="btn btn--outline" href="01-mulai-barang-masuk.html" data-id="Kembali" data-en="Back">Kembali</a>
+      </div>
+    </main>
+</div>
+<script src="js/app.js"></script>
+<script src="js/wire.js"></script>
+</body>
+</html>

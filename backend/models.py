@@ -543,6 +543,54 @@ class MovementList(BaseModel):
     movements: list[MovementRow]
 
 
+# --- bulk stock upload (Alur A, Option C) ------------------------------------
+
+class StockUploadRowError(BaseModel):
+    row_no: int
+    message: str
+
+
+class StockUploadResult(BaseModel):
+    ok: bool
+    upload_id: int | None = None
+    rows_total: int
+    rows_committed: int
+    errors: list[StockUploadRowError] = []
+    message: str
+
+
+class StockUploadBatch(BaseModel):
+    id: int
+    filename: str | None
+    uploaded_by: str | None
+    row_count: int
+    created_at: str
+
+
+class StockUploadBatchList(BaseModel):
+    uploads: list[StockUploadBatch]
+
+
+class StockUploadItem(BaseModel):
+    id: int
+    upload_id: int
+    row_no: int
+    site_code: str
+    barcode: str
+    brand_name: str
+    sku_name: str
+    location_code: str
+    location_was_blank: bool
+    input_date_raw: str | None
+    uploaded_by: str | None
+    created_at: str
+
+
+class StockUploadItemList(BaseModel):
+    items: list[StockUploadItem]
+    total: int
+
+
 # --- training ---------------------------------------------------------------
 
 class Scenario(BaseModel):
