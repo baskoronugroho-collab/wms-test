@@ -591,6 +591,42 @@ class StockUploadItemList(BaseModel):
     total: int
 
 
+# --- admin: product master data ----------------------------------------------
+
+class ProductMasterRowResult(BaseModel):
+    row_no: int
+    ok: bool
+    message: str
+
+
+class ProductMasterImportResult(BaseModel):
+    rows_total: int
+    rows_saved: int
+    results: list[ProductMasterRowResult]
+    message: str
+
+
+class ProductMasterItem(BaseModel):
+    id: int
+    brand_name: str
+    product_name: str
+    default_location_code: str
+    created_at: str
+
+
+class ProductMasterList(BaseModel):
+    items: list[ProductMasterItem]
+    total: int
+
+
+class ProductMasterLocationIn(BaseModel):
+    default_location_code: str
+
+
+class ProductMasterDeleteIn(BaseModel):
+    ids: list[int]
+
+
 # --- training ---------------------------------------------------------------
 
 class Scenario(BaseModel):
