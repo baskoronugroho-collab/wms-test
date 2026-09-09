@@ -80,7 +80,7 @@ async def create_user(
     if body.site_ids:
         await _set_sites(row["id"], body.site_ids)
     await db.execute(
-        "INSERT INTO audit_log (actor_email, action, entity, entity_id, detail) "
+        "INSERT INTO audit_log (actor_email, action, entity, entity_id, after_json) "
         "VALUES (%s,'user.create','users',%s,%s)",
         (user.email, row["id"], f"{email} as {body.role}"),
     )
@@ -127,7 +127,7 @@ async def update_user(
         await _set_sites(user_id, body.site_ids)
 
     await db.execute(
-        "INSERT INTO audit_log (actor_email, action, entity, entity_id, detail) "
+        "INSERT INTO audit_log (actor_email, action, entity, entity_id, after_json) "
         "VALUES (%s,'user.update','users',%s,%s)",
         (user.email, user_id, str(body.model_dump(exclude_none=True))),
     )
@@ -225,7 +225,7 @@ async def update_site(
     params.append(site_id)
     await db.execute(f"UPDATE sites SET {', '.join(sets)} WHERE id = %s", params)
     await db.execute(
-        "INSERT INTO audit_log (actor_email, action, entity, entity_id, detail) "
+        "INSERT INTO audit_log (actor_email, action, entity, entity_id, after_json) "
         "VALUES (%s,'site.update','sites',%s,%s)",
         (user.email, site_id, str(body.model_dump(exclude_none=True))),
     )

@@ -509,7 +509,7 @@ async def release_task(
         )
         await db.run(
             cur,
-            "INSERT INTO audit_log (actor_email, action, entity, entity_id, detail) "
+            "INSERT INTO audit_log (actor_email, action, entity, entity_id, after_json) "
             "VALUES (%s,'pick_task.release','pick_tasks',%s,%s)",
             (user.email, task_id,
              f"released from {task['claimed_by']}: {body.reason or 'no reason given'}"),
