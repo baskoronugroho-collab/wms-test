@@ -7,14 +7,19 @@
   const STORE = { theme: 'njw.theme', lang: 'njw.lang' };
 
   /* ---- theme (backroom at night vs bench by the roller door) --------- */
+  /* A page-authored data-theme wins over the saved preference. 14-terkunci is
+     authored dark on purpose — the blocked screen must look the same whatever
+     the device's last toggle was. The preference only fills in the blank. */
   const savedTheme = localStorage.getItem(STORE.theme);
-  if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+  const authoredTheme = document.documentElement.getAttribute('data-theme');
+  if (!authoredTheme && savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
   document.addEventListener('click', (e) => {
     const t = e.target.closest('[data-action="toggle-theme"]');
     if (!t) return;
     const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem(STORE.theme, next);
+    // Don't persist from a page that pins its own theme — it isn't a preference.
+    if (!authoredTheme) localStorage.setItem(STORE.theme, next);
   });
 
   /* ---- language: ID is the default, EN is one tap ---------------------

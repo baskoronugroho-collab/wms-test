@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staf — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/app.css">
+<link rel="stylesheet" href="../css/console.css">
+</head>
+<body>
+<div class="console" data-screen="staf">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <span class="sidebar__mark">NINJA</span>
+        <span class="sidebar__product">Kilat WMS</span>
+      </div>
+      <nav class="sidebar__section">
+        <a class="sidebar__link" href="index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2"/><path d="M5.6 9v11.4h12.8V9"/></svg></span><span class="sidebar__label" data-id="Ringkasan" data-en="Overview">Ringkasan</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk & keluar</span>
+        <a class="sidebar__link" href="barang-masuk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10.5"/><path d="M8.2 10.2 12 14l3.8-3.8"/><path d="M4 17.5v3h16v-3"/></svg></span><span class="sidebar__label" data-id="Barang masuk" data-en="Inbound">Barang masuk</span></a>
+        <a class="sidebar__link" href="pesanan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V10.5"/><path d="M8.2 14.3 12 10.5l3.8 3.8"/><path d="M4 6.5v-3h16v3"/></svg></span><span class="sidebar__label" data-id="Pesanan" data-en="Orders">Pesanan</span></a>
+        <a class="sidebar__link" href="papan-antrean.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="5" height="15" rx="1.2"/><rect x="9.5" y="4.5" width="5" height="11" rx="1.2"/><rect x="15.5" y="4.5" width="5" height="7" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Papan antrean" data-en="Queue board">Papan antrean</span></a>
+        <a class="sidebar__link" href="stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="3.5" y="12.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="12.5" width="8" height="8" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Stok" data-en="Inventory">Stok</span></a>
+        <a class="sidebar__link" href="hitung-stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2l2.6 2.6 4.6-5.2"/></svg></span><span class="sidebar__label" data-id="Hitung stok" data-en="Stock count">Hitung stok</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
+        <a class="sidebar__link" href="slip-putaway.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h7.5L18 8v12.5H6z"/><path d="M13.2 3.7V8H18"/><path d="M8.8 12h6.4"/><path d="M8.8 15.5h4.4"/></svg></span><span class="sidebar__label" data-id="Slip putaway" data-en="Putaway slips">Slip putaway</span></a>
+        <a class="sidebar__link" href="label-warna-hari.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="7" height="6" rx="1"/><rect x="13.5" y="4.5" width="7" height="6" rx="1"/><rect x="3.5" y="13.5" width="7" height="6" rx="1"/><rect x="13.5" y="13.5" width="7" height="6" rx="1"/></svg></span><span class="sidebar__label" data-id="Label & warna hari" data-en="Labels & day colour">Label & warna hari</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
+        <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
+        <a class="sidebar__link is-current" href="staf.html" aria-current="page"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
+        <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
+        <a class="sidebar__link" href="simulator-grab.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><span class="sidebar__label" data-id="Simulator Grab" data-en="Grab simulator">Simulator Grab</span></a>
+        <a class="sidebar__link" href="mode-latihan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5v17"/><path d="M6.5 4.5h11l-2.2 4.2 2.2 4.2h-11"/></svg></span><span class="sidebar__label" data-id="Mode latihan" data-en="Training mode">Mode latihan</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <span class="sidebar__site">
+          <span class="sidebar__label" data-id="Lokasi aktif" data-en="Active site">Lokasi aktif</span>
+          <strong data-field="site-code">UT5</strong>
+        </span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="lang" role="group" aria-label="Bahasa">
+            <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+            <button class="lang__opt" data-lang="en" type="button">EN</button>
+          </span>
+          <button class="cbtn cbtn--icon cbtn--ghost" data-action="toggle-theme" type="button" aria-label="Ganti tema">◐</button>
+        </div>
+        <a class="sidebar__link" href="../index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg></span><span class="sidebar__label" data-id="Buka aplikasi station" data-en="Open station app">Buka aplikasi station</span></a>
+      </div>
+    </aside>
+  <main class="page">
+    <header class="page__head">
+      <div class="page__heading">
+        <span class="page__eyebrow" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
+        <h1 class="page__title" data-id="Staf" data-en="Staff">Staf</h1>
+        <p class="page__sub" data-id="Email, role, dan lokasi yang boleh dikerjakan. Mengubah role berlaku saat orangnya masuk berikutnya." data-en="Emails, roles and which sites each person may work at. A role change applies at their next sign-in.">Email, role, dan lokasi yang boleh dikerjakan. Mengubah role berlaku saat orangnya masuk berikutnya.</p>
+      </div>
+      <div class="page__actions">
+        <button class="cbtn cbtn--primary" type="button" data-drawer-open="#drawer-staff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-id="Tambah staf" data-en="Add staff">Tambah staf</span></button>
+      </div>
+    </header>
+    <div class="inline-note"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span data-id="Dua hal yang tidak bisa dilakukan ke akun sendiri: menonaktifkan, dan mengubah role. Tombolnya dimatikan di baris Anda — minta admin lain." data-en="Two things you cannot do to your own account: deactivate it, or change its role. Those controls are disabled on your row — ask another admin.">Dua hal yang tidak bisa dilakukan ke akun sendiri: menonaktifkan, dan mengubah role. Tombolnya dimatikan di baris Anda — minta admin lain.</span></div>
+    <div class="toolbar">
+        <label class="search">
+          <span class="search__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></span>
+          <input class="search__input" type="search" data-search-for="#tbl-staff" placeholder="Cari nama atau email…" data-id-placeholder="Cari nama atau email…" data-en-placeholder="Search name or email…" aria-label="Cari nama atau email…">
+        </label>
+      <span class="seg" role="group">
+        <button class="seg__opt is-on" type="button" data-id="Semua" data-en="All">Semua</button>
+        <button class="seg__opt" type="button" data-id="Aktif" data-en="Active">Aktif</button>
+        <button class="seg__opt" type="button" data-id="Nonaktif" data-en="Inactive">Nonaktif</button>
+      </span>
+      <span class="toolbar__spacer"></span>
+      <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16M7 12h10M10 17.5h4"/></svg><span data-id="Role" data-en="Role">Role</span></button>
+      <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M8 10.5l4 4 4-4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Ekspor" data-en="Export">Ekspor</span></button>
+    </div>
+    <div class="table-scroll">
+      <table class="dtable dtable--rows-tall" id="tbl-staff">
+        <thead><tr>
+          <th class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih semua"></th>
+          <th class="is-sortable" data-id="Nama" data-en="Name">Nama<span class="sort">↕</span></th>
+          <th class="is-sortable" data-id="Email" data-en="Email">Email<span class="sort">↕</span></th>
+          <th class="is-sortable" data-id="Role" data-en="Role">Role<span class="sort">↕</span></th>
+          <th data-id="Lokasi" data-en="Sites">Lokasi</th>
+          <th data-id="Status" data-en="Status">Status</th>
+          <th class="td-actions"></th>
+        </tr></thead>
+        <tbody data-region="staff">
+            <tr data-self="true">
+              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih budi.hartono@ninjavan.co"></td>
+              <td class="td-strong">Budi Hartono <span class="tagline" data-id="akun Anda" data-en="your account">akun Anda</span></td>
+              <td class="td-code">budi.hartono@ninjavan.co</td>
+              <td><span class="spill spill--accent"><span class="role">admin</span></span></td>
+              <td class="td-code">UT5, UT2, TRN</td>
+              <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Aktif" data-en="Active">Aktif</span></span></td>
+              <td class="td-actions">
+                <button class="cbtn cbtn--sm is-disabled" type="button" disabled title="Tidak bisa mengubah role akun sendiri — minta admin lain." data-id="Ubah role" data-en="Change role">Ubah role</button>
+                <button class="cbtn cbtn--sm is-disabled" type="button" disabled title="Tidak bisa menonaktifkan akun sendiri — minta admin lain." data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
+              </td>
+            </tr>
+            <tr>
+              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih sari.wijaya@ninjavan.co"></td>
+              <td class="td-strong">Sari Wijaya</td>
+              <td class="td-code">sari.wijaya@ninjavan.co</td>
+              <td><span class="spill spill--accent"><span class="role">admin</span></span></td>
+              <td class="td-code">Semua</td>
+              <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Aktif" data-en="Active">Aktif</span></span></td>
+              <td class="td-actions">
+                <button class="cbtn cbtn--sm" type="button" data-id="Ubah role" data-en="Change role">Ubah role</button>
+                <button class="cbtn cbtn--sm" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
+              </td>
+            </tr>
+            <tr>
+              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih rina.puspita@ninjavan.co"></td>
+              <td class="td-strong">Rina Puspita</td>
+              <td class="td-code">rina.puspita@ninjavan.co</td>
+              <td><span class="spill spill--info"><span class="role">supervisor</span></span></td>
+              <td class="td-code">UT5, TRN</td>
+              <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Aktif" data-en="Active">Aktif</span></span></td>
+              <td class="td-actions">
+                <button class="cbtn cbtn--sm" type="button" data-id="Ubah role" data-en="Change role">Ubah role</button>
+                <button class="cbtn cbtn--sm" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
+              </td>
+            </tr>
+            <tr>
+              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih dwi.lestari@ninjavan.co"></td>
+              <td class="td-strong">Dwi Lestari</td>
+              <td class="td-code">dwi.lestari@ninjavan.co</td>
+              <td><span class="spill spill--neutral"><span class="role">hub_operator</span></span></td>
+              <td class="td-code">UT5</td>
+              <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Aktif" data-en="Active">Aktif</span></span></td>
+              <td class="td-actions">
+                <button class="cbtn cbtn--sm" type="button" data-id="Ubah role" data-en="Change role">Ubah role</button>
+                <button class="cbtn cbtn--sm" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
+              </td>
+            </tr>
+            <tr>
+              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih agus.setiawan@ninjavan.co"></td>
+              <td class="td-strong">Agus Setiawan</td>
+              <td class="td-code">agus.setiawan@ninjavan.co</td>
+              <td><span class="spill spill--neutral"><span class="role">staff</span></span></td>
+              <td class="td-code">UT5</td>
+              <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Aktif" data-en="Active">Aktif</span></span></td>
+              <td class="td-actions">
+                <button class="cbtn cbtn--sm" type="button" data-id="Ubah role" data-en="Change role">Ubah role</button>
+                <button class="cbtn cbtn--sm" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
+              </td>
+            </tr>
+            <tr>
+              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih siti.n@ninjavan.co"></td>
+              <td class="td-strong">Siti Nurhaliza</td>
+              <td class="td-code">siti.n@ninjavan.co</td>
+              <td><span class="spill spill--neutral"><span class="role">staff</span></span></td>
+              <td class="td-code">UT5</td>
+              <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Aktif" data-en="Active">Aktif</span></span></td>
+              <td class="td-actions">
+                <button class="cbtn cbtn--sm" type="button" data-id="Ubah role" data-en="Change role">Ubah role</button>
+                <button class="cbtn cbtn--sm" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
+              </td>
+            </tr>
+            <tr>
+              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih eko.prasetyo@ninjavan.co"></td>
+              <td class="td-strong">Eko Prasetyo</td>
+              <td class="td-code">eko.prasetyo@ninjavan.co</td>
+              <td><span class="spill spill--neutral"><span class="role">staff</span></span></td>
+              <td class="td-code">UT2</td>
+              <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Aktif" data-en="Active">Aktif</span></span></td>
+              <td class="td-actions">
+                <button class="cbtn cbtn--sm" type="button" data-id="Ubah role" data-en="Change role">Ubah role</button>
+                <button class="cbtn cbtn--sm" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
+              </td>
+            </tr>
+            <tr class="is-inactive">
+              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih maya.a@ninjavan.co"></td>
+              <td class="td-strong">Maya Anggraini</td>
+              <td class="td-code">maya.a@ninjavan.co</td>
+              <td><span class="spill spill--neutral"><span class="role">staff</span></span></td>
+              <td class="td-code">TRN</td>
+              <td><span class="spill spill--neutral"><span class="spill__dot"></span><span data-id="Nonaktif" data-en="Inactive">Nonaktif</span></span></td>
+              <td class="td-actions">
+                <button class="cbtn cbtn--sm" type="button" data-id="Ubah role" data-en="Change role">Ubah role</button>
+                <button class="cbtn cbtn--sm" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
+              </td>
+            </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="bulkbar" data-bulk-table="#tbl-staff">
+      <span class="bulkbar__count" data-field="bulk-count">0</span>
+      <span data-id="baris dipilih" data-en="rows selected">baris dipilih</span>
+      <span class="toolbar__spacer"></span>
+      <button class="cbtn" type="button" data-id="Tetapkan lokasi" data-en="Assign sites">Tetapkan lokasi</button>
+      <button class="cbtn" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
+      <button class="cbtn cbtn--ghost" type="button" data-action="bulk-clear" data-id="Batal" data-en="Clear">Batal</button>
+    </div>
+      <div class="pager">
+        <span class="pager__info"><strong data-field="range">1–8</strong> <span data-id="dari" data-en="of">dari</span> <strong data-field="total">8</strong> <span data-id="baris" data-en="rows">baris</span></span>
+        <div class="pager__nav">
+          <button class="pager__page" type="button" aria-label="Sebelumnya">‹</button>
+          <button class="pager__page is-on" type="button">1</button>
+          <button class="pager__page" type="button">2</button>
+          <button class="pager__page" type="button">3</button>
+          <span class="pager__gap">…</span>
+          <button class="pager__page" type="button">12</button>
+          <button class="pager__page" type="button" aria-label="Berikutnya">›</button>
+        </div>
+      </div>
+  </main>
+</div>
+<div class="scrim"></div>
+<aside class="drawer" id="drawer-staff" aria-label="Tambah staf">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-id="Tambah staf" data-en="Add staff">Tambah staf</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <label class="field">
+      <span class="field__label" data-id="Email" data-en="Email">Email</span>
+      <input class="input" type="email" placeholder="nama@ninjavan.co">
+      <span class="field__hint" data-id="Harus email Ninja Van — ini yang dipakai untuk masuk." data-en="Must be a Ninja Van address — this is the sign-in identity.">Harus email Ninja Van — ini yang dipakai untuk masuk.</span>
+    </label>
+    <label class="field">
+      <span class="field__label" data-id="Nama" data-en="Name">Nama</span>
+      <input class="input" type="text" placeholder="Nama lengkap">
+    </label>
+    <label class="field">
+      <span class="field__label" data-id="Role" data-en="Role">Role</span>
+      <select class="select">
+        <option value="admin">Admin</option>
+        <option value="supervisor">Supervisor</option>
+        <option value="hub_operator">Operator hub</option>
+        <option value="staff" selected>Staf</option>
+      </select>
+    </label>
+    <label class="field">
+      <span class="field__label" data-id="Lokasi utama" data-en="Default site">Lokasi utama</span>
+      <select class="select"><option>UT5 — Ninja Kilat Untung Jawa 5</option><option>UT2 — Ninja Kilat Untung Jawa 2</option><option>TRN — Lokasi latihan</option></select>
+    </label>
+    <div class="field">
+      <span class="field__label" data-id="Boleh bekerja di" data-en="May work at">Boleh bekerja di</span>
+      <div class="chipset">
+        <label class="chipbox"><input type="checkbox" checked>UT5</label>
+        <label class="chipbox"><input type="checkbox">UT2</label>
+        <label class="chipbox"><input type="checkbox">UT7</label>
+        <label class="chipbox"><input type="checkbox" checked>TRN</label>
+      </div>
+      <span class="field__hint" data-id="Staf baru sebaiknya dapat lokasi latihan dulu." data-en="New staff should get the training site first.">Staf baru sebaiknya dapat lokasi latihan dulu.</span>
+    </div>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-id="Simpan staf" data-en="Save staff">Simpan staf</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
+  </div>
+</aside>
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/console.js"></script>
+<script>
+  /* GET /api/admin/users -> {users, roles}; POST /api/admin/users; PATCH /api/admin/users/{id}
+     The API returns 422 for self-deactivate and self-role-change. The row for
+     the current user (data-self) must keep those controls disabled so the
+     click never happens. */
+  window.addEventListener('load', async () => {
+    try {
+      const me = await NJW.api.me();
+      const { users } = await NJW.api.users();
+      // render rows into [data-region="staff"], setting data-self on me.email
+    } catch (e) {}
+  });
+</script>
+</body>
+</html>

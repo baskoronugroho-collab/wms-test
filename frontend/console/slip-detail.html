@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PA-UT5-000318 — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/app.css">
+<link rel="stylesheet" href="../css/console.css">
+<link rel="stylesheet" href="../css/print.css">
+</head>
+<body>
+<div class="console" data-screen="slip-detail">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <span class="sidebar__mark">NINJA</span>
+        <span class="sidebar__product">Kilat WMS</span>
+      </div>
+      <nav class="sidebar__section">
+        <a class="sidebar__link" href="index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2"/><path d="M5.6 9v11.4h12.8V9"/></svg></span><span class="sidebar__label" data-id="Ringkasan" data-en="Overview">Ringkasan</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk & keluar</span>
+        <a class="sidebar__link" href="barang-masuk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10.5"/><path d="M8.2 10.2 12 14l3.8-3.8"/><path d="M4 17.5v3h16v-3"/></svg></span><span class="sidebar__label" data-id="Barang masuk" data-en="Inbound">Barang masuk</span></a>
+        <a class="sidebar__link" href="pesanan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V10.5"/><path d="M8.2 14.3 12 10.5l3.8 3.8"/><path d="M4 6.5v-3h16v3"/></svg></span><span class="sidebar__label" data-id="Pesanan" data-en="Orders">Pesanan</span></a>
+        <a class="sidebar__link" href="papan-antrean.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="5" height="15" rx="1.2"/><rect x="9.5" y="4.5" width="5" height="11" rx="1.2"/><rect x="15.5" y="4.5" width="5" height="7" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Papan antrean" data-en="Queue board">Papan antrean</span></a>
+        <a class="sidebar__link" href="stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="3.5" y="12.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="12.5" width="8" height="8" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Stok" data-en="Inventory">Stok</span></a>
+        <a class="sidebar__link" href="hitung-stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2l2.6 2.6 4.6-5.2"/></svg></span><span class="sidebar__label" data-id="Hitung stok" data-en="Stock count">Hitung stok</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
+        <a class="sidebar__link is-current" href="slip-putaway.html" aria-current="page"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h7.5L18 8v12.5H6z"/><path d="M13.2 3.7V8H18"/><path d="M8.8 12h6.4"/><path d="M8.8 15.5h4.4"/></svg></span><span class="sidebar__label" data-id="Slip putaway" data-en="Putaway slips">Slip putaway</span></a>
+        <a class="sidebar__link" href="label-warna-hari.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="7" height="6" rx="1"/><rect x="13.5" y="4.5" width="7" height="6" rx="1"/><rect x="3.5" y="13.5" width="7" height="6" rx="1"/><rect x="13.5" y="13.5" width="7" height="6" rx="1"/></svg></span><span class="sidebar__label" data-id="Label & warna hari" data-en="Labels & day colour">Label & warna hari</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
+        <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
+        <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
+        <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
+        <a class="sidebar__link" href="simulator-grab.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><span class="sidebar__label" data-id="Simulator Grab" data-en="Grab simulator">Simulator Grab</span></a>
+        <a class="sidebar__link" href="mode-latihan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5v17"/><path d="M6.5 4.5h11l-2.2 4.2 2.2 4.2h-11"/></svg></span><span class="sidebar__label" data-id="Mode latihan" data-en="Training mode">Mode latihan</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <span class="sidebar__site">
+          <span class="sidebar__label" data-id="Lokasi aktif" data-en="Active site">Lokasi aktif</span>
+          <strong data-field="site-code">UT5</strong>
+        </span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="lang" role="group" aria-label="Bahasa">
+            <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+            <button class="lang__opt" data-lang="en" type="button">EN</button>
+          </span>
+          <button class="cbtn cbtn--icon cbtn--ghost" data-action="toggle-theme" type="button" aria-label="Ganti tema">◐</button>
+        </div>
+        <a class="sidebar__link" href="../index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg></span><span class="sidebar__label" data-id="Buka aplikasi station" data-en="Open station app">Buka aplikasi station</span></a>
+      </div>
+    </aside>
+  <main class="page">
+    <header class="page__head">
+      <div class="page__heading">
+        <span class="page__eyebrow" data-id="Cetak · slip putaway" data-en="Print · putaway slip">Cetak · slip putaway</span>
+        <h1 class="page__title" data-id="PA-UT5-000318" data-en="PA-UT5-000318">PA-UT5-000318</h1>
+        <p class="page__sub" data-id="Tampilan cetak A4. Warna hari tercetak sebagai blok penuh, bukan garis tipis — printer murah kehilangan garis tipis berwarna. Slip ini harus tetap terbaca kalau difotokopi hitam-putih." data-en="A4 print view. The day colour prints as a solid block, not a thin border — cheap printers lose thin colour. The slip must stay legible photocopied in black and white.">Tampilan cetak A4. Warna hari tercetak sebagai blok penuh, bukan garis tipis — printer murah kehilangan garis tipis berwarna. Slip ini harus tetap terbaca kalau difotokopi hitam-putih.</p>
+      </div>
+      <div class="page__actions">
+        <a class="cbtn" href="slip-putaway.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span data-id="Arsip slip" data-en="Slip archive">Arsip slip</span></a>
+        <button class="cbtn cbtn--primary" type="button" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="7.5" rx="1.5"/><path d="M7 16.5v4h10v-4"/></svg><span data-id="Cetak slip" data-en="Print slip">Cetak slip</span></button>
+      </div>
+    </header>
+    <div class="sheet__desk">
+      <article class="sheet" data-region="slip">
+        <header class="slip__head">
+          <div class="slip__id">
+            <span class="slip__kicker">Slip Putaway · Ninja Kilat WMS</span>
+            <span class="slip__no" data-field="slip-no">PA-UT5-000318</span>
+            <span class="slip__meta">Station <strong data-field="site">UT5</strong> — Ninja Kilat Untung Jawa 5</span>
+            <span class="slip__meta">Penerimaan <strong data-field="receipt">#318</strong> · Kiriman dari brand · Wardah Official Store</span>
+            <span class="slip__meta">Diterima oleh <strong data-field="by">rina.puspita@ninjavan.co</strong></span>
+            <span class="slip__meta">Dicetak <strong data-field="printed">9 Sep 2026 09.14</strong></span>
+          </div>
+          <div class="slip__color">
+            <div class="slip__color-block" data-field="color-block" style="background:#1A73C8;color:#FFFFFF">
+              <span class="slip__color-day" data-field="color-day">RABU</span>
+              <span class="slip__color-week" data-field="color-week">B</span>
+            </div>
+            <div class="slip__color-foot">
+              <span data-field="color-date">2026-09-09</span>
+              <span data-field="color-iso">W37</span>
+            </div>
+          </div>
+        </header>
+        <div class="slip__totals">
+          <span class="slip__total"><span class="slip__total-label">Baris</span><span class="slip__total-num" data-field="total-lines">14</span></span>
+          <span class="slip__total"><span class="slip__total-label">Unit diterima</span><span class="slip__total-num" data-field="total-units">1.284</span></span>
+          <span class="slip__total"><span class="slip__total-label">Baris berselisih</span><span class="slip__total-num" data-field="total-variance">3</span></span>
+          <span class="slip__total"><span class="slip__total-label">Tanggal masuk</span><span class="slip__total-num" data-field="inbound-date">09/09/26</span></span>
+        </div>
+        <table class="slip__table">
+          <thead><tr>
+            <th style="width:8mm">#</th>
+            <th>Produk</th>
+            <th style="width:26mm">Kode SKU</th>
+            <th style="width:30mm">Lokasi</th>
+            <th style="width:16mm;text-align:right">Kirim</th>
+            <th style="width:16mm;text-align:right">Terima</th>
+            <th style="width:16mm;text-align:right">Selisih</th>
+          </tr></thead>
+          <tbody data-region="slip-lines">
+            <tr>
+              <td class="qty" style="text-align:left">1</td>
+              <td>Glasting Liquid Lip 07 Rouge Flare</td>
+              <td class="loc" style="font-size:10pt">WDH-GLL-07</td>
+              <td class="loc">UT5-A-3-02</td>
+              <td class="qty">128</td>
+              <td class="qty">128</td>
+              <td class="var">—</td>
+            </tr>
+            <tr>
+              <td class="qty" style="text-align:left">2</td>
+              <td>Glasting Liquid Lip 08 Coral Dust</td>
+              <td class="loc" style="font-size:10pt">WDH-GLL-08</td>
+              <td class="loc">UT5-A-3-03</td>
+              <td class="qty">96</td>
+              <td class="qty">96</td>
+              <td class="var">—</td>
+            </tr>
+            <tr class="has-variance">
+              <td class="qty" style="text-align:left">3</td>
+              <td>Glasting Liquid Lip 01 Caramel Coat</td>
+              <td class="loc" style="font-size:10pt">WDH-GLL-01</td>
+              <td class="loc">UT5-A-3-04</td>
+              <td class="qty">64</td>
+              <td class="qty">61</td>
+              <td class="var">-3</td>
+            </tr>
+            <tr>
+              <td class="qty" style="text-align:left">4</td>
+              <td>Colorfit Velvet Matte Lipstick 04 Dusty Rose</td>
+              <td class="loc" style="font-size:10pt">WDH-CVM-04</td>
+              <td class="loc">UT5-A-3-05</td>
+              <td class="qty">80</td>
+              <td class="qty">80</td>
+              <td class="var">—</td>
+            </tr>
+            <tr>
+              <td class="qty" style="text-align:left">5</td>
+              <td>Colorfit Matte Lipstick 12 Deep Ruby</td>
+              <td class="loc" style="font-size:10pt">WDH-CML-12</td>
+              <td class="loc">UT5-B-1-02</td>
+              <td class="qty">72</td>
+              <td class="qty">72</td>
+              <td class="var">—</td>
+            </tr>
+            <tr class="has-variance">
+              <td class="qty" style="text-align:left">6</td>
+              <td>Instaperfect Mattesetter Lip Matte Paint 02</td>
+              <td class="loc" style="font-size:10pt">WDH-IMP-02</td>
+              <td class="loc">UT5-B-1-05</td>
+              <td class="qty">60</td>
+              <td class="qty">58</td>
+              <td class="var">-2</td>
+            </tr>
+            <tr>
+              <td class="qty" style="text-align:left">7</td>
+              <td>Colorfit Powder Foundation 03 Natural</td>
+              <td class="loc" style="font-size:10pt">WDH-CPF-03</td>
+              <td class="loc">UT5-C-2-01</td>
+              <td class="qty">48</td>
+              <td class="qty">48</td>
+              <td class="var">—</td>
+            </tr>
+            <tr>
+              <td class="qty" style="text-align:left">8</td>
+              <td>Everyday Cushion Foundation 02 Light Beige</td>
+              <td class="loc" style="font-size:10pt">WDH-ECF-02</td>
+              <td class="loc">UT5-C-2-02</td>
+              <td class="qty">40</td>
+              <td class="qty">40</td>
+              <td class="var">—</td>
+            </tr>
+            <tr class="has-variance">
+              <td class="qty" style="text-align:left">9</td>
+              <td>UV Shield Airy Smooth Sunscreen SPF 50 PA+++</td>
+              <td class="loc" style="font-size:10pt">WDH-UVS-030</td>
+              <td class="loc">UT5-C-5-04</td>
+              <td class="qty">160</td>
+              <td class="qty">164</td>
+              <td class="var">+4</td>
+            </tr>
+            <tr>
+              <td class="qty" style="text-align:left">10</td>
+              <td>Lightening Day Cream SPF 30</td>
+              <td class="loc" style="font-size:10pt">WDH-LDC-030</td>
+              <td class="loc">UT5-D-2-01</td>
+              <td class="qty">120</td>
+              <td class="qty">120</td>
+              <td class="var">—</td>
+            </tr>
+            <tr>
+              <td class="qty" style="text-align:left">11</td>
+              <td>Crystal Secret Hyaluron Serum</td>
+              <td class="loc" style="font-size:10pt">WDH-CSH-020</td>
+              <td class="loc">UT5-D-2-04</td>
+              <td class="qty">90</td>
+              <td class="qty">90</td>
+              <td class="var">—</td>
+            </tr>
+            <tr>
+              <td class="qty" style="text-align:left">12</td>
+              <td>Perfect Bright Micellar Water</td>
+              <td class="loc" style="font-size:10pt">WDH-PBM-100</td>
+              <td class="loc">UT5-E-1-01</td>
+              <td class="qty">144</td>
+              <td class="qty">144</td>
+              <td class="var">—</td>
+            </tr>
+            <tr>
+              <td class="qty" style="text-align:left">13</td>
+              <td>Colorfit Matte Lipstick 08 Rosy Cheeks</td>
+              <td class="loc" style="font-size:10pt">WDH-CML-08</td>
+              <td class="loc">UT5-F-3-02</td>
+              <td class="qty">56</td>
+              <td class="qty">56</td>
+              <td class="var">—</td>
+            </tr>
+            <tr>
+              <td class="qty" style="text-align:left">14</td>
+              <td>Lightening Night Cream</td>
+              <td class="loc" style="font-size:10pt">WDH-LNC-030</td>
+              <td class="loc">UT5-G-1-03</td>
+              <td class="qty">126</td>
+              <td class="qty">126</td>
+              <td class="var">—</td>
+            </tr>
+          </tbody>
+        </table>
+        <section class="slip__deadline">
+          <span class="slip__deadline-title">Batas mengangkat selisih</span>
+          <p class="slip__deadline-body">Selisih pada slip ini harus dilaporkan ke brand paling lambat <strong data-field="deadline">Kamis, 10 September 2026, jam 09.12</strong> — <strong>24 jam</strong> sejak slip diterbitkan. Setelah batas itu, kekurangan barang menjadi tanggungan station dan tidak bisa ditagihkan kembali. Simpan slip ini di berkas station.</p>
+        </section>
+        <div class="slip__sign">
+          <div class="slip__sign-box"><div class="slip__sign-rule"></div><div class="slip__sign-label">Diterima oleh (nama &amp; tanda tangan)</div></div>
+          <div class="slip__sign-box"><div class="slip__sign-rule"></div><div class="slip__sign-label">Diperiksa supervisor (nama &amp; tanda tangan)</div></div>
+          <div class="slip__sign-box"><div class="slip__sign-rule"></div><div class="slip__sign-label">Tanggal</div></div>
+        </div>
+        <footer class="slip__foot">
+          <span>Ninja Kilat WMS · slip diterbitkan sekali; cetakan berikutnya adalah salinan</span>
+          <span>PA-UT5-000318</span>
+        </footer>
+      </article>
+    </div>
+  </main>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/console.js"></script>
+<script>
+  /* GET /api/putaway-slips/{id} — or /api/receipts/{id}/putaway-slip, which
+     issues the slip on first request after the receipt is completed.
+     Returns day_color{hex,ink,day_id,date,iso_week,week_parity} and
+     discrepancy_deadline. Issued ONCE: later fetches return the stored
+     payload, never a fresh render against master data that has since moved. */
+  window.addEventListener('load', async () => {
+    const id = new URLSearchParams(location.search).get('id');
+    if (!id) return;
+    try {
+      const s = await NJW.api.slip(id);
+      const b = document.querySelector('[data-field="color-block"]');
+      b.style.background = s.day_color.hex;
+      b.style.color = s.day_color.ink;
+      document.querySelector('[data-field="color-day"]').textContent = s.day_color.day_id.toUpperCase();
+      document.querySelector('[data-field="color-week"]').textContent = s.day_color.week_parity;
+      document.querySelector('[data-field="color-date"]').textContent = s.day_color.date;
+      document.querySelector('[data-field="color-iso"]').textContent = 'W' + s.day_color.iso_week;
+      document.querySelector('[data-field="slip-no"]').textContent = s.slip_no;
+      document.title = s.slip_no + ' — Ninja Kilat WMS';
+    } catch (e) {}
+  });
+</script>
+</body>
+</html>

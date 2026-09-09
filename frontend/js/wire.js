@@ -1,21 +1,20 @@
-/* wire.js — connects the design's screens to the API.
+/* wire.js — live behaviour for the Station surface and the pick queue board.
  *
- * The design ships one HTML page per screen with demo behaviour in a trailing
- * <script>. This file replaces all of that: it boots identity, fills the chrome,
- * dispatches on [data-screen], and drives each flow against real endpoints.
+ * The design ships each screen with a demo <script> and the endpoint named in a
+ * comment; this file replaces that behaviour with real calls through NJW.api.
+ * It never introduces markup of its own vocabulary: it fills the [data-field]
+ * and [data-region] hooks the design already placed, and builds cards and rows
+ * from the same classes the mockups use, so a restyle stays a CSS job.
  *
- * Nothing here changes the design's markup vocabulary — it populates the nodes
- * the design already marked (`data-field`, `data-region`) and builds lists from
- * the same classes the mockups use, so restyling stays a CSS job.
- *
- * Flow state crosses pages in sessionStorage: each screen is its own document.
+ * Load order: api.js, scan.js, app.js, then this.
  */
 (function () {
   'use strict';
 
   const NJW = (window.NJW = window.NJW || {});
+  const api = () => NJW.api;
 
-  /* ---------- context that survives a page change ---------- */
+  /* ---------- flow state across pages (each screen is its own document) ---- */
 
   const CTX = {
     get(k) { try { return JSON.parse(sessionStorage.getItem('njw.' + k)); } catch { return null; } },
@@ -24,57 +23,44 @@
   };
   NJW.ctx = CTX;
 
-  /* ---------- api ---------- */
-
-  async function api(method, path, body) {
-    const res = await fetch('/api' + path, {
-      method,
-      headers: body ? { 'content-type': 'application/json' } : undefined,
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    let data = null;
-    try { data = await res.json(); } catch { /* empty body */ }
-    if (!res.ok) {
-      const err = new Error((data && data.detail) || ('HTTP ' + res.status));
-      err.status = res.status;
-      throw err;
-    }
-    return data;
-  }
-  const key = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
-  NJW.api = api;
-
-  /* ---------- small helpers ---------- */
-
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
-  const field = f => $('[data-field="' + f + '"]');
-  const setField = (f, v) => { const el = field(f); if (el) el.textContent = v; };
+  const field = (f, r) => $('[data-field="' + f + '"]', r);
+  const region = f => $('[data-region="' + f + '"]');
+  const setF = (f, v) => { const el = field(f); if (el) el.textContent = v; };
   const esc = s => String(s ?? '').replace(/[&<>"']/g,
     c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const go = p => { location.href = p; };
+  const key = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
 
-  /* A location code is what a person navigates by, so rack and level are the
-     parts that get the accent — the design's own .code__hl. */
-  function codeHtml(code) {
-    const p = String(code || '').split('-');
-    if (p.length < 3) return esc(code || '—');
-    return esc(p[0]) + '-<span class="code__hl">' + esc(p[1]) + '</span>-' +
-      '<span class="code__hl">' + esc(p[2]) + '</span>' + (p[3] ? '-' + esc(p[3]) : '');
-  }
-
-  function photoFor(sku) {
-    const code = (sku && sku.brand_sku_code ? sku.brand_sku_code : '').toLowerCase();
-    return code ? 'assets/products/' + code + '.jpg' : 'assets/products/placeholder.svg';
-  }
-
-  /* The design writes both languages into the markup as data-id / data-en.
-     Text we generate has to carry both or the EN toggle would blank it. */
+  /* app.js rewrites textContent from data-id on load and on every language
+     switch, so generated copy must set BOTH attributes or the EN toggle blanks
+     it. data-id is the runtime source of truth, not the text node. */
   function bi(el, id, en) {
     if (!el) return;
     el.dataset.id = id;
     el.dataset.en = en || id;
     el.textContent = (localStorage.getItem('njw.lang') === 'en') ? (en || id) : id;
+  }
+  const biAttr = (id, en) => 'data-id="' + esc(id) + '" data-en="' + esc(en || id) + '"';
+
+  /* app.js applies the language once on load and keeps applyLang private, so
+     anything rendered afterwards would stay Indonesian for an EN reader until
+     they toggled. Re-apply over whatever we just built, without touching
+     app.js — data-id remains the source of truth either way. */
+  function applyLangTo(root) {
+    const en = localStorage.getItem('njw.lang') === 'en';
+    (root || document).querySelectorAll('[data-id]').forEach(el => {
+      const v = en ? (el.dataset.en || el.dataset.id) : el.dataset.id;
+      if (v != null) el.textContent = v;
+    });
+  }
+
+  function codeHtml(code) {
+    const p = String(code || '').split('-');
+    if (p.length < 3) return esc(code || '—');
+    return esc(p[0]) + '-<span class="code__hl">' + esc(p[1]) + '</span>-' +
+      '<span class="code__hl">' + esc(p[2]) + '</span>' + (p[3] ? '-' + esc(p[3]) : '');
   }
 
   function say(msg) {
@@ -83,7 +69,7 @@
       bar = document.createElement('div');
       bar.className = 'wire-toast notice notice--action';
       bar.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);' +
-        'z-index:60;max-width:90vw;box-shadow:0 6px 24px rgba(0,0,0,.2)';
+        'z-index:200;max-width:90vw;box-shadow:var(--sh-2,0 6px 24px rgba(0,0,0,.2))';
       document.body.appendChild(bar);
     }
     bar.textContent = msg;
@@ -92,17 +78,40 @@
   }
 
   function fail(e) {
-    if (e && e.status === 401) { go('14-terkunci.html'); return; }
+    if (e && e.status === 401) { go(isConsole() ? '../14-terkunci.html' : '14-terkunci.html'); return; }
     say((e && e.message) || 'Ada masalah. Panggil supervisor.');
   }
 
-  /* ---------- boot: identity, site, chrome ---------- */
+  const isConsole = () => location.pathname.includes('/console/');
+
+  /* ---------- day colour: colour + day + date, never colour alone ---------- */
+
+  async function paintDayColour() {
+    if (!region('day-color') && !field('day-name')) return;
+    try {
+      const { today } = await api().dayColors();
+      const block = field('day-block');
+      if (block) {
+        block.style.background = today.hex;
+        block.style.color = today.ink;
+      }
+      setF('day-name', today.day_id);
+      setF('day-date', NJW.fmt.date(today.date));
+      setF('day-wk', 'W' + today.iso_week);
+      setF('day-parity', today.week_parity);
+      const el = field('day-name');
+      if (el) el.dataset.en = today.day_en;
+      return today;
+    } catch (e) { /* the slip still prints without it */ }
+  }
+
+  /* ---------- boot ---------- */
 
   let ME = null, SITE = null;
 
   async function boot() {
     try {
-      ME = await api('GET', '/me');
+      ME = await api().me();
     } catch (e) {
       if (e.status === 403) {
         document.body.innerHTML =
@@ -110,10 +119,9 @@
           '<span class="banner__icon">!</span>' + esc(e.message) + '</div>';
         return false;
       }
-      go('14-terkunci.html');
+      go(isConsole() ? '../14-terkunci.html' : '14-terkunci.html');
       return false;
     }
-
     const saved = CTX.get('site');
     SITE = ME.sites.find(s => s.id === saved)
       || ME.sites.find(s => s.id === ME.default_site_id)
@@ -122,65 +130,59 @@
     NJW.me = ME; NJW.site = SITE;
 
     paintChrome();
-    // Must be /api/health, not /health: the ingress routes everything except
-    // /api to nginx, which answers /health with index.html and a 200 — a
-    // heartbeat that can never fail is worse than none.
     NJW.startHeartbeat('/api/health', 20000);
     return true;
   }
 
   function paintChrome() {
-    const user = $('.chrome__user');
-    if (user) user.textContent = ME.name + ' · ' + (SITE ? SITE.code : '—');
+    $$('.chrome__user, [data-field="user-name"]').forEach(el => {
+      el.textContent = ME.name + (SITE ? ' · ' + SITE.code : '');
+    });
+    setF('site-code', SITE ? SITE.code : '—');
 
-    // The site picker replaces the mockup's static "Station UT5" label.
     const mode = $('.chrome__mode');
-    if (mode && ME.sites.length && !$('#siteSel')) {
-      const screen = ($('.app') || {}).dataset ? $('.app').dataset.screen : '';
-      if (screen === 'home') {
-        const sel = document.createElement('select');
-        sel.id = 'siteSel';
-        sel.className = 'chrome__mode';
-        sel.style.cssText = 'background:var(--surface);color:var(--ink);' +
-          'border:1px solid var(--rule);min-height:40px;padding:0 8px';
-        sel.innerHTML = ME.sites.map(s =>
-          '<option value="' + s.id + '"' + (SITE && s.id === SITE.id ? ' selected' : '') + '>' +
-          esc(s.code) + (s.is_training ? ' · LATIHAN' : '') + '</option>').join('');
-        sel.onchange = () => { CTX.set('site', +sel.value); location.reload(); };
-        mode.replaceWith(sel);
-      } else {
-        mode.textContent = SITE ? SITE.code : '';
-      }
+    if (mode && !$('#siteSel') && ME.sites.length > 1 &&
+        ($('.app') || {}).dataset && $('.app').dataset.screen === 'home') {
+      const sel = document.createElement('select');
+      sel.id = 'siteSel';
+      sel.className = 'chrome__mode';
+      sel.style.cssText = 'background:var(--surface);color:var(--ink);' +
+        'border:1px solid var(--rule);border-radius:var(--r-sm,6px);min-height:40px;padding:0 8px';
+      sel.innerHTML = ME.sites.map(s =>
+        '<option value="' + s.id + '"' + (SITE && s.id === SITE.id ? ' selected' : '') + '>' +
+        esc(s.code) + (s.is_training ? ' · LATIHAN' : '') + '</option>').join('');
+      sel.onchange = () => { CTX.set('site', +sel.value); location.reload(); };
+      mode.replaceWith(sel);
+    } else if (mode && !mode.dataset.keep) {
+      mode.textContent = SITE ? SITE.code : '';
     }
 
-    // A training site must be impossible to be in by accident.
-    // Some screens (the wrong-item stop, the blocked screen) deliberately ship
-    // no chrome header, so this has to place itself without one.
-    if (SITE && SITE.is_training && !$('.wire-training')) {
+    // Some screens deliberately ship no .chrome (the full-bleed stop screen),
+    // so this has to place itself without one. That assumption broke in v1.
+    if (SITE && SITE.is_training && !$('.wire-training') && !isConsole()) {
       const b = document.createElement('div');
       b.className = 'wire-training banner banner--caution';
       b.style.cssText = 'min-height:44px;font-size:17px;letter-spacing:.06em';
-      b.innerHTML = '<span class="banner__icon" aria-hidden="true">!</span>' +
-        '<span data-id="MODE LATIHAN — barang tidak nyata, aman untuk salah" ' +
-        'data-en="TRAINING MODE — not real stock, safe to get wrong">' +
-        'MODE LATIHAN — barang tidak nyata, aman untuk salah</span>';
+      b.innerHTML = '<span class="banner__icon" aria-hidden="true">!</span><span ' +
+        biAttr('MODE LATIHAN — barang tidak nyata, aman untuk salah',
+               'TRAINING MODE — not real stock, safe to get wrong') +
+        '>MODE LATIHAN — barang tidak nyata, aman untuk salah</span>';
       const chrome = $('.chrome');
       if (chrome && chrome.parentNode) chrome.parentNode.insertBefore(b, chrome.nextSibling);
       else document.body.insertBefore(b, document.body.firstChild);
     }
   }
 
-  /* Tappable test barcodes, so a training screen works with no scanner and no
-     stock. Only ever rendered on a training site. */
-  async function testCodes(zone, after) {
-    if (!SITE || !SITE.is_training || !zone) return;
+  async function testCodes(zoneEl, after) {
+    if (!SITE || !SITE.is_training || !zoneEl) return;
     try {
-      const sheet = await api('GET', '/training/barcode-sheet?site_id=' + SITE.id + '&limit=18');
+      const sheet = await api().raw.get('/training/barcode-sheet?site_id=' + SITE.id + '&limit=18');
       if (!sheet.rows.length) return;
       const box = document.createElement('div');
       box.className = 'panel';
       box.style.cssText = 'padding:12px 14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center';
-      box.innerHTML = '<span class="eyebrow" data-id="Barcode uji" data-en="Test barcodes">Barcode uji</span>';
+      box.innerHTML = '<span class="eyebrow" ' + biAttr('Barcode uji', 'Test barcodes') +
+        '>Barcode uji</span>';
       sheet.rows.forEach(r => {
         const b = document.createElement('button');
         b.type = 'button';
@@ -191,120 +193,61 @@
         b.onclick = () => after(r.barcode);
         box.appendChild(b);
       });
-      zone.parentNode.insertBefore(box, zone.nextSibling);
+      zoneEl.parentNode.insertBefore(box, zoneEl.nextSibling);
     } catch { /* training-only nicety */ }
   }
 
-  /* ---------- screens ---------- */
+  /* ======================= screens ======================= */
 
   const screens = {};
 
-  /* --- home --- */
+  /* ---- home ---- */
   screens.home = async () => {
     const cards = $$('.home__card');
     try {
-      const [tasks, inv] = await Promise.all([
-        api('GET', '/pick-tasks?site_id=' + SITE.id + '&status=ready'),
-        api('GET', '/inventory?site_id=' + SITE.id + '&limit=1000'),
+      const [board, plans] = await Promise.all([
+        api().pickBoard({ site_id: SITE.id }).catch(() => null),
+        api().opnamePlans({ site_id: SITE.id, limit: 1 }).catch(() => null),
       ]);
-      const n = tasks.tasks.length;
-      const pickNote = $('.note', cards[2]);
-      bi(pickNote, n ? n + ' pesanan menunggu diambil' : 'Belum ada pesanan',
-                   n ? n + ' orders waiting to pick' : 'No orders waiting');
-      const stale = inv.rows.filter(r => !r.last_counted_at).length;
-      bi($('.note', cards[3]), stale + ' keranjang belum dihitung',
-                               stale + ' baskets not counted yet');
-    } catch (e) { fail(e); }
-
-    // The Admin Page is its own box, separate from the Alur flow cards, and
-    // only ever shown to an admin — it curates shared master data, not a task.
-    if (ME.role === 'admin') {
-      const nav = $('.home');
-      const a = document.createElement('a');
-      a.className = 'home__card';
-      a.href = '17-admin.html';
-      a.innerHTML = '<span class="eyebrow">Admin</span>' +
-        '<span class="home__title" data-id="Admin page" data-en="Admin page">Admin page</span>' +
-        '<span class="note" data-id="Kelola data induk brand, produk, dan lokasi default" ' +
-        'data-en="Manage brand, product, and default-location master data">' +
-        'Kelola data induk brand, produk, dan lokasi default</span>';
-      nav.appendChild(a);
-    }
-
-    // Training tools live behind the rack-map card's row, not in the main menu.
-    if (SITE.is_training) {
-      const nav = $('.home');
-      const a = document.createElement('button');
-      a.type = 'button';
-      a.className = 'home__card';
-      a.innerHTML = '<span class="eyebrow">Alur F</span>' +
-        '<span class="home__title" data-id="Alat latihan" data-en="Training tools">Alat latihan</span>' +
-        '<span class="note" data-id="Reset, muat skenario, buat pesanan uji" ' +
-        'data-en="Reset, load a scenario, make test orders">Reset, muat skenario, buat pesanan uji</span>';
-      a.onclick = trainingPanel;
-      nav.appendChild(a);
-    }
+      if (board) {
+        const waiting = board.lanes.find(l => l.key === 'waiting');
+        const note = cards[2] && $('.note', cards[2]);
+        bi(note,
+           waiting.count ? waiting.count + ' pesanan menunggu diambil' : 'Belum ada pesanan',
+           waiting.count ? waiting.count + ' orders waiting to pick' : 'No orders waiting');
+      }
+      if (plans && plans.plans.length) {
+        const p = plans.plans[0];
+        const left = p.total_baskets - p.counted;
+        bi(cards[3] && $('.note', cards[3]),
+           left + ' keranjang belum dihitung', left + ' baskets left to count');
+      }
+    } catch (e) { /* the menu still works */ }
   };
 
-  async function trainingPanel() {
-    const { scenarios } = await api('GET', '/training/scenarios');
-    const main = $('.main');
-    main.innerHTML = '<h1 class="h1" data-id="Alat latihan" data-en="Training tools">Alat latihan</h1>' +
-      '<div class="stats"><button class="btn btn--primary btn--lg" id="rst" ' +
-      'data-id="Reset lokasi latihan" data-en="Reset the training site">Reset lokasi latihan</button>' +
-      '<button class="btn btn--outline btn--lg" id="ord" ' +
-      'data-id="Buat 2 pesanan uji" data-en="Make 2 test orders">Buat 2 pesanan uji</button>' +
-      '<a class="btn btn--outline btn--lg" href="index.html" data-id="Kembali" data-en="Back">Kembali</a></div>' +
-      '<div class="list" id="scn">' + scenarios.map(s =>
-        '<div class="row"><span class="row__code code code--sm">' + esc(s.key) + '</span>' +
-        '<span class="row__name">' + esc(s.name_id) + ' — ' + esc(s.teaches) + '</span>' +
-        '<button class="btn btn--outline" data-k="' + esc(s.key) + '" ' +
-        'data-id="Muat" data-en="Load">Muat</button></div>').join('') + '</div>' +
-      '<pre class="panel" id="fx" style="padding:14px;font-size:13px;white-space:pre-wrap"></pre>';
-
-    $('#rst').onclick = async () => {
-      try { say((await api('POST', '/training/reset', { site_id: SITE.id })).message); }
-      catch (e) { fail(e); }
-    };
-    $('#ord').onclick = async () => {
-      try { say((await api('POST', '/training/orders/generate', { site_id: SITE.id, count: 2 })).message); }
-      catch (e) { fail(e); }
-    };
-    $$('#scn [data-k]').forEach(b => b.onclick = async () => {
-      try {
-        const r = await api('POST', '/training/load', { site_id: SITE.id, scenario: b.dataset.k });
-        $('#fx').textContent = JSON.stringify(r.fixture, null, 2);
-        say(r.message);
-      } catch (e) { fail(e); }
-    });
-  }
-
-  /* --- A: inbound --- */
+  /* ---- A: inbound ---- */
 
   screens['inbound-start'] = async () => {
-    // The mockup lists three fictional deliveries; replace the table with the
-    // real open receipts at this site, and make the button open a new one.
-    const table = $('.choice--primary .table tbody');
-    const btn = $('.choice--primary .btn');
-    if (table) table.closest('table').remove();
-
-    btn.textContent = btn.dataset.id = 'Mulai terima kiriman';
-    btn.dataset.en = 'Start receiving';
-    btn.removeAttribute('href');
-    btn.onclick = async (e) => {
-      e.preventDefault();
-      try {
-        const r = await api('POST', '/receipts', { site_id: SITE.id, source_type: 'from_brand' });
-        CTX.set('receipt', r.id);
-        CTX.set('receiptSession', 0);
-        go('02-barang-masuk-scan.html');
-      } catch (err) { fail(err); }
-    };
-
-    const zone = $('.scanzone').__zone;
+    await paintDayColour();
+    const primary = $('.choice--primary .btn') || $('.btn--primary');
+    if (primary) {
+      primary.removeAttribute('href');
+      primary.onclick = async (e) => {
+        e.preventDefault();
+        try {
+          const r = await api().raw.post('/receipts',
+            { site_id: SITE.id, source_type: 'from_brand' });
+          CTX.set('receipt', r.id);
+          CTX.set('receiptSession', 0);
+          go('02-barang-masuk-scan.html');
+        } catch (err) { fail(err); }
+      };
+    }
+    const zoneEl = $('.scanzone');
+    const zone = zoneEl && zoneEl.__zone;
     if (zone) zone.onScan(async code => {
       try {
-        const r = await api('POST', '/receipts', {
+        const r = await api().raw.post('/receipts', {
           site_id: SITE.id, source_type: 'from_hub_transfer', transfer_reference: code,
         });
         CTX.set('receipt', r.id);
@@ -318,109 +261,93 @@
   screens['inbound-scan'] = async () => {
     const receiptId = CTX.get('receipt');
     if (!receiptId) return go('01-mulai-barang-masuk.html');
+    await paintDayColour();
 
-    const zone = $('.scanzone').__zone;
-    const banner = $('[data-region="result"]');
+    const zoneEl = $('.scanzone');
+    const zone = zoneEl && zoneEl.__zone;
+    const banner = region('result');
     const mode = $('.chrome__mode');
-    if (mode) mode.textContent = 'Barang masuk · #' + receiptId;
+    if (mode) { mode.dataset.keep = '1'; mode.textContent = 'Barang masuk · #' + receiptId; }
 
-    let lastCode = null;
-
-    function showResult(kind, title, detail) {
+    function result(kind, title, detail) {
+      if (!banner) return;
       banner.className = 'banner banner--' + kind;
-      banner.innerHTML = '<span class="banner__icon banner__icon--round" aria-hidden="true">' +
+      banner.innerHTML =
+        '<span class="banner__icon banner__icon--round" aria-hidden="true">' +
         (kind === 'accept' ? '✓' : '!') + '</span><span>' + esc(title) + '</span>' +
-        '<span class="chrome__sep"></span><span class="banner__detail" data-field="product">' +
-        esc(detail) + '</span>';
+        '<span class="chrome__sep"></span>' +
+        '<span class="banner__detail" data-field="product">' + esc(detail) + '</span>';
     }
 
-    function paintProduct(sku, locationCode, basketQty, capacityNote) {
-      const left = $('.row-split .col');
-      const img = $('.product__photo', left);
-      if (img) { img.src = photoFor(sku); img.alt = sku.name_display; }
-      $('.product__meta', left).textContent =
+    function paintProduct(sku, locationCode, basketQty) {
+      const img = $('.product__photo');
+      if (img) {
+        img.dataset.photoKey = (sku.brand_sku_code || '').toLowerCase();
+        img.alt = sku.name_display;
+      }
+      const meta = $('.product__meta');
+      if (meta) meta.textContent =
         [sku.brand_code, sku.unit_size, sku.brand_sku_code].filter(Boolean).join(' · ');
-      $('.product__name', left).textContent = sku.name_display;
-
+      const name = $('.product__name');
+      if (name) name.textContent = sku.name_display;
       const codeEl = $('.code--xl');
       if (codeEl) codeEl.innerHTML = codeHtml(locationCode);
-      const lede = $('.lede');
       const parts = String(locationCode || '').split('-');
-      if (lede && parts.length >= 3) {
-        bi(lede, 'Rak ' + parts[1] + ', tingkat ' + parts[2] + '.',
-                 'Rack ' + parts[1] + ', level ' + parts[2] + '.');
+      if (parts.length >= 3) {
+        bi($('.lede'), 'Rak ' + parts[1] + ', tingkat ' + parts[2] + '.',
+                       'Rack ' + parts[1] + ', level ' + parts[2] + '.');
       }
-      setField('basket-qty', basketQty);
-      const foot = field('basket-qty') && field('basket-qty').nextElementSibling;
-      if (foot && capacityNote) bi(foot, capacityNote, capacityNote);
+      setF('basket-qty', basketQty);
+      if (NJW.paintPhotos) NJW.paintPhotos();
     }
 
     async function doScan(code) {
-      lastCode = code;
       try {
-        const r = await api('POST', '/receipts/' + receiptId + '/scan',
+        const r = await api().raw.post('/receipts/' + receiptId + '/scan',
           { code, qty: 1, idempotency_key: key() });
-
         if (r.accepted) {
           CTX.set('receiptSession', r.session_total);
-          setField('session-qty', r.session_total);
+          setF('session-qty', r.session_total);
           paintProduct(r.sku, r.location_code, r.qty_in_basket);
           if (r.outcome === 'over_capacity') {
             zone.accept('Keranjang penuh', r.message);
-            showResult('caution', 'Keranjang penuh', r.message);
+            result('caution', 'Keranjang penuh', r.message);
           } else {
             zone.accept('Diterima', 'Simpan di ' + r.location_code);
-            showResult('accept', 'Diterima', r.sku.name_display);
+            result('accept', 'Diterima', r.sku.name_display);
           }
-          NJW.undo.push({ code, qty: 1 });
+          NJW.undo.push({ code });
           return;
         }
-
         if (r.outcome === 'no_slot') {
           CTX.set('pendingSku', r.sku);
           CTX.set('pendingCode', code);
-          go('04-buat-keranjang.html');
-          return;
+          return go('04-buat-keranjang.html');
         }
-
         CTX.set('pendingCode', code);
         zone.reject('Barcode tidak dikenal', code);
         go('03-barcode-tidak-dikenal.html');
-      } catch (e) {
-        zone.reject('Gagal', e.message);
-      }
+      } catch (e) { zone.reject('Gagal', e.message); }
     }
 
-    zone.onScan(doScan);
-    testCodes($('.scanzone'), doScan);
-    setField('session-qty', CTX.get('receiptSession') || 0);
-
-    const undoBtn = $('[data-action="undo"]');
-    if (undoBtn) undoBtn.onclick = () => {
-      const last = NJW.undo.pop();
-      if (!last) return say('Tidak ada yang bisa dibatalkan.');
-      say('Batalkan belum tersedia — catat ke supervisor.');
-      NJW.undo.push(last);
-    };
+    if (zone) { zone.onScan(doScan); testCodes(zoneEl, doScan); }
+    setF('session-qty', CTX.get('receiptSession') || 0);
 
     const finish = $('.btn--primary');
     if (finish) finish.onclick = async () => {
       try {
-        const s = await api('POST', '/receipts/' + receiptId + '/complete');
-        CTX.del('receipt');
-        say('Selesai: ' + s.total_units + ' unit.');
-        setTimeout(() => go('index.html'), 900);
+        await api().raw.post('/receipts/' + receiptId + '/complete', {});
+        go('15-penerimaan-selesai.html');
       } catch (e) { fail(e); }
     };
+    const undo = $('[data-action="undo"]');
+    if (undo) undo.onclick = () => say('Batalkan belum tersedia — catat ke supervisor.');
   };
 
   screens['unknown-barcode'] = async () => {
     const code = CTX.get('pendingCode') || '';
-    $$('.code').forEach(el => { if (/^\s*\d/.test(el.textContent) || el.dataset.wire) el.textContent = code; });
     const codeEl = $('.code--xl') || $('.code--lg') || $('.code');
     if (codeEl) codeEl.textContent = code;
-
-    // "Register to a product" needs a SKU chosen first; keep it to one search.
     const primary = $('.btn--primary');
     if (primary) {
       primary.removeAttribute('href');
@@ -429,19 +356,22 @@
         const q = prompt('Nama barang (ketik sebagian):');
         if (!q) return;
         try {
-          const r = await api('GET', '/skus?q=' + encodeURIComponent(q) + '&limit=10');
+          const r = await api().skus({ q, limit: 10 });
           if (!r.skus.length) return say('Tidak ketemu.');
-          const pick = r.skus.length === 1 ? r.skus[0] : r.skus[
-            Math.max(0, (parseInt(prompt(r.skus.map((s, i) =>
-              (i + 1) + '. ' + s.name_display).join('\n') + '\n\nNomor:'), 10) || 1) - 1)];
-          await api('POST', '/barcodes/register', { sku_id: pick.id, barcodes: [code] });
+          let pick = r.skus[0];
+          if (r.skus.length > 1) {
+            const n = parseInt(prompt(r.skus.map((s, i) =>
+              (i + 1) + '. ' + s.name_display).join('\n') + '\n\nNomor:'), 10);
+            pick = r.skus[Math.max(0, (n || 1) - 1)] || r.skus[0];
+          }
+          await api().registerBarcodes({ sku_id: pick.id, barcodes: [code] });
           say('Terdaftar: ' + pick.name_display);
           setTimeout(() => go('02-barang-masuk-scan.html'), 700);
         } catch (err) { fail(err); }
       };
     }
     $$('a.btn').forEach(a => {
-      if (/lewati|skip/i.test(a.textContent)) a.href = '02-barang-masuk-scan.html';
+      if (/lewati|skip|kembali|back/i.test(a.textContent)) a.href = '02-barang-masuk-scan.html';
     });
   };
 
@@ -449,24 +379,21 @@
     const sku = CTX.get('pendingSku');
     const code = CTX.get('pendingCode');
     if (!sku) return go('02-barang-masuk-scan.html');
-
-    let suggestion = null;
+    let suggestion;
     try {
-      suggestion = await api('GET', '/slots/suggest?site_id=' + SITE.id + '&sku_id=' + sku.id);
+      suggestion = await api().raw.get('/slots/suggest?site_id=' + SITE.id + '&sku_id=' + sku.id);
     } catch (e) { return fail(e); }
 
-    const name = $('.product__name');
-    if (name) name.textContent = sku.name_display;
+    const name = $('.product__name'); if (name) name.textContent = sku.name_display;
     const meta = $('.product__meta');
-    if (meta) meta.textContent = [sku.brand_code, sku.unit_size, sku.brand_sku_code]
-      .filter(Boolean).join(' · ');
+    if (meta) meta.textContent =
+      [sku.brand_code, sku.unit_size, sku.brand_sku_code].filter(Boolean).join(' · ');
     const img = $('.product__photo');
-    if (img) { img.src = photoFor(sku); img.alt = sku.name_display; }
-
+    if (img) { img.dataset.photoKey = (sku.brand_sku_code || '').toLowerCase(); img.alt = sku.name_display; }
     const codeEl = $('.code--xl') || $('.code--lg');
     if (codeEl) codeEl.innerHTML = codeHtml(suggestion.location_code);
-    const lede = $('.lede');
-    if (lede) bi(lede, suggestion.reason, suggestion.reason);
+    bi($('.lede'), suggestion.reason, suggestion.reason);
+    if (NJW.paintPhotos) NJW.paintPhotos();
 
     const primary = $('.btn--primary');
     if (primary) {
@@ -474,204 +401,92 @@
       primary.onclick = async (e) => {
         e.preventDefault();
         try {
-          await api('POST', '/slots', {
-            site_id: SITE.id, sku_id: sku.id, created_during_inbound: true,
-          });
+          await api().raw.post('/slots',
+            { site_id: SITE.id, sku_id: sku.id, created_during_inbound: true });
           CTX.del('pendingSku');
-          say('Keranjang dibuat: ' + suggestion.location_code);
-          // Resume the very unit that triggered this.
           if (code) {
-            await api('POST', '/receipts/' + CTX.get('receipt') + '/scan',
+            await api().raw.post('/receipts/' + CTX.get('receipt') + '/scan',
               { code, qty: 1, idempotency_key: key() });
           }
+          say('Keranjang dibuat: ' + suggestion.location_code);
           setTimeout(() => go('02-barang-masuk-scan.html'), 600);
         } catch (err) { fail(err); }
       };
     }
   };
 
-  screens['inbound-bulk-upload'] = async () => {
-    const fileInput = $('#fileInput');
-    const box = $('#resultBox');
-    const submit = $('#submitBtn');
-
-    function renderResult(r) {
-      box.style.display = 'block';
-      if (r.ok) {
-        box.className = 'panel banner banner--accept';
-        box.innerHTML = '<div class="col"><span>' + esc(r.message) + '</span></div>';
-      } else {
-        box.className = 'panel';
-        box.innerHTML = '<div class="col" style="gap:8px">' +
-          '<span class="banner__icon" aria-hidden="true">!</span>' +
-          '<span>' + esc(r.message) + '</span>' +
-          '<div class="list">' + r.errors.map(e =>
-            '<div class="row"><span class="row__name">' + esc(e.message) + '</span></div>'
-          ).join('') + '</div></div>';
-      }
-    }
-
-    submit.onclick = async () => {
-      const f = fileInput.files && fileInput.files[0];
-      if (!f) { say('Pilih file dulu.'); return; }
-      const fd = new FormData();
-      fd.append('file', f);
-      submit.setAttribute('aria-disabled', 'true');
-      try {
-        const res = await fetch('/api/stock-uploads', { method: 'POST', body: fd });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || ('HTTP ' + res.status));
-        renderResult(data);
-        if (data.ok) fileInput.value = '';
-      } catch (e) { fail(e); } finally {
-        submit.removeAttribute('aria-disabled');
-      }
-    };
-  };
-
-  screens['stock-upload-list'] = async () => {
-    const body = $('#itemsBody');
-    const emptyNote = $('#emptyNote');
+  screens['inbound-done'] = async () => {
+    const receiptId = CTX.get('receipt');
+    if (!receiptId) return go('index.html');
     try {
-      const r = await api('GET', '/stock-uploads/items?site_id=' + SITE.id + '&limit=500');
-      if (!r.items.length) { emptyNote.style.display = 'block'; return; }
-      body.innerHTML = r.items.map(it =>
-        '<tr>' +
-        '<td class="td-code">' + esc(it.site_code) + '</td>' +
-        '<td class="td-code">' + esc(it.barcode) + '</td>' +
-        '<td>' + esc(it.brand_name) + '</td>' +
-        '<td>' + esc(it.sku_name) + '</td>' +
-        '<td class="td-code">' + esc(it.location_code) + '</td>' +
-        '<td>' + esc(it.input_date_raw || '—') + '</td>' +
-        '<td>' + esc((it.uploaded_by || '—').split('@')[0]) + '</td>' +
-        '</tr>'
-      ).join('');
+      const slip = await api().receiptSlip(receiptId);
+      setF('slip-no', slip.slip_no);
+      setF('total-lines', slip.total_lines);
+      setF('total-units', slip.total_units);
+      const variance = slip.lines.reduce((n, l) => n + Math.abs(l.variance || 0), 0);
+      setF('total-variance', variance);
+
+      const block = field('day-block');
+      if (block) { block.style.background = slip.day_color.hex; block.style.color = slip.day_color.ink; }
+      setF('day-name', slip.day_color.day_id);
+      setF('day-date', NJW.fmt.date(slip.day_color.date));
+      setF('day-wk', 'W' + slip.day_color.iso_week);
+      setF('day-parity', slip.day_color.week_parity);
+
+      const host = region('lines');
+      if (host) host.innerHTML = slip.lines.map(l =>
+        '<tr><td class="td-code">' + esc(l.location_code || '—') + '</td>' +
+        '<td>' + esc(l.sku_name) + '</td>' +
+        '<td class="td-qty">' + l.qty_received + '</td></tr>').join('');
+
+      $$('a.btn, button.btn').forEach(b => {
+        if (/slip/i.test(b.textContent)) {
+          b.removeAttribute('href');
+          b.onclick = () => { CTX.del('receipt'); go('console/slip-detail.html?id=' + slip.id); };
+        } else if (/selesai|menu|done/i.test(b.textContent)) {
+          b.removeAttribute('href');
+          b.onclick = () => { CTX.del('receipt'); go('index.html'); };
+        }
+      });
     } catch (e) { fail(e); }
   };
 
-  screens['admin-product-master'] = async () => {
-    if (ME.role !== 'admin') {
-      document.body.innerHTML = '<div class="banner banner--stop" style="margin:40px">' +
-        '<span class="banner__icon">!</span>Halaman ini khusus admin.</div>';
-      return;
-    }
-
-    const body = $('#masterBody');
-    const emptyNote = $('#emptyNote');
-    const fileInput = $('#fileInput');
-    const submit = $('#submitBtn');
-    const uploadResult = $('#uploadResult');
-    const deleteBtn = $('#deleteSelectedBtn');
-
-    async function loadList() {
-      const r = await api('GET', '/admin/product-master?limit=1000');
-      if (!r.items.length) {
-        body.innerHTML = '';
-        emptyNote.style.display = 'block';
-        return;
-      }
-      emptyNote.style.display = 'none';
-      body.innerHTML = r.items.map(it =>
-        '<tr data-id="' + it.id + '">' +
-        '<td><input type="checkbox" class="rowSel" data-id="' + it.id + '"></td>' +
-        '<td>' + esc(it.brand_name) + '</td>' +
-        '<td>' + esc(it.product_name) + '</td>' +
-        '</tr>'
-      ).join('');
-    }
-
-    function renderUploadResult(r) {
-      uploadResult.style.display = 'block';
-      const failed = r.results.filter(x => !x.ok);
-      uploadResult.className = 'panel ' + (failed.length ? '' : 'banner banner--accept');
-      uploadResult.innerHTML = '<div class="col" style="gap:8px;padding:' + (failed.length ? '12px' : '0') + '">' +
-        '<span>' + esc(r.message) + '</span>' +
-        (failed.length ? '<div class="list">' + failed.map(x =>
-          '<div class="row"><span class="row__name">Baris ' + x.row_no + ': ' + esc(x.message) + '</span></div>'
-        ).join('') + '</div>' : '') + '</div>';
-    }
-
-    submit.onclick = async () => {
-      const f = fileInput.files && fileInput.files[0];
-      if (!f) { say('Pilih file dulu.'); return; }
-      const fd = new FormData();
-      fd.append('file', f);
-      try {
-        const res = await fetch('/api/admin/product-master/import', { method: 'POST', body: fd });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || ('HTTP ' + res.status));
-        renderUploadResult(data);
-        fileInput.value = '';
-        loadList();
-      } catch (e) { fail(e); }
-    };
-
-    deleteBtn.onclick = async () => {
-      const ids = $$('.rowSel:checked', body).map(cb => +cb.dataset.id);
-      if (!ids.length) { say('Pilih baris yang mau dihapus dulu.'); return; }
-      if (!confirm('Hapus ' + ids.length + ' baris data induk?')) return;
-      try {
-        await api('POST', '/admin/product-master/delete', { ids });
-        say(ids.length + ' baris dihapus.');
-        loadList();
-      } catch (e) { fail(e); }
-    };
-
-    loadList();
-  };
-
-  /* --- B: labelling (Mode B) --- */
+  /* ---- B: unit labelling ---- */
 
   screens['label-unit'] = async () => {
     let sku = CTX.get('labelSku');
     if (!sku) {
       try {
-        const r = await api('GET', '/skus?limit=200');
+        const r = await api().skus({ limit: 200 });
         const modeB = r.skus.filter(s => s.identity_mode === 'unit_label');
         if (!modeB.length) { say('Tidak ada barang tanpa barcode.'); return go('index.html'); }
         sku = modeB[0];
         CTX.set('labelSku', sku);
       } catch (e) { return fail(e); }
     }
-
     const img = $('.product__photo');
-    if (img) { img.src = photoFor(sku); img.alt = sku.name_display; }
-    $('.product__meta').textContent =
+    if (img) { img.dataset.photoKey = (sku.brand_sku_code || '').toLowerCase(); img.alt = sku.name_display; }
+    const meta = $('.product__meta');
+    if (meta) meta.textContent =
       [sku.brand_code, sku.unit_size, sku.brand_sku_code].filter(Boolean).join(' · ');
-    $('.product__name').textContent = sku.name_display;
-    const note = $('.notice--action span[style]');
-    if (note && sku.label_placement_note) bi(note, sku.label_placement_note, sku.label_placement_note);
+    const name = $('.product__name'); if (name) name.textContent = sku.name_display;
+    if (NJW.paintPhotos) NJW.paintPhotos();
+    await paintDayColour();
 
     let n = 0;
-    let stock = { unbound: 0 };
-    try { stock = await api('GET', '/plates/stock?site_id=' + SITE.id); } catch { /* shown below */ }
-    const lede = $('.lede');
-    if (lede) bi(lede, 'sisa ' + stock.unbound + ' label kosong',
-                       stock.unbound + ' blank labels left');
-    if (stock.unbound === 0) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'btn btn--outline btn--lg btn--block';
-      bi(b, 'Buat 200 label baru', 'Make 200 new labels');
-      b.onclick = async () => {
-        try { await api('POST', '/plates/ranges', { site_id: SITE.id, count: 200 });
-              say('200 label dibuat.'); location.reload(); } catch (e) { fail(e); }
-      };
-      $('.col--grow').prepend(b);
-    }
-
-    const zone = $('.scanzone').__zone;
-    zone.onScan(async code => {
+    const zoneEl = $('.scanzone');
+    const zone = zoneEl && zoneEl.__zone;
+    if (zone) zone.onScan(async code => {
       try {
-        const r = await api('POST', '/plates/bind', {
+        const r = await api().raw.post('/plates/bind', {
           site_id: SITE.id, sku_id: sku.id, plate_code: code, idempotency_key: key(),
         });
         if (r.accepted) {
           n = r.bound_count;
-          setField('count', n);
+          setF('count', n);
           const bar = field('bar');
           if (bar) bar.style.width = Math.min(100, n / 200 * 100) + '%';
-          setField('last', code);
+          setF('last', code);
           NJW.undo.push({ plate: code });
           zone.accept('Tercatat', 'Simpan di ' + r.location_code);
         } else if (r.outcome === 'already_bound') {
@@ -689,82 +504,77 @@
       const last = NJW.undo.pop();
       if (!last) return say('Tidak ada yang bisa dibatalkan.');
       try {
-        await api('POST', '/plates/' + encodeURIComponent(last.plate) + '/unbind?reason=undo');
-        setField('count', Math.max(0, --n));
+        await api().raw.post('/plates/' + encodeURIComponent(last.plate) + '/unbind?reason=undo', {});
+        setF('count', Math.max(0, --n));
         say('Label dilepas.');
       } catch (e) { fail(e); }
     };
-
     const done = $('.btn--primary');
     if (done) done.onclick = () => { CTX.del('labelSku'); go('index.html'); };
   };
 
   screens['label-bound'] = async () => {
-    const msg = CTX.get('boundMsg') || '';
-    const plate = CTX.get('boundPlate') || '';
     const codeEl = $('.code--xl') || $('.code--lg') || $('.code');
-    if (codeEl) codeEl.textContent = plate;
-    const lede = $('.lede');
-    if (lede) bi(lede, msg, msg);
+    if (codeEl) codeEl.textContent = CTX.get('boundPlate') || '';
+    bi($('.lede'), CTX.get('boundMsg') || '', CTX.get('boundMsg') || '');
     $$('a.btn').forEach(a => { a.href = '05-label-unit.html'; });
   };
 
-  /* --- C: pick --- */
+  /* ---- C: pick ---- */
 
   screens.pick = async () => {
     let task = CTX.get('task');
     try {
       if (!task) {
-        const list = await api('GET', '/pick-tasks?site_id=' + SITE.id + '&status=ready');
+        const list = await api().pickTasks({ site_id: SITE.id, status: 'ready' });
         if (!list.tasks.length) {
           $('.main').innerHTML =
-            '<h1 class="h1" data-id="Belum ada pesanan" data-en="No orders waiting">Belum ada pesanan</h1>' +
-            '<p class="lede" data-id="Tunggu pesanan masuk dari Grab." ' +
-            'data-en="Wait for an order to arrive from Grab.">Tunggu pesanan masuk dari Grab.</p>' +
-            '<a class="btn btn--primary btn--lg" href="index.html" data-id="Kembali" data-en="Back">Kembali</a>';
+            '<h1 class="h1" ' + biAttr('Belum ada pesanan', 'No orders waiting') +
+            '>Belum ada pesanan</h1><p class="lede" ' +
+            biAttr('Tunggu pesanan masuk dari Grab.', 'Wait for an order from Grab.') +
+            '>Tunggu pesanan masuk dari Grab.</p>' +
+            '<a class="btn btn--primary btn--lg" href="index.html" ' +
+            biAttr('Kembali', 'Back') + '>Kembali</a>';
           return;
         }
-        task = await api('POST', '/pick-tasks/' + list.tasks[0].id + '/claim');
+        task = await api().raw.post('/pick-tasks/' + list.tasks[0].id + '/claim', {});
         CTX.set('task', task);
       }
     } catch (e) { return fail(e); }
 
     const mode = $('.chrome__mode');
-    if (mode) mode.textContent = 'Ambil · ' + task.external_ref;
+    if (mode) { mode.dataset.keep = '1'; mode.textContent = 'Ambil · ' + task.external_ref; }
 
-    function currentLine() {
-      return task.lines.find(l => l.status === 'pending');
-    }
+    const currentLine = () => task.lines.find(l => l.status === 'pending');
 
     function paint() {
       const line = currentLine();
       if (!line) return finish();
-
-      $('.code--xl').innerHTML = codeHtml(line.location_code);
+      const codeEl = $('.code--xl');
+      if (codeEl) codeEl.innerHTML = codeHtml(line.location_code);
       const parts = String(line.location_code || '').split('-');
       if (parts.length >= 3) {
         bi($('.lede'), 'Rak ' + parts[1] + ', tingkat ' + parts[2] + '.',
                        'Rack ' + parts[1] + ', level ' + parts[2] + '.');
       }
-      $('.counter__num').textContent = line.qty_required - line.qty_picked;
-      const sub = $('.counter .lede');
+      const num = $('.counter__num');
+      if (num) num.textContent = line.qty_required - line.qty_picked;
       const idx = task.lines.indexOf(line) + 1;
-      if (sub) bi(sub, 'Barang ' + idx + ' dari ' + task.lines.length,
-                       'Item ' + idx + ' of ' + task.lines.length);
-
+      bi($('.counter .lede'), 'Barang ' + idx + ' dari ' + task.lines.length,
+                              'Item ' + idx + ' of ' + task.lines.length);
       const img = $('.product__photo');
-      if (img) { img.src = 'assets/products/placeholder.svg'; img.alt = line.sku_name; }
-      $('.product__name').textContent = line.sku_name;
-      $('.product__meta').textContent = line.location_code || '';
-      return line;
+      if (img) { img.dataset.photoKey = ''; img.alt = line.sku_name; }
+      const name = $('.product__name'); if (name) name.textContent = line.sku_name;
+      const meta = $('.product__meta'); if (meta) meta.textContent = line.location_code || '';
     }
 
-    const zone = $('.scanzone').__zone;
-    zone.onScan(async code => {
+    const zoneEl = $('.scanzone');
+    const zone = zoneEl && zoneEl.__zone;
+    if (zone) zone.onScan(async code => {
       const line = currentLine();
       if (!line) return;
       try {
-        const r = await api('POST', '/pick-lines/' + line.id + '/confirm', {
+        const r = await api().raw.post('/pick-lines/' + line.id + '/confirm', {
           code, qty: line.qty_required - line.qty_picked, idempotency_key: key(),
         });
         if (!r.accepted) {
@@ -774,8 +584,7 @@
             location: line.location_code,
           });
           zone.reject('Salah barang', r.message);
-          setTimeout(() => go('08-salah-barang.html'), 900);
-          return;
+          return setTimeout(() => go('08-salah-barang.html'), 900);
         }
         zone.accept('Benar', line.sku_name);
         line.qty_picked = r.qty_picked;
@@ -787,61 +596,51 @@
     });
 
     async function finish() {
-      try { await api('POST', '/pick-tasks/' + task.id + '/complete'); } catch { /* already done */ }
+      try { await api().raw.post('/pick-tasks/' + task.id + '/complete', {}); } catch { /* done */ }
       CTX.set('doneTask', task);
       CTX.del('task');
       go('09-pesanan-selesai.html');
     }
 
     paint();
-    testCodes($('.scanzone'), c => zone.handlers[0](c, zone));
-
+    if (zone) testCodes(zoneEl, c => zone.handlers[0](c, zone));
     const short = $('.btn--caution');
     if (short) short.onclick = () => say('Alur barang hilang belum dibuat — panggil supervisor.');
   };
 
   screens['wrong-item'] = async () => {
     const w = CTX.get('wrong') || {};
-
     const cards = $$('.card-compare');
-    const fill = (card, name, code) => {
+    const fill = (card, name) => {
       if (!card) return;
       const n = $('.product__name', card);
       if (n) n.textContent = name || '—';
-      const img = $('.card-compare__photo', card);
-      if (img) { img.src = 'assets/products/placeholder.svg'; img.alt = name || ''; }
-      const meta = $('.code--sm', card);
-      if (meta) meta.textContent = code || '';
+      const img = $('.card-compare__photo, .product__photo', card);
+      if (img) img.alt = name || '';
     };
-    fill(cards[0], w.scanned, '');
-    fill(cards[1], w.expected, w.location || '');
-
-    // The instruction names the basket, because that is where both items live.
-    const instr = $('.col p[style]');
+    fill(cards[0], w.scanned);
+    fill(cards[1], w.expected);
+    const instr = $('.col p[style]') || $('.lede');
     if (instr) {
-      const id = 'Kembalikan barang itu, lalu ambil ' + (w.expected || 'yang benar') +
-        ' dari keranjang yang sama' + (w.location ? ' — ' + w.location : '') + '.';
-      const en = 'Put that item back, then take ' + (w.expected || 'the right one') +
-        ' from the same basket' + (w.location ? ' — ' + w.location : '') + '.';
-      bi(instr, id, en);
+      bi(instr,
+        'Kembalikan barang itu, lalu ambil ' + (w.expected || 'yang benar') +
+        ' dari keranjang yang sama' + (w.location ? ' — ' + w.location : '') + '.',
+        'Put that item back, then take ' + (w.expected || 'the right one') +
+        ' from the same basket' + (w.location ? ' — ' + w.location : '') + '.');
     }
   };
 
   screens['pick-done'] = async () => {
     const done = CTX.get('doneTask');
     if (done) {
-      const tbody = $('.table tbody');
+      const tbody = $('.table tbody') || region('lines');
       if (tbody) tbody.innerHTML = done.lines.map(l =>
         '<tr><td class="td-code">' + esc(l.location_code || '') + '</td>' +
         '<td>' + esc(l.sku_name) + '</td>' +
         '<td class="td-qty">' + l.qty_picked + '</td></tr>').join('');
-
-      const eyebrow = $('.eyebrow');
       const units = done.lines.reduce((n, l) => n + l.qty_picked, 0);
-      if (eyebrow) bi(eyebrow, units + ' barang · ' + done.lines.length + ' keranjang',
-                               units + ' items · ' + done.lines.length + ' baskets');
-
-      // The POS owns the packing ticket; until it is wired, show the order ref.
+      bi($('.eyebrow'), units + ' barang · ' + done.lines.length + ' keranjang',
+                        units + ' items · ' + done.lines.length + ' baskets');
       const ticket = $('.panel .code');
       if (ticket) { ticket.textContent = done.external_ref; ticket.style.fontSize = '30px'; }
       CTX.del('doneTask');
@@ -850,71 +649,71 @@
     if (handoff) handoff.onclick = () => go('07-ambil-pesanan.html');
   };
 
-  /* --- D: stock count --- */
+  /* ---- D: stock count ---- */
 
   screens['count-list'] = async () => {
     let planId = CTX.get('plan');
     try {
       if (!planId) {
-        const p = await api('POST', '/opname/plans', { site_id: SITE.id, name: 'Hitung stok' });
-        planId = p.id;
+        const existing = await api().opnamePlans({ site_id: SITE.id, limit: 1 })
+          .catch(() => ({ plans: [] }));
+        const open = existing.plans.find(p => p.status !== 'closed');
+        planId = open ? open.id
+          : (await api().raw.post('/opname/plans', { site_id: SITE.id, name: 'Hitung stok' })).id;
         CTX.set('plan', planId);
       }
-      const d = await api('GET', '/opname/plans/' + planId);
+      const d = await api().raw.get('/opname/plans/' + planId);
       const count = $('.progress__count');
       if (count) count.innerHTML = d.plan.counted + ' / ' + d.plan.total_baskets +
-        ' <span class="note" data-id="keranjang selesai" data-en="baskets done">keranjang selesai</span>';
+        ' <span class="note" ' + biAttr('keranjang selesai', 'baskets done') + '>keranjang selesai</span>';
 
       const list = $('.list');
-      list.innerHTML = d.baskets.map((b, i) => {
-        const busy = b.status === 'counting' && b.claimed_by && b.claimed_by !== ME.email;
-        const done = b.status === 'finished';
-        const next = !busy && !done && !d.baskets.slice(0, i).some(x =>
-          x.status !== 'finished' && !(x.status === 'counting' && x.claimed_by !== ME.email));
-        return '<div class="row' + (done ? ' row--done' : busy ? ' row--claimed' : next ? ' row--next' : '') + '">' +
-          '<span class="row__code code code--md">' + esc(b.location_code) + '</span>' +
-          '<span class="row__name">' + esc(b.sku_name || '—') + '</span>' +
-          (busy ? '<span class="row__state"><span class="code code--sm">!</span>' +
-                  '<span>Sedang dihitung: ' + esc(b.claimed_by.split('@')[0]) + '</span></span>' : '') +
-          (done ? '<span class="row__state"><span class="pill"><span class="pill__mark">✓</span></span>' +
-                  '<span>Selisih ' + (b.variance > 0 ? '+' : '') + (b.variance || 0) + '</span></span>' : '') +
-          (busy || done
-            ? '<span class="btn is-locked" aria-disabled="true">' + (done ? 'Selesai' : 'Terkunci') + '</span>'
-            : '<button class="btn ' + (next ? 'btn--primary' : 'btn--outline') + '" data-b="' +
-              b.basket_id + '">' + (next ? 'Mulai hitung' : 'Hitung') + '</button>') +
-          '</div>';
-      }).join('');
-
-      $$('[data-b]', list).forEach(btn => btn.onclick = async () => {
-        try {
-          const s = await api('POST', '/opname/sessions',
-            { plan_id: planId, basket_id: +btn.dataset.b });
-          CTX.set('session', s);
-          go('11-hitung-menghitung.html');
-        } catch (e) { say(e.message); }
-      });
+      if (list) {
+        list.innerHTML = d.baskets.map((b, i) => {
+          const busy = b.status === 'counting' && b.claimed_by && b.claimed_by !== ME.email;
+          const done = b.status === 'finished';
+          const next = !busy && !done && !d.baskets.slice(0, i).some(x =>
+            x.status !== 'finished' && !(x.status === 'counting' && x.claimed_by !== ME.email));
+          return '<div class="row' + (done ? ' row--done' : busy ? ' row--claimed' : next ? ' row--next' : '') + '">' +
+            '<span class="row__code code code--md">' + esc(b.location_code) + '</span>' +
+            '<span class="row__name">' + esc(b.sku_name || '—') + '</span>' +
+            (busy ? '<span class="row__state"><span class="code code--sm">!</span><span>Sedang dihitung: ' +
+                    esc(b.claimed_by.split('@')[0]) + '</span></span>' : '') +
+            (done ? '<span class="row__state"><span class="pill"><span class="pill__mark">✓</span></span>' +
+                    '<span>Selisih ' + (b.variance > 0 ? '+' : '') + (b.variance || 0) + '</span></span>' : '') +
+            (busy || done
+              ? '<span class="btn is-locked" aria-disabled="true">' + (done ? 'Selesai' : 'Terkunci') + '</span>'
+              : '<button class="btn ' + (next ? 'btn--primary' : 'btn--outline') + '" data-b="' +
+                b.basket_id + '">' + (next ? 'Mulai hitung' : 'Hitung') + '</button>') +
+            '</div>';
+        }).join('');
+        $$('[data-b]', list).forEach(btn => btn.onclick = async () => {
+          try {
+            const s = await api().raw.post('/opname/sessions',
+              { plan_id: planId, basket_id: +btn.dataset.b });
+            CTX.set('session', s);
+            go('11-hitung-menghitung.html');
+          } catch (e) { say(e.message); }
+        });
+      }
     } catch (e) { fail(e); }
   };
 
   screens.counting = async () => {
     const s = CTX.get('session');
     if (!s) return go('10-hitung-pilih-keranjang.html');
-
-    const codeEl = $('.code--lg');
+    const codeEl = $('.code--lg') || $('.code--xl');
     if (codeEl) codeEl.innerHTML = codeHtml(s.location_code);
-    $('.product__name').textContent = s.sku_name || '—';
-    $('.product__meta').textContent = s.location_code || '';
-    const img = $('.product__photo');
-    if (img) { img.src = 'assets/products/placeholder.svg'; img.alt = s.sku_name || ''; }
+    const name = $('.product__name'); if (name) name.textContent = s.sku_name || '—';
+    const meta = $('.product__meta'); if (meta) meta.textContent = s.location_code || '';
 
-    // The design counts on a keypad rather than scan-per-unit; the backend
-    // records that as count_method 'manual', which is exactly what it is.
     const out = field('count');
-    out.textContent = '0';
+    if (out) out.textContent = '0';
     let typed = '';
-    const set = n => { out.textContent = String(Math.max(0, Math.min(999, n))); };
-    $('[data-action="inc"]').onclick = () => { typed = ''; set(+out.textContent + 1); };
-    $('[data-action="dec"]').onclick = () => { typed = ''; set(+out.textContent - 1); };
+    const set = n => { if (out) out.textContent = String(Math.max(0, Math.min(999, n))); };
+    const inc = $('[data-action="inc"]'), dec = $('[data-action="dec"]');
+    if (inc) inc.onclick = () => { typed = ''; set(+out.textContent + 1); };
+    if (dec) dec.onclick = () => { typed = ''; set(+out.textContent - 1); };
     $$('.keypad__key').forEach(k => k.onclick = () => {
       const v = k.dataset.key;
       if (v === 'del') typed = typed.slice(0, -1);
@@ -924,18 +723,19 @@
     });
 
     const save = $('.btn--primary');
-    save.removeAttribute('href');
-    save.onclick = async (e) => {
-      e.preventDefault();
-      try {
-        const r = await api('POST', '/opname/sessions/' + s.id + '/finish',
-          { manual_qty: +out.textContent });
-        CTX.set('result', Object.assign({}, r, {
-          location_code: s.location_code, sku_name: s.sku_name,
-        }));
-        go('12-hasil-hitung.html');
-      } catch (err) { fail(err); }
-    };
+    if (save) {
+      save.removeAttribute('href');
+      save.onclick = async (e) => {
+        e.preventDefault();
+        try {
+          const r = await api().raw.post('/opname/sessions/' + s.id + '/finish',
+            { manual_qty: +out.textContent });
+          CTX.set('result', Object.assign({}, r,
+            { location_code: s.location_code, sku_name: s.sku_name }));
+          go('12-hasil-hitung.html');
+        } catch (err) { fail(err); }
+      };
+    }
     const skip = $('a.btn--outline');
     if (skip) skip.href = '10-hitung-pilih-keranjang.html';
   };
@@ -943,29 +743,25 @@
   screens.variance = async () => {
     const r = CTX.get('result');
     if (!r) return go('10-hitung-pilih-keranjang.html');
-
     const head = $('.instr');
     if (head) {
-      $('.code', head).textContent = r.location_code || '';
-      const nameEl = head.lastElementChild;
-      if (nameEl) nameEl.textContent = r.sku_name || '';
+      const c = $('.code', head);
+      if (c) c.textContent = r.location_code || '';
+      if (head.lastElementChild) head.lastElementChild.textContent = r.sku_name || '';
     }
     const nums = $$('.reveal__num');
     if (nums[0]) nums[0].textContent = r.qty_expected;
     if (nums[1]) nums[1].textContent = r.qty_counted;
-    if (nums[2]) nums[2].textContent = (r.variance > 0 ? '+' : r.variance < 0 ? '−' : '') +
-      Math.abs(r.variance);
-
+    if (nums[2]) nums[2].textContent =
+      (r.variance > 0 ? '+' : r.variance < 0 ? '−' : '') + Math.abs(r.variance);
     const delta = $('.reveal__cell--delta');
     if (delta) {
-      const foot = delta.lastElementChild;
       const msg = r.variance === 0 ? 'Cocok dengan catatan'
         : Math.abs(r.variance) + (r.variance < 0 ? ' barang kurang dari catatan'
                                                  : ' barang lebih dari catatan');
-      bi(foot, msg, msg);
+      bi(delta.lastElementChild, msg, msg);
       if (r.variance === 0) delta.classList.remove('reveal__cell--delta');
     }
-
     const recount = $('.btn--primary');
     if (recount) {
       bi(recount, 'Hitung ulang ' + (r.location_code || ''), 'Recount ' + (r.location_code || ''));
@@ -975,11 +771,11 @@
     if (cont) { cont.href = '10-hitung-pilih-keranjang.html'; CTX.del('session'); }
   };
 
-  /* --- E: rack map --- */
+  /* ---- E: rack map ---- */
 
   screens['rack-map'] = async () => {
     try {
-      const m = await api('GET', '/sites/' + SITE.id + '/rack-map');
+      const m = await api().rackMap(SITE.id);
       const racks = m.racks.map(r => ({
         name: SITE.code.split('-').pop() + '-' + r.code,
         levels: r.levels.slice().sort((a, b) => b.level_no - a.level_no).map(lv => ({
@@ -993,29 +789,226 @@
           })),
         })),
       }));
-      NJW.renderRackMap($('[data-region="rackmap"]'), racks);
+      NJW.renderRackMap(region('rackmap') || $('.rackmap'), racks);
     } catch (e) { fail(e); }
   };
-
-  /* --- blocked --- */
 
   screens.blocked = async () => {
     const retry = $('.btn--primary');
     if (retry) {
       retry.removeAttribute('href');
       retry.onclick = async () => {
-        try { await api('GET', '/me'); go('index.html'); }
-        catch { say('Masih belum terhubung.'); }
+        try { await api().me(); go('index.html'); } catch { say('Masih belum terhubung.'); }
       };
     }
   };
 
-  /* ---------- go ---------- */
+  /* ======================= console: the pick queue board ================= */
+
+  screens['papan-antrean'] = async () => {
+    const BANDS = NJW.AGE_BANDS || { ageing: 300, late: 600, stuck: 900 };
+    const band = NJW.band || (s => s >= BANDS.late ? 'late' : s >= BANDS.ageing ? 'ageing' : 'normal');
+    const mins = s => Math.max(0, Math.floor((s || 0) / 60));
+    const initials = n => String(n || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+
+    let staged = null;
+
+    function rackDots(racks) {
+      if (!racks || !racks.length) return '';
+      return '<span class="pcard__racks"><span class="pcard__racks-label" ' +
+        biAttr('Rak', 'Racks') + '>Rak</span>' +
+        racks.map(r => '<span class="rackdot">' + esc(r) + '</span>').join('') + '</span>';
+    }
+
+    function testBand(c) {
+      return c.is_test
+        ? '<span class="pcard__test"><span class="pcard__test-badge">UJI COBA</span></span>' : '';
+    }
+
+    function facts(c) {
+      return '<span class="pcard__facts">' +
+        '<span><span class="n">' + c.line_count + '</span> <span ' +
+        biAttr('barang', 'lines') + '>barang</span></span>' +
+        '<span class="dot">·</span>' +
+        '<span><span class="n">' + c.total_units + '</span> <span ' +
+        biAttr('unit', 'units') + '>unit</span></span></span>';
+    }
+
+    function shortFlag(c) {
+      if (!c.short_lines) return '';
+      return '<span class="shortflag"><span aria-hidden="true">!</span><span>' +
+        c.short_lines + ' <span ' +
+        biAttr('baris kurang stok — perlu diputuskan orang',
+               'lines short — a person must decide') +
+        '>baris kurang stok — perlu diputuskan orang</span></span></span>';
+    }
+
+    function waitingCard(c) {
+      const b = band(c.age_seconds);
+      const chip = b === 'normal' ? '' :
+        '<span class="agechip agechip--' + b + '"><span class="agechip__dot"></span><span ' +
+        (b === 'late' ? biAttr('Terlambat', 'Late') : biAttr('Menua', 'Ageing')) + '>' +
+        (b === 'late' ? 'Terlambat' : 'Menua') + '</span></span>';
+      return '<article class="pcard' + (b === 'normal' ? '' : ' is-' + b) +
+        '" data-task="' + c.id + '" data-age-seconds="' + c.age_seconds + '">' +
+        '<span class="pcard__rule" aria-hidden="true"></span>' + testBand(c) +
+        '<span class="pcard__top"><span class="pcard__ref" data-field="ref">' +
+        esc(c.external_ref) + '</span></span>' +
+        '<span class="pcard__age"><span class="pcard__age-num" data-field="age">' +
+        mins(c.age_seconds) + '</span><span class="pcard__age-unit" ' +
+        biAttr('menit menunggu', 'min waiting') + '>menit menunggu</span>' + chip + '</span>' +
+        facts(c) + rackDots(c.racks) + shortFlag(c) + '</article>';
+    }
+
+    function claimedCard(c) {
+      const held = c.held_seconds || 0;
+      const stuck = held >= BANDS.stuck;
+      const who = c.claimed_by_name || (c.claimed_by || '').split('@')[0] || '—';
+      return '<article class="pcard' + (stuck ? ' is-stuck' : '') +
+        '" data-task="' + c.id + '" data-age-seconds="' + c.age_seconds + '">' +
+        '<span class="pcard__rule" aria-hidden="true"></span>' + testBand(c) +
+        '<span class="pcard__top"><span class="pcard__ref" data-field="ref">' +
+        esc(c.external_ref) + '</span></span>' +
+        '<span class="pcard__age"><span class="pcard__age-num" data-field="age">' +
+        mins(c.age_seconds) + '</span><span class="pcard__age-unit" ' +
+        biAttr('menit sejak pesanan masuk', 'min since the order arrived') +
+        '>menit sejak pesanan masuk</span></span>' +
+        facts(c) + rackDots(c.racks) +
+        '<span class="pcard__picker"><span class="pcard__avatar" aria-hidden="true">' +
+        esc(initials(who)) + '</span><span class="pcard__who">' +
+        '<span class="pcard__who-name">' + esc(who) + '</span>' +
+        '<span class="pcard__who-held" data-field="held">Ditahan ' + mins(held) + ' menit</span>' +
+        '</span></span>' +
+        '<span class="pcard__foot">' +
+        (stuck ? '<span class="agechip agechip--stuck"><span class="agechip__dot"></span><span ' +
+                 biAttr('Klaim tersendat', 'Stuck claim') + '>Klaim tersendat</span></span>' : '') +
+        '<span class="toolbar__spacer"></span>' +
+        '<button class="cbtn cbtn--primary" type="button" data-release="' + c.id +
+        '" data-holder="' + esc(who) + '" data-ref="' + esc(c.external_ref) +
+        '" data-held="' + mins(held) + '"><span ' +
+        biAttr('Lepaskan ke antrean', 'Release to the queue') + '>Lepaskan ke antrean</span></button>' +
+        '</span></article>';
+    }
+
+    function render(board) {
+      const lane = k => board.lanes.find(l => l.key === k) || { cards: [], count: 0 };
+      const waiting = lane('waiting'), claimed = lane('picking'), done = lane('done_today');
+
+      const wHost = region('waiting');
+      if (wHost) wHost.innerHTML = waiting.cards.length
+        ? waiting.cards.slice().sort((a, b) => b.age_seconds - a.age_seconds).map(waitingCard).join('')
+        : '<p class="note" ' + biAttr('Antrean kosong.', 'The queue is empty.') + '>Antrean kosong.</p>';
+
+      const cHost = region('claimed');
+      if (cHost) cHost.innerHTML = claimed.cards.length
+        ? claimed.cards.slice().sort((a, b) => (b.held_seconds || 0) - (a.held_seconds || 0))
+            .map(claimedCard).join('')
+        : '<p class="note" ' + biAttr('Tidak ada yang sedang diambil.', 'Nobody is picking.') +
+          '>Tidak ada yang sedang diambil.</p>';
+
+      const dHost = region('done');
+      if (dHost) dHost.innerHTML = done.cards.slice(0, 8).map(c =>
+        '<span class="donerow"><span class="donerow__ref">' + esc(c.external_ref) + '</span>' +
+        '<span class="donerow__time">' + NJW.fmt.time(c.completed_at) + '</span></span>').join('') +
+        (done.count > 8 ? '<span class="donerow" style="color:var(--muted-2)">…dan ' +
+          (done.count - 8) + ' lainnya</span>' : '');
+
+      setF('count-waiting', waiting.count);
+      setF('count-claimed', claimed.count);
+      setF('count-done', done.count);
+      const stuckCards = claimed.cards.filter(c => (c.held_seconds || 0) >= BANDS.stuck);
+      setF('count-stuck', stuckCards.length);
+      setF('oldest-waiting', board.oldest_waiting_seconds != null
+        ? mins(board.oldest_waiting_seconds) + ' menit' : '—');
+
+      // The stuck banner names one order; it exists to be acted on, not admired.
+      const alert = region('stuck-alert');
+      if (alert) {
+        const s = stuckCards[0];
+        alert.style.display = s ? '' : 'none';
+        if (s) {
+          const who = s.claimed_by_name || (s.claimed_by || '').split('@')[0];
+          setF('stuck-ref', s.external_ref);
+          setF('stuck-held', mins(s.held_seconds) + ' menit');
+          setF('stuck-holder', who);
+          const btn = $('[data-release]', alert);
+          if (btn) {
+            btn.dataset.release = s.id;
+            btn.dataset.holder = who;
+            btn.dataset.ref = s.external_ref;
+            btn.dataset.held = mins(s.held_seconds);
+          }
+        }
+      }
+      applyLangTo(document.querySelector('.board') || document);
+    }
+
+    function signature(board) {
+      return board.lanes.map(l => l.key + ':' + l.cards.map(c =>
+        c.id + c.status + (c.claimed_by || '') + c.picked_units).join('|')).join('~');
+    }
+
+    let lastSig = null;
+
+    async function poll(force) {
+      try {
+        const board = await api().pickBoard({ site_id: SITE.id });
+        const sig = signature(board);
+        if (force || lastSig === null) {
+          lastSig = sig;
+          render(board);
+        } else if (sig !== lastSig) {
+          // Park changes rather than reflowing cards under the supervisor's
+          // cursor mid-click; the pill is how the board asks permission.
+          staged = board;
+          lastSig = sig;
+          const n = field('staged-count');
+          if (n) n.textContent = board.lanes.reduce((t, l) => t + l.count, 0);
+          const pill = $('.stagepill');
+          if (pill) pill.classList.add('is-on');
+        }
+        setF('last-poll', 'Diperbarui ' + NJW.fmt.time(new Date().toISOString()));
+      } catch (e) { /* app.js's connection indicator already says so */ }
+    }
+
+    document.addEventListener('click', async (e) => {
+      if (e.target.closest('[data-action="apply-staged"]')) {
+        if (staged) { render(staged); staged = null; }
+        const pill = $('.stagepill');
+        if (pill) pill.classList.remove('is-on');
+        return;
+      }
+      if (e.target.closest('[data-action="poll-now"]')) return poll(true);
+      const rel = e.target.closest('[data-action="confirm-release"]');
+      if (rel) {
+        const id = rel.dataset.taskId;
+        if (!id) return;
+        try {
+          await api().releasePickTask(id);
+          say('Dikembalikan ke antrean.');
+          await poll(true);
+        } catch (err) { fail(err); }
+      }
+    });
+
+    // The confirm dialog is the design's; it only needs the id carried across.
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-release]');
+      if (!btn) return;
+      const confirm = $('[data-action="confirm-release"]');
+      if (confirm) confirm.dataset.taskId = btn.dataset.release;
+    });
+
+    await poll(true);
+    setInterval(() => { if (!document.hidden) poll(false); }, 10000);
+  };
+
+  /* ======================= dispatch ======================= */
 
   window.addEventListener('DOMContentLoaded', async () => {
-    const app = $('.app');
+    const app = $('.app') || $('.shell') || $('[data-screen]');
     const name = app ? app.dataset.screen : '';
-    if (name === 'blocked') { await screens.blocked(); return; }
+    if (name === 'blocked') return screens.blocked();
     if (!(await boot())) return;
     const fn = screens[name];
     if (fn) { try { await fn(); } catch (e) { fail(e); } }

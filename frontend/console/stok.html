@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stok — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/app.css">
+<link rel="stylesheet" href="../css/console.css">
+</head>
+<body>
+<div class="console" data-screen="stok">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <span class="sidebar__mark">NINJA</span>
+        <span class="sidebar__product">Kilat WMS</span>
+      </div>
+      <nav class="sidebar__section">
+        <a class="sidebar__link" href="index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2"/><path d="M5.6 9v11.4h12.8V9"/></svg></span><span class="sidebar__label" data-id="Ringkasan" data-en="Overview">Ringkasan</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk & keluar</span>
+        <a class="sidebar__link" href="barang-masuk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10.5"/><path d="M8.2 10.2 12 14l3.8-3.8"/><path d="M4 17.5v3h16v-3"/></svg></span><span class="sidebar__label" data-id="Barang masuk" data-en="Inbound">Barang masuk</span></a>
+        <a class="sidebar__link" href="pesanan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V10.5"/><path d="M8.2 14.3 12 10.5l3.8 3.8"/><path d="M4 6.5v-3h16v3"/></svg></span><span class="sidebar__label" data-id="Pesanan" data-en="Orders">Pesanan</span></a>
+        <a class="sidebar__link" href="papan-antrean.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="5" height="15" rx="1.2"/><rect x="9.5" y="4.5" width="5" height="11" rx="1.2"/><rect x="15.5" y="4.5" width="5" height="7" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Papan antrean" data-en="Queue board">Papan antrean</span></a>
+        <a class="sidebar__link is-current" href="stok.html" aria-current="page"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="3.5" y="12.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="12.5" width="8" height="8" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Stok" data-en="Inventory">Stok</span></a>
+        <a class="sidebar__link" href="hitung-stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2l2.6 2.6 4.6-5.2"/></svg></span><span class="sidebar__label" data-id="Hitung stok" data-en="Stock count">Hitung stok</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
+        <a class="sidebar__link" href="slip-putaway.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h7.5L18 8v12.5H6z"/><path d="M13.2 3.7V8H18"/><path d="M8.8 12h6.4"/><path d="M8.8 15.5h4.4"/></svg></span><span class="sidebar__label" data-id="Slip putaway" data-en="Putaway slips">Slip putaway</span></a>
+        <a class="sidebar__link" href="label-warna-hari.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="7" height="6" rx="1"/><rect x="13.5" y="4.5" width="7" height="6" rx="1"/><rect x="3.5" y="13.5" width="7" height="6" rx="1"/><rect x="13.5" y="13.5" width="7" height="6" rx="1"/></svg></span><span class="sidebar__label" data-id="Label & warna hari" data-en="Labels & day colour">Label & warna hari</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
+        <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
+        <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
+        <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
+        <a class="sidebar__link" href="simulator-grab.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><span class="sidebar__label" data-id="Simulator Grab" data-en="Grab simulator">Simulator Grab</span></a>
+        <a class="sidebar__link" href="mode-latihan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5v17"/><path d="M6.5 4.5h11l-2.2 4.2 2.2 4.2h-11"/></svg></span><span class="sidebar__label" data-id="Mode latihan" data-en="Training mode">Mode latihan</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <span class="sidebar__site">
+          <span class="sidebar__label" data-id="Lokasi aktif" data-en="Active site">Lokasi aktif</span>
+          <strong data-field="site-code">UT5</strong>
+        </span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="lang" role="group" aria-label="Bahasa">
+            <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+            <button class="lang__opt" data-lang="en" type="button">EN</button>
+          </span>
+          <button class="cbtn cbtn--icon cbtn--ghost" data-action="toggle-theme" type="button" aria-label="Ganti tema">◐</button>
+        </div>
+        <a class="sidebar__link" href="../index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg></span><span class="sidebar__label" data-id="Buka aplikasi station" data-en="Open station app">Buka aplikasi station</span></a>
+      </div>
+    </aside>
+  <main class="page">
+    <header class="page__head">
+      <div class="page__heading">
+        <span class="page__eyebrow" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk & keluar</span>
+        <h1 class="page__title" data-id="Stok" data-en="Inventory">Stok</h1>
+        <p class="page__sub" data-id="Satu keranjang berisi satu SKU, jadi satu SKU punya satu lokasi per station. Kolom tersedia sudah dikurangi yang dialokasikan ke pesanan." data-en="One basket holds one SKU, so a SKU has one location per station. Available is on-hand minus what is allocated to orders.">Satu keranjang berisi satu SKU, jadi satu SKU punya satu lokasi per station. Kolom tersedia sudah dikurangi yang dialokasikan ke pesanan.</p>
+      </div>
+      <div class="page__actions">
+        <a class="cbtn" href="../13-peta-rak.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="3.5" y="12.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="12.5" width="8" height="8" rx="1.2"/></svg><span data-id="Peta rak" data-en="Rack map">Peta rak</span></a>
+        <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M8 10.5l4 4 4-4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Ekspor" data-en="Export">Ekspor</span></button>
+      </div>
+    </header>
+    <section class="kpis">
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="SKU bertengger" data-en="SKUs slotted">SKU bertengger</span>
+        <span class="kpi-card__num" data-field="kpi-slotted">122</span>
+        <span class="kpi-card__foot" data-id="dari 118 SKU aktif" data-en="of 118 active SKUs">dari 118 SKU aktif</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Unit di rak" data-en="Units on hand">Unit di rak</span>
+        <span class="kpi-card__num" data-field="kpi-units">18.402</span>
+        <span class="kpi-card__foot" data-id="nilai Rp 1,84 M" data-en="value Rp 1.84 bn">nilai Rp 1,84 M</span>
+      </div>
+      <div class="kpi-card kpi-card--caution">
+        <span class="kpi-card__label" data-id="Lewah kapasitas" data-en="Over capacity">Lewah kapasitas</span>
+        <span class="kpi-card__num" data-field="kpi-over">4</span>
+        <span class="kpi-card__foot" data-id="perlu dipindahkan" data-en="need moving">perlu dipindahkan</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Belum dihitung 30 hari" data-en="Uncounted 30 days">Belum dihitung 30 hari</span>
+        <span class="kpi-card__num" data-field="kpi-stale">18</span>
+        <span class="kpi-card__foot" data-id="masuk rencana opname" data-en="queued for opname">masuk rencana opname</span>
+      </div>
+    </section>
+    <div class="toolbar">
+        <label class="search">
+          <span class="search__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></span>
+          <input class="search__input" type="search" data-search-for="#tbl-stock" placeholder="Cari produk atau lokasi…" aria-label="Cari produk atau lokasi…">
+        </label>
+      <span class="seg" role="group">
+        <button class="seg__opt is-on" type="button" data-id="Semua" data-en="All">Semua</button>
+        <button class="seg__opt" type="button" data-id="Lewah kapasitas" data-en="Over capacity">Lewah kapasitas</button>
+        <button class="seg__opt" type="button" data-id="Stok menipis" data-en="Low stock">Stok menipis</button>
+      </span>
+      <span class="toolbar__spacer"></span>
+      <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16M7 12h10M10 17.5h4"/></svg><span data-id="Rak" data-en="Rack">Rak</span></button>
+    </div>
+    <div class="table-scroll">
+      <table class="dtable" id="tbl-stock">
+        <thead><tr>
+          <th class="is-sortable" data-id="Lokasi" data-en="Location">Lokasi<span class="sort">↕</span></th>
+          <th class="is-sortable" data-id="Produk" data-en="Product">Produk<span class="sort">↕</span></th>
+          <th data-id="Kode SKU" data-en="SKU code">Kode SKU</th>
+          <th class="is-sortable td-num" data-id="Di rak" data-en="On hand">Di rak<span class="sort">↕</span></th>
+          <th class="td-num" data-id="Dialokasikan" data-en="Allocated">Dialokasikan</th>
+          <th class="td-num" data-id="Tersedia" data-en="Available">Tersedia</th>
+          <th class="td-num" data-id="Kapasitas" data-en="Capacity">Kapasitas</th>
+          <th data-id="Kadaluarsa" data-en="Expiry">Kadaluarsa</th>
+          <th class="is-sortable" data-id="Terakhir dihitung" data-en="Last counted">Terakhir dihitung<span class="sort">↕</span></th>
+        </tr></thead>
+        <tbody data-region="stock">
+          <tr>
+            <td class="td-code td-strong">UT5-A-3-02</td>
+            <td>Glasting Liquid Lip 07 Rouge Flare</td>
+            <td class="td-code" style="color:var(--muted)">WDH-GLL-07</td>
+            <td class="td-num">12</td>
+            <td class="td-num" style="color:var(--muted)">2</td>
+            <td class="td-num td-strong">10</td>
+            <td class="td-num" style="color:var(--muted)">40</td>
+            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Stabil" data-en="Stable">Stabil</span></span></td>
+            <td style="color:var(--muted)">9 Sep</td>
+          </tr>
+          <tr>
+            <td class="td-code td-strong">UT5-A-3-03</td>
+            <td>Glasting Liquid Lip 08 Coral Dust</td>
+            <td class="td-code" style="color:var(--muted)">WDH-GLL-08</td>
+            <td class="td-num">28</td>
+            <td class="td-num" style="color:var(--muted)">—</td>
+            <td class="td-num td-strong">28</td>
+            <td class="td-num" style="color:var(--muted)">40</td>
+            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Stabil" data-en="Stable">Stabil</span></span></td>
+            <td style="color:var(--muted)">2 Sep</td>
+          </tr>
+          <tr>
+            <td class="td-code td-strong">UT5-A-3-04</td>
+            <td>Glasting Liquid Lip 01 Caramel Coat</td>
+            <td class="td-code" style="color:var(--muted)">WDH-GLL-01</td>
+            <td class="td-num" style="color:var(--caution);font-weight:700">61</td>
+            <td class="td-num" style="color:var(--muted)">3</td>
+            <td class="td-num td-strong">58</td>
+            <td class="td-num" style="color:var(--muted)">40 ⚠</td>
+            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Stabil" data-en="Stable">Stabil</span></span></td>
+            <td style="color:var(--muted)">9 Sep</td>
+          </tr>
+          <tr>
+            <td class="td-code td-strong">UT5-A-3-05</td>
+            <td>Colorfit Velvet Matte Lipstick 04 Dusty Rose</td>
+            <td class="td-code" style="color:var(--muted)">WDH-CVM-04</td>
+            <td class="td-num">34</td>
+            <td class="td-num" style="color:var(--muted)">1</td>
+            <td class="td-num td-strong">33</td>
+            <td class="td-num" style="color:var(--muted)">40</td>
+            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Stabil" data-en="Stable">Stabil</span></span></td>
+            <td style="color:var(--caution)">28 Agu</td>
+          </tr>
+          <tr>
+            <td class="td-code td-strong">UT5-B-1-05</td>
+            <td>Instaperfect Mattesetter Lip Matte Paint 02</td>
+            <td class="td-code" style="color:var(--muted)">WDH-IMP-02</td>
+            <td class="td-num">18</td>
+            <td class="td-num" style="color:var(--muted)">—</td>
+            <td class="td-num td-strong">18</td>
+            <td class="td-num" style="color:var(--muted)">20</td>
+            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Stabil" data-en="Stable">Stabil</span></span></td>
+            <td style="color:var(--muted)">9 Sep</td>
+          </tr>
+          <tr>
+            <td class="td-code td-strong">UT5-C-5-04</td>
+            <td>UV Shield Airy Smooth Sunscreen SPF 50 PA+++</td>
+            <td class="td-code" style="color:var(--muted)">WDH-UVS-030</td>
+            <td class="td-num" style="color:var(--caution);font-weight:700">46</td>
+            <td class="td-num" style="color:var(--muted)">4</td>
+            <td class="td-num td-strong">42</td>
+            <td class="td-num" style="color:var(--muted)">40 ⚠</td>
+            <td><span class="spill spill--accent"><span class="spill__dot"></span><span data-id="Pantau" data-en="Watch">Pantau</span></span></td>
+            <td style="color:var(--muted)">9 Sep</td>
+          </tr>
+          <tr>
+            <td class="td-code td-strong">UT5-D-2-01</td>
+            <td>Lightening Day Cream SPF 30</td>
+            <td class="td-code" style="color:var(--muted)">WDH-LDC-030</td>
+            <td class="td-num">22</td>
+            <td class="td-num" style="color:var(--muted)">—</td>
+            <td class="td-num td-strong">22</td>
+            <td class="td-num" style="color:var(--muted)">40</td>
+            <td><span class="spill spill--accent"><span class="spill__dot"></span><span data-id="Pantau" data-en="Watch">Pantau</span></span></td>
+            <td style="color:var(--muted)">9 Sep</td>
+          </tr>
+          <tr>
+            <td class="td-code td-strong">UT5-D-2-04</td>
+            <td>Crystal Secret Hyaluron Serum</td>
+            <td class="td-code" style="color:var(--muted)">WDH-CSH-020</td>
+            <td class="td-num">9</td>
+            <td class="td-num" style="color:var(--muted)">—</td>
+            <td class="td-num td-strong">9</td>
+            <td class="td-num" style="color:var(--muted)">40</td>
+            <td><span class="spill spill--warn"><span class="spill__dot"></span><span data-id="Pendek" data-en="Short">Pendek</span></span></td>
+            <td style="color:var(--caution)">7 Agu</td>
+          </tr>
+          <tr>
+            <td class="td-code td-strong">UT5-E-1-01</td>
+            <td>Perfect Bright Micellar Water</td>
+            <td class="td-code" style="color:var(--muted)">WDH-PBM-100</td>
+            <td class="td-num">71</td>
+            <td class="td-num" style="color:var(--muted)">2</td>
+            <td class="td-num td-strong">69</td>
+            <td class="td-num" style="color:var(--muted)">80</td>
+            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Stabil" data-en="Stable">Stabil</span></span></td>
+            <td style="color:var(--muted)">5 Sep</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+      <div class="pager">
+        <span class="pager__info"><strong data-field="range">1–9</strong> <span data-id="dari" data-en="of">dari</span> <strong data-field="total">122</strong> <span data-id="baris" data-en="rows">baris</span></span>
+        <div class="pager__nav">
+          <button class="pager__page" type="button" aria-label="Sebelumnya">‹</button>
+          <button class="pager__page is-on" type="button">1</button>
+          <button class="pager__page" type="button">2</button>
+          <button class="pager__page" type="button">3</button>
+          <span class="pager__gap">…</span>
+          <button class="pager__page" type="button">14</button>
+          <button class="pager__page" type="button" aria-label="Berikutnya">›</button>
+        </div>
+      </div>
+  </main>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/console.js"></script>
+<script>/* GET /api/inventory?site_id=&q= -> {rows:[InventoryRow], total} */</script>
+</body>
+</html>

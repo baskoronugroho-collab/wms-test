@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Penerimaan selesai — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app" data-screen="inbound-done" data-screen-label="15">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Barang masuk · WRD-2609-02" data-en="Inbound · WRD-2609-02">Barang masuk · WRD-2609-02</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user">Rina P. · UT5</span>
+    </header>
+    <div class="banner banner--accept" role="status">
+      <span class="banner__icon banner__icon--round" aria-hidden="true">✓</span>
+      <span style="font-size:30px" data-id="Penerimaan selesai" data-en="Receipt complete">Penerimaan selesai</span>
+      <span class="spacer"></span>
+      <span class="code" style="font-size:26px">WRD-2609-02</span>
+    </div>
+    <main class="main">
+      <div class="row-split">
+        <div class="col" style="flex:1 1 auto">
+          <div class="daystrip" data-region="day-color">
+            <span class="daystrip__block" data-field="day-block" style="background:#1A73C8;color:#FFFFFF">
+              <span class="daystrip__parity" data-field="day-parity">B</span>
+              <span class="daystrip__wk" data-field="day-wk">W37</span>
+            </span>
+            <span class="daystrip__text">
+              <span class="daystrip__label" data-id="Warna batch kiriman ini" data-en="This delivery's batch colour">Warna batch kiriman ini</span>
+              <span class="daystrip__day" data-field="day-name">Rabu</span>
+              <span class="daystrip__date" data-field="day-date">9 Sep 2026</span>
+            </span>
+            <span class="daystrip__hint" data-id="Warna ini tercetak di slip. Pastikan semua kardus sudah berstiker warna dan bertanggal sebelum meninggalkan meja." data-en="This colour is printed on the slip. Make sure every carton is stickered and dated before you leave the bench.">Warna ini tercetak di slip. Pastikan semua kardus sudah berstiker warna dan bertanggal sebelum meninggalkan meja.</span>
+          </div>
+          <div class="stats">
+            <div class="stat">
+              <span class="stat__label" data-id="Baris" data-en="Lines">Baris</span>
+              <span class="stat__num" data-field="total-lines">14</span>
+              <span class="stat__foot" data-id="SKU berbeda" data-en="distinct SKUs">SKU berbeda</span>
+            </div>
+            <div class="stat">
+              <span class="stat__label" data-id="Unit diterima" data-en="Units received">Unit diterima</span>
+              <span class="stat__num" data-field="total-units">1.284</span>
+              <span class="stat__foot" data-id="dari 1.290 dikirim" data-en="of 1,290 shipped">dari 1.290 dikirim</span>
+            </div>
+            <div class="stat">
+              <span class="stat__label" data-id="Baris berselisih" data-en="Lines with variance">Baris berselisih</span>
+              <span class="stat__num" data-field="total-variance" style="color:var(--caution)">3</span>
+              <span class="stat__foot" data-id="tercantum di slip" data-en="itemised on the slip">tercantum di slip</span>
+            </div>
+          </div>
+          <div class="notice notice--caution">
+            <span class="code code--sm" aria-hidden="true">!</span>
+            <div class="col" style="gap:4px">
+              <span class="notice__title" data-id="Ada 3 baris yang jumlahnya tidak cocok" data-en="3 lines did not match">Ada 3 baris yang jumlahnya tidak cocok</span>
+              <span class="notice__body" data-id="Selisih harus diangkat ke brand dalam 24 jam — paling lambat besok jam 09.12. Lewat dari itu, kekurangannya jadi tanggungan station. Cetak slipnya sekarang dan serahkan ke supervisor." data-en="A discrepancy must be raised with the brand within 24 hours — by 09.12 tomorrow. After that the shortfall is the station’s. Print the slip now and hand it to your supervisor.">Selisih harus diangkat ke brand dalam 24 jam — paling lambat <strong>besok jam 09.12</strong>. Lewat dari itu, kekurangannya jadi tanggungan station. Cetak slipnya sekarang dan serahkan ke supervisor.</span>
+            </div>
+          </div>
+          <table class="table">
+            <tbody data-region="lines">
+              <tr><td class="td-code">UT5-A-3-04</td><td>Glasting Liquid Lip 01 Caramel Coat</td><td class="td-qty" style="color:var(--caution)">−3</td></tr>
+              <tr><td class="td-code">UT5-B-1-05</td><td>Instaperfect Mattesetter Lip Matte Paint 02</td><td class="td-qty" style="color:var(--caution)">−2</td></tr>
+              <tr><td class="td-code">UT5-C-5-04</td><td>UV Shield Airy Smooth Sunscreen SPF 50</td><td class="td-qty" style="color:var(--caution)">+4</td></tr>
+              <tr><td class="td-code" style="color:var(--accept)">11 baris</td><td data-id="cocok semua" data-en="all matched">cocok semua</td><td class="td-qty" style="color:var(--accept)">✓</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="col col--grow" style="flex:0 0 440px">
+          <div class="panel">
+            <div class="panel__body">
+              <span class="eyebrow" data-id="Slip putaway" data-en="Putaway slip">Slip putaway</span>
+              <span class="code" style="font-size:40px" data-field="slip-no">PA-UT5-000318</span>
+              <span class="note" data-id="Satu lembar A4: isi kiriman, lokasi setiap SKU, warna batch, dan batas 24 jam. Cetak, tanda tangani, simpan di berkas station." data-en="One A4 sheet: what arrived, where each SKU went, the batch colour, and the 24-hour deadline. Print it, sign it, file it at the station.">Satu lembar A4: isi kiriman, lokasi setiap SKU, warna batch, dan batas 24 jam. Cetak, tanda tangani, simpan di berkas station.</span>
+            </div>
+          </div>
+          <div class="col">
+            <a class="btn btn--primary btn--lg btn--block" href="console/slip-detail.html" style="min-height:96px;font-size:26px" data-id="Cetak slip putaway" data-en="Print putaway slip">Cetak slip putaway</a>
+            <a class="btn btn--outline btn--lg btn--block" href="01-mulai-barang-masuk.html" data-id="Terima kiriman berikutnya" data-en="Receive the next delivery">Terima kiriman berikutnya</a>
+            <a class="btn btn--lg btn--block" href="index.html" data-id="Kembali ke menu" data-en="Back to the menu">Kembali ke menu</a>
+          </div>
+        </div>
+      </div>
+    </main>
+</div>
+<script src="js/api.js"></script>
+<script src="js/scan.js"></script>
+<script src="js/app.js"></script>
+<script src="js/wire.js"></script>
+
+</body>
+</html>

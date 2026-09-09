@@ -1,0 +1,91 @@
+/* print.css — the putaway slip and the day-colour label sheet.
+   These are printed artefacts, not screens. Two hard constraints shape
+   everything here:
+
+   1. Cheap office printers lose thin colour and fine hairlines. The day
+      colour therefore prints as a SOLID BLOCK, never a thin border.
+   2. The slip gets photocopied in black and white. So the day name, the
+      date and the week letter carry the meaning in text; the colour only
+      makes it faster to find. Nothing is colour-only.
+
+   Screen preview mimics the sheet so what you see is what files. */
+
+.sheet { width: 210mm; min-height: 297mm; margin: 0 auto var(--sp-4); padding: 16mm 14mm; box-sizing: border-box; background: #fff; color: #000; font-family: var(--font-ui); box-shadow: var(--shadow-2); }
+.sheet--labels { padding: 10mm; }
+.sheet__desk { background: var(--ground-sunk); padding: var(--sp-4) 0; }
+
+/* ---- slip -------------------------------------------------------------- */
+.slip__head { display: flex; align-items: flex-start; gap: 8mm; padding-bottom: 4mm; border-bottom: 1.2mm solid #000; }
+.slip__id { flex: 1 1 auto; display: flex; flex-direction: column; gap: 1.5mm; }
+.slip__kicker { font-size: 9pt; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+.slip__no { font-family: var(--font-code); font-size: 22pt; font-weight: 700; letter-spacing: -.01em; }
+.slip__meta { font-size: 10pt; }
+.slip__meta strong { font-family: var(--font-code); }
+
+/* The day colour as a solid printed block, with all three facts inside it. */
+.slip__color { flex: 0 0 46mm; border: 0.6mm solid #000; }
+.slip__color-block { height: 24mm; display: flex; align-items: flex-end; justify-content: space-between; padding: 3mm; }
+.slip__color-day { font-size: 16pt; font-weight: 700; }
+.slip__color-week { font-family: var(--font-code); font-size: 14pt; font-weight: 700; }
+.slip__color-foot { padding: 2mm 3mm; border-top: 0.6mm solid #000; display: flex; justify-content: space-between; font-family: var(--font-code); font-size: 10pt; font-weight: 700; }
+
+.slip__totals { display: flex; gap: 10mm; padding: 4mm 0; border-bottom: 0.3mm solid #000; }
+.slip__total { display: flex; flex-direction: column; gap: 1mm; }
+.slip__total-label { font-size: 8.5pt; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.slip__total-num { font-family: var(--font-code); font-size: 18pt; font-weight: 700; }
+
+.slip__table { width: 100%; border-collapse: collapse; margin-top: 4mm; }
+.slip__table th { padding: 2.5mm 2mm; text-align: left; font-size: 8.5pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; border-bottom: 0.6mm solid #000; }
+.slip__table td { padding: 2.5mm 2mm; font-size: 10.5pt; border-bottom: 0.2mm solid #666; vertical-align: top; }
+/* The location code is what a person walks by — set it at size, in mono. */
+.slip__table .loc { font-family: var(--font-code); font-size: 13pt; font-weight: 700; white-space: nowrap; }
+.slip__table .qty { font-family: var(--font-code); font-size: 12pt; font-weight: 700; text-align: right; white-space: nowrap; }
+.slip__table .var { font-family: var(--font-code); font-size: 11pt; text-align: right; white-space: nowrap; }
+.slip__table tr.has-variance td { background: #eee; }
+.slip__table tr.has-variance .var { font-weight: 700; text-decoration: underline; }
+
+/* The 24-hour window, stated in words where a supervisor will look for it. */
+.slip__deadline { margin-top: 5mm; padding: 3.5mm 4mm; border: 0.6mm solid #000; }
+.slip__deadline-title { font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.slip__deadline-body { margin: 1.5mm 0 0; font-size: 10.5pt; line-height: 1.4; }
+.slip__deadline-body strong { text-decoration: underline; }
+
+.slip__sign { display: flex; gap: 10mm; margin-top: 8mm; }
+.slip__sign-box { flex: 1 1 0; }
+.slip__sign-rule { height: 12mm; border-bottom: 0.4mm solid #000; }
+.slip__sign-label { margin-top: 1.5mm; font-size: 9pt; }
+.slip__foot { margin-top: 6mm; padding-top: 2mm; border-top: 0.2mm solid #666; display: flex; justify-content: space-between; font-size: 8pt; }
+
+/* ---- label sheet ------------------------------------------------------
+   3 x 7 grid of 63mm x 38mm labels — the common A4 address-label pitch. */
+.labelgrid { display: grid; grid-template-columns: repeat(3, 63mm); grid-auto-rows: 38mm; gap: 2mm; justify-content: center; }
+.label { border: 0.4mm solid #000; display: flex; flex-direction: column; overflow: hidden; }
+.label__block { flex: 1 1 auto; display: flex; align-items: center; justify-content: space-between; padding: 3mm; }
+.label__day { font-size: 15pt; font-weight: 700; line-height: 1; }
+.label__week { font-family: var(--font-code); font-size: 20pt; font-weight: 700; line-height: 1; }
+.label__foot { flex: 0 0 auto; padding: 1.8mm 3mm; border-top: 0.4mm solid #000; background: #fff; color: #000; display: flex; justify-content: space-between; align-items: baseline; }
+.label__date { font-family: var(--font-code); font-size: 11pt; font-weight: 700; }
+.label__hint { font-size: 7pt; letter-spacing: .04em; text-transform: uppercase; }
+
+/* ---- wall chart ------------------------------------------------------- */
+.wallchart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2mm; }
+.wallday { border: 0.4mm solid #000; display: flex; flex-direction: column; }
+.wallday__block { height: 34mm; }
+.wallday__text { padding: 2.5mm; border-top: 0.4mm solid #000; }
+.wallday__name { font-size: 12pt; font-weight: 700; }
+.wallday__date { font-family: var(--font-code); font-size: 9pt; }
+.wall__note { margin-top: 5mm; padding: 3mm 4mm; border: 0.6mm solid #000; font-size: 10pt; line-height: 1.4; }
+
+@media print {
+  @page { size: A4; margin: 0; }
+  html, body { background: #fff !important; }
+  .sheet__desk { padding: 0; background: #fff; }
+  .sheet { width: auto; min-height: 0; margin: 0; box-shadow: none; padding: 14mm 12mm; }
+  .no-print, .console > .sidebar, .page__actions, .toolbar, .trainbar { display: none !important; }
+  .console { display: block; }
+  .page { padding: 0; gap: 0; }
+  .slip__table tr, .label, .wallday { break-inside: avoid; }
+  .slip__deadline, .slip__sign { break-inside: avoid; }
+  /* force the day-colour blocks to actually ink */
+  .slip__color-block, .label__block, .wallday__block, .daycell__block { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

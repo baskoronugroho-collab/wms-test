@@ -899,3 +899,7 @@ class PickQueueBoard(BaseModel):
 
 class ReleaseIn(BaseModel):
     reason: str | None = None
+
+
+class OpnamePlanList(BaseModel):
+    plans: list[OpnamePlan]

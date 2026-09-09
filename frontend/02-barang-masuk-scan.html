@@ -6,7 +6,7 @@
 <title>Barang masuk — scan — Ninja Kilat WMS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
@@ -35,9 +35,21 @@
       <span class="banner__detail" data-field="product">Glasting Liquid Lip 07 Rouge Flare</span>
     </div>
     <main class="main">
+      <div class="daystrip" data-region="day-color">
+        <span class="daystrip__block" data-field="day-block" style="background:#1A73C8;color:#FFFFFF">
+          <span class="daystrip__parity" data-field="day-parity">B</span>
+          <span class="daystrip__wk" data-field="day-wk">W37</span>
+        </span>
+        <span class="daystrip__text">
+          <span class="daystrip__label" data-id="Warna label hari ini" data-en="Today's label colour">Warna label hari ini</span>
+          <span class="daystrip__day" data-field="day-name">Rabu</span>
+          <span class="daystrip__date" data-field="day-date">9 Sep 2026</span>
+        </span>
+        <span class="daystrip__hint" data-id="Tempel stiker warna ini di setiap kardus, dan tulis tanggalnya. Warna berulang tiap 7 hari — tanggal yang membedakan batch lama dari yang baru." data-en="Put this colour sticker on every carton, and write the date. Colours repeat weekly — the date is what separates an old batch from a new one.">Tempel stiker warna ini di setiap kardus, dan tulis tanggalnya. Warna berulang tiap 7 hari — tanggal yang membedakan batch lama dari yang baru.</span>
+      </div>
       <div class="row-split">
         <div class="col" style="flex:0 0 380px">
-          <img class="product__photo product__photo--lg" src="assets/products/wdh-gll-07.jpg" alt="Glasting Liquid Lip 07 Rouge Flare" onerror="this.src='assets/products/placeholder.svg'">
+          <img class="product__photo product__photo--lg" src="assets/products/placeholder.svg" data-photo-key="wdh-gll-07" alt="Glasting Liquid Lip 07 Rouge Flare">
           <div class="col" style="gap:6px">
             <span class="product__meta">Wardah · 3,5 g · WDH-GLL-07</span>
             <span class="product__name">Glasting Liquid Lip <span class="product__shade">07</span> Rouge Flare</span>
@@ -72,15 +84,18 @@
       </div>
             <div class="stats">
               <button class="btn btn--outline btn--lg" type="button" data-action="undo"><span aria-hidden="true">↺</span><span data-id="Batalkan scan terakhir" data-en="Undo last scan">Batalkan scan terakhir</span></button>
-              <button class="btn btn--primary btn--lg btn--grow" type="button" data-id="Selesai terima kiriman" data-en="Finish this delivery">Selesai terima kiriman</button>
+              <a class="btn btn--primary btn--lg btn--grow" href="15-penerimaan-selesai.html" data-id="Selesai terima kiriman" data-en="Finish this delivery">Selesai terima kiriman</a>
             </div>
           </div>
         </div>
       </div>
     </main>
 </div>
+<script src="js/api.js"></script>
 <script src="js/scan.js"></script>
 <script src="js/app.js"></script>
 <script src="js/wire.js"></script>
+
+
 </body>
 </html>

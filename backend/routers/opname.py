@@ -1,7 +1,7 @@
 """M6 — Stock opname: weekly physical counting, basket by basket."""
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 import auth
 import common
@@ -76,6 +76,26 @@ async def _plan_summary(plan_id: int) -> dict:
         "status": plan["status"], "total_baskets": len(baskets),
         "counted": counted, "variances": variances,
     }
+
+
+@router.get("/opname/plans", response_model=models.OpnamePlanList)
+async def list_plans(
+    site_id: int,
+    limit: int = Query(default=20, le=100),
+    user: auth.User = Depends(auth.current_user),
+):
+    """Recent count plans at a site.
+
+    Declared BEFORE /opname/plans/{plan_id}: FastAPI matches in registration
+    order, and a literal path registered after a parameterised sibling is
+    shadowed by it.
+    """
+    await auth.assert_site_access(user, site_id)
+    rows = await db.fetch_all(
+        "SELECT id FROM opname_plans WHERE site_id = %s "
+        "ORDER BY created_at DESC LIMIT %s", (site_id, limit),
+    )
+    return {"plans": [await _plan_summary(r["id"]) for r in rows]}
 
 
 @router.get("/opname/plans/{plan_id}", response_model=models.OpnamePlanDetail)

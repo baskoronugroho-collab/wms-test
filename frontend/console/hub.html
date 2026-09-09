@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hub — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/app.css">
+<link rel="stylesheet" href="../css/console.css">
+</head>
+<body>
+<div class="console" data-screen="hub">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <span class="sidebar__mark">NINJA</span>
+        <span class="sidebar__product">Kilat WMS</span>
+      </div>
+      <nav class="sidebar__section">
+        <a class="sidebar__link" href="index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2"/><path d="M5.6 9v11.4h12.8V9"/></svg></span><span class="sidebar__label" data-id="Ringkasan" data-en="Overview">Ringkasan</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk & keluar</span>
+        <a class="sidebar__link" href="barang-masuk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10.5"/><path d="M8.2 10.2 12 14l3.8-3.8"/><path d="M4 17.5v3h16v-3"/></svg></span><span class="sidebar__label" data-id="Barang masuk" data-en="Inbound">Barang masuk</span></a>
+        <a class="sidebar__link" href="pesanan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V10.5"/><path d="M8.2 14.3 12 10.5l3.8 3.8"/><path d="M4 6.5v-3h16v3"/></svg></span><span class="sidebar__label" data-id="Pesanan" data-en="Orders">Pesanan</span></a>
+        <a class="sidebar__link" href="papan-antrean.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="5" height="15" rx="1.2"/><rect x="9.5" y="4.5" width="5" height="11" rx="1.2"/><rect x="15.5" y="4.5" width="5" height="7" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Papan antrean" data-en="Queue board">Papan antrean</span></a>
+        <a class="sidebar__link" href="stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="3.5" y="12.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="12.5" width="8" height="8" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Stok" data-en="Inventory">Stok</span></a>
+        <a class="sidebar__link" href="hitung-stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2l2.6 2.6 4.6-5.2"/></svg></span><span class="sidebar__label" data-id="Hitung stok" data-en="Stock count">Hitung stok</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
+        <a class="sidebar__link" href="slip-putaway.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h7.5L18 8v12.5H6z"/><path d="M13.2 3.7V8H18"/><path d="M8.8 12h6.4"/><path d="M8.8 15.5h4.4"/></svg></span><span class="sidebar__label" data-id="Slip putaway" data-en="Putaway slips">Slip putaway</span></a>
+        <a class="sidebar__link" href="label-warna-hari.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="7" height="6" rx="1"/><rect x="13.5" y="4.5" width="7" height="6" rx="1"/><rect x="3.5" y="13.5" width="7" height="6" rx="1"/><rect x="13.5" y="13.5" width="7" height="6" rx="1"/></svg></span><span class="sidebar__label" data-id="Label & warna hari" data-en="Labels & day colour">Label & warna hari</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
+        <a class="sidebar__link is-current" href="hub.html" aria-current="page"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
+        <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
+        <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
+        <a class="sidebar__link" href="simulator-grab.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><span class="sidebar__label" data-id="Simulator Grab" data-en="Grab simulator">Simulator Grab</span></a>
+        <a class="sidebar__link" href="mode-latihan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5v17"/><path d="M6.5 4.5h11l-2.2 4.2 2.2 4.2h-11"/></svg></span><span class="sidebar__label" data-id="Mode latihan" data-en="Training mode">Mode latihan</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <span class="sidebar__site">
+          <span class="sidebar__label" data-id="Lokasi aktif" data-en="Active site">Lokasi aktif</span>
+          <strong data-field="site-code">UT5</strong>
+        </span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="lang" role="group" aria-label="Bahasa">
+            <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+            <button class="lang__opt" data-lang="en" type="button">EN</button>
+          </span>
+          <button class="cbtn cbtn--icon cbtn--ghost" data-action="toggle-theme" type="button" aria-label="Ganti tema">◐</button>
+        </div>
+        <a class="sidebar__link" href="../index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg></span><span class="sidebar__label" data-id="Buka aplikasi station" data-en="Open station app">Buka aplikasi station</span></a>
+      </div>
+    </aside>
+  <main class="page">
+    <header class="page__head">
+      <div class="page__heading">
+        <span class="page__eyebrow" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
+        <h1 class="page__title" data-id="Hub" data-en="Hubs">Hub</h1>
+        <p class="page__sub" data-id="Satu kartu per station: alamat, jumlah staf, dan seberapa penuh raknya. Angka yang ditindaklanjuti supervisor adalah posisi terpakai." data-en="One card per station: address, headcount, and how full the racks are. The number a supervisor acts on is locations used.">Satu kartu per station: alamat, jumlah staf, dan seberapa penuh raknya. Angka yang ditindaklanjuti supervisor adalah posisi terpakai.</p>
+      </div>
+
+    </header>
+    <section class="kpis">
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Station aktif" data-en="Active stations">Station aktif</span>
+        <span class="kpi-card__num" data-field="kpi-sites">9</span>
+        <span class="kpi-card__foot" data-id="1 lokasi latihan" data-en="1 training site">1 lokasi latihan</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Total posisi" data-en="Total locations">Total posisi</span>
+        <span class="kpi-card__num" data-field="kpi-locs">1.575</span>
+        <span class="kpi-card__foot" data-id="9 station × 175" data-en="9 stations × 175">9 station × 175</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Terpakai" data-en="In use">Terpakai</span>
+        <span class="kpi-card__num" data-field="kpi-used">1.104</span>
+        <span class="kpi-card__foot" data-id="70% rata-rata" data-en="70% average">70% rata-rata</span>
+      </div>
+      <div class="kpi-card kpi-card--caution">
+        <span class="kpi-card__label" data-id="Hampir penuh" data-en="Nearly full">Hampir penuh</span>
+        <span class="kpi-card__num" data-field="kpi-tight">2</span>
+        <span class="kpi-card__foot" data-id="di atas 85%" data-en="above 85%">di atas 85%</span>
+      </div>
+    </section>
+    <section class="section" data-region="sites">
+      <div class="ccard">
+        <div style="display:flex;align-items:flex-start;gap:var(--sp-3);flex-wrap:wrap">
+          <div style="flex:1 1 220px;display:flex;flex-direction:column;gap:4px;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="td-code" style="font-size:var(--fs-c-h2);font-weight:700">UT5</span>
+              
+              
+            </div>
+            <span style="font-size:var(--fs-c-label);color:var(--ink);font-weight:500">Ninja Kilat Untung Jawa 5</span>
+            <span style="font-size:var(--fs-c-meta);color:var(--muted)">Jl. Untung Jawa Raya 118, Jakarta Selatan</span>
+          </div>
+          <div style="display:flex;gap:var(--sp-4);flex:0 0 auto">
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Tipe" data-en="Type">Tipe</span><span style="font-size:var(--fs-c-label)">Darkstore</span></span>
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Staf" data-en="Staff">Staf</span><span class="td-code" style="font-size:var(--fs-c-label)">6</span></span>
+          </div>
+          <button class="cbtn" type="button" data-id="Ubah" data-en="Edit">Ubah</button>
+        </div>
+        <div class="occ">
+          <span class="occ__top">
+            <span class="occ__num">122 / 175</span>
+            <span class="occ__label" data-id="posisi terpakai" data-en="locations used">posisi terpakai</span>
+            <span class="toolbar__spacer"></span>
+            <span class="occ__label">70%</span>
+          </span>
+          <span class="occ__track"><span class="occ__fill" style="width:70%"></span></span>
+        </div>
+        <div class="rack-chips">
+          <span class="rack-chip"><span class="rack-chip__code">A</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">21/25</span></span>
+          <span class="rack-chip"><span class="rack-chip__code">B</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">18/25</span></span>
+          <span class="rack-chip"><span class="rack-chip__code">C</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">24/25</span></span>
+          <span class="rack-chip"><span class="rack-chip__code">D</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">15/25</span></span>
+          <span class="rack-chip"><span class="rack-chip__code">E</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">17/25</span></span>
+          <span class="rack-chip"><span class="rack-chip__code">F</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">12/25</span></span>
+          <span class="rack-chip"><span class="rack-chip__code">G</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">15/25</span></span>
+        </div>
+      </div>
+      <div class="ccard">
+        <div style="display:flex;align-items:flex-start;gap:var(--sp-3);flex-wrap:wrap">
+          <div style="flex:1 1 220px;display:flex;flex-direction:column;gap:4px;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="td-code" style="font-size:var(--fs-c-h2);font-weight:700">UT2</span>
+              
+              
+            </div>
+            <span style="font-size:var(--fs-c-label);color:var(--ink);font-weight:500">Ninja Kilat Untung Jawa 2</span>
+            <span style="font-size:var(--fs-c-meta);color:var(--muted)">Jl. Kebagusan Dalam 4, Jakarta Selatan</span>
+          </div>
+          <div style="display:flex;gap:var(--sp-4);flex:0 0 auto">
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Tipe" data-en="Type">Tipe</span><span style="font-size:var(--fs-c-label)">Darkstore</span></span>
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Staf" data-en="Staff">Staf</span><span class="td-code" style="font-size:var(--fs-c-label)">5</span></span>
+          </div>
+          <button class="cbtn" type="button" data-id="Ubah" data-en="Edit">Ubah</button>
+        </div>
+        <div class="occ">
+          <span class="occ__top">
+            <span class="occ__num">168 / 175</span>
+            <span class="occ__label" data-id="posisi terpakai" data-en="locations used">posisi terpakai</span>
+            <span class="toolbar__spacer"></span>
+            <span class="occ__label">96%</span>
+          </span>
+          <span class="occ__track"><span class="occ__fill is-full" style="width:96%"></span></span>
+        </div>
+        <div class="rack-chips">
+          <span class="rack-chip"><span class="rack-chip__code">A</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">25/25</span></span>
+          <span class="rack-chip"><span class="rack-chip__code">B</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">24/25</span></span>
+          <span class="rack-chip"><span class="rack-chip__code">C</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">25/25</span></span>
+          <span class="rack-chip"><span class="rack-chip__code">D</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">23/25</span></span>
+          <span class="rack-chip"><span class="rack-chip__code">E</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">24/25</span></span>
+          <span class="rack-chip"><span class="rack-chip__code">F</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">22/25</span></span>
+          <span class="rack-chip"><span class="rack-chip__code">G</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">25/25</span></span>
+        </div>
+      </div>
+      <div class="ccard">
+        <div style="display:flex;align-items:flex-start;gap:var(--sp-3);flex-wrap:wrap">
+          <div style="flex:1 1 220px;display:flex;flex-direction:column;gap:4px;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="td-code" style="font-size:var(--fs-c-h2);font-weight:700">TRN</span>
+              <span class="badge-training" data-id="LOKASI LATIHAN" data-en="TRAINING SITE">LOKASI LATIHAN</span>
+              
+            </div>
+            <span style="font-size:var(--fs-c-label);color:var(--ink);font-weight:500">Lokasi latihan — staf baru</span>
+            <span style="font-size:var(--fs-c-meta);color:var(--muted)">Menempel di UT5, rak belakang</span>
+          </div>
+          <div style="display:flex;gap:var(--sp-4);flex:0 0 auto">
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Tipe" data-en="Type">Tipe</span><span style="font-size:var(--fs-c-label)">Latihan</span></span>
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Staf" data-en="Staff">Staf</span><span class="td-code" style="font-size:var(--fs-c-label)">12</span></span>
+          </div>
+          <button class="cbtn" type="button" data-id="Ubah" data-en="Edit">Ubah</button>
+        </div>
+        <div class="occ">
+          <span class="occ__top">
+            <span class="occ__num">34 / 175</span>
+            <span class="occ__label" data-id="posisi terpakai" data-en="locations used">posisi terpakai</span>
+            <span class="toolbar__spacer"></span>
+            <span class="occ__label">19%</span>
+          </span>
+          <span class="occ__track"><span class="occ__fill" style="width:19%"></span></span>
+        </div>
+        <div class="rack-chips">
+          <span class="rack-chip"><span class="rack-chip__code">A</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">14/25</span></span>
+          <span class="rack-chip"><span class="rack-chip__code">B</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">12/25</span></span>
+          <span class="rack-chip"><span class="rack-chip__code">C</span><span class="rack-chip__meta">5 tk × 5</span><span class="rack-chip__meta">8/25</span></span>
+        </div>
+      </div>
+    </section>
+    <div class="inline-note inline-note--warn"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span data-id="Lokasi latihan tidak bisa dinonaktifkan — staf baru membutuhkannya. API menolak permintaan itu, jadi tombolnya tidak ditampilkan." data-en="A training site cannot be deactivated — new staff need it. The API refuses that request, so the control is not shown.">Lokasi latihan tidak bisa dinonaktifkan — staf baru membutuhkannya. API menolak permintaan itu, jadi tombolnya tidak ditampilkan.</span></div>
+  </main>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/console.js"></script>
+<script>
+  /* GET /api/admin/sites -> {sites:[{code,name,address,site_type,is_training,active,
+     racks:[{code,levels,positions_per_level,locations,occupied}],total_locations,
+     occupied_locations,staff_count}]}. Supervisor sees only their own sites.
+     PATCH /api/admin/sites/{id} accepts name, address, active. */
+  window.addEventListener('load', async () => {
+    try { const { sites } = await NJW.api.sites(); /* render into [data-region="sites"] */ } catch (e) {}
+  });
+</script>
+</body>
+</html>

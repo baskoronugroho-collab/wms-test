@@ -1,41 +1,72 @@
-/* Ninja Kilat WMS — design tokens
+/* Ninja Kilat WMS — design tokens (v2)
+   Two surfaces, one token set:
+     Station — warehouse floor, 1366x768, arm's length, barcode gun.
+     Console — desk, >=1280px, mouse, dense tables.
    Semantic colour is a separate system from brand colour, and semantic wins.
-   Red (--stop / --brand) is NEVER used for buttons, links, nav or accents. */
+   Red (--stop / --brand) is NEVER a button, link, nav item or accent. */
 
 :root {
   color-scheme: light;
 
-  --ground: #F4F4F2;
+  /* --- ground / ink ---------------------------------------------------
+     v1's #F4F4F2 was warm enough to read as dingy under warehouse light.
+     This ramp is cooled towards blue and cleaned up. */
+  --ground: #F6F7F9;
+  --ground-sunk: #EFF1F5;      /* console page behind cards */
   --surface: #FFFFFF;
-  --ink: #17181A;
-  --muted: #5E6064;
-  --rule: #DEDDD8;
+  --surface-2: #FAFBFC;        /* table header, inset rows */
+  --ink: #14161A;
+  --ink-2: #3A3F47;
+  --muted: #5B6270;
+  --muted-2: #8A909C;
+  --rule: #E4E7EC;
+  --rule-strong: #D3D8E0;
 
+  /* --- semantic: action is the only primary, everywhere ---------------- */
   --action: #1B3A5C;
   --action-ink: #FFFFFF;
-  --action-bg: #E8EDF3;
-  --action-line: #C9D4E0;
+  --action-bg: #EAF0F6;
+  --action-line: #C4D3E2;
+  --action-hover: #16314D;
+  --action-press: #102538;
 
   --accept: #127A45;
   --accept-ink: #FFFFFF;
-  --accept-bg: #E3F0E9;
-  --accept-line: #BEDDCB;
+  --accept-bg: #E5F2EB;
+  --accept-line: #B6DCC7;
 
-  --caution: #8A5A05;
+  /* Retuned to a deeper ochre in v2: the console gained an amber accent,
+     and a warning must never be mistaken for a control. Caution is now
+     clearly darker and browner than --accent. */
+  --caution: #7A4A08;
   --caution-ink: #FFFFFF;
-  --caution-bg: #F6EDDA;
-  --caution-line: #E0C68C;
+  --caution-bg: #F5EDDF;
+  --caution-line: #DCC49A;
 
   --stop: #C01D22;
   --stop-ink: #FFFFFF;
-  --stop-bg: #FAE7E7;
-  --stop-line: #EEC2C3;
+  --stop-bg: #FBE9E9;
+  --stop-line: #EFC4C5;
 
-  --brand: #C01D22;            /* header mark only, never interactive */
+  --brand: #C01D22;            /* identity mark only, never interactive */
 
-  --font-ui: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  /* --- console supporting accent: amber -------------------------------
+     Ninja red is reserved for failure, so the console's highlight is amber.
+     Used for the current-nav marker, focus emphasis and chart keys — never
+     as a primary button fill (that is always --action). */
+  --accent: #E08A00;
+  --accent-ink: #14161A;
+  --accent-bg: #FDF3E1;
+  --accent-line: #F0D49A;
+  --accent-text: #8A5400;      /* amber at paragraph size needs this step */
+
+  /* --- type ------------------------------------------------------------
+     Inter for UI; IBM Plex Mono stays for every code, quantity and plate —
+     tabular figures and an unmistakable 0/O are load-bearing here. */
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-code: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
 
+  /* Station scale. DO NOT SHRINK — sized for arm's-length reading. */
   --fs-eyebrow: 13px;
   --fs-label: 15px;
   --fs-body: 17px;
@@ -45,47 +76,98 @@
   --fs-code-sm: 40px;
   --fs-counter: 96px;
 
+  /* Console scale — a desk at 50 cm. */
+  --fs-c-micro: 11px;
+  --fs-c-meta: 12px;
+  --fs-c-body: 13px;
+  --fs-c-label: 14px;
+  --fs-c-title: 15px;
+  --fs-c-h2: 20px;
+  --fs-c-h1: 26px;
+  --fs-c-kpi: 34px;
+
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 14px;
   --sp-4: 20px;
   --sp-5: 28px;
   --sp-6: 40px;
+  --sp-card: 24px;             /* v2: cards were too tight for the surface */
 
-  --radius: 2px;
-  --tap: 48px;
-  --btn-h: 64px;
+  /* --- shape: the single biggest "dated" signal in v1 ----------------- */
+  --radius-card: 10px;
+  --radius-btn: 8px;
+  --radius-chip: 6px;
+  --radius-input: 8px;
+  --radius-full: 999px;
+
+  /* --- elevation: cards sit ON the ground rather than being drawn on it */
+  --shadow-1: 0 1px 2px rgba(20,22,26,.05), 0 1px 3px rgba(20,22,26,.05);
+  --shadow-2: 0 2px 4px rgba(20,22,26,.04), 0 10px 20px -6px rgba(20,22,26,.12);
+  --shadow-focus: 0 0 0 3px var(--action-bg);
+
+  /* --- motion: feedback should land, not snap ------------------------- */
+  --ease: cubic-bezier(.2,.7,.3,1);
+  --dur-1: 120ms;
+  --dur-2: 160ms;
+
+  --tap: 48px;                 /* station minimum */
+  --btn-h: 64px;               /* station guided-flow primary */
+  --tap-c: 32px;               /* console control height */
   --chrome-h: 64px;
+  --sidebar-w: 244px;
+  --sidebar-w-collapsed: 64px;
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --ground: #131416;
-  --surface: #1C1D20;
-  --ink: #F0EFEC;
-  --muted: #A8A7A3;
-  --rule: #2F3034;
+  --ground: #14161A;
+  --ground-sunk: #101216;
+  --surface: #1B1E24;
+  --surface-2: #21252C;
+  --ink: #EDEFF2;
+  --ink-2: #C3C8D0;
+  --muted: #98A0AD;
+  --muted-2: #6E7784;
+  --rule: #2B3038;
+  --rule-strong: #3A414B;
 
-  --action: #5E9BD1;
-  --action-ink: #0F1418;
-  --action-bg: #1A2430;
-  --action-line: #2C3E52;
+  --action: #6FA8DC;
+  --action-ink: #0D1117;
+  --action-bg: #1A2530;
+  --action-line: #2E4256;
+  --action-hover: #86B8E5;
+  --action-press: #5C97CC;
 
-  --accept: #42C182;
-  --accept-ink: #0F1418;
-  --accept-bg: #16281F;
-  --accept-line: #264834;
+  --accept: #45C486;
+  --accept-ink: #0D1117;
+  --accept-bg: #15281E;
+  --accept-line: #245038;
 
-  --caution: #DCA33F;
-  --caution-ink: #0F1418;
+  --caution: #D9A344;
+  --caution-ink: #0D1117;
   --caution-bg: #2A2113;
-  --caution-line: #4A3B1C;
+  --caution-line: #4B3A1B;
 
   --stop: #F2545B;
-  --stop-ink: #0F1418;
-  --stop-bg: #2C1517;
-  --stop-line: #4C2326;
+  --stop-ink: #0D1117;
+  --stop-bg: #2B1518;
+  --stop-line: #4E2327;
 
   --brand: #F2545B;
+
+  --accent: #E9A33A;
+  --accent-ink: #0D1117;
+  --accent-bg: #2A2113;
+  --accent-line: #4B3A1B;
+  --accent-text: #E9A33A;
+
+  --shadow-1: 0 1px 2px rgba(0,0,0,.5);
+  --shadow-2: 0 2px 6px rgba(0,0,0,.45), 0 12px 24px -8px rgba(0,0,0,.6);
+  --shadow-focus: 0 0 0 3px rgba(111,168,220,.28);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-1: 0ms; --dur-2: 0ms; }
 }

@@ -6,7 +6,7 @@
 <title>Beranda — Ninja Kilat WMS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
@@ -39,9 +39,13 @@
         <a class="home__card" href="10-hitung-pilih-keranjang.html"><span class="eyebrow">Alur D</span><span class="home__title" data-id="Hitung stok" data-en="Stock count">Hitung stok</span><span class="note" data-id="24 keranjang belum dihitung minggu ini" data-en="24 baskets left this week">24 keranjang belum dihitung minggu ini</span></a>
         <a class="home__card" href="13-peta-rak.html"><span class="eyebrow">Alur E</span><span class="home__title" data-id="Peta rak" data-en="Rack map">Peta rak</span><span class="note" data-id="Untuk supervisor: isi rak dan selisih" data-en="Supervisor: occupancy and variance">Untuk supervisor: isi rak dan selisih</span></a>
       </nav>
-      <p class="note">Semua layar: <a href="03-barcode-tidak-dikenal.html">barcode tidak dikenal</a> · <a href="04-buat-keranjang.html">buat keranjang</a> · <a href="06-label-sudah-terpakai.html">label terpakai</a> · <a href="08-salah-barang.html">salah barang</a> · <a href="09-pesanan-selesai.html">pesanan selesai</a> · <a href="11-hitung-menghitung.html">menghitung</a> · <a href="12-hasil-hitung.html">hasil hitung</a> · <a href="14-terkunci.html">terkunci</a></p>
+      <div class="home" style="grid-template-columns:1fr">
+        <a class="home__card" href="console/index.html" style="box-shadow:var(--shadow-1),inset 3px 0 0 var(--accent)"><span class="eyebrow" data-id="Untuk supervisor" data-en="For supervisors">Untuk supervisor</span><span class="home__title" data-id="Buka konsol supervisor" data-en="Open the supervisor console">Buka konsol supervisor</span><span class="note" data-id="Slip putaway, label warna hari, staf, hub, produk, dan simulator Grab." data-en="Putaway slips, day-colour labels, staff, hubs, products and the Grab simulator.">Slip putaway, label warna hari, staf, hub, produk, dan simulator Grab.</span></a>
+      </div>
+      <p class="note">Semua layar: <a href="03-barcode-tidak-dikenal.html">barcode tidak dikenal</a> · <a href="04-buat-keranjang.html">buat keranjang</a> · <a href="06-label-sudah-terpakai.html">label terpakai</a> · <a href="08-salah-barang.html">salah barang</a> · <a href="09-pesanan-selesai.html">pesanan selesai</a> · <a href="11-hitung-menghitung.html">menghitung</a> · <a href="12-hasil-hitung.html">hasil hitung</a> · <a href="14-terkunci.html">terkunci</a> · <a href="15-penerimaan-selesai.html">penerimaan selesai</a></p>
     </main>
 </div>
+<script src="js/api.js"></script>
 <script src="js/scan.js"></script>
 <script src="js/app.js"></script>
 <script src="js/wire.js"></script>
