@@ -877,7 +877,9 @@
         '<span class="pcard__picker"><span class="pcard__avatar" aria-hidden="true">' +
         esc(initials(who)) + '</span><span class="pcard__who">' +
         '<span class="pcard__who-name">' + esc(who) + '</span>' +
-        '<span class="pcard__who-held" data-field="held">Ditahan ' + mins(held) + ' menit</span>' +
+        '<span class="pcard__who-held" data-field="held" ' +
+        biAttr('Ditahan ' + mins(held) + ' menit', 'Held ' + mins(held) + ' min') +
+        '>Ditahan ' + mins(held) + ' menit</span>' +
         '</span></span>' +
         '<span class="pcard__foot">' +
         (stuck ? '<span class="agechip agechip--stuck"><span class="agechip__dot"></span><span ' +
@@ -918,8 +920,12 @@
       setF('count-done', done.count);
       const stuckCards = claimed.cards.filter(c => (c.held_seconds || 0) >= BANDS.stuck);
       setF('count-stuck', stuckCards.length);
-      setF('oldest-waiting', board.oldest_waiting_seconds != null
-        ? mins(board.oldest_waiting_seconds) + ' menit' : '—');
+      const oldestEl = field('oldest-waiting');
+      if (oldestEl) {
+        if (board.oldest_waiting_seconds == null) bi(oldestEl, '—', '—');
+        else bi(oldestEl, mins(board.oldest_waiting_seconds) + ' menit',
+                          mins(board.oldest_waiting_seconds) + ' min');
+      }
 
       // The stuck banner names one order; it exists to be acted on, not admired.
       const alert = region('stuck-alert');
@@ -929,7 +935,8 @@
         if (s) {
           const who = s.claimed_by_name || (s.claimed_by || '').split('@')[0];
           setF('stuck-ref', s.external_ref);
-          setF('stuck-held', mins(s.held_seconds) + ' menit');
+          bi(field('stuck-held'), mins(s.held_seconds) + ' menit',
+                                   mins(s.held_seconds) + ' min');
           setF('stuck-holder', who);
           const btn = $('[data-release]', alert);
           if (btn) {
@@ -983,6 +990,7 @@
       if (rel) {
         const id = rel.dataset.taskId;
         if (!id) return;
+        closeDialog();
         try {
           await api().releasePickTask(id);
           say('Dikembalikan ke antrean.');
@@ -991,13 +999,37 @@
       }
     });
 
-    // The confirm dialog is the design's; it only needs the id carried across.
+    /* The confirm dialog. Its open/close lived in the design's demo script,
+       which this file replaces, so the behaviour is reimplemented here rather
+       than left as dead markup: releasing another person's work must never be
+       a silent click, and the dialog is what names the holder before it acts. */
+    const dlg = () => $('#dlg-release');
+    const scrim = () => $('.scrim');
+    function closeDialog() {
+      const d = dlg(), sc = scrim();
+      if (d) d.classList.remove('is-open');
+      if (sc) sc.classList.remove('is-open');
+    }
     document.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-release]');
-      if (!btn) return;
-      const confirm = $('[data-action="confirm-release"]');
-      if (confirm) confirm.dataset.taskId = btn.dataset.release;
+      if (btn) {
+        const holder = btn.dataset.holder || '—';
+        setF('dlg-holder', holder);
+        setF('dlg-avatar', holder.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase());
+        setF('dlg-ref', btn.dataset.ref || '—');
+        setF('dlg-held', (btn.dataset.held || '?') + ' menit');
+        const confirm = $('[data-action="confirm-release"]');
+        if (confirm) confirm.dataset.taskId = btn.dataset.release;
+        const d = dlg(), sc = scrim();
+        if (d) d.classList.add('is-open');
+        if (sc) sc.classList.add('is-open');
+        return;
+      }
+      if (e.target.closest('[data-drawer-close]') || e.target.classList.contains('scrim')) {
+        closeDialog();
+      }
     });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDialog(); });
 
     await poll(true);
     setInterval(() => { if (!document.hidden) poll(false); }, 10000);
