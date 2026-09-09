@@ -932,6 +932,18 @@
         (done.count > 8 ? '<span class="donerow" style="color:var(--muted-2)">…dan ' +
           (done.count - 8) + ' lainnya</span>' : '');
 
+      // The mockup hard-codes "4 mnt 12 dtk" here. Compute it or say nothing:
+      // an invented average on an ops board is a number someone will quote in a
+      // meeting.
+      const finished = done.cards.filter(c => c.completed_at && c.created_at);
+      if (finished.length) {
+        const avg = finished.reduce((n, c) =>
+          n + (new Date(c.completed_at) - new Date(c.created_at)) / 1000, 0) / finished.length;
+        bi(field('avg-pick'), Math.floor(avg / 60) + ' mnt ' + Math.round(avg % 60) + ' dtk',
+                              Math.floor(avg / 60) + ' min ' + Math.round(avg % 60) + ' s');
+      } else {
+        bi(field('avg-pick'), '—', '—');
+      }
       setF('count-waiting', waiting.count);
       setF('count-claimed', claimed.count);
       setF('count-done', done.count);
