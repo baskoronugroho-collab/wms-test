@@ -203,6 +203,20 @@
 
   /* ---- home ---- */
   screens.home = async () => {
+    /* The root lands on the Station app, which is right for the people who use
+       this all day. It is wrong for a supervisor or admin: their surface is the
+       console, and from here it is a card below the fold — so the app looked to
+       them like it had never been redesigned at all.
+       Send them to the console, but never trap them: arriving from the console's
+       own "open station app" link, or with ?station, is an explicit choice and
+       is remembered for the session. */
+    const params = new URLSearchParams(location.search);
+    const fromConsole = document.referrer.includes('/console/');
+    if (params.has('station') || fromConsole) CTX.set('preferStation', true);
+    if (ME.role && ['admin', 'supervisor'].includes(ME.role) && !CTX.get('preferStation')) {
+      return go('console/index.html');
+    }
+
     const cards = $$('.home__card');
     try {
       const [board, plans] = await Promise.all([
