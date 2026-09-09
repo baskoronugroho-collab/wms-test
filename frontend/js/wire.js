@@ -216,6 +216,21 @@
                                stale + ' baskets not counted yet');
     } catch (e) { fail(e); }
 
+    // The Admin Page is its own box, separate from the Alur flow cards, and
+    // only ever shown to an admin — it curates shared master data, not a task.
+    if (ME.role === 'admin') {
+      const nav = $('.home');
+      const a = document.createElement('a');
+      a.className = 'home__card';
+      a.href = '17-admin.html';
+      a.innerHTML = '<span class="eyebrow">Admin</span>' +
+        '<span class="home__title" data-id="Admin page" data-en="Admin page">Admin page</span>' +
+        '<span class="note" data-id="Kelola data induk brand, produk, dan lokasi default" ' +
+        'data-en="Manage brand, product, and default-location master data">' +
+        'Kelola data induk brand, produk, dan lokasi default</span>';
+      nav.appendChild(a);
+    }
+
     // Training tools live behind the rack-map card's row, not in the main menu.
     if (SITE.is_training) {
       const nav = $('.home');
@@ -526,13 +541,83 @@
         '<td class="td-code">' + esc(it.barcode) + '</td>' +
         '<td>' + esc(it.brand_name) + '</td>' +
         '<td>' + esc(it.sku_name) + '</td>' +
-        '<td class="td-code">' + esc(it.location_code) +
-          (it.location_was_blank ? ' <span class="note">(default)</span>' : '') + '</td>' +
+        '<td class="td-code">' + esc(it.location_code) + '</td>' +
         '<td>' + esc(it.input_date_raw || '—') + '</td>' +
         '<td>' + esc((it.uploaded_by || '—').split('@')[0]) + '</td>' +
         '</tr>'
       ).join('');
     } catch (e) { fail(e); }
+  };
+
+  screens['admin-product-master'] = async () => {
+    if (ME.role !== 'admin') {
+      document.body.innerHTML = '<div class="banner banner--stop" style="margin:40px">' +
+        '<span class="banner__icon">!</span>Halaman ini khusus admin.</div>';
+      return;
+    }
+
+    const body = $('#masterBody');
+    const emptyNote = $('#emptyNote');
+    const fileInput = $('#fileInput');
+    const submit = $('#submitBtn');
+    const uploadResult = $('#uploadResult');
+    const deleteBtn = $('#deleteSelectedBtn');
+
+    async function loadList() {
+      const r = await api('GET', '/admin/product-master?limit=1000');
+      if (!r.items.length) {
+        body.innerHTML = '';
+        emptyNote.style.display = 'block';
+        return;
+      }
+      emptyNote.style.display = 'none';
+      body.innerHTML = r.items.map(it =>
+        '<tr data-id="' + it.id + '">' +
+        '<td><input type="checkbox" class="rowSel" data-id="' + it.id + '"></td>' +
+        '<td>' + esc(it.brand_name) + '</td>' +
+        '<td>' + esc(it.product_name) + '</td>' +
+        '</tr>'
+      ).join('');
+    }
+
+    function renderUploadResult(r) {
+      uploadResult.style.display = 'block';
+      const failed = r.results.filter(x => !x.ok);
+      uploadResult.className = 'panel ' + (failed.length ? '' : 'banner banner--accept');
+      uploadResult.innerHTML = '<div class="col" style="gap:8px;padding:' + (failed.length ? '12px' : '0') + '">' +
+        '<span>' + esc(r.message) + '</span>' +
+        (failed.length ? '<div class="list">' + failed.map(x =>
+          '<div class="row"><span class="row__name">Baris ' + x.row_no + ': ' + esc(x.message) + '</span></div>'
+        ).join('') + '</div>' : '') + '</div>';
+    }
+
+    submit.onclick = async () => {
+      const f = fileInput.files && fileInput.files[0];
+      if (!f) { say('Pilih file dulu.'); return; }
+      const fd = new FormData();
+      fd.append('file', f);
+      try {
+        const res = await fetch('/api/admin/product-master/import', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || ('HTTP ' + res.status));
+        renderUploadResult(data);
+        fileInput.value = '';
+        loadList();
+      } catch (e) { fail(e); }
+    };
+
+    deleteBtn.onclick = async () => {
+      const ids = $$('.rowSel:checked', body).map(cb => +cb.dataset.id);
+      if (!ids.length) { say('Pilih baris yang mau dihapus dulu.'); return; }
+      if (!confirm('Hapus ' + ids.length + ' baris data induk?')) return;
+      try {
+        await api('POST', '/admin/product-master/delete', { ids });
+        say(ids.length + ' baris dihapus.');
+        loadList();
+      } catch (e) { fail(e); }
+    };
+
+    loadList();
   };
 
   /* --- B: labelling (Mode B) --- */

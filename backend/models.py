@@ -580,7 +580,6 @@ class StockUploadItem(BaseModel):
     brand_name: str
     sku_name: str
     location_code: str
-    location_was_blank: bool
     input_date_raw: str | None
     uploaded_by: str | None
     created_at: str
@@ -589,6 +588,37 @@ class StockUploadItem(BaseModel):
 class StockUploadItemList(BaseModel):
     items: list[StockUploadItem]
     total: int
+
+
+# --- admin: product master data ----------------------------------------------
+
+class ProductMasterRowResult(BaseModel):
+    row_no: int
+    ok: bool
+    message: str
+
+
+class ProductMasterImportResult(BaseModel):
+    rows_total: int
+    rows_saved: int
+    results: list[ProductMasterRowResult]
+    message: str
+
+
+class ProductMasterItem(BaseModel):
+    id: int
+    brand_name: str
+    product_name: str
+    created_at: str
+
+
+class ProductMasterList(BaseModel):
+    items: list[ProductMasterItem]
+    total: int
+
+
+class ProductMasterDeleteIn(BaseModel):
+    ids: list[int]
 
 
 # --- training ---------------------------------------------------------------
