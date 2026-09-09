@@ -373,7 +373,7 @@
     if (zone) { zone.onScan(doScan); testCodes(zoneEl, doScan); }
     setF('session-qty', CTX.get('receiptSession') || 0);
 
-    const finish = $('.btn--primary');
+    const finish = $('#finishDeliveryBtn') || $('.btn--primary');
     if (finish) finish.onclick = async () => {
       try {
         await api().raw.post('/receipts/' + receiptId + '/complete', {});
