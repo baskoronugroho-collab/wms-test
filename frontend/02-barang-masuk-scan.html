@@ -47,6 +47,16 @@
         </span>
         <span class="daystrip__hint" data-id="Tempel stiker warna ini di setiap kardus, dan tulis tanggalnya. Warna berulang tiap 7 hari — tanggal yang membedakan batch lama dari yang baru." data-en="Put this colour sticker on every carton, and write the date. Colours repeat weekly — the date is what separates an old batch from a new one.">Tempel stiker warna ini di setiap kardus, dan tulis tanggalnya. Warna berulang tiap 7 hari — tanggal yang membedakan batch lama dari yang baru.</span>
       </div>
+      <div class="refstrip">
+        <label class="refstrip__label" for="refInput" data-id="Nomor referensi / AWB (opsional)" data-en="Reference / AWB number (optional)">Nomor referensi / AWB (opsional)</label>
+        <input class="refstrip__input" id="refInput" type="text" list="refSamples" placeholder="mis. WRD-2609-1" aria-label="Nomor referensi atau AWB, opsional">
+        <datalist id="refSamples">
+          <option value="WRD-2609-1"></option>
+          <option value="WRD-2609-2"></option>
+          <option value="WRD-2609-3"></option>
+        </datalist>
+        <span class="refstrip__hint" data-id="Isi kalau brand kasih nomor AWB/referensi. Kalau tidak ada, lewati saja." data-en="Fill in if the brand gives an AWB/reference number. Skip it if there isn't one.">Isi kalau brand kasih nomor AWB/referensi. Kalau tidak ada, lewati saja.</span>
+      </div>
       <div class="row-split">
         <div class="col" style="flex:0 0 380px">
           <img class="product__photo product__photo--lg" src="assets/products/placeholder.svg" data-photo-key="wdh-gll-07" alt="Glasting Liquid Lip 07 Rouge Flare">
@@ -69,22 +79,23 @@
                 <span class="stat__num" data-field="basket-qty">14</span>
                 <span class="stat__foot" data-id="Kapasitas 40" data-en="Capacity 40">Kapasitas 40</span>
               </div>
-              <div class="stat">
+              <div class="stat stat--highlight">
                 <span class="stat__label" data-id="Sesi ini" data-en="This session">Sesi ini</span>
                 <span class="stat__num" data-field="session-qty">37</span>
-                <span class="stat__foot" data-id="dari 128 barang" data-en="of 128 items">dari 128 barang</span>
+                <span class="stat__foot" data-id="barang discan sesi ini" data-en="items scanned this session">barang discan sesi ini</span>
               </div>
             </div>
           </div>
           <div class="col">
-      <div class="scanzone" data-scan-label="Pindai barang berikutnya" data-offline-msg="Tunggu koneksi kembali">
+      <button class="btn btn--primary btn--lg btn--block" type="button" id="startScanBtn" data-id="Mulai pindai barcode" data-en="Start barcode scanning">Mulai pindai barcode</button>
+      <div class="scanzone" data-scan-label="Pindai barang berikutnya" data-offline-msg="Tunggu koneksi kembali" hidden>
         <span class="scanzone__state" data-id="Menunggu pindaian" data-en="Waiting for scan">Menunggu pindaian</span>
         <span class="scanzone__prompt" data-id="Pindai barang berikutnya" data-en="Scan the next item">Pindai barang berikutnya</span>
         <input class="scanzone__input" aria-label="Pindai barang berikutnya">
       </div>
             <div class="stats">
               <button class="btn btn--outline btn--lg" type="button" data-action="undo"><span aria-hidden="true">↺</span><span data-id="Batalkan scan terakhir" data-en="Undo last scan">Batalkan scan terakhir</span></button>
-              <a class="btn btn--primary btn--lg btn--grow" href="15-penerimaan-selesai.html" data-id="Selesai terima kiriman" data-en="Finish this delivery">Selesai terima kiriman</a>
+              <a class="btn btn--primary btn--lg btn--grow" href="15-penerimaan-selesai.html" data-id="Selesai Upload Stok" data-en="Finish Upload Stock">Selesai Upload Stok</a>
             </div>
           </div>
         </div>

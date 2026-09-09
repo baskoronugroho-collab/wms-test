@@ -288,6 +288,27 @@
     const mode = $('.chrome__mode');
     if (mode) { mode.dataset.keep = '1'; mode.textContent = 'Barang masuk · #' + receiptId; }
 
+    const startBtn = $('#startScanBtn');
+    if (startBtn && zoneEl) {
+      startBtn.onclick = () => {
+        startBtn.hidden = true;
+        zoneEl.hidden = false;
+        if (zone) zone.focus();
+      };
+    }
+
+    const refInput = $('#refInput');
+    if (refInput) {
+      const saveRef = async () => {
+        const val = refInput.value.trim();
+        try {
+          await api().raw.patch('/receipts/' + receiptId,
+            { external_reference: val || null });
+        } catch (e) { /* not critical to the scan flow */ }
+      };
+      refInput.addEventListener('change', saveRef);
+    }
+
     function result(kind, title, detail) {
       if (!banner) return;
       banner.className = 'banner banner--' + kind;
