@@ -822,6 +822,115 @@
     }
   };
 
+  /* ---- console: overview ---- */
+
+  screens.index = async () => {
+    await paintDayColour();
+    const today = await api().dayColors().then(d => d.today).catch(() => null);
+    if (today) {
+      setF('day-week', 'W' + today.iso_week + ' · ' + today.week_parity);
+      bi(field('day-name'), 'Warna hari ini · ' + today.day_id,
+                            "Today's colour · " + today.day_en);
+      setF('day-date', NJW.fmt.date(today.date));
+    }
+
+    const [board, slips, sites, plans] = await Promise.all([
+      api().pickBoard({ site_id: SITE.id }).catch(() => null),
+      api().slips({ site_id: SITE.id, limit: 50 }).catch(() => null),
+      api().sites().catch(() => null),
+      api().opnamePlans({ site_id: SITE.id, limit: 5 }).catch(() => null),
+    ]);
+
+    // Units received today, from the slips issued today at this site.
+    if (slips) {
+      const today10 = new Date().toISOString().slice(0, 10);
+      const mine = slips.slips.filter(x => (x.created_at || '').slice(0, 10) === today10);
+      setF('kpi-received', NJW.fmt.n(mine.reduce((n, x) => n + x.total_units, 0)));
+      const foot = field('kpi-received') && field('kpi-received').nextElementSibling;
+      bi(foot, 'dari ' + mine.length + ' kiriman', 'across ' + mine.length + ' deliveries');
+    }
+
+    if (board) {
+      const waiting = board.lanes.find(l => l.key === 'waiting');
+      setF('kpi-orders', waiting.count);
+      const foot = field('kpi-orders') && field('kpi-orders').nextElementSibling;
+      const mins = Math.floor((board.oldest_waiting_seconds || 0) / 60);
+      bi(foot, waiting.count ? 'tertua ' + mins + ' menit' : 'antrean kosong',
+               waiting.count ? 'oldest ' + mins + ' min' : 'queue empty');
+    }
+
+    if (plans) {
+      const open = plans.plans.filter(x => x.variances > 0);
+      setF('kpi-variance', open.reduce((n, x) => n + x.variances, 0));
+    }
+
+    if (sites) {
+      const me = sites.sites.find(x => x.id === SITE.id);
+      if (me) {
+        setF('kpi-occupancy', me.occupied_locations + ' / ' + me.total_locations);
+        const foot = field('kpi-occupancy') && field('kpi-occupancy').nextElementSibling;
+        const free = me.total_locations - me.occupied_locations;
+        bi(foot, free + ' posisi kosong', free + ' positions free');
+      }
+    }
+
+    /* "Needs attention" is the only list here, and it must never invent a row:
+       an ops board that shows a problem which does not exist costs someone a
+       walk to a rack. */
+    const host = region('attention');
+    if (host) {
+      const rows = [];
+      if (slips) {
+        slips.slips.slice(0, 3).forEach(x => {
+          const hrs = NJW.fmt.hoursLeft(
+            new Date(new Date(x.created_at).getTime() + 24 * 36e5).toISOString());
+          if (hrs != null && hrs <= 24) {
+            rows.push({
+              what: 'Batas selisih barang masuk', what_en: 'Inbound discrepancy window',
+              ref: x.slip_no,
+              detail: 'Sisa ' + hrs + ' jam sebelum jadi tanggungan station',
+              detail_en: hrs + ' hours left before the station bears it',
+              status: hrs <= 6 ? 'Mendesak' : 'Berjalan',
+              status_en: hrs <= 6 ? 'Urgent' : 'Running',
+              urgent: hrs <= 6,
+              href: 'slip-detail.html?id=' + x.id,
+            });
+          }
+        });
+      }
+      if (board) {
+        const stuck = (board.lanes.find(l => l.key === 'picking') || { cards: [] })
+          .cards.filter(c => (c.held_seconds || 0) >= 900);
+        stuck.forEach(c => rows.push({
+          what: 'Klaim tersendat', what_en: 'Stuck claim', ref: c.external_ref,
+          detail: 'Dipegang ' + Math.floor(c.held_seconds / 60) + ' menit oleh ' +
+                  (c.claimed_by_name || c.claimed_by),
+          detail_en: 'Held ' + Math.floor(c.held_seconds / 60) + ' min by ' +
+                     (c.claimed_by_name || c.claimed_by),
+          status: 'Mendesak', status_en: 'Urgent', urgent: true,
+          href: 'papan-antrean.html',
+        }));
+      }
+
+      // The design's own row vocabulary: td-strong, td-code, a spill status pill
+      // with its dot, and td-actions. Inventing names here would render a row
+      // that is structurally right and visually unstyled.
+      host.innerHTML = rows.length ? rows.map(r =>
+        '<tr><td class="td-strong" ' + biAttr(r.what, r.what_en) + '>' + esc(r.what) + '</td>' +
+        '<td class="td-code">' + esc(r.ref) + '</td>' +
+        '<td ' + biAttr(r.detail, r.detail_en) + '>' + esc(r.detail) + '</td>' +
+        '<td><span class="spill spill--' + (r.urgent ? 'stop' : 'warn') + '">' +
+        '<span class="spill__dot"></span><span ' + biAttr(r.status, r.status_en) + '>' +
+        esc(r.status) + '</span></span></td>' +
+        '<td class="td-actions"><a class="cbtn cbtn--sm" href="' + r.href + '" ' +
+        biAttr('Buka', 'Open') + '>Buka</a></td></tr>').join('')
+        : '<tr><td colspan="5" class="note" ' +
+          biAttr('Tidak ada yang perlu perhatian.', 'Nothing needs attention.') +
+          '>Tidak ada yang perlu perhatian.</td></tr>';
+      applyLangTo(host);
+    }
+  };
+
   /* ======================= console: the pick queue board ================= */
 
   screens['papan-antrean'] = async () => {
