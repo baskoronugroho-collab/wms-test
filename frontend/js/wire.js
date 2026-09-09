@@ -825,10 +825,20 @@
         racks.map(r => '<span class="rackdot">' + esc(r) + '</span>').join('') + '</span>';
     }
 
-    function testBand(c) {
-      return c.is_test
-        ? '<span class="pcard__test"><span class="pcard__test-badge">UJI COBA</span></span>' : '';
-    }
+    /* The design marks a test order two ways, and both matter: `is-test` on the
+       article draws the amber band through ::before, and a badge-test span sits
+       beside the ref inside .pcard__top. An earlier version of this renderer
+       invented pcard__test / pcard__test-badge, which exist in neither the CSS
+       nor the mockup, so the badge rendered as bare unstyled text and the band
+       never appeared at all. */
+    const testBadge = c => c.is_test
+      ? '<span class="badge-test" ' + biAttr('UJI COBA', 'TEST') + '>UJI COBA</span>' : '';
+
+    // The release control carries the design's own icon.
+    const RELEASE_ICON =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M12 3.5v9"/><path d="M8.2 9l3.8 3.5L15.8 9"/><path d="M4.5 15v5.5h15V15"/></svg>';
 
     function facts(c) {
       return '<span class="pcard__facts">' +
@@ -855,10 +865,11 @@
         (b === 'late' ? biAttr('Terlambat', 'Late') : biAttr('Menua', 'Ageing')) + '>' +
         (b === 'late' ? 'Terlambat' : 'Menua') + '</span></span>';
       return '<article class="pcard' + (b === 'normal' ? '' : ' is-' + b) +
+        (c.is_test ? ' is-test' : '') +
         '" data-task="' + c.id + '" data-age-seconds="' + c.age_seconds + '">' +
-        '<span class="pcard__rule" aria-hidden="true"></span>' + testBand(c) +
+        '<span class="pcard__rule" aria-hidden="true"></span>' +
         '<span class="pcard__top"><span class="pcard__ref" data-field="ref">' +
-        esc(c.external_ref) + '</span></span>' +
+        esc(c.external_ref) + '</span>' + testBadge(c) + '</span>' +
         '<span class="pcard__age"><span class="pcard__age-num" data-field="age">' +
         mins(c.age_seconds) + '</span><span class="pcard__age-unit" ' +
         biAttr('menit menunggu', 'min waiting') + '>menit menunggu</span>' + chip + '</span>' +
@@ -870,10 +881,11 @@
       const stuck = held >= BANDS.stuck;
       const who = c.claimed_by_name || (c.claimed_by || '').split('@')[0] || '—';
       return '<article class="pcard' + (stuck ? ' is-stuck' : '') +
+        (c.is_test ? ' is-test' : '') +
         '" data-task="' + c.id + '" data-age-seconds="' + c.age_seconds + '">' +
-        '<span class="pcard__rule" aria-hidden="true"></span>' + testBand(c) +
+        '<span class="pcard__rule" aria-hidden="true"></span>' +
         '<span class="pcard__top"><span class="pcard__ref" data-field="ref">' +
-        esc(c.external_ref) + '</span></span>' +
+        esc(c.external_ref) + '</span>' + testBadge(c) + '</span>' +
         '<span class="pcard__age"><span class="pcard__age-num" data-field="age">' +
         mins(c.age_seconds) + '</span><span class="pcard__age-unit" ' +
         biAttr('menit sejak pesanan masuk', 'min since the order arrived') +
@@ -892,7 +904,7 @@
         '<span class="toolbar__spacer"></span>' +
         '<button class="cbtn cbtn--primary" type="button" data-release="' + c.id +
         '" data-holder="' + esc(who) + '" data-ref="' + esc(c.external_ref) +
-        '" data-held="' + mins(held) + '"><span ' +
+        '" data-held="' + mins(held) + '">' + RELEASE_ICON + '<span ' +
         biAttr('Lepaskan ke antrean', 'Release to the queue') + '>Lepaskan ke antrean</span></button>' +
         '</span></article>';
     }
