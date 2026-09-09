@@ -10,7 +10,7 @@ import json
 import random
 import uuid
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 import auth
 import db
@@ -317,3 +317,65 @@ async def activity(
     return {"rows": [{"actor_email": r["actor_email"], "flow": r["flow"],
                       "event": r["event"], "created_at": str(r["created_at"])}
                      for r in rows]}
+
+
+@router.post("/orders/compose", response_model=models.OrderAccepted, status_code=201)
+async def compose_order(
+    body: models.ComposeOrderIn, user: auth.User = Depends(auth.current_user)
+):
+    """Build one specific test order — chosen SKUs and quantities.
+
+    `generate` makes random orders, which is right for load and for practice but
+    useless when you need to reproduce a particular case: a two-line order, a
+    line that will go short, the exact shade that keeps being mispicked.
+
+    Training sites only, for the same reason `generate` is: a test order against
+    a live site would consume real stock and push a wrong number to Grab
+    (PRD §9.3.4).
+    """
+    site = await auth.assert_training_site(body.site_id)
+    if not body.lines:
+        raise HTTPException(422, "Pilih minimal satu barang.")
+
+    ref = body.external_ref or f"TEST-{uuid.uuid4().hex[:10].upper()}"
+    return await outbound.receive_order(models.OrderIn(
+        external_ref=ref,
+        site_id=body.site_id,
+        is_test=True,
+        lines=[models.OrderLineIn(sku_id=l.sku_id, quantity=max(1, l.quantity))
+               for l in body.lines],
+    ))
+
+
+@router.get("/orders", response_model=models.TestOrderList)
+async def list_test_orders(
+    site_id: int,
+    limit: int = Query(default=25, le=100),
+    user: auth.User = Depends(auth.current_user),
+):
+    """Recent orders at a training site, with what happened to each."""
+    await auth.assert_training_site(site_id)
+    rows = await db.fetch_all(
+        "SELECT o.id, o.external_ref, o.status, o.is_test, o.created_at, "
+        "       pt.id AS pick_task_id, pt.status AS pick_status, "
+        "       COUNT(ol.id) AS line_count, "
+        "       COALESCE(SUM(ol.qty_ordered),0) AS total_qty, "
+        "       SUM(CASE WHEN ol.status='short' THEN 1 ELSE 0 END) AS short_lines "
+        "FROM orders o "
+        "LEFT JOIN pick_tasks pt ON pt.order_id = o.id "
+        "LEFT JOIN order_lines ol ON ol.order_id = o.id "
+        "WHERE o.site_id = %s "
+        "GROUP BY o.id, o.external_ref, o.status, o.is_test, o.created_at, "
+        "         pt.id, pt.status "
+        "ORDER BY o.created_at DESC LIMIT %s",
+        (site_id, limit),
+    )
+    return {"orders": [{
+        "order_id": r["id"], "external_ref": r["external_ref"],
+        "status": r["status"], "is_test": bool(r["is_test"]),
+        "line_count": int(r["line_count"] or 0),
+        "total_qty": int(r["total_qty"] or 0),
+        "short_lines": int(r["short_lines"] or 0),
+        "pick_task_id": r["pick_task_id"], "pick_status": r["pick_status"],
+        "created_at": str(r["created_at"]),
+    } for r in rows]}

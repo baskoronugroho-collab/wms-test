@@ -21,6 +21,7 @@ import auth
 import db
 import models
 from routers import (
+    admin,
     inbound,
     inventory,
     locations,
@@ -29,6 +30,7 @@ from routers import (
     outbound,
     plates,
     scan,
+    slips,
     stock_upload,
     training,
 )
@@ -130,6 +132,6 @@ async def unhandled(request: Request, exc: Exception):
 
 for module in (
     master, locations, scan, inbound, plates, outbound, opname, inventory,
-    stock_upload, training,
+    stock_upload, slips, admin, training,
 ):
     app.include_router(module.router)

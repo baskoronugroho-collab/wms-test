@@ -38,7 +38,7 @@
         ],
         "summary": "The browser's heartbeat",
         "description": "The browser's heartbeat.\n\nSame answer as /health, reachable through the ingress. Once a frontend/ is\nshipped the ingress routes everything except /api to nginx, so a browser\nasking for /health gets index.html back with a cheerful 200 — which would\nmake the connection indicator claim the app is up while the backend or the\ndatabase is down. The station app is online-only and blocks work loudly on a\ndropped connection, so that heartbeat has to reach the backend.\n\nHEAD is declared explicitly. Plain Starlette adds HEAD to any GET route, but\nFastAPI's APIRoute does not — and the frontend's heartbeat sends HEAD, so\nwithout this it collects a 405 every 20 s and reports the app as offline\nforever.",
-        "operationId": "api_health_api_health_head",
+        "operationId": "api_health_api_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -58,7 +58,7 @@
         ],
         "summary": "The browser's heartbeat",
         "description": "The browser's heartbeat.\n\nSame answer as /health, reachable through the ingress. Once a frontend/ is\nshipped the ingress routes everything except /api to nginx, so a browser\nasking for /health gets index.html back with a cheerful 200 — which would\nmake the connection indicator claim the app is up while the backend or the\ndatabase is down. The station app is online-only and blocks work loudly on a\ndropped connection, so that heartbeat has to reach the backend.\n\nHEAD is declared explicitly. Plain Starlette adds HEAD to any GET route, but\nFastAPI's APIRoute does not — and the frontend's heartbeat sends HEAD, so\nwithout this it collects a 405 every 20 s and reports the app as offline\nforever.",
-        "operationId": "api_health_api_health_head",
+        "operationId": "api_health_api_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3077,6 +3077,537 @@
         }
       }
     },
+    "/api/day-colors": {
+      "get": {
+        "tags": [
+          "slips"
+        ],
+        "summary": "Today's batch colour, plus the week, for the label screen and the wall",
+        "description": "Today's batch colour, plus the week, for the label screen and the wall.",
+        "operationId": "day_colors_api_day_colors_get",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DayColorLegend"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/receipts/{receipt_id}/putaway-slip": {
+      "get": {
+        "tags": [
+          "slips"
+        ],
+        "summary": "The slip for a receipt, issuing it on first request after completion",
+        "description": "The slip for a receipt, issuing it on first request after completion.",
+        "operationId": "receipt_slip_api_receipts__receipt_id__putaway_slip_get",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Receipt Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PutawaySlip"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/putaway-slips": {
+      "get": {
+        "tags": [
+          "slips"
+        ],
+        "summary": "The supervisor's archive: every slip this site has issued, newest first",
+        "description": "The supervisor's archive: every slip this site has issued, newest first.",
+        "operationId": "list_slips_api_putaway_slips_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PutawaySlipList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/putaway-slips/{slip_id}": {
+      "get": {
+        "tags": [
+          "slips"
+        ],
+        "summary": "Get Slip",
+        "operationId": "get_slip_api_putaway_slips__slip_id__get",
+        "parameters": [
+          {
+            "name": "slip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Slip Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PutawaySlip"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List Users",
+        "operationId": "list_users_api_admin_users_get",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Register a staff email against a role and the sites they may work at",
+        "description": "Register a staff email against a role and the sites they may work at.",
+        "operationId": "create_user_api_admin_users_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUserIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUser"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{user_id}": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Change a role, the sites someone may work at, or switch them off",
+        "description": "Change a role, the sites someone may work at, or switch them off.",
+        "operationId": "update_user_api_admin_users__user_id__patch",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUserPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUser"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sites": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Hubs with their rack layout and how full each one is",
+        "description": "Hubs with their rack layout and how full each one is.\n\nSupervisor rather than admin: a station supervisor needs to see their own\nracks, and the payload carries no personal data beyond a headcount.",
+        "operationId": "list_sites_api_admin_sites_get",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteAdminList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sites/{site_id}": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Update Site",
+        "operationId": "update_site_api_admin_sites__site_id__patch",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SitePatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/training/scenarios": {
       "get": {
         "tags": [
@@ -3450,6 +3981,136 @@
           }
         }
       }
+    },
+    "/api/training/orders/compose": {
+      "post": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Build one specific test order",
+        "description": "Build one specific test order — chosen SKUs and quantities.\n\n`generate` makes random orders, which is right for load and for practice but\nuseless when you need to reproduce a particular case: a two-line order, a\nline that will go short, the exact shade that keeps being mispicked.\n\nTraining sites only, for the same reason `generate` is: a test order against\na live site would consume real stock and push a wrong number to Grab\n(PRD §9.3.4).",
+        "operationId": "compose_order_api_training_orders_compose_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComposeOrderIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/training/orders": {
+      "get": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Recent orders at a training site, with what happened to each",
+        "description": "Recent orders at a training site, with what happened to each.",
+        "operationId": "list_test_orders_api_training_orders_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "default": 25,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestOrderList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3525,6 +4186,233 @@
           "session_ids"
         ],
         "title": "AdjustmentIn"
+      },
+      "AdminUser": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "default_site_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Site Id"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "site_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Site Codes"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "name",
+          "role",
+          "default_site_id",
+          "locale",
+          "active",
+          "site_codes"
+        ],
+        "title": "AdminUser"
+      },
+      "AdminUserIn": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "default": "staff"
+          },
+          "default_site_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Site Id"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale",
+            "default": "id"
+          },
+          "site_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Site Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "AdminUserIn"
+      },
+      "AdminUserList": {
+        "properties": {
+          "users": {
+            "items": {
+              "$ref": "#/components/schemas/AdminUser"
+            },
+            "type": "array",
+            "title": "Users"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Roles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "users",
+          "roles"
+        ],
+        "title": "AdminUserList"
+      },
+      "AdminUserPatch": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "default_site_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Site Id"
+          },
+          "locale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locale"
+          },
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active"
+          },
+          "site_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Ids"
+          }
+        },
+        "type": "object",
+        "title": "AdminUserPatch"
       },
       "BarcodeCheck": {
         "properties": {
@@ -3758,6 +4646,129 @@
           "name"
         ],
         "title": "BrandIn"
+      },
+      "ComposeOrderIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/ComposeOrderLineIn"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "external_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Ref"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "lines"
+        ],
+        "title": "ComposeOrderIn"
+      },
+      "ComposeOrderLineIn": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id"
+        ],
+        "title": "ComposeOrderLineIn"
+      },
+      "DayColor": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "hex": {
+            "type": "string",
+            "title": "Hex"
+          },
+          "ink": {
+            "type": "string",
+            "title": "Ink"
+          },
+          "day_id": {
+            "type": "string",
+            "title": "Day Id"
+          },
+          "day_en": {
+            "type": "string",
+            "title": "Day En"
+          },
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "iso_week": {
+            "type": "integer",
+            "title": "Iso Week"
+          },
+          "week_parity": {
+            "type": "string",
+            "title": "Week Parity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "hex",
+          "ink",
+          "day_id",
+          "day_en",
+          "date",
+          "iso_week",
+          "week_parity"
+        ],
+        "title": "DayColor"
+      },
+      "DayColorLegend": {
+        "properties": {
+          "today": {
+            "$ref": "#/components/schemas/DayColor"
+          },
+          "week": {
+            "items": {
+              "$ref": "#/components/schemas/DayColor"
+            },
+            "type": "array",
+            "title": "Week"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "today",
+          "week",
+          "note"
+        ],
+        "title": "DayColorLegend"
       },
       "GenerateOrdersIn": {
         "properties": {
@@ -5414,6 +6425,279 @@
         ],
         "title": "PlateStock"
       },
+      "PutawaySlip": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "slip_no": {
+            "type": "string",
+            "title": "Slip No"
+          },
+          "receipt_id": {
+            "type": "integer",
+            "title": "Receipt Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "site_code": {
+            "type": "string",
+            "title": "Site Code"
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type"
+          },
+          "inbound_date": {
+            "type": "string",
+            "title": "Inbound Date"
+          },
+          "day_color": {
+            "$ref": "#/components/schemas/DayColor"
+          },
+          "received_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received By"
+          },
+          "total_lines": {
+            "type": "integer",
+            "title": "Total Lines"
+          },
+          "total_units": {
+            "type": "integer",
+            "title": "Total Units"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PutawaySlipLine"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "discrepancy_deadline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discrepancy Deadline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "slip_no",
+          "receipt_id",
+          "site_id",
+          "site_code",
+          "source_type",
+          "inbound_date",
+          "day_color",
+          "received_by",
+          "total_lines",
+          "total_units",
+          "lines",
+          "created_at"
+        ],
+        "title": "PutawaySlip"
+      },
+      "PutawaySlipBrief": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "slip_no": {
+            "type": "string",
+            "title": "Slip No"
+          },
+          "receipt_id": {
+            "type": "integer",
+            "title": "Receipt Id"
+          },
+          "site_code": {
+            "type": "string",
+            "title": "Site Code"
+          },
+          "inbound_date": {
+            "type": "string",
+            "title": "Inbound Date"
+          },
+          "day_color_hex": {
+            "type": "string",
+            "title": "Day Color Hex"
+          },
+          "day_label": {
+            "type": "string",
+            "title": "Day Label"
+          },
+          "total_lines": {
+            "type": "integer",
+            "title": "Total Lines"
+          },
+          "total_units": {
+            "type": "integer",
+            "title": "Total Units"
+          },
+          "received_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received By"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "slip_no",
+          "receipt_id",
+          "site_code",
+          "inbound_date",
+          "day_color_hex",
+          "day_label",
+          "total_lines",
+          "total_units",
+          "received_by",
+          "created_at"
+        ],
+        "title": "PutawaySlipBrief"
+      },
+      "PutawaySlipLine": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "type": "string",
+            "title": "Sku Name"
+          },
+          "brand_sku_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Sku Code"
+          },
+          "location_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Code"
+          },
+          "rack_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rack Code"
+          },
+          "level_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level No"
+          },
+          "qty_received": {
+            "type": "integer",
+            "title": "Qty Received"
+          },
+          "qty_expected": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qty Expected"
+          },
+          "variance": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id",
+          "sku_name",
+          "qty_received"
+        ],
+        "title": "PutawaySlipLine"
+      },
+      "PutawaySlipList": {
+        "properties": {
+          "slips": {
+            "items": {
+              "$ref": "#/components/schemas/PutawaySlipBrief"
+            },
+            "type": "array",
+            "title": "Slips"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slips",
+          "total"
+        ],
+        "title": "PutawaySlipList"
+      },
       "RackMap": {
         "properties": {
           "site": {
@@ -5469,6 +6753,44 @@
           "levels"
         ],
         "title": "RackMapRack"
+      },
+      "RackSetting": {
+        "properties": {
+          "rack_id": {
+            "type": "integer",
+            "title": "Rack Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "levels": {
+            "type": "integer",
+            "title": "Levels"
+          },
+          "positions_per_level": {
+            "type": "integer",
+            "title": "Positions Per Level"
+          },
+          "locations": {
+            "type": "integer",
+            "title": "Locations"
+          },
+          "occupied": {
+            "type": "integer",
+            "title": "Occupied"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rack_id",
+          "code",
+          "levels",
+          "positions_per_level",
+          "locations",
+          "occupied"
+        ],
+        "title": "RackSetting"
       },
       "Receipt": {
         "properties": {
@@ -5961,6 +7283,95 @@
         ],
         "title": "Site"
       },
+      "SiteAdmin": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "site_type": {
+            "type": "string",
+            "title": "Site Type"
+          },
+          "is_training": {
+            "type": "boolean",
+            "title": "Is Training"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "racks": {
+            "items": {
+              "$ref": "#/components/schemas/RackSetting"
+            },
+            "type": "array",
+            "title": "Racks"
+          },
+          "total_locations": {
+            "type": "integer",
+            "title": "Total Locations"
+          },
+          "occupied_locations": {
+            "type": "integer",
+            "title": "Occupied Locations"
+          },
+          "staff_count": {
+            "type": "integer",
+            "title": "Staff Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "address",
+          "site_type",
+          "is_training",
+          "active",
+          "racks",
+          "total_locations",
+          "occupied_locations",
+          "staff_count"
+        ],
+        "title": "SiteAdmin"
+      },
+      "SiteAdminList": {
+        "properties": {
+          "sites": {
+            "items": {
+              "$ref": "#/components/schemas/SiteAdmin"
+            },
+            "type": "array",
+            "title": "Sites"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sites"
+        ],
+        "title": "SiteAdminList"
+      },
       "SiteBrief": {
         "properties": {
           "id": {
@@ -6032,6 +7443,45 @@
           "name"
         ],
         "title": "SiteIn"
+      },
+      "SitePatch": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active"
+          }
+        },
+        "type": "object",
+        "title": "SitePatch"
       },
       "Sku": {
         "properties": {
@@ -6639,6 +8089,94 @@
           "message"
         ],
         "title": "StockUploadRowError"
+      },
+      "TestOrderList": {
+        "properties": {
+          "orders": {
+            "items": {
+              "$ref": "#/components/schemas/TestOrderRow"
+            },
+            "type": "array",
+            "title": "Orders"
+          }
+        },
+        "type": "object",
+        "required": [
+          "orders"
+        ],
+        "title": "TestOrderList"
+      },
+      "TestOrderRow": {
+        "properties": {
+          "order_id": {
+            "type": "integer",
+            "title": "Order Id"
+          },
+          "external_ref": {
+            "type": "string",
+            "title": "External Ref"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "is_test": {
+            "type": "boolean",
+            "title": "Is Test"
+          },
+          "line_count": {
+            "type": "integer",
+            "title": "Line Count"
+          },
+          "total_qty": {
+            "type": "integer",
+            "title": "Total Qty"
+          },
+          "short_lines": {
+            "type": "integer",
+            "title": "Short Lines"
+          },
+          "pick_task_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pick Task Id"
+          },
+          "pick_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pick Status"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id",
+          "external_ref",
+          "status",
+          "is_test",
+          "line_count",
+          "total_qty",
+          "short_lines",
+          "pick_task_id",
+          "pick_status",
+          "created_at"
+        ],
+        "title": "TestOrderRow"
       },
       "TrainingActionIn": {
         "properties": {

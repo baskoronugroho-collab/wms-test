@@ -650,3 +650,174 @@ class ActivityRow(BaseModel):
 
 class ActivityReport(BaseModel):
     rows: list[ActivityRow]
+
+
+# --- day colour (FIFO aid) ---------------------------------------------------
+
+class DayColor(BaseModel):
+    key: str
+    hex: str
+    ink: str
+    day_id: str
+    day_en: str
+    date: str
+    iso_week: int
+    week_parity: str
+
+
+class DayColorLegend(BaseModel):
+    today: DayColor
+    week: list[DayColor]
+    note: str
+
+
+# --- putaway slips -----------------------------------------------------------
+
+class PutawaySlipLine(BaseModel):
+    sku_id: int
+    sku_name: str
+    brand_sku_code: str | None = None
+    location_code: str | None = None
+    rack_code: str | None = None
+    level_no: int | None = None
+    qty_received: int
+    qty_expected: int | None = None
+    variance: int | None = None
+
+
+class PutawaySlip(BaseModel):
+    id: int
+    slip_no: str
+    receipt_id: int
+    site_id: int
+    site_code: str
+    source_type: str
+    inbound_date: str
+    day_color: DayColor
+    received_by: str | None
+    total_lines: int
+    total_units: int
+    lines: list[PutawaySlipLine]
+    created_at: str
+    discrepancy_deadline: str | None = None
+
+
+class PutawaySlipBrief(BaseModel):
+    id: int
+    slip_no: str
+    receipt_id: int
+    site_code: str
+    inbound_date: str
+    day_color_hex: str
+    day_label: str
+    total_lines: int
+    total_units: int
+    received_by: str | None
+    created_at: str
+
+
+class PutawaySlipList(BaseModel):
+    slips: list[PutawaySlipBrief]
+    total: int
+
+
+# --- admin: users ------------------------------------------------------------
+
+class AdminUser(BaseModel):
+    id: int
+    email: str
+    name: str | None
+    role: str
+    default_site_id: int | None
+    locale: str
+    active: bool
+    site_codes: list[str]
+    created_at: str | None = None
+
+
+class AdminUserList(BaseModel):
+    users: list[AdminUser]
+    roles: list[str]
+
+
+class AdminUserIn(BaseModel):
+    email: str
+    name: str | None = None
+    role: str = "staff"
+    default_site_id: int | None = None
+    locale: str = "id"
+    site_ids: list[int] = Field(default_factory=list)
+
+
+class AdminUserPatch(BaseModel):
+    name: str | None = None
+    role: str | None = None
+    default_site_id: int | None = None
+    locale: str | None = None
+    active: bool | None = None
+    site_ids: list[int] | None = None
+
+
+# --- admin: sites & racks ----------------------------------------------------
+
+class RackSetting(BaseModel):
+    rack_id: int
+    code: str
+    levels: int
+    positions_per_level: int
+    locations: int
+    occupied: int
+
+
+class SiteAdmin(BaseModel):
+    id: int
+    code: str
+    name: str
+    address: str | None
+    site_type: str
+    is_training: bool
+    active: bool
+    racks: list[RackSetting]
+    total_locations: int
+    occupied_locations: int
+    staff_count: int
+
+
+class SiteAdminList(BaseModel):
+    sites: list[SiteAdmin]
+
+
+class SitePatch(BaseModel):
+    name: str | None = None
+    address: str | None = None
+    active: bool | None = None
+
+
+# --- test orders (Grab simulator) -------------------------------------------
+
+class ComposeOrderLineIn(BaseModel):
+    sku_id: int
+    quantity: int = 1
+
+
+class ComposeOrderIn(BaseModel):
+    site_id: int
+    lines: list[ComposeOrderLineIn]
+    external_ref: str | None = None
+
+
+class TestOrderRow(BaseModel):
+    order_id: int
+    external_ref: str
+    status: str
+    is_test: bool
+    line_count: int
+    total_qty: int
+    short_lines: int
+    pick_task_id: int | None
+    pick_status: str | None
+    created_at: str
+
+
+class TestOrderList(BaseModel):
+    orders: list[TestOrderRow]
