@@ -1,8 +1,11 @@
 """M5 / §9 — Order intake from the POS, allocation, and guided picking."""
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 import auth
 import common
+import daycolor
 import db
 import ledger
 import models
@@ -136,11 +139,20 @@ async def _task_payload(task_id: int) -> dict:
         "LEFT JOIN racks r ON r.id = lv.rack_id "
         "WHERE pl.pick_task_id = %s ORDER BY pl.sequence_no", (task_id,)
     )
+    created = task.get("created_at")
+    age = None
+    if created is not None:
+        # created_at comes back naive from the driver and the pods write UTC.
+        age = int((datetime.now(timezone.utc)
+                   - created.replace(tzinfo=timezone.utc)).total_seconds())
     return {
         "id": task["id"], "order_id": task["order_id"],
         "external_ref": task["external_ref"], "site_id": task["site_id"],
         "status": task["status"], "claimed_by": task["claimed_by"],
         "is_test": bool(task["is_test"]),
+        "created_at": str(created) if created else None,
+        "claimed_at": str(task["claimed_at"]) if task.get("claimed_at") else None,
+        "age_seconds": age,
         "lines": [{
             "id": l["id"], "sequence_no": l["sequence_no"], "sku_id": l["sku_id"],
             "sku_name": l["name_display"], "photo_key": l["photo_key"],
@@ -343,4 +355,165 @@ async def complete_task(task_id: int, user: auth.User = Depends(auth.current_use
                      (task["order_id"],))
         await db.run(cur, "UPDATE unit_plates SET state='shipped' "
                           "WHERE state='picked' AND site_id=%s", (task["site_id"],))
+    return await _task_payload(task_id)
+
+
+# --- the supervisor's queue board -------------------------------------------
+
+# Placeholders until ops confirms them against the Grab delivery promise. They
+# are returned to the client rather than hardcoded in CSS so retuning them is a
+# config change, not a redeploy of the frontend.
+AGE_THRESHOLDS = {"ageing_seconds": 300, "late_seconds": 600}
+
+
+def _jakarta_day_start_utc() -> datetime:
+    """UTC instant of the current Jakarta midnight.
+
+    The 'done today' lane means today *at the station*, not today in UTC. The
+    pods write UTC, so the window has to be converted rather than compared
+    against UTC's own date — otherwise the lane empties at 07:00 local instead
+    of midnight.
+    """
+    local_midnight = daycolor.local_now().replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    return local_midnight.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+@router.get("/pick-tasks/board", response_model=models.PickQueueBoard)
+async def queue_board(
+    site_id: int, user: auth.User = Depends(auth.current_user)
+):
+    """Everything waiting, everything being picked, and what finished today.
+
+    One aggregate query rather than the per-task fan-out `list_tasks` does: a
+    board showing fifty cards would otherwise run a hundred round trips, and
+    this is the screen most likely to be left open and refreshing all shift.
+    """
+    site = await auth.assert_site_access(user, site_id)
+    day_start = _jakarta_day_start_utc()
+
+    rows = await db.fetch_all(
+        "SELECT pt.id, pt.order_id, pt.status, pt.claimed_by, pt.claimed_at, "
+        "       pt.completed_at, pt.created_at, o.external_ref, o.is_test, "
+        "       TIMESTAMPDIFF(SECOND, pt.created_at, NOW()) AS age_seconds, "
+        "       TIMESTAMPDIFF(SECOND, pt.claimed_at, NOW()) AS held_seconds, "
+        "       COUNT(DISTINCT pl.id) AS line_count, "
+        "       COALESCE(SUM(pl.qty_required),0) AS total_units, "
+        "       COALESCE(SUM(pl.qty_picked),0) AS picked_units, "
+        "       COUNT(DISTINCT CASE WHEN ol.status='short' THEN ol.id END) AS short_lines, "
+        "       GROUP_CONCAT(DISTINCT r.code SEPARATOR ',') AS racks, "
+        "       u.name AS picker_name "
+        "FROM pick_tasks pt "
+        "JOIN orders o ON o.id = pt.order_id "
+        "LEFT JOIN pick_lines pl ON pl.pick_task_id = pt.id "
+        "LEFT JOIN order_lines ol ON ol.id = pl.order_line_id "
+        "LEFT JOIN locations l ON l.id = pl.location_id "
+        "LEFT JOIN levels lv ON lv.id = l.level_id "
+        "LEFT JOIN racks r ON r.id = lv.rack_id "
+        "LEFT JOIN users u ON u.email = pt.claimed_by "
+        "WHERE pt.site_id = %s "
+        "  AND (pt.status IN ('ready','claimed','blocked') "
+        # Finished work is only interesting for the rest of the shift; keeping
+        # every completed task would make the board grow without bound.
+        "       OR (pt.status = 'completed' AND pt.completed_at >= %s)) "
+        "GROUP BY pt.id, pt.order_id, pt.status, pt.claimed_by, pt.claimed_at, "
+        "         pt.completed_at, pt.created_at, o.external_ref, o.is_test, u.name "
+        "ORDER BY pt.created_at",
+        (site_id, day_start),
+    )
+
+    def card(r: dict) -> dict:
+        racks = sorted({c for c in (r["racks"] or "").split(",") if c})
+        return {
+            "id": r["id"], "order_id": r["order_id"],
+            "external_ref": r["external_ref"], "status": r["status"],
+            "is_test": bool(r["is_test"]),
+            "created_at": str(r["created_at"]),
+            "claimed_at": str(r["claimed_at"]) if r["claimed_at"] else None,
+            "completed_at": str(r["completed_at"]) if r["completed_at"] else None,
+            "age_seconds": int(r["age_seconds"] or 0),
+            "held_seconds": int(r["held_seconds"]) if r["held_seconds"] is not None else None,
+            "claimed_by": r["claimed_by"], "claimed_by_name": r["picker_name"],
+            "line_count": int(r["line_count"] or 0),
+            "total_units": int(r["total_units"] or 0),
+            "picked_units": int(r["picked_units"] or 0),
+            "short_lines": int(r["short_lines"] or 0),
+            "racks": racks,
+        }
+
+    cards = [card(r) for r in rows]
+    lanes = []
+    for key, members in (
+        ("waiting", [c for c in cards if c["status"] in ("ready", "blocked")]),
+        ("picking", [c for c in cards if c["status"] == "claimed"]),
+        ("done_today", [c for c in cards if c["status"] == "completed"]),
+    ):
+        if key == "done_today":
+            members = sorted(members, key=lambda c: c["completed_at"] or "", reverse=True)
+        lanes.append({"key": key, "count": len(members), "cards": members})
+
+    waiting = [c["age_seconds"] for c in cards if c["status"] in ("ready", "blocked")]
+    return {
+        "site_id": site_id, "site_code": site["code"],
+        # The board renders live clocks; it must tick against the server, not a
+        # station laptop whose clock nobody has ever checked.
+        "server_time": str(datetime.now(timezone.utc)),
+        "lanes": lanes,
+        "oldest_waiting_seconds": max(waiting) if waiting else None,
+        "thresholds": AGE_THRESHOLDS,
+    }
+
+
+@router.post("/pick-tasks/{task_id}/release", response_model=models.PickTask)
+async def release_task(
+    task_id: int,
+    body: models.ReleaseIn,
+    user: auth.User = Depends(auth.current_user),
+):
+    """Hand a claimed order back to the queue.
+
+    Without this a claim is permanent: `claim` hides a task from every other
+    picker, so a dead tablet or an abandoned shift strands the order where
+    nobody can see it while Grab keeps counting.
+
+    Anyone may release their own claim; releasing someone else's needs
+    supervisor, because it takes work off a colleague who may simply be walking
+    back from the far rack.
+
+    Lines already picked keep their progress — the stock has physically moved
+    and the ledger says so. The next picker resumes at the first pending line
+    rather than starting the order again.
+    """
+    async with db.tx() as cur:
+        task = await db.one(
+            cur, "SELECT * FROM pick_tasks WHERE id = %s FOR UPDATE", (task_id,)
+        )
+        if not task:
+            raise HTTPException(404, "Pick task not found")
+        if task["status"] == "completed":
+            raise HTTPException(409, "Pesanan ini sudah selesai.")
+        if task["status"] != "claimed":
+            raise HTTPException(409, "Pesanan ini belum diambil siapa pun.")
+        if task["claimed_by"] != user.email and not user.at_least("supervisor"):
+            raise HTTPException(
+                403,
+                f"{task['claimed_by']} sedang mengambil pesanan ini. "
+                "Minta supervisor untuk melepaskannya.",
+            )
+
+        await db.run(
+            cur,
+            "UPDATE pick_tasks SET status='ready', claimed_by=NULL, claimed_at=NULL "
+            "WHERE id = %s", (task_id,),
+        )
+        await db.run(
+            cur,
+            "INSERT INTO audit_log (actor_email, action, entity, entity_id, detail) "
+            "VALUES (%s,'pick_task.release','pick_tasks',%s,%s)",
+            (user.email, task_id,
+             f"released from {task['claimed_by']}: {body.reason or 'no reason given'}"),
+        )
+
+    await auth.assert_site_access(user, task["site_id"])
     return await _task_payload(task_id)

@@ -2048,6 +2048,134 @@
         }
       }
     },
+    "/api/pick-tasks/board": {
+      "get": {
+        "tags": [
+          "outbound"
+        ],
+        "summary": "Everything waiting, everything being picked, and what finished today",
+        "description": "Everything waiting, everything being picked, and what finished today.\n\nOne aggregate query rather than the per-task fan-out `list_tasks` does: a\nboard showing fifty cards would otherwise run a hundred round trips, and\nthis is the screen most likely to be left open and refreshing all shift.",
+        "operationId": "queue_board_api_pick_tasks_board_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickQueueBoard"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pick-tasks/{task_id}/release": {
+      "post": {
+        "tags": [
+          "outbound"
+        ],
+        "summary": "Hand a claimed order back to the queue",
+        "description": "Hand a claimed order back to the queue.\n\nWithout this a claim is permanent: `claim` hides a task from every other\npicker, so a dead tablet or an abandoned shift strands the order where\nnobody can see it while Grab keeps counting.\n\nAnyone may release their own claim; releasing someone else's needs\nsupervisor, because it takes work off a colleague who may simply be walking\nback from the far rack.\n\nLines already picked keep their progress — the stock has physically moved\nand the ledger says so. The next picker resumes at the first pending line\nrather than starting the order again.",
+        "operationId": "release_task_api_pick_tasks__task_id__release_post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickTask"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/opname/plans": {
       "post": {
         "tags": [
@@ -6388,6 +6516,212 @@
         ],
         "title": "PickLine"
       },
+      "PickQueueBoard": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "site_code": {
+            "type": "string",
+            "title": "Site Code"
+          },
+          "server_time": {
+            "type": "string",
+            "title": "Server Time"
+          },
+          "lanes": {
+            "items": {
+              "$ref": "#/components/schemas/PickQueueLane"
+            },
+            "type": "array",
+            "title": "Lanes"
+          },
+          "oldest_waiting_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oldest Waiting Seconds"
+          },
+          "thresholds": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Thresholds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "site_code",
+          "server_time",
+          "lanes",
+          "oldest_waiting_seconds",
+          "thresholds"
+        ],
+        "title": "PickQueueBoard"
+      },
+      "PickQueueCard": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "order_id": {
+            "type": "integer",
+            "title": "Order Id"
+          },
+          "external_ref": {
+            "type": "string",
+            "title": "External Ref"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "ready | claimed | completed | blocked"
+          },
+          "is_test": {
+            "type": "boolean",
+            "title": "Is Test"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "claimed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "age_seconds": {
+            "type": "integer",
+            "title": "Age Seconds",
+            "description": "Since the order arrived — the queue's key number"
+          },
+          "held_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Held Seconds",
+            "description": "How long the current picker has held it"
+          },
+          "claimed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed By"
+          },
+          "claimed_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed By Name"
+          },
+          "line_count": {
+            "type": "integer",
+            "title": "Line Count",
+            "default": 0
+          },
+          "total_units": {
+            "type": "integer",
+            "title": "Total Units",
+            "default": 0
+          },
+          "picked_units": {
+            "type": "integer",
+            "title": "Picked Units",
+            "default": 0
+          },
+          "short_lines": {
+            "type": "integer",
+            "title": "Short Lines",
+            "default": 0
+          },
+          "racks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Racks",
+            "description": "Distinct racks the pick touches"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "order_id",
+          "external_ref",
+          "status",
+          "is_test",
+          "created_at",
+          "age_seconds"
+        ],
+        "title": "PickQueueCard"
+      },
+      "PickQueueLane": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "cards": {
+            "items": {
+              "$ref": "#/components/schemas/PickQueueCard"
+            },
+            "type": "array",
+            "title": "Cards"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "count",
+          "cards"
+        ],
+        "title": "PickQueueLane"
+      },
       "PickTask": {
         "properties": {
           "id": {
@@ -6431,6 +6765,39 @@
             },
             "type": "array",
             "title": "Lines"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "claimed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed At"
+          },
+          "age_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Seconds"
           }
         },
         "type": "object",
@@ -7519,6 +7886,23 @@
           "variance"
         ],
         "title": "ReceiptSummaryLine"
+      },
+      "ReleaseIn": {
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "title": "ReleaseIn"
       },
       "ScanResolved": {
         "properties": {

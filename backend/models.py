@@ -375,6 +375,9 @@ class PickTask(BaseModel):
     claimed_by: str | None
     is_test: bool
     lines: list[PickLine]
+    created_at: str | None = None
+    claimed_at: str | None = None
+    age_seconds: int | None = None
 
 
 class PickTaskList(BaseModel):
@@ -851,3 +854,48 @@ class TestOrderRow(BaseModel):
 
 class TestOrderList(BaseModel):
     orders: list[TestOrderRow]
+
+
+# --- pick queue board (supervisor) ------------------------------------------
+
+class PickQueueCard(BaseModel):
+    id: int
+    order_id: int
+    external_ref: str
+    status: str = Field(description="ready | claimed | completed | blocked")
+    is_test: bool
+    created_at: str
+    claimed_at: str | None = None
+    completed_at: str | None = None
+    age_seconds: int = Field(description="Since the order arrived — the queue's key number")
+    held_seconds: int | None = Field(
+        default=None, description="How long the current picker has held it"
+    )
+    claimed_by: str | None = None
+    claimed_by_name: str | None = None
+    line_count: int = 0
+    total_units: int = 0
+    picked_units: int = 0
+    short_lines: int = 0
+    racks: list[str] = Field(
+        default_factory=list, description="Distinct racks the pick touches"
+    )
+
+
+class PickQueueLane(BaseModel):
+    key: str
+    count: int
+    cards: list[PickQueueCard]
+
+
+class PickQueueBoard(BaseModel):
+    site_id: int
+    site_code: str
+    server_time: str
+    lanes: list[PickQueueLane]
+    oldest_waiting_seconds: int | None
+    thresholds: dict[str, int]
+
+
+class ReleaseIn(BaseModel):
+    reason: str | None = None
