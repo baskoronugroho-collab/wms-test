@@ -541,8 +541,7 @@
         '<td class="td-code">' + esc(it.barcode) + '</td>' +
         '<td>' + esc(it.brand_name) + '</td>' +
         '<td>' + esc(it.sku_name) + '</td>' +
-        '<td class="td-code">' + esc(it.location_code) +
-          (it.location_was_blank ? ' <span class="note">(default)</span>' : '') + '</td>' +
+        '<td class="td-code">' + esc(it.location_code) + '</td>' +
         '<td>' + esc(it.input_date_raw || '—') + '</td>' +
         '<td>' + esc((it.uploaded_by || '—').split('@')[0]) + '</td>' +
         '</tr>'
@@ -577,23 +576,8 @@
         '<td><input type="checkbox" class="rowSel" data-id="' + it.id + '"></td>' +
         '<td>' + esc(it.brand_name) + '</td>' +
         '<td>' + esc(it.product_name) + '</td>' +
-        '<td class="td-code"><span class="locVal">' + esc(it.default_location_code) + '</span></td>' +
-        '<td><button class="btn btn--outline editBtn" data-id="' + it.id + '" ' +
-          'data-loc="' + esc(it.default_location_code) + '">Edit</button></td>' +
         '</tr>'
       ).join('');
-
-      $$('.editBtn', body).forEach(btn => btn.onclick = async () => {
-        const id = btn.dataset.id;
-        const current = btn.dataset.loc;
-        const next = prompt('Lokasi default baru untuk baris ini:', current);
-        if (!next || next === current) return;
-        try {
-          await api('PUT', '/admin/product-master/' + id, { default_location_code: next });
-          say('Lokasi diperbarui.');
-          loadList();
-        } catch (e) { fail(e); }
-      });
     }
 
     function renderUploadResult(r) {

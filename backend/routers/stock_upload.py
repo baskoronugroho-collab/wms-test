@@ -9,12 +9,15 @@ Validation, per row of Hub name | barcode | brand | Product Name | input date
 | LOCATION:
   - Hub name must match a site code.
   - brand + Product Name must match a row in product_default_locations (the
-    brand/product/default-location master data) — this is what "not in the
-    back end master data" refers to.
+    brand/product master data) — this is what "not in the back end master
+    data" refers to.
   - barcode must not already be registered in `barcodes` — one barcode is one
     physical/product identity, so a repeat would corrupt stock opname.
-  - LOCATION, if given, must be a real location code at that site; if blank,
-    the SKU's default location from product_default_locations is used.
+  - LOCATION is required and must be a real location code at that hub. There
+    is no auto-fill: a location code embeds its hub's own prefix
+    (TRN-A-1-01, UT5-A-3-02, ...), so one "default" per product can never be
+    valid across multiple hubs — the warehouse staff filling the sheet always
+    knows which hub they're at and what its codes look like.
 """
 import csv
 import io
@@ -32,7 +35,7 @@ router = APIRouter(prefix="/api", tags=["stock upload"])
 TEMPLATE_CSV = (
     "Hub name,barcode,brand,Product Name,input date,LOCATION\r\n"
     "MAC-UT5,2990000009001,Wardah Official Store,"
-    "Glasting Liquid Lip 01 Caramel Coat,2026-09-04,\r\n"
+    "Glasting Liquid Lip 01 Caramel Coat,2026-09-04,UT5-A-1-01\r\n"
 )
 
 
@@ -72,6 +75,8 @@ async def _validate_row(row_no: int, raw: dict) -> tuple[dict | None, str | None
         return None, f"Baris {row_no}: brand kosong."
     if not product_name:
         return None, f"Baris {row_no}: Product Name kosong."
+    if not location_raw:
+        return None, f"Baris {row_no}: LOCATION kosong — wajib diisi."
 
     site = await db.fetch_one(
         "SELECT id, code FROM sites WHERE code = %s AND active = 1", (hub_name,)
@@ -92,7 +97,7 @@ async def _validate_row(row_no: int, raw: dict) -> tuple[dict | None, str | None
         return None, f"Baris {row_no}: brand '{brand_name}' tidak ada di data induk."
 
     master = await db.fetch_one(
-        "SELECT pdl.sku_id, pdl.default_location_code, s.name_display "
+        "SELECT pdl.sku_id, s.name_display "
         "FROM product_default_locations pdl JOIN skus s ON s.id = pdl.sku_id "
         "WHERE pdl.brand_id = %s AND s.name_display = %s",
         (brand["id"], product_name),
@@ -103,13 +108,12 @@ async def _validate_row(row_no: int, raw: dict) -> tuple[dict | None, str | None
             "tidak ada di data induk."
         )
 
-    location_code = location_raw or master["default_location_code"]
     location = await db.fetch_one(
         "SELECT id, code FROM locations WHERE site_id = %s AND code = %s",
-        (site["id"], location_code),
+        (site["id"], location_raw),
     )
     if not location:
-        return None, f"Baris {row_no}: lokasi '{location_code}' tidak ditemukan di {hub_name}."
+        return None, f"Baris {row_no}: lokasi '{location_raw}' tidak ditemukan di {hub_name}."
 
     return {
         "site_id": site["id"],
@@ -117,7 +121,6 @@ async def _validate_row(row_no: int, raw: dict) -> tuple[dict | None, str | None
         "location_id": location["id"],
         "barcode": barcode,
         "input_date_raw": input_date,
-        "location_was_blank": not bool(location_raw),
     }, None
 
 
@@ -209,9 +212,9 @@ async def upload_stock(
                 cur,
                 "INSERT INTO stock_upload_rows "
                 "(upload_id, row_no, site_id, sku_id, location_id, barcode, "
-                " input_date_raw, location_was_blank) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                " input_date_raw) VALUES (%s,%s,%s,%s,%s,%s,%s)",
                 (upload_id, row_no, clean["site_id"], clean["sku_id"], location_id,
-                 clean["barcode"], clean["input_date_raw"], clean["location_was_blank"]),
+                 clean["barcode"], clean["input_date_raw"]),
             )
         await ledger.audit(
             cur, actor_email=user.email, entity="stock_upload", entity_id=upload_id,
@@ -257,7 +260,7 @@ async def list_uploaded_items(
     rows = await db.fetch_all(
         f"SELECT sur.id, sur.upload_id, sur.row_no, si.code AS site_code, "
         "sur.barcode, b.name AS brand_name, s.name_display AS sku_name, "
-        "l.code AS location_code, sur.location_was_blank, sur.input_date_raw, "
+        "l.code AS location_code, sur.input_date_raw, "
         "su.uploaded_by, sur.created_at "
         "FROM stock_upload_rows sur "
         "JOIN sites si ON si.id = sur.site_id "
@@ -269,7 +272,6 @@ async def list_uploaded_items(
         params + [limit, offset],
     )
     return {
-        "items": [dict(r, created_at=str(r["created_at"]),
-                        location_was_blank=bool(r["location_was_blank"])) for r in rows],
+        "items": [dict(r, created_at=str(r["created_at"])) for r in rows],
         "total": total,
     }

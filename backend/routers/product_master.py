@@ -1,14 +1,18 @@
-"""Admin Page — superadmin curation of the brand/product/default-location
-master data (product_default_locations) that bulk stock upload validates
-against and maps blank LOCATION cells with.
+"""Admin Page — superadmin curation of the brand/product master data
+(product_default_locations) that bulk stock upload cross-checks against.
 
 Deliberately separate from the Alur flow cards and gated to the admin role:
 this data feeds every future stock upload, so only an admin curates it.
 
-Editing is limited to the default location. Brand and product name live on
-the shared `skus`/`brands` tables that every other flow (receiving, picking,
-opname) also reads — renaming a SKU from here would rename it everywhere.
-To fix a wrong brand/product on a row, delete it and re-upload the row.
+No location here: a location code embeds its hub's own prefix
+(TRN-A-1-01, UT5-A-3-02, ...), so a single "default" per product can never be
+valid across multiple hubs. LOCATION is a required column on stock upload
+instead — this table only confirms a brand + product name pair is real.
+
+There is nothing to edit, either — brand and product name live on the shared
+`skus`/`brands` tables that every other flow (receiving, picking, opname)
+also reads, so renaming a SKU from here would rename it everywhere. To fix a
+wrong brand/product, delete the row and re-upload it.
 """
 import csv
 import io
@@ -25,8 +29,8 @@ import models
 router = APIRouter(prefix="/api/admin/product-master", tags=["admin master data"])
 
 TEMPLATE_CSV = (
-    "brand,product name,storage location\r\n"
-    "Wardah Official Store,Glasting Liquid Lip 01 Caramel Coat,TRN-A-1-01\r\n"
+    "brand,product name\r\n"
+    "Wardah Official Store,Glasting Liquid Lip 01 Caramel Coat\r\n"
 )
 
 
@@ -65,11 +69,10 @@ async def import_master(
         for i, raw_row in enumerate(rows, start=2):
             brand_name = _pick(raw_row, "brand")
             product_name = _pick(raw_row, "product name", "product")
-            location_code = _pick(raw_row, "storage location", "location")
 
-            if not brand_name or not product_name or not location_code:
+            if not brand_name or not product_name:
                 results.append({"row_no": i, "ok": False,
-                                 "message": "brand, product name, atau storage location kosong."})
+                                 "message": "brand atau product name kosong."})
                 continue
 
             brand = await db.one(cur, "SELECT id FROM brands WHERE name = %s", (brand_name,))
@@ -99,10 +102,9 @@ async def import_master(
 
             await db.run(
                 cur,
-                "INSERT INTO product_default_locations (brand_id, sku_id, default_location_code) "
-                "VALUES (%s,%s,%s) "
-                "ON DUPLICATE KEY UPDATE default_location_code = VALUES(default_location_code)",
-                (brand_id, sku_id, location_code),
+                "INSERT INTO product_default_locations (brand_id, sku_id) "
+                "VALUES (%s,%s) ON DUPLICATE KEY UPDATE sku_id = VALUES(sku_id)",
+                (brand_id, sku_id),
             )
             results.append({"row_no": i, "ok": True, "message": "Tersimpan."})
             ok_count += 1
@@ -139,7 +141,7 @@ async def list_master(
     ))["n"]
     rows = await db.fetch_all(
         f"SELECT pdl.id, b.name AS brand_name, s.name_display AS product_name, "
-        "pdl.default_location_code, pdl.created_at "
+        "pdl.created_at "
         "FROM product_default_locations pdl "
         "JOIN brands b ON b.id = pdl.brand_id JOIN skus s ON s.id = pdl.sku_id "
         f"WHERE {clause} ORDER BY b.name, s.name_display LIMIT %s OFFSET %s",
@@ -154,45 +156,20 @@ async def list_master(
 @router.get("/export")
 async def export_master(user: auth.User = Depends(auth.require("admin"))):
     rows = await db.fetch_all(
-        "SELECT b.name AS brand_name, s.name_display AS product_name, "
-        "pdl.default_location_code "
+        "SELECT b.name AS brand_name, s.name_display AS product_name "
         "FROM product_default_locations pdl "
         "JOIN brands b ON b.id = pdl.brand_id JOIN skus s ON s.id = pdl.sku_id "
         "ORDER BY b.name, s.name_display"
     )
     buf = io.StringIO()
     w = csv.writer(buf)
-    w.writerow(["brand", "product name", "storage location"])
+    w.writerow(["brand", "product name"])
     for r in rows:
-        w.writerow([r["brand_name"], r["product_name"], r["default_location_code"]])
+        w.writerow([r["brand_name"], r["product_name"]])
     return Response(
         content=buf.getvalue(), media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=product-master.csv"},
     )
-
-
-@router.put("/{item_id}", response_model=models.Ok)
-async def update_location(
-    item_id: int,
-    body: models.ProductMasterLocationIn,
-    user: auth.User = Depends(auth.require("admin")),
-):
-    async with db.tx() as cur:
-        row = await db.one(
-            cur, "SELECT id FROM product_default_locations WHERE id = %s", (item_id,)
-        )
-        if not row:
-            raise HTTPException(404, "Baris tidak ditemukan.")
-        await db.run(
-            cur, "UPDATE product_default_locations SET default_location_code = %s WHERE id = %s",
-            (body.default_location_code, item_id),
-        )
-        await ledger.audit(
-            cur, actor_email=user.email, entity="product_default_location",
-            entity_id=item_id, action="update",
-            after={"default_location_code": body.default_location_code},
-        )
-    return {"ok": True, "message": "Lokasi default diperbarui."}
 
 
 @router.post("/delete", response_model=models.Ok)

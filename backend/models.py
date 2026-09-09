@@ -580,7 +580,6 @@ class StockUploadItem(BaseModel):
     brand_name: str
     sku_name: str
     location_code: str
-    location_was_blank: bool
     input_date_raw: str | None
     uploaded_by: str | None
     created_at: str
@@ -610,17 +609,12 @@ class ProductMasterItem(BaseModel):
     id: int
     brand_name: str
     product_name: str
-    default_location_code: str
     created_at: str
 
 
 class ProductMasterList(BaseModel):
     items: list[ProductMasterItem]
     total: int
-
-
-class ProductMasterLocationIn(BaseModel):
-    default_location_code: str
 
 
 class ProductMasterDeleteIn(BaseModel):
