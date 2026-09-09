@@ -216,11 +216,16 @@
            waiting.count ? waiting.count + ' pesanan menunggu diambil' : 'Belum ada pesanan',
            waiting.count ? waiting.count + ' orders waiting to pick' : 'No orders waiting');
       }
+      // Always overwrite: the mockup ships a plausible number here, and a
+      // fabricated count on the home screen is worse than no count at all —
+      // a staffer has no way to tell it is fiction.
+      const note = cards[3] && $('.note', cards[3]);
       if (plans && plans.plans.length) {
         const p = plans.plans[0];
         const left = p.total_baskets - p.counted;
-        bi(cards[3] && $('.note', cards[3]),
-           left + ' keranjang belum dihitung', left + ' baskets left to count');
+        bi(note, left + ' keranjang belum dihitung', left + ' baskets left to count');
+      } else {
+        bi(note, 'Belum ada jadwal hitung', 'No count scheduled yet');
       }
     } catch (e) { /* the menu still works */ }
   };
