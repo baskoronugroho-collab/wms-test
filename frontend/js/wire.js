@@ -828,9 +828,11 @@
     await paintDayColour();
     const today = await api().dayColors().then(d => d.today).catch(() => null);
     if (today) {
-      setF('day-week', 'W' + today.iso_week + ' · ' + today.week_parity);
-      bi(field('day-name'), 'Warna hari ini · ' + today.day_id,
-                            "Today's colour · " + today.day_en);
+      // The markup already carries "Warna hari ini ·" as a sibling, so this
+      // field is the day alone — prefixing it here printed it twice.
+      bi(field('day-name'), today.day_id, today.day_en);
+      bi(field('day-week'), 'Minggu ' + today.week_parity + ' · W' + today.iso_week,
+                            'Week ' + today.week_parity + ' · W' + today.iso_week);
       setF('day-date', NJW.fmt.date(today.date));
     }
 
@@ -847,7 +849,8 @@
       const mine = slips.slips.filter(x => (x.created_at || '').slice(0, 10) === today10);
       setF('kpi-received', NJW.fmt.n(mine.reduce((n, x) => n + x.total_units, 0)));
       const foot = field('kpi-received') && field('kpi-received').nextElementSibling;
-      bi(foot, 'dari ' + mine.length + ' kiriman', 'across ' + mine.length + ' deliveries');
+      bi(foot, 'dari ' + mine.length + ' kiriman',
+               'across ' + mine.length + (mine.length === 1 ? ' delivery' : ' deliveries'));
     }
 
     if (board) {
