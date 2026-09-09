@@ -297,15 +297,35 @@
       };
     }
 
+    // Demo-only lookup: no backend yet knows "AWB X holds N units" (see the
+    // Console's Inbound table, which is static mockup data for the same
+    // reason). Swap this for a real call once that data exists somewhere.
+    const AWB_DEMO_UNITS = {
+      'WRD-2609-02': 128,
+      'WRD-2609-01': 64,
+      'WRD-2508-14': 812,
+    };
+
     const refInput = $('#refInput');
+    const targetFoot = $('#sessionTargetFoot');
     if (refInput) {
+      const applyTarget = () => {
+        const val = refInput.value.trim().toUpperCase();
+        const units = AWB_DEMO_UNITS[val];
+        if (targetFoot) {
+          if (units) bi(targetFoot, 'dari ' + units + ' barang', 'of ' + units + ' items');
+          else bi(targetFoot, 'barang discan sesi ini', 'items scanned this session');
+        }
+      };
       const saveRef = async () => {
+        applyTarget();
         const val = refInput.value.trim();
         try {
           await api().raw.patch('/receipts/' + receiptId,
             { external_reference: val || null });
         } catch (e) { /* not critical to the scan flow */ }
       };
+      refInput.addEventListener('input', applyTarget);
       refInput.addEventListener('change', saveRef);
     }
 
