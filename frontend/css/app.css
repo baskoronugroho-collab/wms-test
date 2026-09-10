@@ -128,6 +128,33 @@ strong { font-weight: 600; }
 @keyframes njw-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 .scanzone.is-rejected { border-style: solid; border-color: var(--stop); background: var(--stop); color: var(--stop-ink); animation: njw-shake var(--dur-2) var(--ease); }
 .scanzone.is-offline { border-style: solid; border-color: var(--stop); background: var(--stop-bg); color: var(--stop); }
+.scanzone[hidden] { display: none; }
+/* Waiting is the only state with no accept/reject/offline class — the dashed
+   border blinks so an idle scan zone still reads as "ready", not "stuck". */
+@keyframes njw-blink-border { 0%, 100% { border-color: var(--action); } 50% { border-color: transparent; } }
+.scanzone[data-state="waiting"] { animation: njw-blink-border 1.4s ease-in-out infinite; }
+
+/* ---- reference / AWB strip --------------------------------------------- */
+.refstrip {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--rule); border-radius: var(--radius-card);
+  background: var(--surface);
+}
+.refstrip__label { font-size: 14px; font-weight: 600; color: var(--muted); }
+.refstrip__input {
+  flex: 1 1 200px; min-height: 40px; padding: 0 var(--sp-2);
+  border: 1px solid var(--rule); border-radius: var(--radius-btn);
+  background: var(--ground); color: var(--ink); font-family: var(--font-code); font-size: 15px;
+}
+.refstrip__hint { flex: 1 1 100%; font-size: 13px; color: var(--muted); }
+
+/* ---- highlighted stat (the running scan count) -------------------------- */
+.stat--highlight {
+  border: 2px solid var(--action); border-radius: var(--radius-card);
+  padding: var(--sp-2); background: var(--action-bg);
+}
+.stat--highlight .stat__num { color: var(--action); font-size: 40px; }
 
 /* ---- buttons ---------------------------------------------------------- */
 .btn {
@@ -314,7 +341,7 @@ strong { font-weight: 600; }
 .daystrip__text { display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: var(--sp-3) var(--sp-4); min-width: 0; }
 .daystrip__label { font-family: var(--font-code); font-size: 12px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
 .daystrip__day { font-size: 26px; font-weight: 600; line-height: 1.1; }
-.daystrip__date { font-family: var(--font-code); font-size: 18px; font-weight: 500; color: var(--ink-2); }
+.daystrip__date { font-family: var(--font-code); font-size: 18px; font-weight: 500; color: var(--muted); }
 .daystrip__hint { flex: 1 1 auto; display: flex; align-items: center; padding: var(--sp-3) var(--sp-4); font-size: 16px; color: var(--muted); text-wrap: pretty; }
 
 /* ---- 1366x768 is the target; below that, stack ------------------------ */

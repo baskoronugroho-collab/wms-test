@@ -27,6 +27,7 @@ def _receipt_out(row: dict) -> dict:
         "source_type": row["source_type"], "status": row["status"],
         "opened_by": row.get("opened_by"), "opened_at": str(row["opened_at"]),
         "completed_at": str(row["completed_at"]) if row.get("completed_at") else None,
+        "external_reference": row.get("external_reference"),
         "banner": BANNER.get(row["source_type"], ""),
     }
 
@@ -73,6 +74,32 @@ async def open_receipt(
                     (rid, ln["sku_id"], ln["qty_dispatched"]),
                 )
     row = await db.fetch_one("SELECT * FROM inbound_receipts WHERE id = %s", (rid,))
+    return _receipt_out(row)
+
+
+@router.patch("/receipts/{receipt_id}", response_model=models.Receipt)
+async def update_receipt(
+    receipt_id: int, body: models.ReceiptPatch,
+    user: auth.User = Depends(auth.current_user),
+):
+    """Attach an AWB/reference number a brand happened to supply.
+
+    Optional and free-text — there is no known-good list to validate against
+    yet (M3 addendum). It carries no expected-quantity behaviour of its own;
+    it is only recorded for the summary/slip so it can be searched later.
+    """
+    receipt = await db.fetch_one(
+        "SELECT site_id FROM inbound_receipts WHERE id = %s", (receipt_id,)
+    )
+    if not receipt:
+        raise HTTPException(404, "Receipt not found")
+    await auth.assert_site_access(user, receipt["site_id"])
+
+    await db.execute(
+        "UPDATE inbound_receipts SET external_reference = %s WHERE id = %s",
+        (body.external_reference, receipt_id),
+    )
+    row = await db.fetch_one("SELECT * FROM inbound_receipts WHERE id = %s", (receipt_id,))
     return _receipt_out(row)
 
 

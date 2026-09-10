@@ -222,6 +222,10 @@ class ReceiptIn(BaseModel):
     transfer_reference: str | None = None
 
 
+class ReceiptPatch(BaseModel):
+    external_reference: str | None = None
+
+
 class Receipt(BaseModel):
     id: int
     site_id: int
@@ -231,6 +235,7 @@ class Receipt(BaseModel):
     opened_by: str | None
     opened_at: str
     completed_at: str | None = None
+    external_reference: str | None = None
     banner: str
 
 
