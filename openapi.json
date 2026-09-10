@@ -1127,6 +1127,75 @@
         }
       }
     },
+    "/api/sites/{site_id}/racks": {
+      "post": {
+        "tags": [
+          "locations"
+        ],
+        "summary": "Add one rack to a site that already has some",
+        "description": "Add one rack to a site that already has some.\n\ngenerate_racks refuses to run twice and tells the reader to \"add racks\nindividually\" -- which had no endpoint behind it. A station that fills up,\nor one that needs somewhere to put overflow, has to be able to grow by one\nrack without tearing down the layout it already has.",
+        "operationId": "add_rack_api_sites__site_id__racks_post",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddRackIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/scan/resolve": {
       "get": {
         "tags": [
@@ -5667,6 +5736,34 @@
           "created_at"
         ],
         "title": "ActivityRow"
+      },
+      "AddRackIn": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "level_count": {
+            "type": "integer",
+            "title": "Level Count",
+            "default": 5
+          },
+          "positions_per_level": {
+            "type": "integer",
+            "title": "Positions Per Level",
+            "default": 5
+          },
+          "basket_size": {
+            "type": "string",
+            "title": "Basket Size",
+            "default": "M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "AddRackIn"
       },
       "AdjustmentIn": {
         "properties": {

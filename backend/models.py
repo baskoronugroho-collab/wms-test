@@ -1100,3 +1100,10 @@ class OutboxHealth(BaseModel):
     lanes: list[OutboxLane]
     oldest_pending_seconds: int | None = None
     note: str
+
+
+class AddRackIn(BaseModel):
+    code: str
+    level_count: int = 5
+    positions_per_level: int = 5
+    basket_size: str = "M"

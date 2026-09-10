@@ -349,3 +349,69 @@ async def relocate_slot(
         "location_id": new["location_id"], "location_code": new["location_code"],
         "basket_size": new["basket_size"],
     }
+
+
+@router.post("/sites/{site_id}/racks", response_model=models.Ok, status_code=201)
+async def add_rack(
+    site_id: int,
+    body: models.AddRackIn,
+    user: auth.User = Depends(auth.require("admin")),
+):
+    """Add one rack to a site that already has some.
+
+    generate_racks refuses to run twice and tells the reader to "add racks
+    individually" -- which had no endpoint behind it. A station that fills up,
+    or one that needs somewhere to put overflow, has to be able to grow by one
+    rack without tearing down the layout it already has.
+    """
+    site = await auth.assert_site_access(user, site_id)
+    code = body.code.strip().upper()
+    if not code:
+        raise HTTPException(422, "A rack needs a code.")
+
+    clash = await db.fetch_one(
+        "SELECT id FROM racks WHERE site_id = %s AND code = %s", (site_id, code)
+    )
+    if clash:
+        raise HTTPException(409, f"{site['code']} already has a rack {code}.")
+
+    order_row = await db.fetch_one(
+        "SELECT COALESCE(MAX(sort_order), 0) AS n FROM racks WHERE site_id = %s",
+        (site_id,),
+    )
+    made = {"locations": 0, "baskets": 0}
+    async with db.tx() as cur:
+        rack_id = await db.run(
+            cur,
+            "INSERT INTO racks (site_id, code, level_count, sort_order) "
+            "VALUES (%s,%s,%s,%s)",
+            (site_id, code, body.level_count, int(order_row["n"]) + 1),
+        )
+        for ln in range(1, body.level_count + 1):
+            level_id = await db.run(
+                cur,
+                "INSERT INTO levels (rack_id, level_no, is_open_shelf) "
+                "VALUES (%s,%s,0)",
+                (rack_id, ln),
+            )
+            for p in range(1, body.positions_per_level + 1):
+                loc_code = f"{site['code'].split('-')[-1]}-{code}-{ln}-{p:02d}"
+                loc_id = await db.run(
+                    cur,
+                    "INSERT INTO locations (level_id, site_id, position_no, code) "
+                    "VALUES (%s,%s,%s,%s)",
+                    (level_id, site_id, p, loc_code),
+                )
+                made["locations"] += 1
+                await db.run(
+                    cur,
+                    "INSERT INTO baskets (location_id, site_id, basket_size) "
+                    "VALUES (%s,%s,%s)",
+                    (loc_id, site_id, body.basket_size),
+                )
+                made["baskets"] += 1
+        await ledger.audit(cur, actor_email=user.email, entity="site",
+                           entity_id=site_id, action="add_rack",
+                           after={"code": code, **made})
+    return {"ok": True,
+            "message": f"Rack {code} added with {made['baskets']} baskets."}
