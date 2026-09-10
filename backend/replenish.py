@@ -24,7 +24,7 @@ async def evaluate(site_id: int, sku_id: int, actor: str | None = None) -> dict:
         "SELECT sa.full_threshold, sa.low_threshold, sa.restock_point, "
         "       bk.location_id AS primary_location_id "
         "FROM slot_assignments sa JOIN baskets bk ON bk.id = sa.basket_id "
-        "WHERE sa.site_id = %s AND sa.sku_id = %s AND sa.role = 'primary'",
+        "WHERE sa.site_id = %s AND sa.sku_id = %s AND sa.slot_role = 'primary'",
         (site_id, sku_id),
     )
     if not slot or slot["low_threshold"] is None:
@@ -35,7 +35,7 @@ async def evaluate(site_id: int, sku_id: int, actor: str | None = None) -> dict:
     overflow = await db.fetch_one(
         "SELECT bk.location_id FROM slot_assignments sa "
         "JOIN baskets bk ON bk.id = sa.basket_id "
-        "WHERE sa.site_id = %s AND sa.sku_id = %s AND sa.role = 'overflow'",
+        "WHERE sa.site_id = %s AND sa.sku_id = %s AND sa.slot_role = 'overflow'",
         (site_id, sku_id),
     )
 

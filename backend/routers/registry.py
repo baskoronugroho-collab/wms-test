@@ -48,7 +48,7 @@ async def _row(site_id: int, sku_id: int) -> dict | None:
         "FROM slot_assignments sa "
         "JOIN baskets bk ON bk.id = sa.basket_id "
         "JOIN locations l ON l.id = bk.location_id "
-        "WHERE sa.site_id = %s AND sa.sku_id = %s AND sa.role = 'primary'",
+        "WHERE sa.site_id = %s AND sa.sku_id = %s AND sa.slot_role = 'primary'",
         (site_id, sku_id),
     )
     if not primary:
@@ -58,7 +58,7 @@ async def _row(site_id: int, sku_id: int) -> dict | None:
         "FROM slot_assignments sa "
         "JOIN baskets bk ON bk.id = sa.basket_id "
         "JOIN locations l ON l.id = bk.location_id "
-        "WHERE sa.site_id = %s AND sa.sku_id = %s AND sa.role = 'overflow'",
+        "WHERE sa.site_id = %s AND sa.sku_id = %s AND sa.slot_role = 'overflow'",
         (site_id, sku_id),
     )
     sku = await common.sku_by_id(sku_id)
@@ -108,7 +108,7 @@ async def list_registry(
     sql = (
         "SELECT DISTINCT sa.sku_id FROM slot_assignments sa "
         "JOIN skus s ON s.id = sa.sku_id "
-        "WHERE sa.site_id = %s AND sa.role = 'primary'"
+        "WHERE sa.site_id = %s AND sa.slot_role = 'primary'"
     )
     if q:
         sql += " AND (s.name_display LIKE %s OR s.brand_sku_code LIKE %s)"
@@ -139,7 +139,7 @@ async def set_thresholds(
 
     updated = await db.execute(
         "UPDATE slot_assignments SET full_threshold=%s, low_threshold=%s, "
-        "restock_point=%s WHERE site_id=%s AND sku_id=%s AND role='primary'",
+        "restock_point=%s WHERE site_id=%s AND sku_id=%s AND slot_role='primary'",
         (body.full_threshold, body.low_threshold, body.restock_point,
          body.site_id, sku_id),
     )
@@ -176,7 +176,7 @@ async def bulk_thresholds(
     for sku_id in body.sku_ids:
         n += await db.execute(
             "UPDATE slot_assignments SET full_threshold=%s, low_threshold=%s, "
-            "restock_point=%s WHERE site_id=%s AND sku_id=%s AND role='primary'",
+            "restock_point=%s WHERE site_id=%s AND sku_id=%s AND slot_role='primary'",
             (body.full_threshold, body.low_threshold, body.restock_point,
              body.site_id, sku_id),
         )

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kirim tote — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="css/tokens.css?v=a602d0c">
+<link rel="stylesheet" href="css/app.css?v=a602d0c">
+<link rel="stylesheet" href="css/print.css?v=a602d0c">
+</head>
+<body>
+<div class="app" data-screen="hub-dispatch" data-screen-label="19">
+    <header class="chrome no-print">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Gudang Logos · Kirim" data-en="Logos hub · Dispatch">Gudang Logos · Kirim</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user">Eko P. · LGS</span>
+    </header>
+    <main class="main main--dense main--fit no-print">
+      <div class="main__scroll">
+      <div class="row-split">
+        <div class="col col--grow">
+          <div class="totehead">
+            <span class="totehead__dest">
+              <span class="eyebrow" data-id="Tote untuk" data-en="Tote for">Tote untuk</span>
+              <span class="code code--lg" data-field="dest-code">UT5</span>
+            </span>
+            <span class="col" style="gap:2px">
+              <span class="note" data-field="dest-name">Ninja Kilat Untung Jawa 5</span>
+              <span class="note" data-id="Berangkat sore ini" data-en="Leaves this afternoon">Berangkat sore ini</span>
+            </span>
+            <span class="totehead__ref">
+              <span class="eyebrow" data-id="Nomor tote" data-en="Tote reference">Nomor tote</span>
+              <span class="code code--md" data-field="tote-ref">TT-LGS-004417</span>
+            </span>
+          </div>
+
+          <div class="col" style="gap:10px">
+            <span class="eyebrow" data-id="Tujuan" data-en="Destination">Tujuan</span>
+            <div class="destgrid" data-region="dests">
+              <button class="dest is-on" type="button" data-dest="UT5" data-name="Ninja Kilat Untung Jawa 5">
+                <span class="dest__code">UT5</span>
+                <span class="dest__name">Untung Jawa 5</span>
+              </button>
+              <button class="dest" type="button" data-dest="UT2" data-name="Ninja Kilat Untung Jawa 2">
+                <span class="dest__code">UT2</span>
+                <span class="dest__name">Untung Jawa 2</span>
+              </button>
+              <button class="dest" type="button" data-dest="UT7" data-name="Ninja Kilat Untung Jawa 7">
+                <span class="dest__code">UT7</span>
+                <span class="dest__name">Untung Jawa 7</span>
+              </button>
+              <button class="dest" type="button" data-dest="KB3" data-name="Ninja Kilat Kebagusan 3">
+                <span class="dest__code">KB3</span>
+                <span class="dest__name">Kebagusan 3</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="scanzone" data-scan-label="Pindai unit untuk dimasukkan" data-offline-msg="Tunggu koneksi kembali">
+            <span class="scanzone__state" data-id="Menunggu pindaian" data-en="Waiting for scan">Menunggu pindaian</span>
+            <span class="scanzone__prompt" data-id="Pindai unit untuk dimasukkan" data-en="Scan a unit to put in">Pindai unit untuk dimasukkan</span>
+            <input class="scanzone__input" aria-label="Pindai unit untuk dimasukkan">
+          </div>
+
+        </div>
+
+        <div class="col" style="flex:0 0 470px">
+          <div class="counter">
+            <div class="col" style="gap:6px">
+              <span class="eyebrow" data-id="Unit di tote" data-en="Units in the tote">Unit di tote</span>
+              <span class="lede"><span data-field="line-count">5</span> <span data-id="jenis barang" data-en="distinct SKUs">jenis barang</span></span>
+            </div>
+            <span class="counter__num" data-field="unit-count">198</span>
+          </div>
+          <div class="totelines" data-region="tote-lines">
+            <span class="toteline">
+              <span class="toteline__name">Glasting Liquid Lip 07 Rouge Flare</span>
+              <span class="toteline__sku">WDH-GLL-07</span>
+              <span class="toteline__qty">48</span>
+            </span>
+            <span class="toteline">
+              <span class="toteline__name">Glasting Liquid Lip 08 Coral Dust</span>
+              <span class="toteline__sku">WDH-GLL-08</span>
+              <span class="toteline__qty">36</span>
+            </span>
+            <span class="toteline">
+              <span class="toteline__name">UV Shield Airy Smooth Sunscreen SPF 50</span>
+              <span class="toteline__sku">WDH-UVS-030</span>
+              <span class="toteline__qty">60</span>
+            </span>
+            <span class="toteline">
+              <span class="toteline__name">Colorfit Powder Foundation 03 Natural</span>
+              <span class="toteline__sku">WDH-CPF-03</span>
+              <span class="toteline__qty">24</span>
+            </span>
+            <span class="toteline">
+              <span class="toteline__name">Perfect Bright Micellar Water</span>
+              <span class="toteline__sku">WDH-PBM-100</span>
+              <span class="toteline__qty">30</span>
+            </span>
+          </div>
+          <div class="notice notice--action">
+            <span class="code code--sm" aria-hidden="true">i</span>
+            <div class="col" style="gap:4px">
+              <span class="notice__title" data-id="Tote disegel sekali" data-en="A tote is sealed once">Tote disegel sekali</span>
+              <span class="notice__body" data-id="Setelah disegel isinya terkunci dan labelnya tercetak. Darkstore menghitung ulang saat menerima — selisih apa pun muncul di layar Transfer dengan batas 24 jam." data-en="Once sealed the contents are locked and the label prints. The darkstore recounts on arrival — any variance appears on the Transfers screen with a 24-hour window.">Setelah disegel isinya terkunci dan labelnya tercetak. Darkstore menghitung ulang saat menerima — selisih apa pun muncul di layar Transfer dengan batas 24 jam.</span>
+            </div>
+          </div>
+          <a class="btn btn--block" href="01-mulai-barang-masuk.html" data-id="Terima kiriman dari brand" data-en="Receive from the brand">Terima kiriman dari brand</a>
+        </div>
+      </div>
+      </div>
+      <!-- Outside .main__scroll on purpose: the seal action must be reachable
+           at any viewport height, without scrolling and without being clipped. -->
+      <div class="actionbar">
+        <button class="btn btn--outline btn--lg" type="button" data-action="undo"><span aria-hidden="true">↺</span><span data-id="Batalkan" data-en="Undo">Batalkan</span></button>
+        <span class="spacer"></span>
+        <span class="note" data-id="198 unit · 5 jenis barang" data-en="198 units · 5 SKUs"><span data-field="bar-units">198</span> unit · <span data-field="bar-lines">5</span> jenis barang</span>
+        <button class="btn btn--primary btn--lg" type="button" onclick="window.print()" style="min-width:320px" data-id="Segel & cetak label" data-en="Seal &amp; print label">Segel &amp; cetak label</button>
+      </div>
+    </main>
+
+    <!-- Tote label — same 63 x 38 mm stock as the day-colour labels, so the
+         hub buys one kind of label. Destination is the biggest thing on it:
+         a tote in the wrong van is the failure this label prevents. -->
+    <div class="sheet__desk">
+      <article class="sheet sheet--labels" data-region="tote-label">
+        <div class="labelgrid">
+          <div class="tlabel">
+            <span class="tlabel__dest">
+              <span class="tlabel__code" data-field="label-dest">UT5</span>
+              <span class="tlabel__site" data-field="label-site">Ninja Kilat Untung Jawa 5</span>
+            </span>
+            <span class="tlabel__bar">
+              <span class="tlabel__ref" data-field="label-ref">TT-LGS-004417</span>
+              <span class="tlabel__n"><span data-field="label-units">198</span> unit</span>
+            </span>
+            <span class="tlabel__foot">
+              <span class="tlabel__date" data-field="label-date">10/09/2026</span>
+              <span class="tlabel__from">Dari Gudang Logos</span>
+            </span>
+          </div>
+          <div class="tlabel">
+            <span class="tlabel__dest">
+              <span class="tlabel__code" data-field="label-dest">UT5</span>
+              <span class="tlabel__site" data-field="label-site">Ninja Kilat Untung Jawa 5</span>
+            </span>
+            <span class="tlabel__bar">
+              <span class="tlabel__ref" data-field="label-ref">TT-LGS-004417</span>
+              <span class="tlabel__n"><span data-field="label-units">198</span> unit</span>
+            </span>
+            <span class="tlabel__foot">
+              <span class="tlabel__date" data-field="label-date">10/09/2026</span>
+              <span class="tlabel__from">Dari Gudang Logos</span>
+            </span>
+          </div>
+          <div class="tlabel">
+            <span class="tlabel__dest">
+              <span class="tlabel__code" data-field="label-dest">UT5</span>
+              <span class="tlabel__site" data-field="label-site">Ninja Kilat Untung Jawa 5</span>
+            </span>
+            <span class="tlabel__bar">
+              <span class="tlabel__ref" data-field="label-ref">TT-LGS-004417</span>
+              <span class="tlabel__n"><span data-field="label-units">198</span> unit</span>
+            </span>
+            <span class="tlabel__foot">
+              <span class="tlabel__date" data-field="label-date">10/09/2026</span>
+              <span class="tlabel__from">Dari Gudang Logos</span>
+            </span>
+          </div>
+        </div>
+      </article>
+    </div>
+</div>
+<script src="js/api.js?v=a602d0c"></script>
+<script src="js/scan.js?v=a602d0c"></script>
+<script src="js/app.js?v=a602d0c"></script>
+<script src="js/wire.js?v=a602d0c"></script>
+
+</body>
+</html>

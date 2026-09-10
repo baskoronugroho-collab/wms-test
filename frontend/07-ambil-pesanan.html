@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=6ab229a">
-<link rel="stylesheet" href="css/app.css?v=6ab229a">
+<link rel="stylesheet" href="css/tokens.css?v=a602d0c">
+<link rel="stylesheet" href="css/app.css?v=a602d0c">
 </head>
 <body>
 <div class="app" data-screen="pick">
@@ -34,7 +34,7 @@
       <span class="progress__bar"><span class="progress__seg is-done"></span><span class="progress__seg is-done"></span><span class="progress__seg is-done"></span><span class="progress__seg"></span><span class="progress__seg"></span><span class="progress__seg"></span><span class="progress__seg"></span></span>
       <span class="code code--sm" style="color:var(--muted)">GrabMart Kilat · 14:26</span>
     </div>
-    <main class="main">
+    <main class="main main--dense">
       <div class="row-split">
         <div class="col col--grow">
           <div class="col">
@@ -44,6 +44,18 @@
               <span class="code code--xl">UT5-<span class="code__hl">A</span>-<span class="code__hl">3</span>-02</span>
             </div>
             <p class="lede" data-id="Rak A, tingkat 3, keranjang kedua." data-en="Rack A, level 3, second basket.">Rak A, tingkat 3, keranjang kedua.</p>
+            <div class="fifo" data-region="fifo">
+              <span class="fifo__swatch" data-field="fifo-block" style="background:#1A73C8;color:#fff">B</span>
+              <span class="fifo__text">
+                <span class="fifo__lead"><span data-id="Ambil yang stiker" data-en="Take the">Ambil yang stiker</span> <span data-field="fifo-day">Rabu</span> <span data-id="dulu" data-en="stickers first">dulu</span></span>
+                <span class="fifo__sub"><span data-field="fifo-date">2 Sep</span> · <span data-id="yang paling lama di keranjang ini" data-en="the oldest batch in this basket">yang paling lama di keranjang ini</span></span>
+              </span>
+              <span class="fifo__also">
+                <span class="fifo__also-label" data-id="juga ada" data-en="also in here">juga ada</span>
+                <span class="fifo__chip" style="background:#F2C300;color:#17181A" title="Senin 7 Sep">S</span>
+                <span class="fifo__chip" style="background:#1A73C8;color:#fff" title="Rabu 9 Sep">R</span>
+              </span>
+            </div>
           </div>
           <div class="counter">
             <div class="col" style="gap:6px">
@@ -60,7 +72,7 @@
       </div>
             <div class="stats">
               <button class="btn btn--outline btn--lg btn--grow" type="button" data-action="undo"><span aria-hidden="true">↺</span><span data-id="Batalkan" data-en="Undo">Batalkan</span></button>
-              <button class="btn btn--lg btn--grow btn--caution" type="button" data-id="Barang tidak ada di keranjang" data-en="Item is not in the basket">Barang tidak ada di keranjang</button>
+              <a class="btn btn--lg btn--grow btn--caution" href="17-barang-tidak-ada.html" data-id="Barang tidak ada di keranjang" data-en="Item is not in the basket">Barang tidak ada di keranjang</a>
             </div>
           </div>
         </div>
@@ -74,10 +86,30 @@
       </div>
     </main>
 </div>
-<script src="js/api.js?v=6ab229a"></script>
-<script src="js/scan.js?v=6ab229a"></script>
-<script src="js/app.js?v=6ab229a"></script>
-<script src="js/wire.js?v=6ab229a"></script>
+<script src="js/api.js?v=a602d0c"></script>
+<script src="js/scan.js?v=a602d0c"></script>
+<script src="js/app.js?v=a602d0c"></script>
+<script>
+  /* POST /api/pick/scan { orderId, barcode } -> { status:'ok'|'wrong'|'blocked' }
 
+     The FIFO prompt comes from GET /api/inventory/{location}/batches ->
+     {batches:[{day_color, date, qty}]} sorted oldest-first. Stock is held as
+     a quantity, not per unit, so the system CANNOT enforce FIFO — but naming
+     the oldest colour and date turns it from a memory test into a reading
+     task. Never show the swatch without the day name and the date. */
+  window.addEventListener('load', () => {
+    const zone = document.querySelector('.scanzone').__zone;
+    if (!zone) return;
+    const WANTED = 'WDH-GLL-07';
+    zone.onScan(code => {
+      if (code.toUpperCase().includes('GLL-07') || code === '8992222106742') {
+        zone.accept('Cocok', 'Lanjut ke barang berikutnya');
+        setTimeout(() => location.href = '09-pesanan-selesai.html', 900);
+      } else {
+        location.href = '08-salah-barang.html';
+      }
+    });
+  });
+</script>
 </body>
 </html>

@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="../css/tokens.css?v=6ab229a">
-<link rel="stylesheet" href="../css/app.css?v=6ab229a">
-<link rel="stylesheet" href="../css/console.css?v=6ab229a">
+<link rel="stylesheet" href="../css/tokens.css?v=a602d0c">
+<link rel="stylesheet" href="../css/app.css?v=a602d0c">
+<link rel="stylesheet" href="../css/console.css?v=a602d0c">
 </head>
 <body>
 <div class="console" data-screen="hub">
@@ -26,8 +26,14 @@
         <a class="sidebar__link" href="barang-masuk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10.5"/><path d="M8.2 10.2 12 14l3.8-3.8"/><path d="M4 17.5v3h16v-3"/></svg></span><span class="sidebar__label" data-id="Barang masuk" data-en="Inbound">Barang masuk</span></a>
         <a class="sidebar__link" href="pesanan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V10.5"/><path d="M8.2 14.3 12 10.5l3.8 3.8"/><path d="M4 6.5v-3h16v3"/></svg></span><span class="sidebar__label" data-id="Pesanan" data-en="Orders">Pesanan</span></a>
         <a class="sidebar__link" href="papan-antrean.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="5" height="15" rx="1.2"/><rect x="9.5" y="4.5" width="5" height="11" rx="1.2"/><rect x="15.5" y="4.5" width="5" height="7" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Papan antrean" data-en="Queue board">Papan antrean</span></a>
+        <a class="sidebar__link" href="transfer.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5h13"/><path d="M13.5 5 17 8.5 13.5 12"/><path d="M20 15.5H7"/><path d="M10.5 12 7 15.5 10.5 19"/></svg></span><span class="sidebar__label" data-id="Transfer gudang" data-en="Transfers">Transfer gudang</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Stok" data-en="Stock">Stok</span>
         <a class="sidebar__link" href="stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="3.5" y="12.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="12.5" width="8" height="8" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Stok" data-en="Inventory">Stok</span></a>
+        <a class="sidebar__link" href="stok-perhatian.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 21 19.5H3z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="16.8" r=".9" fill="currentColor"/></svg></span><span class="sidebar__label" data-id="Stok perlu perhatian" data-en="Stock needs attention">Stok perlu perhatian</span></a>
         <a class="sidebar__link" href="hitung-stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2l2.6 2.6 4.6-5.2"/></svg></span><span class="sidebar__label" data-id="Hitung stok" data-en="Stock count">Hitung stok</span></a>
+        <a class="sidebar__link" href="registry.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17"/><path d="M9 9.5v10"/><path d="M13.5 13h4"/></svg></span><span class="sidebar__label" data-id="Penempatan & batas" data-en="Slotting & thresholds">Penempatan & batas</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
@@ -39,6 +45,7 @@
         <a class="sidebar__link is-current" href="hub.html" aria-current="page"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
         <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
         <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi POS" data-en="POS integration">Integrasi POS</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
@@ -65,24 +72,24 @@
       <div class="page__heading">
         <span class="page__eyebrow" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
         <h1 class="page__title" data-id="Hub" data-en="Hubs">Hub</h1>
-        <p class="page__sub" data-id="Satu kartu per station: alamat, jumlah staf, dan seberapa penuh raknya. Angka yang ditindaklanjuti supervisor adalah posisi terpakai." data-en="One card per station: address, headcount, and how full the racks are. The number a supervisor acts on is locations used.">Satu kartu per station: alamat, jumlah staf, dan seberapa penuh raknya. Angka yang ditindaklanjuti supervisor adalah posisi terpakai.</p>
+        <p class="page__sub" data-id="Dua tipe lokasi menjalankan WMS yang sama. Darkstore mengambil pesanan pelanggan; hub menerima dari brand dan mengirim tote ke darkstore." data-en="Two site types run the same WMS. A darkstore picks customer orders; a hub receives from the brand and dispatches totes to the darkstores.">Dua tipe lokasi menjalankan WMS yang sama. Darkstore mengambil pesanan pelanggan; hub menerima dari brand dan mengirim tote ke darkstore.</p>
       </div>
 
     </header>
     <section class="kpis">
       <div class="kpi-card">
-        <span class="kpi-card__label" data-id="Station aktif" data-en="Active stations">Station aktif</span>
+        <span class="kpi-card__label" data-id="Darkstore aktif" data-en="Active darkstores">Darkstore aktif</span>
         <span class="kpi-card__num" data-field="kpi-sites">9</span>
         <span class="kpi-card__foot" data-id="1 lokasi latihan" data-en="1 training site">1 lokasi latihan</span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-card__label" data-id="Total posisi" data-en="Total locations">Total posisi</span>
-        <span class="kpi-card__num" data-field="kpi-locs">1.575</span>
-        <span class="kpi-card__foot" data-id="9 station × 175" data-en="9 stations × 175">9 station × 175</span>
+        <span class="kpi-card__label" data-id="Hub" data-en="Hubs">Hub</span>
+        <span class="kpi-card__num" data-field="kpi-hubs">1</span>
+        <span class="kpi-card__foot" data-id="Gudang Logos" data-en="Logos warehouse">Gudang Logos</span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-card__label" data-id="Terpakai" data-en="In use">Terpakai</span>
-        <span class="kpi-card__num" data-field="kpi-used">1.104</span>
+        <span class="kpi-card__label" data-id="Posisi rak ambil terpakai" data-en="Pick faces in use">Posisi rak ambil terpakai</span>
+        <span class="kpi-card__num" data-field="kpi-used">1.104 / 1.575</span>
         <span class="kpi-card__foot" data-id="70% rata-rata" data-en="70% average">70% rata-rata</span>
       </div>
       <div class="kpi-card kpi-card--caution">
@@ -96,15 +103,40 @@
         <div style="display:flex;align-items:flex-start;gap:var(--sp-3);flex-wrap:wrap">
           <div style="flex:1 1 220px;display:flex;flex-direction:column;gap:4px;min-width:0">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-              <span class="td-code" style="font-size:var(--fs-c-h2);font-weight:700">UT5</span>
+              <span class="td-code" style="font-size:var(--fs-c-h2);font-weight:700">LGS</span>
+              <span class="sitetype sitetype--hub" data-id="Hub" data-en="Hub">Hub</span>
               
+            </div>
+            <span style="font-size:var(--fs-c-label);color:var(--ink);font-weight:500">Gudang Logos</span>
+            <span style="font-size:var(--fs-c-meta);color:var(--muted)">Kawasan Pergudangan Logos, Cakung, Jakarta Timur</span>
+          </div>
+          <div style="display:flex;gap:var(--sp-4);flex:0 0 auto">
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Ambil pesanan" data-en="Picks orders">Ambil pesanan</span><span style="font-size:var(--fs-c-label)"><span class="na" data-id="tidak berlaku" data-en="not applicable">tidak berlaku</span></span></span>
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Kirim stok ke POS" data-en="Publishes stock">Kirim stok ke POS</span><span style="font-size:var(--fs-c-label)"><span class="na" data-id="tidak berlaku" data-en="not applicable">tidak berlaku</span></span></span>
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Staf" data-en="Staff">Staf</span><span class="td-code" style="font-size:var(--fs-c-label)">14</span></span>
+          </div>
+          <button class="cbtn" type="button" data-id="Ubah" data-en="Edit">Ubah</button>
+        </div>
+        <span class="inline-note"><span data-id="Hub menerima dari brand, membongkar, dan mengirim tote tersegel ke darkstore. Hub tidak pernah mengambil pesanan pelanggan dan tidak pernah mengirim angka stok ke POS — kolom itu kosong karena memang tidak berlaku, bukan karena rusak." data-en="A hub receives from the brand, decants, and dispatches sealed totes to the darkstores. It never picks a customer order and never publishes stock to the POS — those columns are blank because they do not apply, not because something is broken.">Hub menerima dari brand, membongkar, dan mengirim tote tersegel ke darkstore. Hub tidak pernah mengambil pesanan pelanggan dan tidak pernah mengirim angka stok ke POS — kolom itu kosong karena memang tidak berlaku, bukan karena rusak.</span></span>
+        <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap">
+          <a class="cbtn" href="transfer.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5h13"/><path d="M13.5 5 17 8.5 13.5 12"/><path d="M20 15.5H7"/><path d="M10.5 12 7 15.5 10.5 19"/></svg><span data-id="Lihat transfer keluar" data-en="View outbound transfers">Lihat transfer keluar</span></a>
+          <a class="cbtn" href="../19-gudang-kirim.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka layar kirim" data-en="Open dispatch screen">Buka layar kirim</span></a>
+        </div>
+      </div>
+      <div class="ccard">
+        <div style="display:flex;align-items:flex-start;gap:var(--sp-3);flex-wrap:wrap">
+          <div style="flex:1 1 220px;display:flex;flex-direction:column;gap:4px;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="td-code" style="font-size:var(--fs-c-h2);font-weight:700">UT5</span>
+              <span class="sitetype sitetype--dark" data-id="Darkstore" data-en="Darkstore">Darkstore</span>
               
             </div>
             <span style="font-size:var(--fs-c-label);color:var(--ink);font-weight:500">Ninja Kilat Untung Jawa 5</span>
             <span style="font-size:var(--fs-c-meta);color:var(--muted)">Jl. Untung Jawa Raya 118, Jakarta Selatan</span>
           </div>
           <div style="display:flex;gap:var(--sp-4);flex:0 0 auto">
-            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Tipe" data-en="Type">Tipe</span><span style="font-size:var(--fs-c-label)">Darkstore</span></span>
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Ambil pesanan" data-en="Picks orders">Ambil pesanan</span><span style="font-size:var(--fs-c-label)"><span data-id="Ya" data-en="Yes">Ya</span></span></span>
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Kirim stok ke POS" data-en="Publishes stock">Kirim stok ke POS</span><span style="font-size:var(--fs-c-label)"><span data-id="Ya" data-en="Yes">Ya</span></span></span>
             <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Staf" data-en="Staff">Staf</span><span class="td-code" style="font-size:var(--fs-c-label)">6</span></span>
           </div>
           <button class="cbtn" type="button" data-id="Ubah" data-en="Edit">Ubah</button>
@@ -112,7 +144,7 @@
         <div class="occ">
           <span class="occ__top">
             <span class="occ__num">122 / 175</span>
-            <span class="occ__label" data-id="posisi terpakai" data-en="locations used">posisi terpakai</span>
+            <span class="occ__label" data-id="posisi rak ambil terpakai" data-en="pick faces in use">posisi rak ambil terpakai</span>
             <span class="toolbar__spacer"></span>
             <span class="occ__label">70%</span>
           </span>
@@ -133,14 +165,15 @@
           <div style="flex:1 1 220px;display:flex;flex-direction:column;gap:4px;min-width:0">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <span class="td-code" style="font-size:var(--fs-c-h2);font-weight:700">UT2</span>
-              
+              <span class="sitetype sitetype--dark" data-id="Darkstore" data-en="Darkstore">Darkstore</span>
               
             </div>
             <span style="font-size:var(--fs-c-label);color:var(--ink);font-weight:500">Ninja Kilat Untung Jawa 2</span>
             <span style="font-size:var(--fs-c-meta);color:var(--muted)">Jl. Kebagusan Dalam 4, Jakarta Selatan</span>
           </div>
           <div style="display:flex;gap:var(--sp-4);flex:0 0 auto">
-            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Tipe" data-en="Type">Tipe</span><span style="font-size:var(--fs-c-label)">Darkstore</span></span>
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Ambil pesanan" data-en="Picks orders">Ambil pesanan</span><span style="font-size:var(--fs-c-label)"><span data-id="Ya" data-en="Yes">Ya</span></span></span>
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Kirim stok ke POS" data-en="Publishes stock">Kirim stok ke POS</span><span style="font-size:var(--fs-c-label)"><span data-id="Ya" data-en="Yes">Ya</span></span></span>
             <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Staf" data-en="Staff">Staf</span><span class="td-code" style="font-size:var(--fs-c-label)">5</span></span>
           </div>
           <button class="cbtn" type="button" data-id="Ubah" data-en="Edit">Ubah</button>
@@ -148,7 +181,7 @@
         <div class="occ">
           <span class="occ__top">
             <span class="occ__num">168 / 175</span>
-            <span class="occ__label" data-id="posisi terpakai" data-en="locations used">posisi terpakai</span>
+            <span class="occ__label" data-id="posisi rak ambil terpakai" data-en="pick faces in use">posisi rak ambil terpakai</span>
             <span class="toolbar__spacer"></span>
             <span class="occ__label">96%</span>
           </span>
@@ -169,14 +202,15 @@
           <div style="flex:1 1 220px;display:flex;flex-direction:column;gap:4px;min-width:0">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <span class="td-code" style="font-size:var(--fs-c-h2);font-weight:700">TRN</span>
+              <span class="sitetype sitetype--dark" data-id="Darkstore" data-en="Darkstore">Darkstore</span>
               <span class="badge-training" data-id="LOKASI LATIHAN" data-en="TRAINING SITE">LOKASI LATIHAN</span>
-              
             </div>
             <span style="font-size:var(--fs-c-label);color:var(--ink);font-weight:500">Lokasi latihan — staf baru</span>
             <span style="font-size:var(--fs-c-meta);color:var(--muted)">Menempel di UT5, rak belakang</span>
           </div>
           <div style="display:flex;gap:var(--sp-4);flex:0 0 auto">
-            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Tipe" data-en="Type">Tipe</span><span style="font-size:var(--fs-c-label)">Latihan</span></span>
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Ambil pesanan" data-en="Picks orders">Ambil pesanan</span><span style="font-size:var(--fs-c-label)"><span data-id="Ya" data-en="Yes">Ya</span></span></span>
+            <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Kirim stok ke POS" data-en="Publishes stock">Kirim stok ke POS</span><span style="font-size:var(--fs-c-label)"><span data-id="Ya" data-en="Yes">Ya</span></span></span>
             <span style="display:flex;flex-direction:column;gap:2px"><span class="kpi-card__label" data-id="Staf" data-en="Staff">Staf</span><span class="td-code" style="font-size:var(--fs-c-label)">12</span></span>
           </div>
           <button class="cbtn" type="button" data-id="Ubah" data-en="Edit">Ubah</button>
@@ -184,7 +218,7 @@
         <div class="occ">
           <span class="occ__top">
             <span class="occ__num">34 / 175</span>
-            <span class="occ__label" data-id="posisi terpakai" data-en="locations used">posisi terpakai</span>
+            <span class="occ__label" data-id="posisi rak ambil terpakai" data-en="pick faces in use">posisi rak ambil terpakai</span>
             <span class="toolbar__spacer"></span>
             <span class="occ__label">19%</span>
           </span>
@@ -201,16 +235,19 @@
   </main>
 </div>
 
-<script src="../js/api.js?v=6ab229a"></script>
-<script src="../js/app.js?v=6ab229a"></script>
-<script src="../js/console.js?v=6ab229a"></script>
+<script src="../js/api.js?v=a602d0c"></script>
+<script src="../js/app.js?v=a602d0c"></script>
+<script src="../js/console.js?v=a602d0c"></script>
 <script>
-  /* GET /api/admin/sites -> {sites:[{code,name,address,site_type,is_training,active,
-     racks:[{code,levels,positions_per_level,locations,occupied}],total_locations,
-     occupied_locations,staff_count}]}. Supervisor sees only their own sites.
-     PATCH /api/admin/sites/{id} accepts name, address, active. */
+  /* GET /api/admin/sites -> {sites:[{code, name, address, site_type:'hub'|'darkstore',
+     is_training, active, picks_orders, publishes_stock, racks[],
+     total_locations, occupied_locations, staff_count}]}
+
+     site_type drives what a card shows. A hub has no pick queue and never
+     publishes stock, so those fields read "tidak berlaku" rather than a
+     blank or a zero — an empty cell implies breakage, and it isn't broken. */
   window.addEventListener('load', async () => {
-    try { const { sites } = await NJW.api.sites(); /* render into [data-region="sites"] */ } catch (e) {}
+    try { const { sites } = await NJW.api.sites(); } catch (e) {}
   });
 </script>
 </body>

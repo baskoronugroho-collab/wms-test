@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=6ab229a">
-<link rel="stylesheet" href="css/app.css?v=6ab229a">
+<link rel="stylesheet" href="css/tokens.css?v=a602d0c">
+<link rel="stylesheet" href="css/app.css?v=a602d0c">
 </head>
 <body>
 <div class="app" data-screen="counting">
@@ -73,10 +73,25 @@
       </div>
     </main>
 </div>
-<script src="js/api.js?v=6ab229a"></script>
-<script src="js/scan.js?v=6ab229a"></script>
-<script src="js/app.js?v=6ab229a"></script>
-<script src="js/wire.js?v=6ab229a"></script>
-
+<script src="js/api.js?v=a602d0c"></script>
+<script src="js/scan.js?v=a602d0c"></script>
+<script src="js/app.js?v=a602d0c"></script>
+<script>
+  /* No free text anywhere: the count only changes through the stepper and keypad. */
+  window.addEventListener('load', () => {
+    const out = document.querySelector('[data-field="count"]');
+    let typed = '';
+    const set = n => { out.textContent = String(Math.max(0, Math.min(999, n))); };
+    document.querySelector('[data-action="inc"]').onclick = () => { typed = ''; set(+out.textContent + 1); };
+    document.querySelector('[data-action="dec"]').onclick = () => { typed = ''; set(+out.textContent - 1); };
+    document.querySelectorAll('.keypad__key').forEach(k => k.onclick = () => {
+      const v = k.dataset.key;
+      if (v === 'del') typed = typed.slice(0, -1);
+      else if (v === 'zero') typed = '0';
+      else typed = (typed + v).slice(0, 3);
+      set(+(typed || 0));
+    });
+  });
+</script>
 </body>
 </html>

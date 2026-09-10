@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Isi ulang rak — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="css/tokens.css?v=a602d0c">
+<link rel="stylesheet" href="css/app.css?v=a602d0c">
+</head>
+<body>
+<div class="app" data-screen="replenish" data-screen-label="18">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Isi ulang rak · UT5" data-en="Replenishment · UT5">Isi ulang rak · UT5</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user">Dwi L. · UT5</span>
+    </header>
+    <div class="progress">
+      <span class="progress__count" data-field="task-count">5</span>
+      <span class="note" data-id="rak perlu diisi" data-en="faces to refill">rak perlu diisi</span>
+      <span class="spacer"></span>
+      <span class="tasktag tasktag--empty"><span data-field="empty-count">2</span> <span data-id="kosong" data-en="at zero">kosong</span></span>
+      <span class="tasktag tasktag--low"><span data-field="low-count">3</span> <span data-id="menipis" data-en="low">menipis</span></span>
+    </div>
+    <main class="main main--tight">
+      <p class="lede" data-id="Urut dari yang paling mendesak. Rak yang sudah kosong menghentikan pesanan, jadi selalu dikerjakan lebih dulu. Selesaikan satu baris dengan memindai di rak tujuan." data-en="Ordered by urgency. A face at zero stops orders, so it always comes first. Finish a row by scanning at the destination rack.">Urut dari yang paling mendesak. Rak yang sudah kosong menghentikan pesanan, jadi selalu dikerjakan lebih dulu. Selesaikan satu baris dengan memindai di rak tujuan.</p>
+
+      <div class="list" data-region="tasks">
+        <div class="task task--empty" data-task-sku="WDH-GLL-07">
+          <img class="task__photo" src="assets/products/placeholder.svg" data-photo-key="wdh-gll-07" alt="">
+          <span class="task__ident">
+            <span class="task__name">Glasting Liquid Lip 07 Rouge Flare</span>
+            <span class="task__sku">WDH-GLL-07 · <span data-id="sisa di rak ambil" data-en="left on the pick face">sisa di rak ambil</span> 0 / 40</span>
+          </span>
+          <span class="task__move">
+            <span class="task__loc">
+              <span class="task__loc-label" data-id="Dari cadangan" data-en="From overflow">Dari cadangan</span>
+              <span class="task__loc-code">UT5-OV-2-04</span>
+            </span>
+            <span class="task__arrow" aria-hidden="true">→</span>
+            <span class="task__loc">
+              <span class="task__loc-label" data-id="Ke rak ambil" data-en="To pick face">Ke rak ambil</span>
+              <span class="task__loc-code">UT5-A-3-02</span>
+            </span>
+          </span>
+          <span class="task__qty">
+            <span class="task__qty-num">24</span>
+            <span class="task__qty-unit" data-id="unit" data-en="units">unit</span>
+          </span>
+          <span class="task__since">
+            <span class="tasktag tasktag--empty" data-id="Kosong" data-en="At zero">Kosong</span>
+            <span class="note" style="font-size:13px">38 menit</span>
+          </span>
+          <a class="btn btn--primary" href="18-isi-ulang-pindai.html" data-id="Kerjakan" data-en="Do it">Kerjakan</a>
+        </div>
+        <div class="task task--empty" data-task-sku="WDH-UVS-030">
+          <img class="task__photo" src="assets/products/placeholder.svg" data-photo-key="wdh-uvs-030" alt="">
+          <span class="task__ident">
+            <span class="task__name">UV Shield Airy Smooth Sunscreen SPF 50</span>
+            <span class="task__sku">WDH-UVS-030 · <span data-id="sisa di rak ambil" data-en="left on the pick face">sisa di rak ambil</span> 0 / 40</span>
+          </span>
+          <span class="task__move">
+            <span class="task__loc">
+              <span class="task__loc-label" data-id="Dari cadangan" data-en="From overflow">Dari cadangan</span>
+              <span class="task__loc-code">UT5-OV-1-01</span>
+            </span>
+            <span class="task__arrow" aria-hidden="true">→</span>
+            <span class="task__loc">
+              <span class="task__loc-label" data-id="Ke rak ambil" data-en="To pick face">Ke rak ambil</span>
+              <span class="task__loc-code">UT5-C-5-04</span>
+            </span>
+          </span>
+          <span class="task__qty">
+            <span class="task__qty-num">20</span>
+            <span class="task__qty-unit" data-id="unit" data-en="units">unit</span>
+          </span>
+          <span class="task__since">
+            <span class="tasktag tasktag--empty" data-id="Kosong" data-en="At zero">Kosong</span>
+            <span class="note" style="font-size:13px">12 menit</span>
+          </span>
+          <a class="btn btn--primary" href="18-isi-ulang-pindai.html" data-id="Kerjakan" data-en="Do it">Kerjakan</a>
+        </div>
+        <div class="task task--low" data-task-sku="WDH-CVM-04">
+          <img class="task__photo" src="assets/products/placeholder.svg" data-photo-key="wdh-cvm-04" alt="">
+          <span class="task__ident">
+            <span class="task__name">Colorfit Velvet Matte Lipstick 04 Dusty Rose</span>
+            <span class="task__sku">WDH-CVM-04 · <span data-id="sisa di rak ambil" data-en="left on the pick face">sisa di rak ambil</span> 6 / 40</span>
+          </span>
+          <span class="task__move">
+            <span class="task__loc">
+              <span class="task__loc-label" data-id="Dari cadangan" data-en="From overflow">Dari cadangan</span>
+              <span class="task__loc-code">UT5-OV-2-01</span>
+            </span>
+            <span class="task__arrow" aria-hidden="true">→</span>
+            <span class="task__loc">
+              <span class="task__loc-label" data-id="Ke rak ambil" data-en="To pick face">Ke rak ambil</span>
+              <span class="task__loc-code">UT5-A-3-05</span>
+            </span>
+          </span>
+          <span class="task__qty">
+            <span class="task__qty-num">16</span>
+            <span class="task__qty-unit" data-id="unit" data-en="units">unit</span>
+          </span>
+          <span class="task__since">
+            <span class="tasktag tasktag--low" data-id="Menipis" data-en="Low">Menipis</span>
+            <span class="note" style="font-size:13px">1 jam 20 mnt</span>
+          </span>
+          <a class="btn btn--primary" href="18-isi-ulang-pindai.html" data-id="Kerjakan" data-en="Do it">Kerjakan</a>
+        </div>
+        <div class="task task--low" data-task-sku="WDH-PBM-100">
+          <img class="task__photo" src="assets/products/placeholder.svg" data-photo-key="wdh-pbm-100" alt="">
+          <span class="task__ident">
+            <span class="task__name">Perfect Bright Micellar Water</span>
+            <span class="task__sku">WDH-PBM-100 · <span data-id="sisa di rak ambil" data-en="left on the pick face">sisa di rak ambil</span> 9 / 80</span>
+          </span>
+          <span class="task__move">
+            <span class="task__loc">
+              <span class="task__loc-label" data-id="Dari cadangan" data-en="From overflow">Dari cadangan</span>
+              <span class="task__loc-code">UT5-OV-3-02</span>
+            </span>
+            <span class="task__arrow" aria-hidden="true">→</span>
+            <span class="task__loc">
+              <span class="task__loc-label" data-id="Ke rak ambil" data-en="To pick face">Ke rak ambil</span>
+              <span class="task__loc-code">UT5-E-1-01</span>
+            </span>
+          </span>
+          <span class="task__qty">
+            <span class="task__qty-num">30</span>
+            <span class="task__qty-unit" data-id="unit" data-en="units">unit</span>
+          </span>
+          <span class="task__since">
+            <span class="tasktag tasktag--low" data-id="Menipis" data-en="Low">Menipis</span>
+            <span class="note" style="font-size:13px">2 jam 05 mnt</span>
+          </span>
+          <a class="btn btn--primary" href="18-isi-ulang-pindai.html" data-id="Kerjakan" data-en="Do it">Kerjakan</a>
+        </div>
+        <div class="task task--low" data-task-sku="WDH-LDC-030">
+          <img class="task__photo" src="assets/products/placeholder.svg" data-photo-key="wdh-ldc-030" alt="">
+          <span class="task__ident">
+            <span class="task__name">Lightening Day Cream SPF 30</span>
+            <span class="task__sku">WDH-LDC-030 · <span data-id="sisa di rak ambil" data-en="left on the pick face">sisa di rak ambil</span> 7 / 40</span>
+          </span>
+          <span class="task__move">
+            <span class="task__loc">
+              <span class="task__loc-label" data-id="Dari cadangan" data-en="From overflow">Dari cadangan</span>
+              <span class="task__loc-code">UT5-OV-1-05</span>
+            </span>
+            <span class="task__arrow" aria-hidden="true">→</span>
+            <span class="task__loc">
+              <span class="task__loc-label" data-id="Ke rak ambil" data-en="To pick face">Ke rak ambil</span>
+              <span class="task__loc-code">UT5-D-2-01</span>
+            </span>
+          </span>
+          <span class="task__qty">
+            <span class="task__qty-num">18</span>
+            <span class="task__qty-unit" data-id="unit" data-en="units">unit</span>
+          </span>
+          <span class="task__since">
+            <span class="tasktag tasktag--low" data-id="Menipis" data-en="Low">Menipis</span>
+            <span class="note" style="font-size:13px">3 jam 40 mnt</span>
+          </span>
+          <a class="btn btn--primary" href="18-isi-ulang-pindai.html" data-id="Kerjakan" data-en="Do it">Kerjakan</a>
+        </div>
+      </div>
+
+      <!-- Most days this list is short or empty. An empty state that looks
+           broken gets ignored on the day it matters, so it is calm and
+           states the fact. Toggle with ?empty=1 to review it. -->
+      <div class="emptystate" data-region="empty" hidden>
+        <span class="emptystate__mark" aria-hidden="true">✓</span>
+        <span class="emptystate__title" data-id="Semua rak ambil terisi" data-en="Every pick face is stocked">Semua rak ambil terisi</span>
+        <span class="emptystate__body" data-id="Tidak ada yang perlu dipindahkan sekarang. Layar ini akan terisi sendiri begitu ada rak yang turun di bawah batas — tidak perlu ditunggui." data-en="Nothing needs moving right now. This screen fills itself the moment a face drops below its threshold — you do not need to watch it.">Tidak ada yang perlu dipindahkan sekarang. Layar ini akan terisi sendiri begitu ada rak yang turun di bawah batas — tidak perlu ditunggui.</span>
+        <a class="btn" href="index.html" data-id="Kembali ke menu" data-en="Back to the menu">Kembali ke menu</a>
+      </div>
+    </main>
+</div>
+<script src="js/api.js?v=a602d0c"></script>
+<script src="js/scan.js?v=a602d0c"></script>
+<script src="js/app.js?v=a602d0c"></script>
+<script src="js/wire.js?v=a602d0c"></script>
+
+</body>
+</html>

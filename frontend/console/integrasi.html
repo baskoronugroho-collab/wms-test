@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Integrasi POS — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../css/tokens.css?v=a602d0c">
+<link rel="stylesheet" href="../css/app.css?v=a602d0c">
+<link rel="stylesheet" href="../css/console.css?v=a602d0c">
+</head>
+<body>
+<div class="console" data-screen="integrasi">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <span class="sidebar__mark">NINJA</span>
+        <span class="sidebar__product">Kilat WMS</span>
+      </div>
+      <nav class="sidebar__section">
+        <a class="sidebar__link" href="index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2"/><path d="M5.6 9v11.4h12.8V9"/></svg></span><span class="sidebar__label" data-id="Ringkasan" data-en="Overview">Ringkasan</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk & keluar</span>
+        <a class="sidebar__link" href="barang-masuk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10.5"/><path d="M8.2 10.2 12 14l3.8-3.8"/><path d="M4 17.5v3h16v-3"/></svg></span><span class="sidebar__label" data-id="Barang masuk" data-en="Inbound">Barang masuk</span></a>
+        <a class="sidebar__link" href="pesanan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V10.5"/><path d="M8.2 14.3 12 10.5l3.8 3.8"/><path d="M4 6.5v-3h16v3"/></svg></span><span class="sidebar__label" data-id="Pesanan" data-en="Orders">Pesanan</span></a>
+        <a class="sidebar__link" href="papan-antrean.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="5" height="15" rx="1.2"/><rect x="9.5" y="4.5" width="5" height="11" rx="1.2"/><rect x="15.5" y="4.5" width="5" height="7" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Papan antrean" data-en="Queue board">Papan antrean</span></a>
+        <a class="sidebar__link" href="transfer.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5h13"/><path d="M13.5 5 17 8.5 13.5 12"/><path d="M20 15.5H7"/><path d="M10.5 12 7 15.5 10.5 19"/></svg></span><span class="sidebar__label" data-id="Transfer gudang" data-en="Transfers">Transfer gudang</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Stok" data-en="Stock">Stok</span>
+        <a class="sidebar__link" href="stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="3.5" y="12.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="12.5" width="8" height="8" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Stok" data-en="Inventory">Stok</span></a>
+        <a class="sidebar__link" href="stok-perhatian.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 21 19.5H3z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="16.8" r=".9" fill="currentColor"/></svg></span><span class="sidebar__label" data-id="Stok perlu perhatian" data-en="Stock needs attention">Stok perlu perhatian</span></a>
+        <a class="sidebar__link" href="hitung-stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2l2.6 2.6 4.6-5.2"/></svg></span><span class="sidebar__label" data-id="Hitung stok" data-en="Stock count">Hitung stok</span></a>
+        <a class="sidebar__link" href="registry.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17"/><path d="M9 9.5v10"/><path d="M13.5 13h4"/></svg></span><span class="sidebar__label" data-id="Penempatan & batas" data-en="Slotting & thresholds">Penempatan & batas</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
+        <a class="sidebar__link" href="slip-putaway.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h7.5L18 8v12.5H6z"/><path d="M13.2 3.7V8H18"/><path d="M8.8 12h6.4"/><path d="M8.8 15.5h4.4"/></svg></span><span class="sidebar__label" data-id="Slip putaway" data-en="Putaway slips">Slip putaway</span></a>
+        <a class="sidebar__link" href="label-warna-hari.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="7" height="6" rx="1"/><rect x="13.5" y="4.5" width="7" height="6" rx="1"/><rect x="3.5" y="13.5" width="7" height="6" rx="1"/><rect x="13.5" y="13.5" width="7" height="6" rx="1"/></svg></span><span class="sidebar__label" data-id="Label & warna hari" data-en="Labels & day colour">Label & warna hari</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
+        <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
+        <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
+        <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
+        <a class="sidebar__link is-current" href="integrasi.html" aria-current="page"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi POS" data-en="POS integration">Integrasi POS</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
+        <a class="sidebar__link" href="simulator-grab.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><span class="sidebar__label" data-id="Simulator Grab" data-en="Grab simulator">Simulator Grab</span></a>
+        <a class="sidebar__link" href="mode-latihan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5v17"/><path d="M6.5 4.5h11l-2.2 4.2 2.2 4.2h-11"/></svg></span><span class="sidebar__label" data-id="Mode latihan" data-en="Training mode">Mode latihan</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <span class="sidebar__site">
+          <span class="sidebar__label" data-id="Lokasi aktif" data-en="Active site">Lokasi aktif</span>
+          <strong data-field="site-code">UT5</strong>
+        </span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="lang" role="group" aria-label="Bahasa">
+            <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+            <button class="lang__opt" data-lang="en" type="button">EN</button>
+          </span>
+          <button class="cbtn cbtn--icon cbtn--ghost" data-action="toggle-theme" type="button" aria-label="Ganti tema">◐</button>
+        </div>
+        <a class="sidebar__link" href="../index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg></span><span class="sidebar__label" data-id="Buka aplikasi station" data-en="Open station app">Buka aplikasi station</span></a>
+      </div>
+    </aside>
+  <main class="page">
+    <header class="page__head">
+      <div class="page__heading">
+        <span class="page__eyebrow" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
+        <h1 class="page__title" data-id="Integrasi POS" data-en="POS integration">Integrasi POS</h1>
+        <p class="page__sub" data-id="Lima pesan yang dikirim WMS ke POS. WMS tidak pernah memanggil Grab — POS yang memegang hubungan itu. Layar ini menjawab satu pertanyaan: gudangnya yang bermasalah, atau salurannya?" data-en="The five messages the WMS sends to the POS. The WMS never calls Grab — the POS owns that relationship. This screen answers one question: is the warehouse the problem, or the pipe?">Lima pesan yang dikirim WMS ke POS. WMS tidak pernah memanggil Grab — POS yang memegang hubungan itu. Layar ini menjawab satu pertanyaan: gudangnya yang bermasalah, atau salurannya?</p>
+      </div>
+      <div class="page__actions">
+        <span class="seg" role="group" aria-label="Tampilan">
+          <button class="seg__opt is-on" type="button" data-view="shadow" data-id="Mode bayangan" data-en="Shadow mode">Mode bayangan</button>
+          <button class="seg__opt" type="button" data-view="live" data-id="Tersambung" data-en="Live">Tersambung</button>
+        </span>
+        <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v4h-4"/></svg><span data-id="Muat ulang" data-en="Refresh">Muat ulang</span></button>
+      </div>
+    </header>
+
+    <!-- SHADOW -->
+    <div data-region="view-shadow">
+      <div class="shadowbar" style="margin-bottom:var(--sp-4)">
+        <span class="shadowbar__icon" aria-hidden="true">!</span>
+        <span class="shadowbar__text">
+          <span class="shadowbar__title" data-id="Mode bayangan — tidak ada satu pun pesan yang dikirim" data-en="Shadow mode — not one message is being sent">Mode bayangan — tidak ada satu pun pesan yang dikirim</span>
+          <span class="shadowbar__body" data-id="WMS menghitung setiap angka tapi batasnya ditutup. Angka di bawah ini adalah yang AKAN dikirim, bukan yang sudah. Jangan baca layar ini sebagai integrasi yang sehat — belum ada yang tersambung." data-en="The WMS computes every number but the boundary is closed. The figures below are what WOULD be sent, not what has been. Do not read this screen as a healthy integration — nothing is connected yet.">WMS menghitung setiap angka tapi batasnya ditutup. Angka di bawah ini adalah yang AKAN dikirim, bukan yang sudah. Jangan baca layar ini sebagai integrasi yang sehat — belum ada yang tersambung.</span>
+        </span>
+      </div>
+
+      <section class="section" style="margin-bottom:var(--sp-5)">
+        <h2 class="section__title" data-id="Yang akan kami kirim, dibanding yang dipegang POS sekarang" data-en="What we would send, against what the POS holds now">Yang akan kami kirim, dibanding yang dipegang POS sekarang</h2>
+        <p class="page__sub" data-id="Ini bukti untuk rapat dengan tim POS. Selama mode bayangan, ini satu-satunya hal di layar ini yang benar-benar berguna — jadi diberi tempat, bukan diselipkan di tabel antrean." data-en="This is the evidence for the conversation with the POS team. During shadow mode it is the only genuinely useful thing on this screen, so it gets room rather than a row in a queue table.">Ini bukti untuk rapat dengan tim POS. Selama mode bayangan, ini satu-satunya hal di layar ini yang benar-benar berguna — jadi diberi tempat, bukan diselipkan di tabel antrean.</p>
+        <div class="evidence">
+          <div class="evrow is-adrift">
+            <span class="evrow__side">
+              <span class="evrow__label" data-id="WMS hitung" data-en="WMS computes">WMS hitung</span>
+              <span class="evrow__num">6</span>
+              <span class="msgcard__code">WDH-GLL-07</span>
+            </span>
+            <span class="evrow__delta">-6</span>
+            <span class="evrow__side evrow__side--pos">
+              <span class="evrow__label" data-id="POS pegang" data-en="POS holds">POS pegang</span>
+              <span class="evrow__num">12</span>
+              <span class="msgcard__code">Glasting Liquid Lip 07</span>
+            </span>
+          </div>
+          <div class="evrow is-match">
+            <span class="evrow__side">
+              <span class="evrow__label" data-id="WMS hitung" data-en="WMS computes">WMS hitung</span>
+              <span class="evrow__num">4</span>
+              <span class="msgcard__code">WDH-UVS-030</span>
+            </span>
+            <span class="evrow__delta">=</span>
+            <span class="evrow__side evrow__side--pos">
+              <span class="evrow__label" data-id="POS pegang" data-en="POS holds">POS pegang</span>
+              <span class="evrow__num">4</span>
+              <span class="msgcard__code">UV Shield SPF 50</span>
+            </span>
+          </div>
+          <div class="evrow is-adrift">
+            <span class="evrow__side">
+              <span class="evrow__label" data-id="WMS hitung" data-en="WMS computes">WMS hitung</span>
+              <span class="evrow__num">10</span>
+              <span class="msgcard__code">WDH-CVM-04</span>
+            </span>
+            <span class="evrow__delta">-4</span>
+            <span class="evrow__side evrow__side--pos">
+              <span class="evrow__label" data-id="POS pegang" data-en="POS holds">POS pegang</span>
+              <span class="evrow__num">14</span>
+              <span class="msgcard__code">Colorfit Velvet Matte 04</span>
+            </span>
+          </div>
+          <div class="evrow is-match">
+            <span class="evrow__side">
+              <span class="evrow__label" data-id="WMS hitung" data-en="WMS computes">WMS hitung</span>
+              <span class="evrow__num">9</span>
+              <span class="msgcard__code">WDH-PBM-100</span>
+            </span>
+            <span class="evrow__delta">=</span>
+            <span class="evrow__side evrow__side--pos">
+              <span class="evrow__label" data-id="POS pegang" data-en="POS holds">POS pegang</span>
+              <span class="evrow__num">9</span>
+              <span class="msgcard__code">Perfect Bright Micellar</span>
+            </span>
+          </div>
+        </div>
+        <span class="inline-note inline-note--warn"><span data-id="Dua dari empat SKU melenceng, dua-duanya POS kelebihan hitung. Selama itu terjadi, Grab menjual barang yang tidak ada di rak." data-en="Two of four SKUs are adrift, both with the POS over-counting. While that is true, Grab is selling stock that is not on the shelf.">Dua dari empat SKU melenceng, dua-duanya POS kelebihan hitung. Selama itu terjadi, Grab menjual barang yang tidak ada di rak.</span></span>
+      </section>
+
+      <section class="section">
+        <h2 class="section__title" data-id="Lima pesan" data-en="The five messages">Lima pesan</h2>
+        <div class="msggrid">
+        <div class="msgcard is-shadow">
+          <span class="msgcard__top">
+            <span class="msgcard__name" data-id="Stok penuh" data-en="Full stock snapshot">Stok penuh</span>
+            <span class="badge-training" data-id="TIDAK DIKIRIM" data-en="NOT SENT">TIDAK DIKIRIM</span>
+          </span>
+          <span class="msgcard__code">stock.snapshot · <span data-id="setiap 15 menit" data-en="every 15 min">setiap 15 menit</span></span>
+          <span class="msgcard__nums">
+            <span class="msgcard__num"><span class="msgcard__num-v">1.284</span><span class="msgcard__num-l" data-id="dihitung" data-en="computed">dihitung</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">0</span><span class="msgcard__num-l" data-id="antre" data-en="queued">antre</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">—</span><span class="msgcard__num-l" data-id="gagal" data-en="failed">gagal</span></span>
+          </span>
+          <span class="msgcard__foot"><span data-id="Terakhir dihitung" data-en="Last computed">Terakhir dihitung</span> <span data-id="2 mnt lalu" data-en="2 min ago">2 mnt lalu</span></span>
+        </div>
+        <div class="msgcard is-shadow">
+          <span class="msgcard__top">
+            <span class="msgcard__name" data-id="Perubahan stok" data-en="Stock movement">Perubahan stok</span>
+            <span class="badge-training" data-id="TIDAK DIKIRIM" data-en="NOT SENT">TIDAK DIKIRIM</span>
+          </span>
+          <span class="msgcard__code">stock.delta · <span data-id="saat terjadi" data-en="on every move">saat terjadi</span></span>
+          <span class="msgcard__nums">
+            <span class="msgcard__num"><span class="msgcard__num-v">8.420</span><span class="msgcard__num-l" data-id="dihitung" data-en="computed">dihitung</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">0</span><span class="msgcard__num-l" data-id="antre" data-en="queued">antre</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">—</span><span class="msgcard__num-l" data-id="gagal" data-en="failed">gagal</span></span>
+          </span>
+          <span class="msgcard__foot"><span data-id="Terakhir dihitung" data-en="Last computed">Terakhir dihitung</span> <span data-id="11 dtk lalu" data-en="11 s ago">11 dtk lalu</span></span>
+        </div>
+        <div class="msgcard is-shadow">
+          <span class="msgcard__top">
+            <span class="msgcard__name" data-id="Pesanan selesai diambil" data-en="Order picked">Pesanan selesai diambil</span>
+            <span class="badge-training" data-id="TIDAK DIKIRIM" data-en="NOT SENT">TIDAK DIKIRIM</span>
+          </span>
+          <span class="msgcard__code">order.picked · <span data-id="saat selesai" data-en="on completion">saat selesai</span></span>
+          <span class="msgcard__nums">
+            <span class="msgcard__num"><span class="msgcard__num-v">84</span><span class="msgcard__num-l" data-id="dihitung" data-en="computed">dihitung</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">0</span><span class="msgcard__num-l" data-id="antre" data-en="queued">antre</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">—</span><span class="msgcard__num-l" data-id="gagal" data-en="failed">gagal</span></span>
+          </span>
+          <span class="msgcard__foot"><span data-id="Terakhir dihitung" data-en="Last computed">Terakhir dihitung</span> <span data-id="4 mnt lalu" data-en="4 min ago">4 mnt lalu</span></span>
+        </div>
+        <div class="msgcard is-shadow">
+          <span class="msgcard__top">
+            <span class="msgcard__name" data-id="Pesanan kurang barang" data-en="Order short">Pesanan kurang barang</span>
+            <span class="badge-training" data-id="TIDAK DIKIRIM" data-en="NOT SENT">TIDAK DIKIRIM</span>
+          </span>
+          <span class="msgcard__code">order.short · <span data-id="saat dinyatakan" data-en="when declared">saat dinyatakan</span></span>
+          <span class="msgcard__nums">
+            <span class="msgcard__num"><span class="msgcard__num-v">6</span><span class="msgcard__num-l" data-id="dihitung" data-en="computed">dihitung</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">0</span><span class="msgcard__num-l" data-id="antre" data-en="queued">antre</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">—</span><span class="msgcard__num-l" data-id="gagal" data-en="failed">gagal</span></span>
+          </span>
+          <span class="msgcard__foot"><span data-id="Terakhir dihitung" data-en="Last computed">Terakhir dihitung</span> <span data-id="18 mnt lalu" data-en="18 min ago">18 mnt lalu</span></span>
+        </div>
+        <div class="msgcard is-shadow">
+          <span class="msgcard__top">
+            <span class="msgcard__name" data-id="Penyesuaian stok" data-en="Stock adjustment">Penyesuaian stok</span>
+            <span class="badge-training" data-id="TIDAK DIKIRIM" data-en="NOT SENT">TIDAK DIKIRIM</span>
+          </span>
+          <span class="msgcard__code">adjustment.posted · <span data-id="setelah disetujui" data-en="after sign-off">setelah disetujui</span></span>
+          <span class="msgcard__nums">
+            <span class="msgcard__num"><span class="msgcard__num-v">12</span><span class="msgcard__num-l" data-id="dihitung" data-en="computed">dihitung</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">0</span><span class="msgcard__num-l" data-id="antre" data-en="queued">antre</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">—</span><span class="msgcard__num-l" data-id="gagal" data-en="failed">gagal</span></span>
+          </span>
+          <span class="msgcard__foot"><span data-id="Terakhir dihitung" data-en="Last computed">Terakhir dihitung</span> <span data-id="1 jam lalu" data-en="1 h ago">1 jam lalu</span></span>
+        </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- LIVE -->
+    <div data-region="view-live" hidden>
+      <div class="inline-note" style="margin-bottom:var(--sp-4)"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span data-id="Batas terbuka. Empat dari lima pesan terkirim normal; satu gagal berulang — itu masalah di saluran, bukan di gudang." data-en="The boundary is open. Four of five messages are flowing; one is failing repeatedly — that is a problem in the pipe, not in the warehouse.">Batas terbuka. Empat dari lima pesan terkirim normal; satu gagal berulang — itu masalah di saluran, bukan di gudang.</span></div>
+      <section class="kpis" style="margin-bottom:var(--sp-4)">
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Terkirim 24 jam" data-en="Delivered in 24 h">Terkirim 24 jam</span>
+        <span class="kpi-card__num" data-field="kpi-sent">9.806</span>
+        <span class="kpi-card__foot" data-id="lima jenis pesan" data-en="across five message types">lima jenis pesan</span>
+      </div>
+      <div class="kpi-card kpi-card--accent">
+        <span class="kpi-card__label" data-id="Antre sekarang" data-en="Queued now">Antre sekarang</span>
+        <span class="kpi-card__num" data-field="kpi-queued">14</span>
+        <span class="kpi-card__foot" data-id="penyesuaian stok" data-en="stock adjustments">penyesuaian stok</span>
+      </div>
+      <div class="kpi-card kpi-card--caution">
+        <span class="kpi-card__label" data-id="Gagal 24 jam" data-en="Failed in 24 h">Gagal 24 jam</span>
+        <span class="kpi-card__num" data-field="kpi-failed">3</span>
+        <span class="kpi-card__foot" data-id="semuanya order.short" data-en="all order.short">semuanya order.short</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Balasan POS" data-en="POS response">Balasan POS</span>
+        <span class="kpi-card__num" data-field="kpi-latency">340 ms</span>
+        <span class="kpi-card__foot" data-id="rata-rata, sehat" data-en="median, healthy">rata-rata, sehat</span>
+      </div>
+      </section>
+      <section class="section">
+        <h2 class="section__title" data-id="Lima pesan" data-en="The five messages">Lima pesan</h2>
+        <div class="msggrid">
+        <div class="msgcard ">
+          <span class="msgcard__top">
+            <span class="msgcard__name" data-id="Stok penuh" data-en="Full stock snapshot">Stok penuh</span>
+            <span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Terkirim" data-en="Delivered">Terkirim</span></span>
+          </span>
+          <span class="msgcard__code">stock.snapshot · <span data-id="setiap 15 menit" data-en="every 15 min">setiap 15 menit</span></span>
+          <span class="msgcard__nums">
+            <span class="msgcard__num"><span class="msgcard__num-v">1.284</span><span class="msgcard__num-l" data-id="terkirim" data-en="sent">terkirim</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">0</span><span class="msgcard__num-l" data-id="antre" data-en="queued">antre</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">0</span><span class="msgcard__num-l" data-id="gagal" data-en="failed">gagal</span></span>
+          </span>
+          <span class="msgcard__foot"><span data-id="Terakhir terkirim" data-en="Last delivered">Terakhir terkirim</span> <span data-id="2 mnt lalu" data-en="2 min ago">2 mnt lalu</span></span>
+        </div>
+        <div class="msgcard ">
+          <span class="msgcard__top">
+            <span class="msgcard__name" data-id="Perubahan stok" data-en="Stock movement">Perubahan stok</span>
+            <span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Terkirim" data-en="Delivered">Terkirim</span></span>
+          </span>
+          <span class="msgcard__code">stock.delta · <span data-id="saat terjadi" data-en="on every move">saat terjadi</span></span>
+          <span class="msgcard__nums">
+            <span class="msgcard__num"><span class="msgcard__num-v">8.420</span><span class="msgcard__num-l" data-id="terkirim" data-en="sent">terkirim</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">0</span><span class="msgcard__num-l" data-id="antre" data-en="queued">antre</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">0</span><span class="msgcard__num-l" data-id="gagal" data-en="failed">gagal</span></span>
+          </span>
+          <span class="msgcard__foot"><span data-id="Terakhir terkirim" data-en="Last delivered">Terakhir terkirim</span> <span data-id="11 dtk lalu" data-en="11 s ago">11 dtk lalu</span></span>
+        </div>
+        <div class="msgcard ">
+          <span class="msgcard__top">
+            <span class="msgcard__name" data-id="Pesanan selesai diambil" data-en="Order picked">Pesanan selesai diambil</span>
+            <span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Terkirim" data-en="Delivered">Terkirim</span></span>
+          </span>
+          <span class="msgcard__code">order.picked · <span data-id="saat selesai" data-en="on completion">saat selesai</span></span>
+          <span class="msgcard__nums">
+            <span class="msgcard__num"><span class="msgcard__num-v">84</span><span class="msgcard__num-l" data-id="terkirim" data-en="sent">terkirim</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">0</span><span class="msgcard__num-l" data-id="antre" data-en="queued">antre</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">0</span><span class="msgcard__num-l" data-id="gagal" data-en="failed">gagal</span></span>
+          </span>
+          <span class="msgcard__foot"><span data-id="Terakhir terkirim" data-en="Last delivered">Terakhir terkirim</span> <span data-id="4 mnt lalu" data-en="4 min ago">4 mnt lalu</span></span>
+        </div>
+        <div class="msgcard is-failing">
+          <span class="msgcard__top">
+            <span class="msgcard__name" data-id="Pesanan kurang barang" data-en="Order short">Pesanan kurang barang</span>
+            <span class="spill spill--warn"><span class="spill__dot"></span><span data-id="Gagal" data-en="Failing">Gagal</span></span>
+          </span>
+          <span class="msgcard__code">order.short · <span data-id="saat dinyatakan" data-en="when declared">saat dinyatakan</span></span>
+          <span class="msgcard__nums">
+            <span class="msgcard__num"><span class="msgcard__num-v">6</span><span class="msgcard__num-l" data-id="terkirim" data-en="sent">terkirim</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">0</span><span class="msgcard__num-l" data-id="antre" data-en="queued">antre</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">3</span><span class="msgcard__num-l" data-id="gagal" data-en="failed">gagal</span></span>
+          </span>
+          <span class="msgcard__foot"><span data-id="Terakhir terkirim" data-en="Last delivered">Terakhir terkirim</span> <span data-id="18 mnt lalu" data-en="18 min ago">18 mnt lalu</span></span>
+        </div>
+        <div class="msgcard is-queued">
+          <span class="msgcard__top">
+            <span class="msgcard__name" data-id="Penyesuaian stok" data-en="Stock adjustment">Penyesuaian stok</span>
+            <span class="spill spill--accent"><span class="spill__dot"></span><span data-id="Antre" data-en="Queued">Antre</span></span>
+          </span>
+          <span class="msgcard__code">adjustment.posted · <span data-id="setelah disetujui" data-en="after sign-off">setelah disetujui</span></span>
+          <span class="msgcard__nums">
+            <span class="msgcard__num"><span class="msgcard__num-v">12</span><span class="msgcard__num-l" data-id="terkirim" data-en="sent">terkirim</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">14</span><span class="msgcard__num-l" data-id="antre" data-en="queued">antre</span></span>
+            <span class="msgcard__num"><span class="msgcard__num-v">0</span><span class="msgcard__num-l" data-id="gagal" data-en="failed">gagal</span></span>
+          </span>
+          <span class="msgcard__foot"><span data-id="Terakhir terkirim" data-en="Last delivered">Terakhir terkirim</span> <span data-id="1 jam lalu" data-en="1 h ago">1 jam lalu</span></span>
+        </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="../js/api.js?v=a602d0c"></script>
+<script src="../js/app.js?v=a602d0c"></script>
+<script src="../js/console.js?v=a602d0c"></script>
+<script src="../js/wire.js?v=a602d0c"></script>
+
+</body>
+</html>

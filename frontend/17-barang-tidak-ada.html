@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barang tidak ada — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="css/tokens.css?v=a602d0c">
+<link rel="stylesheet" href="css/app.css?v=a602d0c">
+</head>
+<body>
+<div class="app" data-screen="short-pick" data-screen-label="17">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-id="Ambil pesanan · GM-8841" data-en="Pick order · GM-8841">Ambil pesanan · GM-8841</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user">Agus S. · UT5</span>
+    </header>
+    <!-- caution, never stop. The picker did nothing wrong; the stock was
+         missing. Red on this screen would teach exactly the wrong lesson. -->
+    <div class="banner banner--caution" role="status">
+      <span class="banner__icon" aria-hidden="true">!</span>
+      <span data-id="Barang tidak ada di keranjang" data-en="Item is not in the basket">Barang tidak ada di keranjang</span>
+      <span class="spacer"></span>
+      <span class="code code--md">UT5-A-3-02</span>
+    </div>
+    <main class="main main--dense">
+      <div class="row-split">
+        <div class="col col--grow">
+          <div class="col">
+            <span class="eyebrow" data-id="Berapa yang ada di keranjang?" data-en="How many are in the basket?">Berapa yang ada di keranjang?</span>
+            <p class="lede" data-id="Pilih satu. Kamu tetap melanjutkan pesanan ini setelahnya — sisa barangnya masih perlu diambil." data-en="Pick one. You carry on with this order afterwards — the rest of it still needs picking.">Pilih satu. Kamu tetap melanjutkan pesanan ini setelahnya — sisa barangnya masih perlu diambil.</p>
+          </div>
+
+          <div class="shortpick">
+            <button class="shortpick__choice" type="button" data-choice="none">
+              <span class="shortpick__num">0</span>
+              <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                <span class="shortpick__title" data-id="Tidak ada sama sekali" data-en="None at all">Tidak ada sama sekali</span>
+                <span class="shortpick__body" data-id="Keranjang kosong. Satu ketukan, selesai." data-en="The basket is empty. One tap, done.">Keranjang kosong. Satu ketukan, selesai.</span>
+              </span>
+            </button>
+            <button class="shortpick__choice is-on" type="button" data-choice="some">
+              <span class="shortpick__num" data-field="found">1</span>
+              <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                <span class="shortpick__title" data-id="Cuma ada sebagian" data-en="Only some are there">Cuma ada sebagian</span>
+                <span class="shortpick__body" data-id="Atur jumlahnya di bawah, lalu lanjut." data-en="Set the number below, then carry on.">Atur jumlahnya di bawah, lalu lanjut.</span>
+              </span>
+            </button>
+          </div>
+
+          <!-- The stepper is the count screen's, not a text field. Expected,
+               found and short read left to right in one row. -->
+          <div class="vsrow" data-region="stepper">
+            <span class="vsrow__side">
+              <span class="vsrow__label" data-id="Pesanan minta" data-en="The order wants">Pesanan minta</span>
+              <span class="vsrow__num" data-field="wanted">2</span>
+            </span>
+            <span class="vsrow__stepper">
+              <button class="step step--minus" type="button" data-step="down" aria-label="Kurangi">−</button>
+              <span class="counter__col">
+                <span class="counter__num" data-field="found-num">1</span>
+                <span class="note" data-id="yang benar-benar ada" data-en="actually there">yang benar-benar ada</span>
+              </span>
+              <button class="step step--plus" type="button" data-step="up" aria-label="Tambah">+</button>
+            </span>
+            <span class="vsrow__side vsrow__side--short">
+              <span class="vsrow__label" data-id="Kurang" data-en="Short by">Kurang</span>
+              <span class="vsrow__num" data-field="short">1</span>
+            </span>
+          </div>
+
+          <div class="stats">
+            <a class="btn btn--primary btn--lg btn--grow" href="07-ambil-pesanan.html" style="min-height:88px;font-size:24px" data-id="Lanjut ambil barang lain" data-en="Carry on with the other items">Lanjut ambil barang lain</a>
+            <a class="btn btn--lg" href="07-ambil-pesanan.html" data-id="Batal" data-en="Cancel">Batal</a>
+          </div>
+        </div>
+
+        <div class="col" style="flex:0 0 300px">
+          <img class="product__photo product__photo--fill" src="assets/products/placeholder.svg" data-photo-key="wdh-gll-07" alt="Glasting Liquid Lip 07 Rouge Flare">
+          <div class="col" style="gap:6px">
+            <span class="product__meta">Wardah · 3,5 g · WDH-GLL-07</span>
+            <span class="product__name">Glasting Liquid Lip <span class="product__shade">07</span> Rouge Flare</span>
+          </div>
+          <div class="notice notice--caution">
+            <span class="code code--sm" aria-hidden="true">i</span>
+            <div class="col" style="gap:4px">
+              <span class="notice__title" data-id="Ini bukan kesalahanmu" data-en="This is not your mistake">Ini bukan kesalahanmu</span>
+              <span class="notice__body" data-id="Stoknya yang tidak cocok, bukan cara kamu mengambil. Supervisor akan melihat selisih ini dan keranjangnya masuk daftar hitung ulang." data-en="The stock did not match, not the way you picked. A supervisor sees this gap and the basket goes on the recount list.">Stoknya yang tidak cocok, bukan cara kamu mengambil. Supervisor akan melihat selisih ini dan keranjangnya masuk daftar hitung ulang.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+</div>
+<script src="js/api.js?v=a602d0c"></script>
+<script src="js/scan.js?v=a602d0c"></script>
+<script src="js/app.js?v=a602d0c"></script>
+<script src="js/wire.js?v=a602d0c"></script>
+
+</body>
+</html>

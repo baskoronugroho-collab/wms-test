@@ -362,6 +362,116 @@ details[open] > .done-toggle .done-toggle__chev { transform: rotate(90deg); }
   .donelane { grid-column: auto; }
 }
 
+
+/* ---- tabs (stok-perhatian) -------------------------------------------- */
+.tabs { display: flex; gap: 2px; padding: 3px; border-radius: var(--radius-btn); background: var(--ground-sunk); align-self: flex-start; }
+.tab { display: inline-flex; align-items: center; gap: var(--sp-2); height: 34px; padding: 0 14px; border: 0; border-radius: var(--radius-chip); background: transparent; color: var(--muted); font: inherit; font-size: var(--fs-c-label); font-weight: 500; cursor: pointer; transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease); }
+.tab:hover { color: var(--action); }
+.tab.is-on { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-1); }
+.tab__n { display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: var(--radius-full); background: var(--ground-sunk); font-family: var(--font-code); font-size: var(--fs-c-micro); font-weight: 700; }
+.tab.is-on .tab__n { background: var(--caution); color: var(--caution-ink); }
+.tabpanel[hidden] { display: none; }
+
+/* ---- threshold bar (registry) -----------------------------------------
+   Three numbers is one too many to read as three numbers in a table cell,
+   so they become one picture: a track from 0 to the pick face's capacity,
+   with restock / low / full as marks and current stock as the fill. A
+   supervisor scans the column for a fill sitting left of a mark, and for
+   marks in the wrong ORDER — which is a configuration error, not a stock
+   problem, and is flagged as such. */
+.thbar { display: flex; flex-direction: column; gap: 5px; min-width: 190px; }
+.thbar__track { position: relative; height: 20px; border-radius: var(--radius-chip); background: var(--ground-sunk); overflow: hidden; }
+.thbar__fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: var(--radius-chip); background: var(--action); transition: width var(--dur-2) var(--ease); }
+.thbar__fill.is-low { background: var(--accent); }
+.thbar__fill.is-empty { background: var(--caution); }
+.thbar__fill.is-full { background: var(--accept); }
+.thbar__mark { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); opacity: .55; }
+.thbar__mark::after { content: attr(data-mark); position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 3px; font-family: var(--font-code); font-size: 9px; font-weight: 700; letter-spacing: .06em; color: var(--muted); }
+.thbar__nums { display: flex; align-items: baseline; gap: 5px; margin-top: 9px; font-family: var(--font-code); font-size: var(--fs-c-meta); color: var(--muted); }
+.thbar__nums strong { font-size: var(--fs-c-body); color: var(--ink); }
+.thbar__nums .sep { color: var(--muted-2); }
+.thbar.is-misset .thbar__track { box-shadow: inset 0 0 0 2px var(--caution); }
+
+/* A row whose low sits above its full cannot be saved — the API rejects it,
+   so the table says so before anyone tries. */
+.misset { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: var(--radius-chip); background: var(--caution); color: var(--caution-ink); font-size: var(--fs-c-meta); font-weight: 700; white-space: nowrap; }
+
+/* A suggestion, not a blank field — a supervisor corrects a number far more
+   readily than they invent three. */
+.suggested { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-code); font-size: var(--fs-c-meta); color: var(--accent-text); }
+.suggested__dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+
+/* ---- integration health ------------------------------------------------
+   Five message types. The screen must let a supervisor tell "the warehouse
+   is fine, the POS is down" from "something is wrong here" — so the boundary
+   state is stated at the top of the page, not inferred from five cards. */
+.msggrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--sp-3); }
+.msgcard { display: flex; flex-direction: column; gap: var(--sp-3); padding: var(--sp-4); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-1); }
+.msgcard__top { display: flex; align-items: flex-start; gap: var(--sp-2); }
+.msgcard__name { flex: 1 1 auto; font-size: var(--fs-c-title); font-weight: 600; color: var(--ink); }
+.msgcard__code { font-family: var(--font-code); font-size: var(--fs-c-meta); letter-spacing: .06em; color: var(--muted); }
+.msgcard__nums { display: flex; gap: var(--sp-4); }
+.msgcard__num { display: flex; flex-direction: column; gap: 1px; }
+.msgcard__num-v { font-family: var(--font-code); font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.msgcard__num-l { font-size: var(--fs-c-micro); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.msgcard__foot { font-size: var(--fs-c-meta); color: var(--muted); }
+.msgcard.is-queued { box-shadow: inset 3px 0 0 var(--accent), var(--shadow-1); }
+.msgcard.is-failing { background: var(--caution-bg); box-shadow: inset 3px 0 0 var(--caution), var(--shadow-2); }
+.msgcard.is-failing .msgcard__num-v { color: var(--caution); }
+.msgcard.is-shadow { background: var(--surface-2); }
+.msgcard.is-shadow .msgcard__num-v { color: var(--muted); }
+
+/* Shadow mode: the WMS computes every number and sends nothing. A supervisor
+   must never read this screen as "working" while it is deliberately
+   disconnected — so it gets the training banner's weight, and every card
+   underneath is visibly drained. */
+.shadowbar { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-4); border-radius: var(--radius-card); background: var(--accent-bg); box-shadow: inset 5px 0 0 var(--accent); }
+.shadowbar__icon { flex: 0 0 auto; display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--radius-chip); background: var(--accent); color: var(--accent-ink); font-size: 17px; font-weight: 700; }
+.shadowbar__text { flex: 1 1 auto; min-width: 0; }
+.shadowbar__title { display: block; font-size: var(--fs-c-title); font-weight: 700; color: var(--accent-text); }
+.shadowbar__body { display: block; font-size: var(--fs-c-label); color: var(--accent-text); text-wrap: pretty; }
+
+/* The evidence for the conversation with the POS team: what we WOULD have
+   sent against what the POS actually holds. This is the most useful thing
+   the screen can show, so it gets room rather than a row in a queue table. */
+.evidence { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--sp-3); }
+.evrow { display: flex; align-items: stretch; gap: 0; border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-1); overflow: hidden; }
+.evrow__side { flex: 1 1 0; display: flex; flex-direction: column; gap: 3px; padding: var(--sp-3) var(--sp-4); }
+.evrow__side--pos { background: var(--surface-2); }
+.evrow__label { font-size: var(--fs-c-micro); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.evrow__num { font-family: var(--font-code); font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.evrow__delta { flex: 0 0 auto; display: grid; place-items: center; padding: 0 var(--sp-3); font-family: var(--font-code); font-size: var(--fs-c-title); font-weight: 700; }
+.evrow.is-adrift .evrow__delta { background: var(--caution); color: var(--caution-ink); }
+.evrow.is-match .evrow__delta { background: var(--accept-bg); color: var(--accept); }
+.evrow__sku { grid-column: 1 / -1; }
+
+/* ---- transfers ---------------------------------------------------------
+   A received transfer with a variance carries the same 24-hour clock as an
+   inbound slip: after that the receiving site bears the loss. */
+.clockpill { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border-radius: var(--radius-chip); font-family: var(--font-code); font-size: var(--fs-c-meta); font-weight: 700; white-space: nowrap; }
+.clockpill--running { background: var(--caution); color: var(--caution-ink); }
+.clockpill--soon { background: var(--accent-bg); color: var(--accent-text); }
+.clockpill--closed { background: var(--ground-sunk); color: var(--muted); }
+.dtable tbody tr.is-variance { background: var(--caution-bg); }
+.dtable tbody tr.is-variance:hover { background: var(--caution-bg); }
+.dtable tbody tr.is-variance td:first-child { box-shadow: inset 4px 0 0 var(--caution); }
+.dtable tbody tr.is-variance .td-num { color: var(--caution); font-weight: 700; }
+
+/* ---- hub empty state ---------------------------------------------------
+   One nav for everyone. A hub has no pick queue and publishes no stock, so
+   those screens explain themselves rather than rendering an empty table that
+   reads as breakage. */
+.notapplicable { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-3); padding: var(--sp-6) var(--sp-card); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-1); }
+.notapplicable__mark { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--radius-chip); background: var(--ground-sunk); color: var(--muted); font-size: 20px; font-weight: 700; }
+.notapplicable__title { font-size: var(--fs-c-h2); font-weight: 600; color: var(--ink); }
+.notapplicable__body { font-size: var(--fs-c-label); color: var(--muted); max-width: 60ch; text-wrap: pretty; }
+
+/* site-type marker, used in the hub table and the sidebar */
+.sitetype { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: var(--radius-chip); font-size: var(--fs-c-meta); font-weight: 600; white-space: nowrap; }
+.sitetype--hub { background: var(--action-bg); color: var(--action); }
+.sitetype--dark { background: var(--ground-sunk); color: var(--muted); }
+.na { color: var(--muted-2); }
+
 /* ---- collapse below 1280 --------------------------------------------- */
 @media (max-width: 1279px) {
   .console { grid-template-columns: var(--sidebar-w-collapsed) minmax(0, 1fr); }

@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=6ab229a">
-<link rel="stylesheet" href="css/app.css?v=6ab229a">
+<link rel="stylesheet" href="css/tokens.css?v=a602d0c">
+<link rel="stylesheet" href="css/app.css?v=a602d0c">
 </head>
 <body>
 <div class="app" data-screen="unknown-barcode">
@@ -80,11 +80,29 @@
       </div>
     </main>
 </div>
-<script src="js/api.js?v=6ab229a"></script>
-<script src="js/scan.js?v=6ab229a"></script>
-<script src="js/app.js?v=6ab229a"></script>
-<script src="js/wire.js?v=6ab229a"></script>
+<script src="js/api.js?v=a602d0c"></script>
+<script src="js/scan.js?v=a602d0c"></script>
+<script src="js/app.js?v=a602d0c"></script>
 
-
+<script>
+  /* GET /api/day-colors -> {today:{hex,ink,day_id,day_en,date,iso_week,week_parity}}
+     Server-side and Jakarta-time: a receipt taken after 17:00 WIB must not be
+     stamped with tomorrow's colour. Never derive the day from the browser clock. */
+  window.addEventListener('load', async () => {
+    if (!window.NJW || !NJW.api) return;
+    try {
+      const { today } = await NJW.api.dayColors();
+      document.querySelectorAll('[data-region="day-color"]').forEach(el => {
+        const b = el.querySelector('[data-field="day-block"]');
+        if (b) { b.style.background = today.hex; b.style.color = today.ink; }
+        const p = el.querySelector('[data-field="day-parity"]'); if (p) p.textContent = today.week_parity;
+        const w = el.querySelector('[data-field="day-wk"]'); if (w) w.textContent = 'W' + today.iso_week;
+        const n = el.querySelector('[data-field="day-name"]');
+        if (n) { n.textContent = today.day_id; n.dataset.id = today.day_id; n.dataset.en = today.day_en; }
+        const d = el.querySelector('[data-field="day-date"]'); if (d) d.textContent = NJW.fmt.date(today.date);
+      });
+    } catch (e) {}
+  });
+</script>
 </body>
 </html>

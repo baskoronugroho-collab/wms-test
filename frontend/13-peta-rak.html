@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=6ab229a">
-<link rel="stylesheet" href="css/app.css?v=6ab229a">
+<link rel="stylesheet" href="css/tokens.css?v=a602d0c">
+<link rel="stylesheet" href="css/app.css?v=a602d0c">
 </head>
 <body>
 <div class="app" data-screen="rack-map">
@@ -32,14 +32,16 @@
       <div class="row-split">
         <div class="col" style="flex:1 1 auto;min-width:0">
           <div class="legend">
-            <h1 class="h2" data-id="7 rak · 5 tingkat · 175 posisi" data-en="7 racks · 5 levels · 175 positions">7 rak · 5 tingkat · 175 posisi</h1>
+            <h1 class="h2" data-id="7 rak ambil · 175 posisi · 1 rak cadangan" data-en="7 pick racks · 175 positions · 1 overflow rack">7 rak ambil · 175 posisi · 1 rak cadangan</h1>
             <span class="spacer"></span>
             <span class="legend__item"><span class="legend__swatch cell is-free"></span><span data-id="Kosong" data-en="Free">Kosong</span></span>
             <span class="legend__item"><span class="legend__swatch cell is-occ"></span><span data-id="Terisi" data-en="Occupied">Terisi</span></span>
             <span class="legend__item"><span class="legend__swatch cell is-over"></span><span data-id="Lewah kapasitas" data-en="Over capacity">Lewah kapasitas</span></span>
             <span class="legend__item"><span class="legend__swatch cell is-count"></span><span data-id="Perlu dihitung" data-en="Needs counting">Perlu dihitung</span></span>
+            <span class="legend__item"><span class="legend__swatch legend__swatch--hatch"></span><span data-id="Cadangan — tidak pernah diambil" data-en="Overflow — never picked from">Cadangan — tidak pernah diambil</span></span>
           </div>
           <div class="rackmap" data-region="rackmap" aria-label="Peta rak"></div>
+          <span class="note" data-id="Kolom bergaris adalah rak cadangan. Pemetik tidak pernah dikirim ke sana — isinya sampai ke rak ambil lewat tugas isi ulang. Posisi terpakai di kanan hanya menghitung rak ambil." data-en="The hatched column is the overflow rack. A picker is never sent there — its stock reaches a pick face through a replenishment task. The positions-in-use figure on the right counts pick faces only.">Kolom bergaris adalah rak cadangan. Pemetik tidak pernah dikirim ke sana — isinya sampai ke rak ambil lewat tugas isi ulang. Posisi terpakai di kanan hanya menghitung rak ambil.</span>
         </div>
         <div class="col" style="flex:0 0 340px">
           <div class="panel">
@@ -62,11 +64,16 @@
       </div>
     </main>
 </div>
-<script src="js/api.js?v=6ab229a"></script>
-<script src="js/scan.js?v=6ab229a"></script>
-<script src="js/app.js?v=6ab229a"></script>
-<script src="js/rack-map.js?v=6ab229a"></script>
-<script src="js/wire.js?v=6ab229a"></script>
-
+<script src="js/api.js?v=a602d0c"></script>
+<script src="js/scan.js?v=a602d0c"></script>
+<script src="js/app.js?v=a602d0c"></script>
+<script src="js/rack-map.js?v=a602d0c"></script>
+<script>
+  window.addEventListener('load', () => {
+    fetch('data/racks.json').then(r => r.json())
+      .then(data => NJW.renderRackMap(document.querySelector('[data-region="rackmap"]'), data))
+      .catch(() => NJW.renderRackMap(document.querySelector('[data-region="rackmap"]'), NJW.demoRacks()));
+  });
+</script>
 </body>
 </html>

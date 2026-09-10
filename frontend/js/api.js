@@ -63,14 +63,40 @@
     inventory: (p) => get('/inventory' + qs(p)),
     rackMap: (siteId) => get('/sites/' + siteId + '/rack-map'),
     pickTasks: (p) => get('/pick-tasks' + qs(p)),
-    // The queue board's own endpoint: one aggregate query returning the three
-    // lanes already grouped, with age, rack spread and short-line counts. The
-    // flat pickTasks list would be a hundred round trips for fifty cards.
-    pickBoard: (p) => get('/pick-tasks/board' + qs(p)),
     // Being added for the queue board: returns a claimed task to status
     // 'ready' and clears claimed_by. Supervisor-gated server-side.
     releasePickTask: (id) => post('/pick-tasks/' + id + '/release', {}),
     opnamePlans: (p) => get('/opname/plans' + qs(p)),
+
+    // --- slotting, replenishment, restock (v3) --------------------------
+    // One pick face per SKU plus an optional overflow, and three thresholds:
+    // full (start using overflow), low (raise a replenishment task) and the
+    // restock point (ask the hub). Only full and low measure the pick face.
+    slotting: (p) => get('/slotting' + qs(p)),
+    updateSlot: (skuId, b) => patch('/slotting/' + skuId, b),
+    bulkSlot: (b) => post('/slotting/bulk', b),
+    replenishTasks: (p) => get('/replenishment/tasks' + qs(p)),
+    completeReplenish: (id, b) => post('/replenishment/tasks/' + id + '/complete', b),
+    restockRequests: (p) => get('/restock/requests' + qs(p)),
+    updateRestock: (id, b) => patch('/restock/requests/' + id, b),
+    sendRestock: (id) => post('/restock/requests/' + id + '/send', {}),
+
+    // --- hub transfers (v3) ---------------------------------------------
+    transfers: (p) => get('/transfers' + qs(p)),
+    createTransfer: (b) => post('/transfers', b),
+    scanIntoTransfer: (id, b) => post('/transfers/' + id + '/scan', b),
+    sealTransfer: (id) => post('/transfers/' + id + '/seal', {}),
+    raiseTransferVariance: (id, b) => post('/transfers/' + id + '/raise', b),
+
+    // --- POS integration (v3) -------------------------------------------
+    // Five message types. The WMS never calls Grab; the POS owns that.
+    // `mode` is server-owned — a client must never be able to make this
+    // look connected while the boundary is deliberately closed.
+    integrationHealth: () => get('/integration/health'),
+
+    // --- short pick (v3) -------------------------------------------------
+    shortPick: (taskId, b) => post('/pick-tasks/' + taskId + '/short', b),
+    locationBatches: (code) => get('/inventory/' + code + '/batches'),
 
     // --- training / Grab simulator -------------------------------------
     // Training sites ONLY. Gate the UI on site.is_training before calling.

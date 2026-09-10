@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="../css/tokens.css?v=6ab229a">
-<link rel="stylesheet" href="../css/app.css?v=6ab229a">
-<link rel="stylesheet" href="../css/console.css?v=6ab229a">
+<link rel="stylesheet" href="../css/tokens.css?v=a602d0c">
+<link rel="stylesheet" href="../css/app.css?v=a602d0c">
+<link rel="stylesheet" href="../css/console.css?v=a602d0c">
 </head>
 <body>
 <div class="console" data-screen="index">
@@ -26,8 +26,14 @@
         <a class="sidebar__link" href="barang-masuk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10.5"/><path d="M8.2 10.2 12 14l3.8-3.8"/><path d="M4 17.5v3h16v-3"/></svg></span><span class="sidebar__label" data-id="Barang masuk" data-en="Inbound">Barang masuk</span></a>
         <a class="sidebar__link" href="pesanan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V10.5"/><path d="M8.2 14.3 12 10.5l3.8 3.8"/><path d="M4 6.5v-3h16v3"/></svg></span><span class="sidebar__label" data-id="Pesanan" data-en="Orders">Pesanan</span></a>
         <a class="sidebar__link" href="papan-antrean.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="5" height="15" rx="1.2"/><rect x="9.5" y="4.5" width="5" height="11" rx="1.2"/><rect x="15.5" y="4.5" width="5" height="7" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Papan antrean" data-en="Queue board">Papan antrean</span></a>
+        <a class="sidebar__link" href="transfer.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5h13"/><path d="M13.5 5 17 8.5 13.5 12"/><path d="M20 15.5H7"/><path d="M10.5 12 7 15.5 10.5 19"/></svg></span><span class="sidebar__label" data-id="Transfer gudang" data-en="Transfers">Transfer gudang</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Stok" data-en="Stock">Stok</span>
         <a class="sidebar__link" href="stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="3.5" y="12.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="12.5" width="8" height="8" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Stok" data-en="Inventory">Stok</span></a>
+        <a class="sidebar__link" href="stok-perhatian.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 21 19.5H3z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="16.8" r=".9" fill="currentColor"/></svg></span><span class="sidebar__label" data-id="Stok perlu perhatian" data-en="Stock needs attention">Stok perlu perhatian</span></a>
         <a class="sidebar__link" href="hitung-stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2l2.6 2.6 4.6-5.2"/></svg></span><span class="sidebar__label" data-id="Hitung stok" data-en="Stock count">Hitung stok</span></a>
+        <a class="sidebar__link" href="registry.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17"/><path d="M9 9.5v10"/><path d="M13.5 13h4"/></svg></span><span class="sidebar__label" data-id="Penempatan & batas" data-en="Slotting & thresholds">Penempatan & batas</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
@@ -39,6 +45,7 @@
         <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
         <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
         <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi POS" data-en="POS integration">Integrasi POS</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
@@ -121,6 +128,7 @@
             <tr><td class="td-strong" data-id="Selisih hitung stok" data-en="Count variance">Selisih hitung stok</td><td class="td-code">UT5-A-3-02</td><td>Glasting Liquid Lip 07 · −3 unit · Siti N.</td><td><span class="spill spill--warn"><span class="spill__dot"></span><span data-id="Perlu tanda tangan" data-en="Needs sign-off">Perlu tanda tangan</span></span></td><td class="td-actions"><a class="cbtn cbtn--sm" href="hitung-stok.html" data-id="Tinjau" data-en="Review">Tinjau</a></td></tr>
             <tr><td class="td-strong" data-id="Batas selisih inbound" data-en="Inbound discrepancy window">Batas selisih inbound</td><td class="td-code">PA-UT5-000318</td><td data-id="Sisa 6 jam sebelum jadi tanggungan station" data-en="6 hours left before the station bears it">Sisa 6 jam sebelum jadi tanggungan station</td><td><span class="spill spill--stop"><span class="spill__dot"></span><span data-id="Mendesak" data-en="Urgent">Mendesak</span></span></td><td class="td-actions"><a class="cbtn cbtn--sm" href="slip-putaway.html" data-id="Buka slip" data-en="Open slip">Buka slip</a></td></tr>
             <tr><td class="td-strong" data-id="Keranjang lewah kapasitas" data-en="Basket over capacity">Keranjang lewah kapasitas</td><td class="td-code">UT5-C-5-04</td><td>UV Shield SPF 50 · 46 / 40 unit</td><td><span class="spill spill--warn"><span class="spill__dot"></span><span data-id="Pindahkan" data-en="Needs moving">Pindahkan</span></span></td><td class="td-actions"><a class="cbtn cbtn--sm" href="stok.html" data-id="Lihat" data-en="View">Lihat</a></td></tr>
+            <tr><td class="td-strong" data-id="Rak ambil kosong" data-en="Pick face at zero">Rak ambil kosong</td><td class="td-code">UT5-A-3-02</td><td>Glasting Liquid Lip 07 · cadangan punya 24 unit</td><td><span class="spill spill--warn"><span class="spill__dot"></span><span data-id="Isi ulang" data-en="Refill">Isi ulang</span></span></td><td class="td-actions"><a class="cbtn cbtn--sm" href="stok-perhatian.html" data-id="Buka" data-en="Open">Buka</a></td></tr>
             <tr><td class="td-strong" data-id="Barcode belum terdaftar" data-en="Unregistered barcodes">Barcode belum terdaftar</td><td>Wardah</td><td data-id="12 SKU belum punya barcode" data-en="12 SKUs have no barcode">12 SKU belum punya barcode</td><td><span class="spill spill--info"><span class="spill__dot"></span><span data-id="Perlu didaftarkan" data-en="Needs registering">Perlu didaftarkan</span></span></td><td class="td-actions"><a class="cbtn cbtn--sm" href="produk.html" data-id="Daftarkan" data-en="Register">Daftarkan</a></td></tr>
           </tbody>
         </table>
@@ -129,10 +137,17 @@
   </main>
 </div>
 
-<script src="../js/api.js?v=6ab229a"></script>
-<script src="../js/app.js?v=6ab229a"></script>
-<script src="../js/console.js?v=6ab229a"></script>
-<script src="../js/wire.js?v=6ab229a"></script>
-
+<script src="../js/api.js?v=a602d0c"></script>
+<script src="../js/app.js?v=a602d0c"></script>
+<script src="../js/console.js?v=a602d0c"></script>
+<script>
+  /* GET /api/day-colors + the site's own summary endpoints. */
+  window.addEventListener('load', async () => {
+    try {
+      const dc = await NJW.api.dayColors();
+      NJW.paintDayColor(dc.today);
+    } catch (e) { /* markup already shows a readable fallback */ }
+  });
+</script>
 </body>
 </html>

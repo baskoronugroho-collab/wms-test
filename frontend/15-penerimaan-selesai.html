@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=6ab229a">
-<link rel="stylesheet" href="css/app.css?v=6ab229a">
+<link rel="stylesheet" href="css/tokens.css?v=a602d0c">
+<link rel="stylesheet" href="css/app.css?v=a602d0c">
 </head>
 <body>
 <div class="app" data-screen="inbound-done" data-screen-label="15">
@@ -99,10 +99,27 @@
       </div>
     </main>
 </div>
-<script src="js/api.js?v=6ab229a"></script>
-<script src="js/scan.js?v=6ab229a"></script>
-<script src="js/app.js?v=6ab229a"></script>
-<script src="js/wire.js?v=6ab229a"></script>
-
+<script src="js/api.js?v=a602d0c"></script>
+<script src="js/scan.js?v=a602d0c"></script>
+<script src="js/app.js?v=a602d0c"></script>
+<script>
+  /* The slip is issued on first request after the receipt is completed:
+     GET /api/receipts/{id}/putaway-slip -> PutawaySlip.
+     This screen appears automatically at that moment — it is when the slip
+     is needed, and the 24-hour clock has already started. */
+  window.addEventListener('load', async () => {
+    if (!window.NJW || !NJW.api) return;
+    try {
+      const { today } = await NJW.api.dayColors();
+      const b = document.querySelector('[data-field="day-block"]');
+      if (b) { b.style.background = today.hex; b.style.color = today.ink; }
+      document.querySelector('[data-field="day-parity"]').textContent = today.week_parity;
+      document.querySelector('[data-field="day-wk"]').textContent = 'W' + today.iso_week;
+      const n = document.querySelector('[data-field="day-name"]');
+      n.textContent = today.day_id; n.dataset.id = today.day_id; n.dataset.en = today.day_en;
+      document.querySelector('[data-field="day-date"]').textContent = NJW.fmt.date(today.date);
+    } catch (e) {}
+  });
+</script>
 </body>
 </html>

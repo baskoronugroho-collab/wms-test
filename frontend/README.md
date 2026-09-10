@@ -40,13 +40,109 @@ Two surfaces share one token set:
 
 **Station** — `index.html` (menu), `01`–`04` inbound, `05`–`06` unit
 labelling, `07`–`09` pick, `10`–`12` stock count, `13` rack map,
-`14` blocked (dark), `15` receipt complete.
+`14` blocked (dark), `15` receipt complete, `17` short pick,
+`18` replenishment (+ `18-…-pindai` destination scan), `19` hub dispatch.
 
 **Console** — `index` overview, `barang-masuk`, `pesanan`,
-`papan-antrean` (pick queue board), `stok`, `hitung-stok`,
-`slip-putaway` (archive), `slip-detail` (A4 print),
-`label-warna-hari` (label sheet + wall chart), `hub`, `staf`, `produk`,
+`papan-antrean` (pick queue board), `transfer`, `stok`,
+`stok-perhatian` (replenishment + restock), `hitung-stok`,
+`registry` (slotting & thresholds), `slip-putaway` (archive),
+`slip-detail` (A4 print), `label-warna-hari` (label sheet + wall chart),
+`hub`, `staf`, `produk`, `integrasi` (POS health),
 `simulator-grab`, `mode-latihan`.
+
+## v3 — the operating model
+
+Four things changed, and they touch each other:
+
+**The Logos hub runs the same WMS.** It is a second site type. It receives
+from the brand, decants, and dispatches sealed totes to the darkstores. It
+never picks a customer order and never publishes stock.
+
+*One nav for everyone.* A hub user still sees Pesanan and Papan antrean —
+hiding nav items makes the product feel broken in a different way. Instead
+the four screens that don't apply explain themselves, driven by
+`NJW.HUB_NA` + `NJW.applySiteType(siteType)` in `console.js`. Append
+`?site=hub` to any console screen to preview it.
+
+**One pick face per SKU, plus an optional overflow.** Three thresholds:
+**full** (start using overflow), **low** (raise a replenishment task) and the
+**restock point** (ask the hub). Only full and low measure the pick face — the
+restock point measures face *plus* overflow, which is why it can legitimately
+exceed what the face holds. **A picker is never sent to overflow**; the rack
+map hatches that column and the occupancy figure counts pick faces only.
+
+**Five messages to the POS, and no link to Grab.** The WMS never calls Grab.
+`integrasi.html` shows the boundary state at the top of the page rather than
+leaving it to be inferred from five cards, so a supervisor can tell "the
+warehouse is fine, the POS is down" from "something is wrong here".
+
+**The short pick is designed.** `17-barang-tidak-ada.html`: two taps, no
+typing, and the picker carries on with the rest of the order.
+
+### Screens worth reading before you change them
+
+* `registry.html` — three thresholds per SKU is one number too many to read
+  as numbers in a table cell, so they render as one `.thbar`: a track from 0
+  to face capacity, R/M/P as marks, current stock as the fill. A supervisor
+  scans for a fill stopping left of a mark, and for marks in the wrong
+  **order** — which is a configuration error. The API rejects low ≥ full
+  (422), so those rows are flagged before anyone tries to save. Bulk edit
+  defaults to **percent of capacity**, not fixed numbers: S, M and L baskets
+  hold different amounts, so applying "12" to 118 SKUs is wrong for most.
+* `stok-perhatian.html` — C4 and C5 from the brief, collapsed into two tabs.
+  Tab 1 reuses the queue board's card and `NJW.AGE_BANDS`: a pick face at
+  zero is the same shape of urgency as a stalled order, and the two screens
+  must not drift apart. Tab 2's quantities arrive pre-filled because the job
+  is done on WhatsApp today and has to be faster than that.
+* `integrasi.html` — `mode` comes from the **server**. A supervisor must
+  never be able to make this screen look connected while the boundary is
+  deliberately closed; the segmented control is a mockup affordance so both
+  states can be reviewed. In shadow mode the WMS-vs-POS drift comparison is
+  promoted above the five cards — during the pilot it is the only genuinely
+  useful thing on the page, and it is the evidence for the POS conversation.
+* `17-barang-tidak-ada.html` — entirely `--caution`. Red would teach that a
+  short pick is the picker's fault. It isn't. Expected / found / short read
+  as one `.vsrow`, not three stacked blocks: they are the same fact three
+  ways, and stacking them pushed "Lanjut ambil barang lain" below the fold.
+
+### `.main--dense`
+
+Two screens stack one block more in the left column than the rest of the
+station does — `07` (the FIFO prompt) and `17` (the choice row). On
+1366 × 768 that extra block put the primary action below the fold, and **a
+picker must never scroll to reach a button.** `.main--dense` tightens the
+frame — padding, gaps, counter padding, step buttons 76 px, photo cap — and
+never the type: the 32 / 60 / 96 px scale is untouched and every target stays
+above the 48 px minimum. Both screens measure exactly 768 px.
+
+### The primary action never lives inside the region that can overflow
+
+`19-gudang-kirim.html` holds more incompressible content than a short
+viewport can show — a tote can carry twenty lines, and a real 1366 × 768
+laptop has only ~620 px of viewport once browser chrome and the taskbar are
+gone. So that screen splits `main` in two:
+
+    <main class="main main--dense main--fit">
+      <div class="main__scroll"> …everything… </div>
+      <div class="actionbar">  Batalkan · Segel & cetak label  </div>
+    </main>
+
+`.main--fit` pins main to `calc(100vh - var(--chrome-h))`; `.main__scroll`
+takes the remaining height and **scrolls**; `.actionbar` sits outside it, so
+the seal action is visible and clickable at any viewport height.
+
+**Do not put `overflow: hidden` on a container holding a primary action.**
+A clipped container renders no scrollbar, ignores the wheel, and is not
+hit-testable — `elementFromPoint` returns whatever is underneath. Below the
+fold is a nuisance; unreachable is a broken screen. If a region can overflow
+it gets `overflow-y: auto`, and anything that must always be reachable goes
+in a sibling band outside it.
+
+If you add a block to either column on these screens, re-measure at
+1366 × 768 before shipping. Screens `07`, `17` and `19` are all verified at
+exactly that size; `18` scrolls by design (it is a worklist and every row
+carries its own button).
 
 ### The pick queue board
 
@@ -132,6 +228,12 @@ primary disambiguator, so a *wrong* photo is worse than none.
   (A/B) are what separate them. The palette contains no red on purpose.
 * **Tap targets** ≥ 48 px (`--tap`); Station guided-flow primaries 64 px
   (`--btn-h`). Console controls are 32 px (`--tap-c`) — desk, not floor.
+  The hub is calmer than a darkstore and `19` is allowed to be denser, but
+  it is still a warehouse floor: the tap targets do not shrink.
+* **A picker is never sent to overflow.** Overflow is a different *kind* of
+  location, not another status, so the rack map hatches it rather than giving
+  it a fifth fill colour — hatching survives a colour-vision deficiency, and
+  the legend spells it out.
 * **The Station type scale does not shrink.** 32 / 60 / 96 px is sized for
   arm's-length reading.
 * **Copy lives in the markup** as `data-id` / `data-en`. Indonesian is the
@@ -143,6 +245,12 @@ primary disambiguator, so a *wrong* photo is worse than none.
 * **Wide tables scroll in `.table-scroll`**, never the page body.
 
 ## Print
+
+`css/print.css` owns the putaway slip, the day-colour label sheet and the
+**tote label**. The tote label deliberately shares the 63 × 38 mm pitch of the
+day-colour labels so the hub buys one kind of label stock; the destination is
+the biggest thing on it, because a tote in the wrong van is the failure that
+label exists to prevent.
 
 `css/print.css` owns the slip and the label sheet. Both are A4 at
 `@page { margin: 0 }`, with `print-color-adjust: exact` on the colour blocks

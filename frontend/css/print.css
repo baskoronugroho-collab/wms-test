@@ -67,6 +67,22 @@
 .label__date { font-family: var(--font-code); font-size: 11pt; font-weight: 700; }
 .label__hint { font-size: 7pt; letter-spacing: .04em; text-transform: uppercase; }
 
+/* ---- tote label -------------------------------------------------------
+   Same 63 x 38 mm pitch as the day-colour labels, so the hub buys ONE kind
+   of label stock. The destination is the biggest thing on it — a tote in
+   the wrong van is the failure this label exists to prevent — and the tote
+   reference is mono so it can be read back over a phone. */
+.tlabel { border: 0.4mm solid #000; display: flex; flex-direction: column; overflow: hidden; }
+.tlabel__dest { flex: 1 1 auto; display: flex; align-items: center; justify-content: space-between; gap: 2mm; padding: 2.5mm 3mm; }
+.tlabel__code { font-size: 26pt; font-weight: 700; line-height: 1; letter-spacing: -.02em; }
+.tlabel__site { font-size: 7.5pt; line-height: 1.2; text-align: right; max-width: 22mm; }
+.tlabel__bar { display: flex; align-items: baseline; justify-content: space-between; padding: 1.5mm 3mm; border-top: 0.4mm solid #000; }
+.tlabel__ref { font-family: var(--font-code); font-size: 11pt; font-weight: 700; }
+.tlabel__n { font-family: var(--font-code); font-size: 11pt; font-weight: 700; }
+.tlabel__foot { display: flex; align-items: baseline; justify-content: space-between; padding: 1.5mm 3mm; border-top: 0.2mm solid #666; }
+.tlabel__date { font-family: var(--font-code); font-size: 9pt; }
+.tlabel__from { font-size: 7pt; letter-spacing: .04em; text-transform: uppercase; }
+
 /* ---- wall chart ------------------------------------------------------- */
 .wallchart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2mm; }
 .wallday { border: 0.4mm solid #000; display: flex; flex-direction: column; }
@@ -84,8 +100,8 @@
   .no-print, .console > .sidebar, .page__actions, .toolbar, .trainbar { display: none !important; }
   .console { display: block; }
   .page { padding: 0; gap: 0; }
-  .slip__table tr, .label, .wallday { break-inside: avoid; }
+  .slip__table tr, .label, .tlabel, .wallday { break-inside: avoid; }
   .slip__deadline, .slip__sign { break-inside: avoid; }
   /* force the day-colour blocks to actually ink */
-  .slip__color-block, .label__block, .wallday__block, .daycell__block { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .slip__color-block, .label__block, .tlabel__dest, .wallday__block, .daycell__block { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

@@ -25,7 +25,9 @@
   /* ---- language: ID is the default, EN is one tap ---------------------
      Every string lives in the markup as data-id / data-en, so translation
      is a content job, not a code change. */
-  function applyLang(lang) {
+  NJW.applyLang = function applyLang(lang) {
+    /* No argument = re-run the current language over newly injected markup. */
+    lang = lang || localStorage.getItem(STORE.lang) || 'id';
     document.documentElement.lang = lang === 'en' ? 'en' : 'id';
     document.querySelectorAll('[data-id]').forEach(el => {
       const val = lang === 'en' ? (el.dataset.en || el.dataset.id) : el.dataset.id;
@@ -36,11 +38,11 @@
       btn.setAttribute('aria-pressed', String(btn.dataset.lang === lang));
     });
     localStorage.setItem(STORE.lang, lang);
-  }
+  };
   const savedLang = localStorage.getItem(STORE.lang) || 'id';
   document.addEventListener('click', (e) => {
     const b = e.target.closest('.lang__opt');
-    if (b) applyLang(b.dataset.lang);
+    if (b) NJW.applyLang(b.dataset.lang);
   });
 
   /* ---- connection indicator: online-only app, so say so loudly ------- */
@@ -69,7 +71,7 @@
   window.NJW.undo = { stack: [], push(entry) { this.stack.push(entry); }, pop() { return this.stack.pop(); } };
 
   document.addEventListener('DOMContentLoaded', () => {
-    applyLang(savedLang);
+    NJW.applyLang(savedLang);
     paintConn(navigator.onLine);
     // wire every scan zone on the page; screens add their own onScan handlers
     document.querySelectorAll('.scanzone').forEach(el => {

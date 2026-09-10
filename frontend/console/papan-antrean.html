@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="../css/tokens.css?v=6ab229a">
-<link rel="stylesheet" href="../css/app.css?v=6ab229a">
-<link rel="stylesheet" href="../css/console.css?v=6ab229a">
+<link rel="stylesheet" href="../css/tokens.css?v=a602d0c">
+<link rel="stylesheet" href="../css/app.css?v=a602d0c">
+<link rel="stylesheet" href="../css/console.css?v=a602d0c">
 </head>
 <body>
 <div class="console" data-screen="papan-antrean">
@@ -25,9 +25,15 @@
         <span class="sidebar__heading" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk & keluar</span>
         <a class="sidebar__link" href="barang-masuk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10.5"/><path d="M8.2 10.2 12 14l3.8-3.8"/><path d="M4 17.5v3h16v-3"/></svg></span><span class="sidebar__label" data-id="Barang masuk" data-en="Inbound">Barang masuk</span></a>
         <a class="sidebar__link" href="pesanan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V10.5"/><path d="M8.2 14.3 12 10.5l3.8 3.8"/><path d="M4 6.5v-3h16v3"/></svg></span><span class="sidebar__label" data-id="Pesanan" data-en="Orders">Pesanan</span></a>
-        <a class="sidebar__link" href="papan-antrean.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="5" height="15" rx="1.2"/><rect x="9.5" y="4.5" width="5" height="11" rx="1.2"/><rect x="15.5" y="4.5" width="5" height="7" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Papan antrean" data-en="Queue board">Papan antrean</span></a>
+        <a class="sidebar__link is-current" href="papan-antrean.html" aria-current="page"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="5" height="15" rx="1.2"/><rect x="9.5" y="4.5" width="5" height="11" rx="1.2"/><rect x="15.5" y="4.5" width="5" height="7" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Papan antrean" data-en="Queue board">Papan antrean</span></a>
+        <a class="sidebar__link" href="transfer.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5h13"/><path d="M13.5 5 17 8.5 13.5 12"/><path d="M20 15.5H7"/><path d="M10.5 12 7 15.5 10.5 19"/></svg></span><span class="sidebar__label" data-id="Transfer gudang" data-en="Transfers">Transfer gudang</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Stok" data-en="Stock">Stok</span>
         <a class="sidebar__link" href="stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="3.5" y="12.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="12.5" width="8" height="8" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Stok" data-en="Inventory">Stok</span></a>
+        <a class="sidebar__link" href="stok-perhatian.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 21 19.5H3z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="16.8" r=".9" fill="currentColor"/></svg></span><span class="sidebar__label" data-id="Stok perlu perhatian" data-en="Stock needs attention">Stok perlu perhatian</span></a>
         <a class="sidebar__link" href="hitung-stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2l2.6 2.6 4.6-5.2"/></svg></span><span class="sidebar__label" data-id="Hitung stok" data-en="Stock count">Hitung stok</span></a>
+        <a class="sidebar__link" href="registry.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17"/><path d="M9 9.5v10"/><path d="M13.5 13h4"/></svg></span><span class="sidebar__label" data-id="Penempatan & batas" data-en="Slotting & thresholds">Penempatan & batas</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
@@ -39,6 +45,7 @@
         <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
         <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
         <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi POS" data-en="POS integration">Integrasi POS</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
@@ -369,7 +376,7 @@
             <span class="lane__count" data-field="count-done">84</span>
             <span class="lane__name" data-id="Selesai hari ini" data-en="Done today">Selesai hari ini</span>
           </span>
-          <span class="lane__meta"><span data-id="rata-rata" data-en="average">rata-rata</span> <strong data-field="avg-pick">—</strong></span>
+          <span class="lane__meta"><span data-id="rata-rata" data-en="average">rata-rata</span> 4 mnt 12 dtk</span>
         </header>
         <details>
           <summary class="done-toggle">
@@ -408,11 +415,28 @@
   </div>
 </div>
 
-<script src="../js/api.js?v=6ab229a"></script>
-<script src="../js/app.js?v=6ab229a"></script>
-<script src="../js/console.js?v=6ab229a"></script>
-<script src="../js/wire.js?v=6ab229a"></script>
+<script src="../js/api.js?v=a602d0c"></script>
+<script src="../js/app.js?v=a602d0c"></script>
+<script src="../js/console.js?v=a602d0c"></script>
 <script>
+/* ---------------------------------------------------------------------------
+   Pick queue board — wiring.
+
+   GET /api/pick-tasks?site_id= returns id, order_id, external_ref, status,
+   claimed_by, is_test, lines[] (sku_name, location_code, rack_code, level_no,
+   qty_required, qty_picked, status).
+
+   Being added for this screen, and assumed here:
+     created_at, claimed_at, age_seconds (computed), short_lines
+     POST /api/pick-tasks/{id}/release
+
+   Until age_seconds ships, derive it from created_at — but prefer the server
+   value: a tablet with a wrong clock must not mis-band the queue.
+--------------------------------------------------------------------------- */
+
+/* Thresholds, in seconds. UNCONFIRMED — suggested against the 15-minute
+   delivery promise and to be retuned with ops. This object is the only place
+   they live; nothing else in the page hard-codes a number. */
 NJW.AGE_BANDS = {
   ageing: 5 * 60,    // amber, the word "Menua"
   late: 10 * 60,     // ochre, the word "Terlambat" — never red
@@ -424,6 +448,106 @@ NJW.band = function (seconds) {
   if (seconds >= NJW.AGE_BANDS.ageing) return 'ageing';
   return 'normal';
 };
+
+(function () {
+  const SITE_ID = 1;
+  const POLL_MS = 10000;
+  let staged = null;
+
+  const $ = (s, r) => (r || document).querySelector(s);
+
+  /* Auto-refresh never reflows cards under the cursor. A poll that finds
+     changes parks them and offers a pill; the board only moves when the
+     supervisor clicks it. */
+  function stage(tasks) {
+    staged = tasks;
+    const pill = $('.stagepill');
+    const n = $('[data-field="staged-count"]');
+    if (n) n.textContent = tasks.__changeCount || 1;
+    if (pill) pill.classList.add('is-on');
+  }
+
+  function apply() {
+    if (!staged) return;
+    render(staged);
+    staged = null;
+    $('.stagepill').classList.remove('is-on');
+  }
+
+  function render(tasks) {
+    // Build cards from the markup patterns above; keep every data-field hook.
+    // Waiting: status === 'ready', sorted by age_seconds DESC (oldest first).
+    // Claimed: status === 'claimed', stuck first, then longest-held.
+    // Done: status === 'completed', count only until the <details> is opened.
+  }
+
+  async function poll() {
+    try {
+      const { tasks } = await NJW.api.pickTasks({ site_id: SITE_ID });
+      stage(tasks);
+      const el = $('[data-field="last-poll"]');
+      if (el) el.textContent = 'Diperbarui baru saja';
+    } catch (e) { /* the connection indicator in app.js already says so */ }
+  }
+
+  /* ---- release: never silent, and it always names the holder ---------- */
+  let pending = null;
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-release]');
+    if (btn) {
+      pending = btn.dataset.release;
+      const holder = btn.dataset.holder || '—';
+      $('[data-field="dlg-holder"]').textContent = holder;
+      $('[data-field="dlg-avatar"]').textContent = holder.split(' ').map(w => w[0]).slice(0, 2).join('');
+      $('[data-field="dlg-ref"]').textContent = btn.dataset.ref || '—';
+      $('[data-field="dlg-held"]').textContent = (btn.dataset.held || '?') + ' menit';
+      $('#dlg-release').classList.add('is-open');
+      $('.scrim').classList.add('is-open');
+      return;
+    }
+    if (e.target.closest('[data-action="apply-staged"]')) { apply(); return; }
+    if (e.target.closest('[data-action="poll-now"]')) { poll(); return; }
+    if (e.target.closest('[data-action="confirm-release"]')) {
+      const id = pending;
+      $('#dlg-release').classList.remove('is-open');
+      $('.scrim').classList.remove('is-open');
+      if (!id) return;
+      NJW.api.raw.post('/pick-tasks/' + id + '/release', {})
+        .then(poll)
+        .catch(() => {});
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { $('#dlg-release').classList.remove('is-open'); $('.scrim').classList.remove('is-open'); }
+  });
+  $('.scrim').addEventListener('click', () => {
+    $('#dlg-release').classList.remove('is-open');
+    $('.scrim').classList.remove('is-open');
+  });
+
+  /* The age ticks up in place — no reflow, no hover, nothing to subtract.
+     Every 15 s, not every second: the age is shown in whole minutes, so a
+     1 s tick is pure churn on a board that stays open all shift. Pauses
+     while the tab is hidden. */
+  const TICK_MS = 15000;
+  function tick() {
+    if (document.hidden) return;
+    document.querySelectorAll('[data-age-seconds]').forEach(card => {
+      const s = +card.dataset.ageSeconds + TICK_MS / 1000;
+      card.dataset.ageSeconds = s;
+      const n = card.querySelector('[data-field="age"]');
+      if (n) n.textContent = Math.floor(s / 60);
+      const band = NJW.band(s);
+      card.classList.toggle('is-ageing', band === 'ageing');
+      card.classList.toggle('is-late', band === 'late');
+    });
+  }
+
+  window.addEventListener('load', () => {
+    setInterval(tick, TICK_MS);
+    setInterval(() => { if (!document.hidden) poll(); }, POLL_MS);
+  });
+})();
 </script>
 </body>
 </html>

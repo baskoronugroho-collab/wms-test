@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Penempatan & batas — Ninja Kilat WMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../css/tokens.css?v=a602d0c">
+<link rel="stylesheet" href="../css/app.css?v=a602d0c">
+<link rel="stylesheet" href="../css/console.css?v=a602d0c">
+</head>
+<body>
+<div class="console" data-screen="registry">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <span class="sidebar__mark">NINJA</span>
+        <span class="sidebar__product">Kilat WMS</span>
+      </div>
+      <nav class="sidebar__section">
+        <a class="sidebar__link" href="index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2"/><path d="M5.6 9v11.4h12.8V9"/></svg></span><span class="sidebar__label" data-id="Ringkasan" data-en="Overview">Ringkasan</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk & keluar</span>
+        <a class="sidebar__link" href="barang-masuk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10.5"/><path d="M8.2 10.2 12 14l3.8-3.8"/><path d="M4 17.5v3h16v-3"/></svg></span><span class="sidebar__label" data-id="Barang masuk" data-en="Inbound">Barang masuk</span></a>
+        <a class="sidebar__link" href="pesanan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V10.5"/><path d="M8.2 14.3 12 10.5l3.8 3.8"/><path d="M4 6.5v-3h16v3"/></svg></span><span class="sidebar__label" data-id="Pesanan" data-en="Orders">Pesanan</span></a>
+        <a class="sidebar__link" href="papan-antrean.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="5" height="15" rx="1.2"/><rect x="9.5" y="4.5" width="5" height="11" rx="1.2"/><rect x="15.5" y="4.5" width="5" height="7" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Papan antrean" data-en="Queue board">Papan antrean</span></a>
+        <a class="sidebar__link" href="transfer.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5h13"/><path d="M13.5 5 17 8.5 13.5 12"/><path d="M20 15.5H7"/><path d="M10.5 12 7 15.5 10.5 19"/></svg></span><span class="sidebar__label" data-id="Transfer gudang" data-en="Transfers">Transfer gudang</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Stok" data-en="Stock">Stok</span>
+        <a class="sidebar__link" href="stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="3.5" y="12.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="12.5" width="8" height="8" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Stok" data-en="Inventory">Stok</span></a>
+        <a class="sidebar__link" href="stok-perhatian.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 21 19.5H3z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="16.8" r=".9" fill="currentColor"/></svg></span><span class="sidebar__label" data-id="Stok perlu perhatian" data-en="Stock needs attention">Stok perlu perhatian</span></a>
+        <a class="sidebar__link" href="hitung-stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2l2.6 2.6 4.6-5.2"/></svg></span><span class="sidebar__label" data-id="Hitung stok" data-en="Stock count">Hitung stok</span></a>
+        <a class="sidebar__link is-current" href="registry.html" aria-current="page"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17"/><path d="M9 9.5v10"/><path d="M13.5 13h4"/></svg></span><span class="sidebar__label" data-id="Penempatan & batas" data-en="Slotting & thresholds">Penempatan & batas</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
+        <a class="sidebar__link" href="slip-putaway.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h7.5L18 8v12.5H6z"/><path d="M13.2 3.7V8H18"/><path d="M8.8 12h6.4"/><path d="M8.8 15.5h4.4"/></svg></span><span class="sidebar__label" data-id="Slip putaway" data-en="Putaway slips">Slip putaway</span></a>
+        <a class="sidebar__link" href="label-warna-hari.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="7" height="6" rx="1"/><rect x="13.5" y="4.5" width="7" height="6" rx="1"/><rect x="3.5" y="13.5" width="7" height="6" rx="1"/><rect x="13.5" y="13.5" width="7" height="6" rx="1"/></svg></span><span class="sidebar__label" data-id="Label & warna hari" data-en="Labels & day colour">Label & warna hari</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
+        <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
+        <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
+        <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi POS" data-en="POS integration">Integrasi POS</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
+        <a class="sidebar__link" href="simulator-grab.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><span class="sidebar__label" data-id="Simulator Grab" data-en="Grab simulator">Simulator Grab</span></a>
+        <a class="sidebar__link" href="mode-latihan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5v17"/><path d="M6.5 4.5h11l-2.2 4.2 2.2 4.2h-11"/></svg></span><span class="sidebar__label" data-id="Mode latihan" data-en="Training mode">Mode latihan</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <span class="sidebar__site">
+          <span class="sidebar__label" data-id="Lokasi aktif" data-en="Active site">Lokasi aktif</span>
+          <strong data-field="site-code">UT5</strong>
+        </span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="lang" role="group" aria-label="Bahasa">
+            <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+            <button class="lang__opt" data-lang="en" type="button">EN</button>
+          </span>
+          <button class="cbtn cbtn--icon cbtn--ghost" data-action="toggle-theme" type="button" aria-label="Ganti tema">◐</button>
+        </div>
+        <a class="sidebar__link" href="../index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg></span><span class="sidebar__label" data-id="Buka aplikasi station" data-en="Open station app">Buka aplikasi station</span></a>
+      </div>
+    </aside>
+  <main class="page">
+    <header class="page__head">
+      <div class="page__heading">
+        <span class="page__eyebrow" data-id="Stok" data-en="Stock">Stok</span>
+        <h1 class="page__title" data-id="Penempatan & batas" data-en="Slotting & thresholds">Penempatan & batas</h1>
+        <p class="page__sub" data-id="Satu rak ambil per SKU, plus cadangan kalau perlu. Tiga batas mengatur kapan sistem minta isi ulang dan kapan minta kiriman baru dari hub." data-en="One pick face per SKU, plus an overflow if it needs one. Three thresholds decide when the system asks for a refill and when it asks the hub for more.">Satu rak ambil per SKU, plus cadangan kalau perlu. Tiga batas mengatur kapan sistem minta isi ulang dan kapan minta kiriman baru dari hub.</p>
+      </div>
+      <div class="page__actions">
+        <button class="cbtn" type="button" data-action="suggest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 15 9"/><path d="M17 3.5v3M20.5 7h-3"/><path d="M14.5 6.5 17.5 9.5"/><path d="M19 15.5v2.5M21.5 16.8H18"/></svg><span data-id="Isi saran untuk yang kosong" data-en="Fill suggestions for blanks">Isi saran untuk yang kosong</span></button>
+        <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M8 10.5l4 4 4-4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Ekspor" data-en="Export">Ekspor</span></button>
+      </div>
+    </header>
+
+    <div class="ccard">
+      <h2 class="ccard__title" data-id="Membaca kolom batas" data-en="Reading the threshold column">Membaca kolom batas</h2>
+      <p class="page__sub" data-id="Tiga angka terlalu banyak untuk dibaca sebagai angka di dalam sel tabel, jadi ketiganya jadi satu gambar: jalur dari nol sampai kapasitas rak ambil, dengan isian menunjukkan stok sekarang. Yang dicari supervisor cuma dua hal — isian yang berhenti di kiri sebuah tanda, dan tanda yang urutannya salah." data-en="Three numbers is one too many to read as three numbers inside a table cell, so they become one picture: a track from zero to the pick face’s capacity, with the fill showing current stock. A supervisor is looking for two things only — a fill stopping left of a mark, and marks in the wrong order.">Tiga angka terlalu banyak untuk dibaca sebagai angka di dalam sel tabel, jadi ketiganya jadi satu gambar: jalur dari nol sampai kapasitas rak ambil, dengan isian menunjukkan stok sekarang. Yang dicari supervisor cuma dua hal — isian yang berhenti di kiri sebuah tanda, dan tanda yang urutannya salah.</p>
+      <div style="display:flex;gap:var(--sp-6);flex-wrap:wrap">
+        <dl class="deflist" style="gap:10px var(--sp-3);align-items:baseline">
+          <dt class="td-code">R</dt><dd data-id="Titik pesan ulang — minta kiriman dari hub" data-en="Restock point — ask the hub for more">Titik pesan ulang — minta kiriman dari hub</dd>
+          <dt class="td-code">M</dt><dd data-id="Menipis — buat tugas isi ulang dari cadangan" data-en="Low — raise a replenishment task from overflow">Menipis — buat tugas isi ulang dari cadangan</dd>
+          <dt class="td-code">P</dt><dd data-id="Penuh — mulai pakai cadangan" data-en="Full — start using overflow">Penuh — mulai pakai cadangan</dd>
+        </dl>
+        <span class="inline-note" style="align-self:flex-start;max-width:44ch"><span data-id="Hanya M dan P yang mengukur rak ambil. R mengukur rak ambil ditambah cadangan — itu sebabnya R bisa lebih besar dari isi rak ambil tanpa keliru." data-en="Only M and P measure the pick face. R measures pick face plus overflow — which is why R can exceed what the face holds without being wrong.">Hanya M dan P yang mengukur rak ambil. R mengukur rak ambil ditambah cadangan — itu sebabnya R bisa lebih besar dari isi rak ambil tanpa keliru.</span></span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+        <label class="search">
+          <span class="search__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></span>
+          <input class="search__input" type="search" data-search-for="#tbl-registry" placeholder="Cari produk, kode SKU, atau lokasi…" aria-label="Cari produk, kode SKU, atau lokasi…">
+        </label>
+      <span class="seg" role="group">
+        <button class="seg__opt is-on" type="button" data-id="Semua" data-en="All">Semua</button>
+        <button class="seg__opt" type="button" data-id="Batas salah" data-en="Mis-set">Batas salah</button>
+        <button class="seg__opt" type="button" data-id="Belum diatur" data-en="Unset">Belum diatur</button>
+        <button class="seg__opt" type="button" data-id="Tanpa cadangan" data-en="No overflow">Tanpa cadangan</button>
+      </span>
+      <span class="toolbar__spacer"></span>
+      <span class="pager__info"><strong data-field="result-count">10</strong> <span data-id="tampil" data-en="shown">tampil</span></span>
+    </div>
+
+    <div class="table-scroll">
+      <table class="dtable dtable--rows-tall" id="tbl-registry">
+        <thead><tr>
+          <th class="td-check" data-id="" data-en=""></th>
+          <th class="td-thumb" data-id="" data-en=""></th>
+          <th class="is-sortable" data-id="Produk" data-en="Product">Produk<span class="sort">↕</span></th>
+          <th class="is-sortable" data-id="Rak ambil" data-en="Pick face">Rak ambil<span class="sort">↕</span></th>
+          <th data-id="Cadangan" data-en="Overflow">Cadangan</th>
+          <th data-id="Batas & stok sekarang" data-en="Thresholds & current stock">Batas & stok sekarang</th>
+          <th class="td-actions" data-id="" data-en=""></th>
+        </tr></thead>
+        <tbody data-region="registry">
+          <tr>
+            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-GLL-07"></td>
+            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-gll-07" alt=""></td>
+            <td><span class="td-strong">Glasting Liquid Lip 07 Rouge Flare</span><br><span class="td-code" style="color:var(--muted);font-size:var(--fs-c-meta)">WDH-GLL-07</span></td>
+            <td class="td-code">UT5-A-3-02</td>
+            <td><span class="td-code">UT5-OV-2-04</span></td>
+            <td>
+          <span class="thbar">
+            <span class="thbar__track">
+              <span class="thbar__fill is-low" style="width:15.0%"></span>
+              <span class="thbar__mark" data-mark="R" style="left:20.0%"></span>
+              <span class="thbar__mark" data-mark="M" style="left:30.0%"></span>
+              <span class="thbar__mark" data-mark="P" style="left:85.0%"></span>
+            </span>
+            <span class="thbar__nums"><strong>6</strong> <span class="sep">/</span> 40 <span class="sep">·</span> R8 M12 P34</span>
+          </span>
+
+            </td>
+            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-drawer-open="#drawer-reg" data-id="Ubah" data-en="Edit">Ubah</button></td>
+          </tr>
+          <tr>
+            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-GLL-08"></td>
+            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-gll-08" alt=""></td>
+            <td><span class="td-strong">Glasting Liquid Lip 08 Coral Dust</span><br><span class="td-code" style="color:var(--muted);font-size:var(--fs-c-meta)">WDH-GLL-08</span></td>
+            <td class="td-code">UT5-A-3-03</td>
+            <td><span class="td-code">UT5-OV-2-05</span></td>
+            <td>
+          <span class="thbar">
+            <span class="thbar__track">
+              <span class="thbar__fill " style="width:70.0%"></span>
+              <span class="thbar__mark" data-mark="R" style="left:20.0%"></span>
+              <span class="thbar__mark" data-mark="M" style="left:30.0%"></span>
+              <span class="thbar__mark" data-mark="P" style="left:85.0%"></span>
+            </span>
+            <span class="thbar__nums"><strong>28</strong> <span class="sep">/</span> 40 <span class="sep">·</span> R8 M12 P34</span>
+          </span>
+
+            </td>
+            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-drawer-open="#drawer-reg" data-id="Ubah" data-en="Edit">Ubah</button></td>
+          </tr>
+          <tr>
+            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-GLL-01"></td>
+            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-gll-01" alt=""></td>
+            <td><span class="td-strong">Glasting Liquid Lip 01 Caramel Coat</span><br><span class="td-code" style="color:var(--muted);font-size:var(--fs-c-meta)">WDH-GLL-01</span></td>
+            <td class="td-code">UT5-A-3-04</td>
+            <td><span class="td-code">UT5-OV-2-06</span></td>
+            <td>
+          <span class="thbar">
+            <span class="thbar__track">
+              <span class="thbar__fill is-full" style="width:95.0%"></span>
+              <span class="thbar__mark" data-mark="R" style="left:20.0%"></span>
+              <span class="thbar__mark" data-mark="M" style="left:30.0%"></span>
+              <span class="thbar__mark" data-mark="P" style="left:85.0%"></span>
+            </span>
+            <span class="thbar__nums"><strong>38</strong> <span class="sep">/</span> 40 <span class="sep">·</span> R8 M12 P34</span>
+          </span>
+
+            </td>
+            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-drawer-open="#drawer-reg" data-id="Ubah" data-en="Edit">Ubah</button></td>
+          </tr>
+          <tr>
+            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-CVM-04"></td>
+            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-cvm-04" alt=""></td>
+            <td><span class="td-strong">Colorfit Velvet Matte Lipstick 04 Dusty Rose</span><br><span class="td-code" style="color:var(--muted);font-size:var(--fs-c-meta)">WDH-CVM-04</span></td>
+            <td class="td-code">UT5-A-3-05</td>
+            <td><span class="td-code">UT5-OV-2-01</span></td>
+            <td>
+          <span class="thbar">
+            <span class="thbar__track">
+              <span class="thbar__fill is-low" style="width:25.0%"></span>
+              <span class="thbar__mark" data-mark="R" style="left:20.0%"></span>
+              <span class="thbar__mark" data-mark="M" style="left:30.0%"></span>
+              <span class="thbar__mark" data-mark="P" style="left:85.0%"></span>
+            </span>
+            <span class="thbar__nums"><strong>10</strong> <span class="sep">/</span> 40 <span class="sep">·</span> R8 M12 P34</span>
+          </span>
+
+            </td>
+            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-drawer-open="#drawer-reg" data-id="Ubah" data-en="Edit">Ubah</button></td>
+          </tr>
+          <tr>
+            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-CML-12"></td>
+            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-cml-12" alt=""></td>
+            <td><span class="td-strong">Colorfit Matte Lipstick 12 Deep Ruby</span><br><span class="td-code" style="color:var(--muted);font-size:var(--fs-c-meta)">WDH-CML-12</span></td>
+            <td class="td-code">UT5-B-1-02</td>
+            <td><span class="na" data-id="tidak ada" data-en="none">tidak ada</span></td>
+            <td>
+          <span class="thbar">
+            <span class="thbar__track">
+              <span class="thbar__fill " style="width:55.0%"></span>
+              <span class="thbar__mark" data-mark="R" style="left:15.0%"></span>
+              <span class="thbar__mark" data-mark="M" style="left:25.0%"></span>
+              <span class="thbar__mark" data-mark="P" style="left:85.0%"></span>
+            </span>
+            <span class="thbar__nums"><strong>22</strong> <span class="sep">/</span> 40 <span class="sep">·</span> R6 M10 P34</span>
+          </span>
+
+            </td>
+            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-drawer-open="#drawer-reg" data-id="Ubah" data-en="Edit">Ubah</button></td>
+          </tr>
+          <tr class="is-variance">
+            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-UVS-030"></td>
+            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-uvs-030" alt=""></td>
+            <td><span class="td-strong">UV Shield Airy Smooth Sunscreen SPF 50 PA+++</span><br><span class="td-code" style="color:var(--muted);font-size:var(--fs-c-meta)">WDH-UVS-030</span></td>
+            <td class="td-code">UT5-C-5-04</td>
+            <td><span class="td-code">UT5-OV-1-01</span></td>
+            <td>
+          <span class="thbar is-misset">
+            <span class="thbar__track">
+              <span class="thbar__fill is-low" style="width:10.0%"></span>
+              <span class="thbar__mark" data-mark="R" style="left:25.0%"></span>
+              <span class="thbar__mark" data-mark="M" style="left:75.0%"></span>
+              <span class="thbar__mark" data-mark="P" style="left:50.0%"></span>
+            </span>
+            <span class="thbar__nums"><strong>4</strong> <span class="sep">/</span> 40 <span class="sep">·</span> R10 M30 P20</span>
+          </span>
+              <span class="misset" style="margin-top:6px"><span aria-hidden="true">!</span><span data-id="M di atas P — tidak bisa disimpan" data-en="Low above full — cannot be saved">M di atas P — tidak bisa disimpan</span></span>
+            </td>
+            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-drawer-open="#drawer-reg" data-id="Ubah" data-en="Edit">Ubah</button></td>
+          </tr>
+          <tr>
+            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-LDC-030"></td>
+            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-ldc-030" alt=""></td>
+            <td><span class="td-strong">Lightening Day Cream SPF 30</span><br><span class="td-code" style="color:var(--muted);font-size:var(--fs-c-meta)">WDH-LDC-030</span></td>
+            <td class="td-code">UT5-D-2-01</td>
+            <td><span class="td-code">UT5-OV-1-05</span></td>
+            <td>
+          <span class="thbar">
+            <span class="thbar__track">
+              <span class="thbar__fill is-low" style="width:17.5%"></span>
+              <span class="thbar__mark" data-mark="R" style="left:20.0%"></span>
+              <span class="thbar__mark" data-mark="M" style="left:30.0%"></span>
+              <span class="thbar__mark" data-mark="P" style="left:85.0%"></span>
+            </span>
+            <span class="thbar__nums"><strong>7</strong> <span class="sep">/</span> 40 <span class="sep">·</span> R8 M12 P34</span>
+          </span>
+
+            </td>
+            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-drawer-open="#drawer-reg" data-id="Ubah" data-en="Edit">Ubah</button></td>
+          </tr>
+          <tr>
+            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-IMP-02"></td>
+            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-imp-02" alt=""></td>
+            <td><span class="td-strong">Instaperfect Mattesetter Lip Matte Paint 02</span><br><span class="td-code" style="color:var(--muted);font-size:var(--fs-c-meta)">WDH-IMP-02</span></td>
+            <td class="td-code">UT5-B-1-05</td>
+            <td><span class="na" data-id="tidak ada" data-en="none">tidak ada</span></td>
+            <td>
+          <span class="thbar">
+            <span class="thbar__track">
+              <span class="thbar__fill is-full" style="width:90.0%"></span>
+              <span class="thbar__mark" data-mark="R" style="left:20.0%"></span>
+              <span class="thbar__mark" data-mark="M" style="left:30.0%"></span>
+              <span class="thbar__mark" data-mark="P" style="left:85.0%"></span>
+            </span>
+            <span class="thbar__nums"><strong>18</strong> <span class="sep">/</span> 20 <span class="sep">·</span> R4 M6 P17</span>
+          </span>
+
+            </td>
+            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-drawer-open="#drawer-reg" data-id="Ubah" data-en="Edit">Ubah</button></td>
+          </tr>
+          <tr>
+            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-CSH-020"></td>
+            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-csh-020" alt=""></td>
+            <td><span class="td-strong">Crystal Secret Hyaluron Serum</span><br><span class="td-code" style="color:var(--muted);font-size:var(--fs-c-meta)">WDH-CSH-020</span></td>
+            <td class="td-code">UT5-D-2-04</td>
+            <td><span class="na" data-id="tidak ada" data-en="none">tidak ada</span></td>
+            <td>
+          <span class="thbar">
+            <span class="thbar__track">
+              <span class="thbar__fill is-low" style="width:22.5%"></span>
+              <span class="thbar__mark" data-mark="R" style="left:20.0%"></span>
+              <span class="thbar__mark" data-mark="M" style="left:30.0%"></span>
+              <span class="thbar__mark" data-mark="P" style="left:85.0%"></span>
+            </span>
+            <span class="thbar__nums"><strong>9</strong> <span class="sep">/</span> 40 <span class="sep">·</span> R8 M12 P34</span>
+          </span>
+
+            </td>
+            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-drawer-open="#drawer-reg" data-id="Ubah" data-en="Edit">Ubah</button></td>
+          </tr>
+          <tr>
+            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-PBM-100"></td>
+            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-pbm-100" alt=""></td>
+            <td><span class="td-strong">Perfect Bright Micellar Water</span><br><span class="td-code" style="color:var(--muted);font-size:var(--fs-c-meta)">WDH-PBM-100</span></td>
+            <td class="td-code">UT5-E-1-01</td>
+            <td><span class="td-code">UT5-OV-3-02</span></td>
+            <td>
+          <span class="thbar">
+            <span class="thbar__track">
+              <span class="thbar__fill is-low" style="width:11.3%"></span>
+              <span class="thbar__mark" data-mark="R" style="left:20.0%"></span>
+              <span class="thbar__mark" data-mark="M" style="left:30.0%"></span>
+              <span class="thbar__mark" data-mark="P" style="left:85.0%"></span>
+            </span>
+            <span class="thbar__nums"><strong>9</strong> <span class="sep">/</span> 80 <span class="sep">·</span> R16 M24 P68</span>
+          </span>
+
+            </td>
+            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-drawer-open="#drawer-reg" data-id="Ubah" data-en="Edit">Ubah</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bulkbar" data-bulk-table="#tbl-registry">
+      <span class="bulkbar__count" data-field="bulk-count">0</span>
+      <span data-id="SKU dipilih" data-en="SKUs selected">SKU dipilih</span>
+      <span class="toolbar__spacer"></span>
+      <button class="cbtn" type="button" data-drawer-open="#drawer-bulk" data-id="Terapkan batas ke pilihan" data-en="Apply thresholds to selection">Terapkan batas ke pilihan</button>
+      <button class="cbtn" type="button" data-id="Tetapkan cadangan" data-en="Assign overflow">Tetapkan cadangan</button>
+      <button class="cbtn cbtn--ghost" type="button" data-action="bulk-clear" data-id="Batal" data-en="Clear">Batal</button>
+    </div>
+      <div class="pager">
+        <span class="pager__info"><strong data-field="range">1–10</strong> <span data-id="dari" data-en="of">dari</span> <strong data-field="total">118</strong> <span data-id="baris" data-en="rows">baris</span></span>
+        <div class="pager__nav">
+          <button class="pager__page" type="button" aria-label="Sebelumnya">‹</button>
+          <button class="pager__page is-on" type="button">1</button>
+          <button class="pager__page" type="button">2</button>
+          <button class="pager__page" type="button">3</button>
+          <span class="pager__gap">…</span>
+          <button class="pager__page" type="button">12</button>
+          <button class="pager__page" type="button" aria-label="Berikutnya">›</button>
+        </div>
+      </div>
+
+    <div class="inline-note inline-note--warn"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17"/><path d="M9 9.5v10"/><path d="M13.5 13h4"/></svg></span><span data-id="Mengatur 118 SKU satu per satu tidak akan terjadi. Pilih beberapa baris, lalu terapkan satu set batas sekaligus — itu bedanya layar ini dipakai atau ditinggalkan." data-en="Setting 118 SKUs one at a time will not happen. Select rows and apply one set of thresholds at once — that is the difference between this screen being used and being abandoned.">Mengatur 118 SKU satu per satu tidak akan terjadi. Pilih beberapa baris, lalu terapkan satu set batas sekaligus — itu bedanya layar ini dipakai atau ditinggalkan.</span></div>
+  </main>
+</div>
+<div class="scrim"></div>
+<aside class="drawer" id="drawer-reg" aria-label="Ubah penempatan">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-id="Ubah penempatan" data-en="Edit slotting">Ubah penempatan</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <div style="display:flex;gap:var(--sp-3);align-items:center">
+      <img class="thumb thumb--lg" src="../assets/products/placeholder.svg" data-photo-key="wdh-gll-07" alt="">
+      <span class="col" style="display:flex;flex-direction:column;gap:2px">
+        <span style="font-size:var(--fs-c-label);font-weight:600">Glasting Liquid Lip 07 Rouge Flare</span>
+        <span class="td-code" style="color:var(--muted);font-size:var(--fs-c-meta)">WDH-GLL-07 · keranjang S · kapasitas 40</span>
+      </span>
+    </div>
+    <label class="field"><span class="field__label" data-id="Rak ambil" data-en="Pick face">Rak ambil</span><input class="input" type="text" value="UT5-A-3-02">
+      <span class="field__hint" data-id="Satu SKU, satu rak ambil per station. Pemetik hanya pernah dikirim ke sini." data-en="One SKU, one pick face per station. A picker is only ever sent here.">Satu SKU, satu rak ambil per station. Pemetik hanya pernah dikirim ke sini.</span></label>
+    <label class="field"><span class="field__label" data-id="Cadangan (opsional)" data-en="Overflow (optional)">Cadangan (opsional)</span><input class="input" type="text" value="UT5-OV-2-04">
+      <span class="field__hint" data-id="Pemetik tidak pernah dikirim ke cadangan. Isinya dipindahkan ke rak ambil lewat tugas isi ulang." data-en="A picker is never sent to overflow. Its stock reaches the face through a replenishment task.">Pemetik tidak pernah dikirim ke cadangan. Isinya dipindahkan ke rak ambil lewat tugas isi ulang.</span></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-3)">
+      <label class="field"><span class="field__label">R · <span data-id="Pesan ulang" data-en="Restock">Pesan ulang</span></span><input class="input" type="number" value="8"><span class="suggested"><span class="suggested__dot"></span>saran 8</span></label>
+      <label class="field"><span class="field__label">M · <span data-id="Menipis" data-en="Low">Menipis</span></span><input class="input" type="number" value="12"><span class="suggested"><span class="suggested__dot"></span>saran 12</span></label>
+      <label class="field"><span class="field__label">P · <span data-id="Penuh" data-en="Full">Penuh</span></span><input class="input" type="number" value="34"><span class="suggested"><span class="suggested__dot"></span>saran 34</span></label>
+    </div>
+    <span class="inline-note"><span data-id="Saran dihitung dari kapasitas keranjang dan kecepatan jual 14 hari terakhir. Mengoreksi angka jauh lebih mudah daripada mengarang tiga." data-en="Suggestions come from basket capacity and the last 14 days of sales. Correcting a number is far easier than inventing three.">Saran dihitung dari kapasitas keranjang dan kecepatan jual 14 hari terakhir. Mengoreksi angka jauh lebih mudah daripada mengarang tiga.</span></span>
+    <span class="inline-note inline-note--warn"><span data-id="M harus di bawah P, dan R di bawah M. Urutan yang salah ditolak saat disimpan, bukan setelahnya." data-en="Low must sit below full, and restock below low. A wrong order is refused on save, not after.">M harus di bawah P, dan R di bawah M. Urutan yang salah ditolak saat disimpan, bukan setelahnya.</span></span>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-id="Simpan" data-en="Save">Simpan</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
+  </div>
+</aside>
+<aside class="drawer" id="drawer-bulk" aria-label="Terapkan batas ke pilihan">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-id="Terapkan ke pilihan" data-en="Apply to selection">Terapkan ke pilihan</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <span class="inline-note"><span><strong data-field="bulk-echo">0</strong> <span data-id="SKU akan diubah." data-en="SKUs will change.">SKU akan diubah.</span></span></span>
+    <div class="field">
+      <span class="field__label" data-id="Cara menetapkan" data-en="How to set them">Cara menetapkan</span>
+      <div class="chipset">
+        <label class="chipbox"><input type="radio" name="mode" checked><span data-id="Sebagai persen kapasitas" data-en="As a percent of capacity">Sebagai persen kapasitas</span></label>
+        <label class="chipbox"><input type="radio" name="mode"><span data-id="Angka tetap" data-en="Fixed numbers">Angka tetap</span></label>
+      </div>
+      <span class="field__hint" data-id="Persen jauh lebih aman untuk banyak SKU sekaligus — kapasitas keranjang S, M, dan L berbeda-beda." data-en="A percent is much safer across many SKUs — S, M and L baskets hold different amounts.">Persen jauh lebih aman untuk banyak SKU sekaligus — kapasitas keranjang S, M, dan L berbeda-beda.</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-3)">
+      <label class="field"><span class="field__label">R %</span><input class="input" type="number" value="20"></label>
+      <label class="field"><span class="field__label">M %</span><input class="input" type="number" value="30"></label>
+      <label class="field"><span class="field__label">P %</span><input class="input" type="number" value="85"></label>
+    </div>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-id="Terapkan" data-en="Apply">Terapkan</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
+  </div>
+</aside>
+<script src="../js/api.js?v=a602d0c"></script>
+<script src="../js/app.js?v=a602d0c"></script>
+<script src="../js/console.js?v=a602d0c"></script>
+<script src="../js/wire.js?v=a602d0c"></script>
+
+</body>
+</html>

@@ -200,7 +200,7 @@ async def enqueue_pos_push(cur, *, site_id: int, sku_id: int, is_training: bool)
     await db.run(
         cur,
         "INSERT INTO pos_outbox (site_id, sku_id, available, status, message_type, "
-        "priority) VALUES (%s, %s, %s, %s, 'stock_level', 5)",
+        "send_priority) VALUES (%s, %s, %s, %s, 'stock_level', 5)",
         (site_id, sku_id, avail, status),
     )
 
@@ -290,7 +290,7 @@ async def enqueue_pos_message(
     await db.run(
         cur,
         "INSERT INTO pos_outbox (site_id, sku_id, available, status, message_type, "
-        "priority, payload_json, order_ref) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+        "send_priority, payload_json, order_ref) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
         (
             site_id, sku_id, available,
             "suppressed" if is_training else "pending",
