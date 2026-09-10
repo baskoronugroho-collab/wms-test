@@ -9,6 +9,7 @@ import daycolor
 import db
 import ledger
 import models
+import replenish
 
 router = APIRouter(prefix="/api", tags=["outbound"])
 
@@ -339,6 +340,11 @@ async def confirm_pick(
             "message": "Sudah diambil." if done else f"{picked} dari {line['qty_required']}.",
         }
         await ledger.remember(cur, body.idempotency_key, "pick_confirm", result)
+
+    # Picking is the main thing that drains a pick face, so it is the natural
+    # place to notice the face has run low. Outside the transaction: a
+    # replenishment task is not worth failing a completed pick over.
+    await replenish.evaluate(line["site_id"], line["sku_id"], user.email)
     return result
 
 
@@ -355,6 +361,29 @@ async def complete_task(task_id: int, user: auth.User = Depends(auth.current_use
                      (task["order_id"],))
         await db.run(cur, "UPDATE unit_plates SET state='shipped' "
                           "WHERE state='picked' AND site_id=%s", (task["site_id"],))
+
+        # Message 4 -- the bag is sealed. This is the trigger the POS turns into a
+        # receipt and passes to Grab; it is the only thing standing between a
+        # packed order and a customer being told it is on its way, so it goes out
+        # on the priority lane rather than behind queued stock updates.
+        order = await db.one(
+            cur, "SELECT external_ref, is_test FROM orders WHERE id = %s",
+            (task["order_id"],),
+        )
+        site = await db.one(
+            cur, "SELECT is_training FROM sites WHERE id = %s", (task["site_id"],)
+        )
+        if order:
+            await ledger.enqueue_pos_message(
+                cur, message_type="order_ready", site_id=task["site_id"],
+                order_ref=order["external_ref"],
+                is_training=bool(site["is_training"]) if site else False,
+                payload={
+                    "order_ref": order["external_ref"],
+                    "packed_by": user.email,
+                    "is_test": bool(order["is_test"]),
+                },
+            )
     return await _task_payload(task_id)
 
 
@@ -517,3 +546,199 @@ async def release_task(
 
     await auth.assert_site_access(user, task["site_id"])
     return await _task_payload(task_id)
+
+
+# --- short pick (PRD 8.9) ----------------------------------------------------
+
+@router.post("/pick-lines/{line_id}/short", response_model=models.ShortPickResult)
+async def declare_short(
+    line_id: int,
+    body: models.ShortPickIn,
+    user: auth.User = Depends(auth.current_user),
+):
+    """The picker cannot find the stock. Two taps, and the POS hears immediately.
+
+    Grab refunds the customer and charges the merchant by default, so the whole
+    point of this endpoint is reaching the POS before the charge does.
+
+    The stock correction here is DELIBERATELY unsigned, unlike every other
+    adjustment in this product (M6.3.3). If it waited for a supervisor the system
+    would keep selling stock that does not exist and produce a second short pick,
+    then a third. The signature catches up; the bleeding stops now. The cost is
+    that a staffer can zero a SKU with two taps -- which is why the exception row
+    names them and is indexed for repeat offenders.
+    """
+    line = await db.fetch_one(
+        "SELECT pl.*, pt.site_id, pt.status AS task_status, o.external_ref, "
+        "       o.is_test, s.name_display "
+        "FROM pick_lines pl "
+        "JOIN pick_tasks pt ON pt.id = pl.pick_task_id "
+        "JOIN order_lines ol ON ol.id = pl.order_line_id "
+        "JOIN orders o ON o.id = ol.order_id "
+        "JOIN skus s ON s.id = pl.sku_id "
+        "WHERE pl.id = %s",
+        (line_id,),
+    )
+    if not line:
+        raise HTTPException(404, "Pick line not found")
+    await auth.assert_site_access(user, line["site_id"])
+    if line["status"] == "picked":
+        raise HTTPException(409, "Baris ini sudah selesai diambil.")
+
+    required = line["qty_required"] - line["qty_picked"]
+    found = max(0, min(body.qty_found, required))
+    if found >= required:
+        raise HTTPException(422, "Kalau barangnya lengkap, pindai seperti biasa.")
+    missing = required - found
+
+    site = await db.fetch_one(
+        "SELECT is_training, site_type FROM sites WHERE id = %s", (line["site_id"],)
+    )
+
+    async with db.tx() as cur:
+        # 1. Stop promising what is not there.
+        if line["location_id"]:
+            await ledger.release(
+                cur, site_id=line["site_id"], sku_id=line["sku_id"],
+                location_id=line["location_id"], qty=required,
+            )
+
+        # 2. Correct on-hand to what the picker actually found. Only the
+        #    shortfall is written off; anything found is picked normally below.
+        if line["location_id"]:
+            bal = await db.one(
+                cur,
+                "SELECT qty_on_hand FROM inventory_balances "
+                "WHERE site_id=%s AND sku_id=%s AND location_id=%s",
+                (line["site_id"], line["sku_id"], line["location_id"]),
+            )
+            on_hand = int(bal["qty_on_hand"]) if bal else 0
+            write_off = min(missing, on_hand)
+            if write_off:
+                await ledger.apply(
+                    cur, site_id=line["site_id"], sku_id=line["sku_id"],
+                    location_id=line["location_id"], qty_delta=-write_off,
+                    movement_type="adjustment", actor_email=user.email,
+                    reason_code="short_pick", ref_type="pick_line", ref_id=line_id,
+                    scan_source="manual", is_training=bool(site["is_training"]),
+                )
+
+        # 3. Take what was actually found, if any.
+        if found and line["location_id"]:
+            await ledger.apply(
+                cur, site_id=line["site_id"], sku_id=line["sku_id"],
+                location_id=line["location_id"], qty_delta=-found,
+                movement_type="pick_out", actor_email=user.email,
+                ref_type="pick_line", ref_id=line_id,
+                is_training=bool(site["is_training"]),
+            )
+
+        await db.run(
+            cur,
+            "UPDATE pick_lines SET qty_picked = %s, status = 'short' WHERE id = %s",
+            (line["qty_picked"] + found, line_id),
+        )
+        await db.run(
+            cur,
+            "UPDATE order_lines SET qty_picked = %s, status = 'short' WHERE id = %s",
+            (line["qty_picked"] + found, line["order_line_id"]),
+        )
+
+        # 4. Message 5 -- a statement of fact. The POS decides refund,
+        #    substitution or cancellation, because the POS owns the customer.
+        await ledger.enqueue_pos_message(
+            cur, message_type="order_short", site_id=line["site_id"],
+            order_ref=line["external_ref"], sku_id=line["sku_id"],
+            is_training=bool(site["is_training"]),
+            payload={
+                "order_ref": line["external_ref"],
+                "line_id": line_id,
+                "sku_id": line["sku_id"],
+                "sku_name": line["name_display"],
+                "qty_required": required,
+                "qty_found": found,
+                "declared_by": user.email,
+            },
+        )
+
+        # 5. The supervisor exception, naming the staffer.
+        await db.run(
+            cur,
+            "INSERT INTO pick_shortfalls (pick_line_id, site_id, sku_id, "
+            "qty_required, qty_found, declared_by) VALUES (%s,%s,%s,%s,%s,%s) "
+            "ON DUPLICATE KEY UPDATE qty_found = VALUES(qty_found)",
+            (line_id, line["site_id"], line["sku_id"], required, found, user.email),
+        )
+
+    # Stock just dropped; the pick face may now need refilling.
+    await replenish.evaluate(line["site_id"], line["sku_id"], user.email)
+
+    task = await _task_payload(line["pick_task_id"])
+    remaining = [x for x in task["lines"] if x["status"] == "pending"]
+    return {
+        "accepted": True,
+        "qty_found": found,
+        "qty_missing": missing,
+        "task_complete": not remaining,
+        "lines_remaining": len(remaining),
+        "message": (
+            "Dicatat: " + str(found) + " dari " + str(required) +
+            ". Lanjut ambil barang lain."
+            if remaining else
+            "Dicatat: " + str(found) + " dari " + str(required) + ". Pesanan selesai."
+        ),
+    }
+
+
+@router.post("/orders/{external_ref}/cancel", response_model=models.Ok)
+async def cancel_order(external_ref: str, user: auth.User = Depends(auth.current_user)):
+    """Message 2 -- the POS tells us Grab or the customer cancelled.
+
+    Allocations are released so the stock becomes sellable again. Anything
+    already physically picked is NOT returned to stock automatically: those units
+    are off the shelf and in a tote, and putting them back in the ledger without
+    someone walking them to the rack would be a lie. That path is undesigned.
+    """
+    order = await db.fetch_one(
+        "SELECT o.*, pt.id AS task_id FROM orders o "
+        "LEFT JOIN pick_tasks pt ON pt.order_id = o.id WHERE o.external_ref = %s",
+        (external_ref,),
+    )
+    if not order:
+        raise HTTPException(404, "Order not found")
+    await auth.assert_site_access(user, order["site_id"])
+    if order["status"] == "cancelled":
+        return {"ok": True, "message": "Already cancelled."}
+
+    picked_back = 0
+    async with db.tx() as cur:
+        lines = await db.many(
+            cur,
+            "SELECT ol.id, ol.sku_id, ol.qty_allocated, ol.qty_picked, "
+            "       pl.location_id FROM order_lines ol "
+            "LEFT JOIN pick_lines pl ON pl.order_line_id = ol.id "
+            "WHERE ol.order_id = %s",
+            (order["id"],),
+        )
+        for l in lines:
+            outstanding = (l["qty_allocated"] or 0) - (l["qty_picked"] or 0)
+            if outstanding > 0 and l["location_id"]:
+                await ledger.release(
+                    cur, site_id=order["site_id"], sku_id=l["sku_id"],
+                    location_id=l["location_id"], qty=outstanding,
+                )
+            picked_back += l["qty_picked"] or 0
+
+        await db.run(cur, "UPDATE orders SET status='cancelled' WHERE id=%s",
+                     (order["id"],))
+        if order["task_id"]:
+            await db.run(cur, "UPDATE pick_tasks SET status='cancelled' WHERE id=%s",
+                         (order["task_id"],))
+
+    return {
+        "ok": True,
+        "message": (
+            str(picked_back) + " unit(s) already picked need returning to the shelf "
+            "by hand." if picked_back else "Cancelled; nothing was picked."
+        ),
+    }

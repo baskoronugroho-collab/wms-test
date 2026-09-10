@@ -2176,6 +2176,134 @@
         }
       }
     },
+    "/api/pick-lines/{line_id}/short": {
+      "post": {
+        "tags": [
+          "outbound"
+        ],
+        "summary": "The picker cannot find the stock",
+        "description": "The picker cannot find the stock. Two taps, and the POS hears immediately.\n\nGrab refunds the customer and charges the merchant by default, so the whole\npoint of this endpoint is reaching the POS before the charge does.\n\nThe stock correction here is DELIBERATELY unsigned, unlike every other\nadjustment in this product (M6.3.3). If it waited for a supervisor the system\nwould keep selling stock that does not exist and produce a second short pick,\nthen a third. The signature catches up; the bleeding stops now. The cost is\nthat a staffer can zero a SKU with two taps -- which is why the exception row\nnames them and is indexed for repeat offenders.",
+        "operationId": "declare_short_api_pick_lines__line_id__short_post",
+        "parameters": [
+          {
+            "name": "line_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Line Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShortPickIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShortPickResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orders/{external_ref}/cancel": {
+      "post": {
+        "tags": [
+          "outbound"
+        ],
+        "summary": "Message 2 -- the POS tells us Grab or the customer cancelled",
+        "description": "Message 2 -- the POS tells us Grab or the customer cancelled.\n\nAllocations are released so the stock becomes sellable again. Anything\nalready physically picked is NOT returned to stock automatically: those units\nare off the shelf and in a tote, and putting them back in the ledger without\nsomeone walking them to the rack would be a lie. That path is undesigned.",
+        "operationId": "cancel_order_api_orders__external_ref__cancel_post",
+        "parameters": [
+          {
+            "name": "external_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Ref"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/opname/plans": {
       "post": {
         "tags": [
@@ -4085,6 +4213,817 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/registry": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Every SKU with a pick face at this site, with its thresholds and stock",
+        "description": "Every SKU with a pick face at this site, with its thresholds and stock.",
+        "operationId": "list_registry_api_registry_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "unconfigured_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Unconfigured Only"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "default": 200,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistryList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/registry/{sku_id}": {
+      "put": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Set the three thresholds for one SKU's pick face",
+        "description": "Set the three thresholds for one SKU's pick face.",
+        "operationId": "set_thresholds_api_registry__sku_id__put",
+        "parameters": [
+          {
+            "name": "sku_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Sku Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistryIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistryRow"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/registry/bulk": {
+      "post": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Apply one set of thresholds across many SKUs",
+        "description": "Apply one set of thresholds across many SKUs.\n\n118 SKUs set one at a time will not happen, and a registry nobody fills in is\na registry that silently never fires a replenishment.",
+        "operationId": "bulk_thresholds_api_registry_bulk_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistryBulkIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/registry/suggest/{sku_id}": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Derive a starting point from the space model",
+        "description": "Derive a starting point from the space model.\n\nA supervisor correcting a suggestion will fill this in; a supervisor facing\nthree empty boxes for 118 SKUs will not.",
+        "operationId": "suggest_thresholds_api_registry_suggest__sku_id__get",
+        "parameters": [
+          {
+            "name": "sku_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Sku Id"
+            }
+          },
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrySuggestion"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/replenishment": {
+      "get": {
+        "tags": [
+          "flow"
+        ],
+        "summary": "Open moves from overflow to the pick face, most urgent first",
+        "description": "Open moves from overflow to the pick face, most urgent first.\n\nA pick face at zero outranks one merely low: the first stops picking, the\nsecond only threatens to.",
+        "operationId": "list_replenishment_api_replenishment_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplenishmentList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/replenishment/{task_id}/complete": {
+      "post": {
+        "tags": [
+          "flow"
+        ],
+        "summary": "Book the physical move: units leave overflow and land on the pick face",
+        "description": "Book the physical move: units leave overflow and land on the pick face.\n\nTwo ledger movements, not one. A relocation that wrote a single row would\nlose which location the stock left, and the rack map would be wrong until the\nnext count.",
+        "operationId": "complete_replenishment_api_replenishment__task_id__complete_post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplenishDoneIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/restock": {
+      "get": {
+        "tags": [
+          "flow"
+        ],
+        "summary": "List Restock",
+        "operationId": "list_restock_api_restock_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestockList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/restock/{request_id}/send": {
+      "post": {
+        "tags": [
+          "flow"
+        ],
+        "summary": "A supervisor confirms the quantity and sends the request to the hub",
+        "description": "A supervisor confirms the quantity and sends the request to the hub.",
+        "operationId": "send_restock_api_restock__request_id__send_post",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Request Id"
+            }
+          },
+          {
+            "name": "qty",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Qty"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transfers": {
+      "post": {
+        "tags": [
+          "flow"
+        ],
+        "summary": "Dispatch a tote from the hub to a darkstore",
+        "description": "Dispatch a tote from the hub to a darkstore.\n\nThe dispatched quantity is what makes the receiving end checkable even when\nthe brand sent no manifest — this number is ours, so hop 2 of the chain of\ncustody always has an authority (PRD 5.6). Stock leaves the hub's ledger now;\nit enters the darkstore's when someone receives it.",
+        "operationId": "create_transfer_api_transfers_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transfer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "flow"
+        ],
+        "summary": "Transfers touching this site, in either direction",
+        "description": "Transfers touching this site, in either direction.",
+        "operationId": "list_transfers_api_transfers_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "default": 30,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pos/outbox": {
+      "get": {
+        "tags": [
+          "flow"
+        ],
+        "summary": "What the boundary is doing",
+        "description": "What the boundary is doing — or, during the pilot, deliberately not doing.\n\nThe most valuable thing on this endpoint is `push_enabled`. A supervisor\nlooking at a healthy-looking queue must be able to tell that nothing is being\nsent on purpose, rather than concluding the integration works.",
+        "operationId": "outbox_health_api_pos_outbox_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutboxHealth"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shortfalls": {
+      "get": {
+        "tags": [
+          "flow"
+        ],
+        "summary": "Declared shortfalls, and who declared them",
+        "description": "Declared shortfalls, and who declared them.\n\nA short pick corrects stock without a signature, so the only control on it is\nthat someone reviews these — and that a person declaring them far more often\nthan their colleagues is visible (PRD 8.9.5).",
+        "operationId": "list_shortfalls_api_shortfalls_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShortfallList"
                 }
               }
             }
@@ -6392,6 +7331,88 @@
         ],
         "title": "OrderLineIn"
       },
+      "OutboxHealth": {
+        "properties": {
+          "push_enabled": {
+            "type": "boolean",
+            "title": "Push Enabled",
+            "description": "False means shadow mode: every number computed, nothing sent"
+          },
+          "lanes": {
+            "items": {
+              "$ref": "#/components/schemas/OutboxLane"
+            },
+            "type": "array",
+            "title": "Lanes"
+          },
+          "oldest_pending_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oldest Pending Seconds"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "push_enabled",
+          "lanes",
+          "note"
+        ],
+        "title": "OutboxHealth"
+      },
+      "OutboxLane": {
+        "properties": {
+          "message_type": {
+            "type": "string",
+            "title": "Message Type"
+          },
+          "pending": {
+            "type": "integer",
+            "title": "Pending"
+          },
+          "suppressed": {
+            "type": "integer",
+            "title": "Suppressed"
+          },
+          "sent": {
+            "type": "integer",
+            "title": "Sent"
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed"
+          },
+          "last_sent_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sent At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message_type",
+          "pending",
+          "suppressed",
+          "sent",
+          "failed"
+        ],
+        "title": "OutboxLane"
+      },
       "PickConfirmIn": {
         "properties": {
           "code": {
@@ -7971,6 +8992,311 @@
         ],
         "title": "ReceiptSummaryLine"
       },
+      "RegistryBulkIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "sku_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Sku Ids"
+          },
+          "full_threshold": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Threshold"
+          },
+          "low_threshold": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low Threshold"
+          },
+          "restock_point": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restock Point"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "sku_ids"
+        ],
+        "title": "RegistryBulkIn"
+      },
+      "RegistryIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "full_threshold": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Threshold"
+          },
+          "low_threshold": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low Threshold"
+          },
+          "restock_point": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restock Point"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id"
+        ],
+        "title": "RegistryIn"
+      },
+      "RegistryList": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/RegistryRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "unconfigured": {
+            "type": "integer",
+            "title": "Unconfigured"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rows",
+          "total",
+          "unconfigured"
+        ],
+        "title": "RegistryList"
+      },
+      "RegistryRow": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "type": "string",
+            "title": "Sku Name"
+          },
+          "brand_sku_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Sku Code"
+          },
+          "primary_location_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Location Id"
+          },
+          "primary_location_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Location Code"
+          },
+          "overflow_location_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overflow Location Id"
+          },
+          "overflow_location_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overflow Location Code"
+          },
+          "full_threshold": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Threshold"
+          },
+          "low_threshold": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low Threshold"
+          },
+          "restock_point": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restock Point"
+          },
+          "qty_primary": {
+            "type": "integer",
+            "title": "Qty Primary",
+            "default": 0
+          },
+          "qty_overflow": {
+            "type": "integer",
+            "title": "Qty Overflow",
+            "default": 0
+          },
+          "qty_total": {
+            "type": "integer",
+            "title": "Qty Total",
+            "default": 0
+          },
+          "needs_replenishment": {
+            "type": "boolean",
+            "title": "Needs Replenishment",
+            "default": false
+          },
+          "needs_restock": {
+            "type": "boolean",
+            "title": "Needs Restock",
+            "default": false
+          },
+          "configured": {
+            "type": "boolean",
+            "title": "Configured",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id",
+          "sku_name"
+        ],
+        "title": "RegistryRow"
+      },
+      "RegistrySuggestion": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "basket_size": {
+            "type": "string",
+            "title": "Basket Size"
+          },
+          "capacity_units": {
+            "type": "integer",
+            "title": "Capacity Units"
+          },
+          "full_threshold": {
+            "type": "integer",
+            "title": "Full Threshold"
+          },
+          "low_threshold": {
+            "type": "integer",
+            "title": "Low Threshold"
+          },
+          "restock_point": {
+            "type": "integer",
+            "title": "Restock Point"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id",
+          "basket_size",
+          "capacity_units",
+          "full_threshold",
+          "low_threshold",
+          "restock_point",
+          "reason"
+        ],
+        "title": "RegistrySuggestion"
+      },
       "ReleaseIn": {
         "properties": {
           "reason": {
@@ -7987,6 +9313,207 @@
         },
         "type": "object",
         "title": "ReleaseIn"
+      },
+      "ReplenishDoneIn": {
+        "properties": {
+          "qty_moved": {
+            "type": "integer",
+            "title": "Qty Moved"
+          }
+        },
+        "type": "object",
+        "required": [
+          "qty_moved"
+        ],
+        "title": "ReplenishDoneIn"
+      },
+      "ReplenishmentList": {
+        "properties": {
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/ReplenishmentTask"
+            },
+            "type": "array",
+            "title": "Tasks"
+          },
+          "at_zero": {
+            "type": "integer",
+            "title": "At Zero",
+            "description": "Pick faces with nothing left — these outrank the rest"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tasks",
+          "at_zero"
+        ],
+        "title": "ReplenishmentList"
+      },
+      "ReplenishmentTask": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "type": "string",
+            "title": "Sku Name"
+          },
+          "from_location_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Location Code"
+          },
+          "to_location_code": {
+            "type": "string",
+            "title": "To Location Code"
+          },
+          "qty_suggested": {
+            "type": "integer",
+            "title": "Qty Suggested"
+          },
+          "qty_moved": {
+            "type": "integer",
+            "title": "Qty Moved",
+            "default": 0
+          },
+          "qty_at_pick_face": {
+            "type": "integer",
+            "title": "Qty At Pick Face",
+            "default": 0
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "claimed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed By"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "age_seconds": {
+            "type": "integer",
+            "title": "Age Seconds",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "site_id",
+          "sku_id",
+          "sku_name",
+          "to_location_code",
+          "qty_suggested",
+          "status",
+          "created_at"
+        ],
+        "title": "ReplenishmentTask"
+      },
+      "RestockList": {
+        "properties": {
+          "requests": {
+            "items": {
+              "$ref": "#/components/schemas/RestockRequest"
+            },
+            "type": "array",
+            "title": "Requests"
+          }
+        },
+        "type": "object",
+        "required": [
+          "requests"
+        ],
+        "title": "RestockList"
+      },
+      "RestockRequest": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "type": "string",
+            "title": "Sku Name"
+          },
+          "qty_suggested": {
+            "type": "integer",
+            "title": "Qty Suggested"
+          },
+          "qty_requested": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qty Requested"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "raised_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raised By"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "site_id",
+          "sku_id",
+          "sku_name",
+          "qty_suggested",
+          "status",
+          "created_at"
+        ],
+        "title": "RestockRequest"
       },
       "ScanResolved": {
         "properties": {
@@ -8132,6 +9659,140 @@
           "scenarios"
         ],
         "title": "ScenarioList"
+      },
+      "ShortPickIn": {
+        "properties": {
+          "qty_found": {
+            "type": "integer",
+            "title": "Qty Found",
+            "description": "How many were actually on the shelf",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "ShortPickIn"
+      },
+      "ShortPickResult": {
+        "properties": {
+          "accepted": {
+            "type": "boolean",
+            "title": "Accepted"
+          },
+          "qty_found": {
+            "type": "integer",
+            "title": "Qty Found"
+          },
+          "qty_missing": {
+            "type": "integer",
+            "title": "Qty Missing"
+          },
+          "task_complete": {
+            "type": "boolean",
+            "title": "Task Complete"
+          },
+          "lines_remaining": {
+            "type": "integer",
+            "title": "Lines Remaining"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "accepted",
+          "qty_found",
+          "qty_missing",
+          "task_complete",
+          "lines_remaining",
+          "message"
+        ],
+        "title": "ShortPickResult"
+      },
+      "ShortfallList": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ShortfallRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "by_person": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Person",
+            "description": "Declarations per staffer — repeat offenders must be visible"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rows"
+        ],
+        "title": "ShortfallList"
+      },
+      "ShortfallRow": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "pick_line_id": {
+            "type": "integer",
+            "title": "Pick Line Id"
+          },
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "type": "string",
+            "title": "Sku Name"
+          },
+          "qty_required": {
+            "type": "integer",
+            "title": "Qty Required"
+          },
+          "qty_found": {
+            "type": "integer",
+            "title": "Qty Found"
+          },
+          "declared_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Declared By"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "pick_line_id",
+          "sku_id",
+          "sku_name",
+          "qty_required",
+          "qty_found",
+          "declared_by",
+          "status",
+          "created_at"
+        ],
+        "title": "ShortfallRow"
       },
       "Site": {
         "properties": {
@@ -9123,6 +10784,203 @@
           "message"
         ],
         "title": "TrainingResult"
+      },
+      "Transfer": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "from_site_code": {
+            "type": "string",
+            "title": "From Site Code"
+          },
+          "to_site_code": {
+            "type": "string",
+            "title": "To Site Code"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "dispatched_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dispatched At"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "total_dispatched": {
+            "type": "integer",
+            "title": "Total Dispatched",
+            "default": 0
+          },
+          "total_received": {
+            "type": "integer",
+            "title": "Total Received",
+            "default": 0
+          },
+          "variance": {
+            "type": "integer",
+            "title": "Variance",
+            "default": 0
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/TransferLine"
+            },
+            "type": "array",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "from_site_code",
+          "to_site_code",
+          "status"
+        ],
+        "title": "Transfer"
+      },
+      "TransferIn": {
+        "properties": {
+          "from_site_id": {
+            "type": "integer",
+            "title": "From Site Id"
+          },
+          "to_site_id": {
+            "type": "integer",
+            "title": "To Site Id"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/TransferLineIn"
+            },
+            "type": "array",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from_site_id",
+          "to_site_id"
+        ],
+        "title": "TransferIn"
+      },
+      "TransferLine": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "type": "string",
+            "title": "Sku Name"
+          },
+          "qty_dispatched": {
+            "type": "integer",
+            "title": "Qty Dispatched"
+          },
+          "qty_received": {
+            "type": "integer",
+            "title": "Qty Received"
+          },
+          "variance": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id",
+          "sku_name",
+          "qty_dispatched",
+          "qty_received"
+        ],
+        "title": "TransferLine"
+      },
+      "TransferLineIn": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id",
+          "quantity"
+        ],
+        "title": "TransferLineIn"
+      },
+      "TransferList": {
+        "properties": {
+          "transfers": {
+            "items": {
+              "$ref": "#/components/schemas/Transfer"
+            },
+            "type": "array",
+            "title": "Transfers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "transfers"
+        ],
+        "title": "TransferList"
       },
       "ValidationError": {
         "properties": {

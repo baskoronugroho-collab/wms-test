@@ -16,6 +16,7 @@ from typing import Literal
 
 from fastapi import HTTPException
 
+import daycolor
 import db
 
 MovementType = Literal[
@@ -101,12 +102,17 @@ async def apply(
         cur,
         "INSERT INTO stock_movements "
         "(site_id, sku_id, location_id, plate_id, qty_delta, movement_type, "
-        " ref_type, ref_id, reason_code, actor_email, scan_source, is_training) "
-        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+        " ref_type, ref_id, reason_code, actor_email, scan_source, is_training, "
+        " day_color_key) "
+        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
         (
             site_id, sku_id, location_id, plate_id, qty_delta, movement_type,
             ref_type, ref_id, reason_code, actor_email, scan_source,
             1 if is_training else 0,
+            # Stamped on every movement, but only meaningful on the ones that put
+            # stock IN: it is how the pick screen later names the oldest colour
+            # sitting in a basket without tracking individual units.
+            daycolor.for_moment()["key"] if qty_delta > 0 else None,
         ),
     )
 
@@ -181,12 +187,20 @@ async def enqueue_pos_push(cur, *, site_id: int, sku_id: int, is_training: bool)
     at the single outbound edge, so no route into it can leak — rather than at
     each of the dozen call sites that move stock.
     """
+    # A hub is a warehouse, not a store. Publishing its stock would have Grab
+    # selling units sitting in Bekasi, so the filter lives here beside the
+    # training suppression rather than at each of the dozen call sites that move
+    # stock (PRD §5.6).
+    site = await db.one(cur, "SELECT site_type FROM sites WHERE id = %s", (site_id,))
+    if site and site["site_type"] != "darkstore":
+        return
+
     avail = await available_to_sell(cur, site_id=site_id, sku_id=sku_id)
     status = "suppressed" if is_training else "pending"
     await db.run(
         cur,
-        "INSERT INTO pos_outbox (site_id, sku_id, available, status) "
-        "VALUES (%s, %s, %s, %s)",
+        "INSERT INTO pos_outbox (site_id, sku_id, available, status, message_type, "
+        "priority) VALUES (%s, %s, %s, %s, 'stock_level', 5)",
         (site_id, sku_id, avail, status),
     )
 
@@ -242,4 +256,45 @@ async def remember(cur, key: str | None, endpoint: str, response: dict) -> None:
         "INSERT INTO scan_events (idempotency_key, endpoint, response_json) "
         "VALUES (%s, %s, %s)",
         (key, endpoint, json.dumps(response, default=str)),
+    )
+
+
+# --- the five POS messages --------------------------------------------------
+
+# Order events are latency-critical; a stock sync is not. Priority is what keeps
+# an "order ready" from queuing behind two hundred stock updates.
+PRIORITY = {
+    "order_ready": 1,
+    "order_short": 1,
+    "stock_level": 5,
+}
+
+
+async def enqueue_pos_message(
+    cur,
+    *,
+    message_type: str,
+    site_id: int,
+    payload: dict,
+    order_ref: str | None = None,
+    sku_id: int | None = None,
+    available: int | None = None,
+    is_training: bool = False,
+) -> None:
+    """Queue any of the outbound POS messages on the same durable path.
+
+    Suppression lives here, at the single outbound edge, for the same reason the
+    stock push's does: a training site must never reach the POS, and a rule
+    enforced at one edge cannot be leaked by a new call site (PRD M8.2.1).
+    """
+    await db.run(
+        cur,
+        "INSERT INTO pos_outbox (site_id, sku_id, available, status, message_type, "
+        "priority, payload_json, order_ref) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+        (
+            site_id, sku_id, available,
+            "suppressed" if is_training else "pending",
+            message_type, PRIORITY.get(message_type, 5),
+            json.dumps(payload, default=str), order_ref,
+        ),
     )

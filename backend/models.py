@@ -903,3 +903,190 @@ class ReleaseIn(BaseModel):
 
 class OpnamePlanList(BaseModel):
     plans: list[OpnamePlan]
+
+
+# --- v2 model: registry, replenishment, short pick, transfers ---------------
+
+class RegistryRow(BaseModel):
+    sku_id: int
+    sku_name: str
+    brand_sku_code: str | None = None
+    primary_location_id: int | None = None
+    primary_location_code: str | None = None
+    overflow_location_id: int | None = None
+    overflow_location_code: str | None = None
+    full_threshold: int | None = None
+    low_threshold: int | None = None
+    restock_point: int | None = None
+    qty_primary: int = 0
+    qty_overflow: int = 0
+    qty_total: int = 0
+    needs_replenishment: bool = False
+    needs_restock: bool = False
+    configured: bool = False
+
+
+class RegistryList(BaseModel):
+    rows: list[RegistryRow]
+    total: int
+    unconfigured: int
+
+
+class RegistryIn(BaseModel):
+    site_id: int
+    full_threshold: int | None = None
+    low_threshold: int | None = None
+    restock_point: int | None = None
+
+
+class RegistryBulkIn(BaseModel):
+    site_id: int
+    sku_ids: list[int]
+    full_threshold: int | None = None
+    low_threshold: int | None = None
+    restock_point: int | None = None
+
+
+class RegistrySuggestion(BaseModel):
+    sku_id: int
+    basket_size: str
+    capacity_units: int
+    full_threshold: int
+    low_threshold: int
+    restock_point: int
+    reason: str
+
+
+class ReplenishmentTask(BaseModel):
+    id: int
+    site_id: int
+    sku_id: int
+    sku_name: str
+    from_location_code: str | None = None
+    to_location_code: str
+    qty_suggested: int
+    qty_moved: int = 0
+    qty_at_pick_face: int = 0
+    status: str
+    claimed_by: str | None = None
+    created_at: str
+    age_seconds: int = 0
+
+
+class ReplenishmentList(BaseModel):
+    tasks: list[ReplenishmentTask]
+    at_zero: int = Field(description="Pick faces with nothing left — these outrank the rest")
+
+
+class ReplenishDoneIn(BaseModel):
+    qty_moved: int
+
+
+class RestockRequest(BaseModel):
+    id: int
+    site_id: int
+    sku_id: int
+    sku_name: str
+    qty_suggested: int
+    qty_requested: int | None = None
+    status: str
+    raised_by: str | None = None
+    created_at: str
+
+
+class RestockList(BaseModel):
+    requests: list[RestockRequest]
+
+
+class ShortPickIn(BaseModel):
+    qty_found: int = Field(default=0, description="How many were actually on the shelf")
+
+
+class ShortPickResult(BaseModel):
+    accepted: bool
+    qty_found: int
+    qty_missing: int
+    task_complete: bool
+    lines_remaining: int
+    message: str
+
+
+class ShortfallRow(BaseModel):
+    id: int
+    pick_line_id: int
+    sku_id: int
+    sku_name: str
+    qty_required: int
+    qty_found: int
+    declared_by: str | None
+    status: str
+    created_at: str
+
+
+class ShortfallList(BaseModel):
+    rows: list[ShortfallRow]
+    by_person: dict[str, int] = Field(
+        default_factory=dict,
+        description="Declarations per staffer — repeat offenders must be visible",
+    )
+
+
+# --- transfers: the hub to darkstore hop ------------------------------------
+
+class TransferLineIn(BaseModel):
+    sku_id: int
+    quantity: int
+
+
+class TransferIn(BaseModel):
+    from_site_id: int
+    to_site_id: int
+    reference: str | None = None
+    note: str | None = None
+    lines: list[TransferLineIn] = Field(default_factory=list)
+
+
+class TransferLine(BaseModel):
+    sku_id: int
+    sku_name: str
+    qty_dispatched: int
+    qty_received: int
+    variance: int | None = None
+
+
+class Transfer(BaseModel):
+    id: int
+    reference: str
+    from_site_code: str
+    to_site_code: str
+    status: str
+    dispatched_at: str | None = None
+    received_at: str | None = None
+    total_dispatched: int = 0
+    total_received: int = 0
+    variance: int = 0
+    lines: list[TransferLine] = Field(default_factory=list)
+
+
+class TransferList(BaseModel):
+    transfers: list[Transfer]
+
+
+# --- POS outbox health ------------------------------------------------------
+
+class OutboxLane(BaseModel):
+    message_type: str
+    pending: int
+    suppressed: int
+    sent: int
+    failed: int
+    last_sent_at: str | None = None
+
+
+class OutboxHealth(BaseModel):
+    push_enabled: bool = Field(
+        description="False means shadow mode: every number computed, nothing sent"
+    )
+    lanes: list[OutboxLane]
+    oldest_pending_seconds: int | None = None
+    note: str

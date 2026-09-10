@@ -245,6 +245,29 @@ The data model still expresses location and SKU separately (so a future mixed-bi
 
 ---
 
+### 5.6 Two site types, one system **[DECIDED 10 Sep 2026]**
+
+The Logos hub runs **the same WMS** as the darkstores. That is what gives every hop in the
+chain of custody exactly one authority for the expected quantity:
+
+**Brand → Logos** (expected = the brand's manifest, *if one exists*) → **Logos →
+darkstore** (expected = the dispatch the WMS itself generated, always) → shelf.
+
+So even when the brand sends no manifest, the second hop is always checkable, because we
+produced the number. The chain is blind only at the very first hop — a far stronger
+position than one hub receiving blind and every site downstream inheriting the doubt.
+
+Two rules follow, and both are bugs if left implicit:
+
+- **A hub never sends message 3.** It is a warehouse, not a store. Publishing hub stock
+  would have Grab selling units sitting in Bekasi. Enforced at the outbox edge on
+  `site_type`, which v1 stored but never branched on.
+- **A hub needs a dispatch flow** the receiving site books against: pick a tote, seal it,
+  record the quantity, book it out. The `transfers` table exists from v1 but has no API.
+
+A hub does not pick customer orders, run a pick queue board, or publish stock. It
+receives, decants, binds identity, stores and dispatches.
+
 ## 6. Domain model and glossary
 
 | Term | Definition |
@@ -347,6 +370,39 @@ Physical requirements, all of which need brand sign-off (§16):
 - **Placement rule per SKU**, configured once and shown on screen during labelling: never over the brand's own barcode, batch code, expiry date, or primary artwork face.
 - **Removable adhesive**, so the customer can peel it cleanly, unless the brand agrees otherwise.
 - Rolls are consumable stock. The WMS tracks which plate ranges have been issued to which site so a supervisor can see when a station is running low, and so a duplicate range from a printer misfeed is detectable.
+
+### 7.5 Slot registry: one pick face, one overflow, three thresholds **[DECIDED 10 Sep 2026]**
+
+A supervisor assigns each SKU a **primary rack location** once. Everything afterwards is
+decided by three numbers set at the same time.
+
+| Threshold | Measured on | Fires |
+|---|---|---|
+| **Full** | The primary location | Surplus units are directed to overflow |
+| **Low** | The primary location | A replenishment task: move overflow → primary |
+| **Restock point** | Primary **+** overflow | A restock request to the hub |
+
+**The low threshold must never be measured on the total.** Primary empty with overflow
+full still totals healthy, and the picker walks up to a bare rack — which is precisely
+the failure overflow exists to prevent. The inverse also breaks: primary full and
+overflow empty raises a replenishment task with nothing to move. Two of these thresholds
+measure the pick face; only the third counts everything held.
+
+**Overflow is storage, never a pick face.** A picker is only ever sent to the primary
+location. When the primary runs low, a separate replenishment task moves stock across —
+proactively, never mid-order, because a fifteen-minute promise has no room for a detour.
+This keeps one pick face per SKU, which is what makes §5.5 and the day-colour FIFO rule
+survive the introduction of a second location.
+
+**Schema consequence.** The v1 constraint `uq_slot_site_sku (site_id, sku_id)` permits
+exactly one basket per SKU per site and therefore makes overflow impossible. It is
+replaced by a uniqueness rule on `(site_id, sku_id, role)` where role is `primary` or
+`overflow`, preserving the guarantee that matters — one *pick face* per SKU — while
+allowing a second, non-pickable location.
+
+**Day colour is recorded per putaway movement**, so the pick screen can name which colour
+to take first (*"take the Wednesday colour first"*). The system still cannot enforce FIFO
+over untracked units in Mode A, but it can stop it being a memory test.
 
 ## 8. Functional requirements
 
@@ -697,34 +753,87 @@ These are hard rules enforced at the service layer, not conventions:
 
 ---
 
+### 8.9 Short pick — when the stock is not there **[DESIGNED 10 Sep 2026]**
+
+Previously listed in §15 as not covered. It is the most expensive gap in the product:
+Grab refunds the customer and charges the merchant by default, so everything here exists
+to reach the POS before the charge does.
+
+- **8.9.1** The picker declares a shortfall in **two taps and no typing**: *Item is not
+  here* → *none at all*, or a stepper for how many were actually found.
+- **8.9.2** The picker continues with the rest of the order. One missing line must never
+  strand the other four.
+- **8.9.3** In one transaction the WMS releases the allocation, corrects on-hand to what
+  the picker actually found, and queues **message 5**.
+- **8.9.4** A supervisor exception is raised in parallel, naming the staffer.
+
+**8.9.5 — the deliberate exception.** Everywhere else in this product, only a
+supervisor's signature moves stock (§M6.3.3). Here the correction is immediate and
+unsigned. If it waited, the system would keep selling stock that does not exist and
+produce a second short pick, then a third; the signature catches up afterwards while the
+bleeding stops now.
+
+**The cost of that, stated plainly:** a staffer can zero a SKU with two taps. So the
+exception must be loud, the audit row must name them, and repeat declarations by one
+person must be visible to a supervisor. That reporting is part of this requirement, not
+a later nicety.
+
 ## 9. POS integration
 
-### 9.1 Ownership of the stock number — the open integration decision
+### 9.1 The boundary **[DECIDED 10 Sep 2026 — supersedes the v1 proposal]**
 
-Today the POS holds a stock quantity per SKU, is updated on inbound, and auto-deducts on completed orders. If the WMS also deducts on pick, the same sale is subtracted twice.
+**Grab and the POS already talk, and that conversation is not touched. The WMS never
+calls Grab.** Every Ninja-side need fits in five messages across one boundary.
 
-**Proposed contract, to be agreed with the Hiryu POS team:**
+The v1 draft proposed that the POS stop auto-deducting on a sale and instead consume the
+WMS's available-to-sell. That is now rejected. It required a change to a system another
+Ninja team owns, made the WMS the single point of failure for Grab's stock numbers, and
+solved a problem that a simpler split solves for free.
 
-| Concern | Owner |
+**The POS keeps deducting sales exactly as it does today** — which is also what Hiryu
+already does in Malaysia: *updated on inbound only, sales auto-deduct* (1 Sep sharing
+session). The WMS never sends a sale-driven number, so one unit is never subtracted
+twice. The two systems own disjoint event classes:
+
+| Event class | Owner |
 |---|---|
-| Grab connectivity, menu, store registration | **POS** |
-| Order ticket, receipt, compliance photo, dispatch | **POS** |
-| Physical inventory: location, on-hand, counts, movements | **WMS** |
-| The number listed as available on Grab | **WMS computes → POS publishes** |
+| A unit was **sold** | POS (unchanged) |
+| A unit was **received**, **moved** or **corrected** | WMS |
+| Grab connectivity, menu, receipt, compliance photo | POS (unchanged) |
+| Physical location, on-hand, counts, movements | WMS |
 
-Under this contract the POS **stops** auto-deducting from its own counter and instead consumes the WMS's available-to-sell. The POS remains the system of record for everything customer-facing; the WMS becomes the system of record for everything physical.
+### 9.2 The five messages
 
-**This requires Hiryu-side change and is not within Ninja WMS's control.** It is flagged in §16 as blocking, with a fallback: if the POS cannot stop deducting, run the WMS in **shadow mode** for the pilot — WMS tracks and reports but does not push, and the two numbers are reconciled daily by hand until the divergence is understood. That is a deliberate pilot posture, not a permanent design.
+| # | Message | Direction | Fires when | Shape | Urgency |
+|---|---|---|---|---|---|
+| 1 | **Order to pick** | POS → WMS | Grab order lands in the POS | Order ref + lines | Immediate |
+| 2 | **Order cancelled** | POS → WMS | Customer or Grab cancels | Order ref | Immediate |
+| 3 | **Stock level** | WMS → POS | Putaway complete · variance signed off | **Absolute** qty per SKU per darkstore | Eventual |
+| 4 | **Order ready** | WMS → POS | Pack scan — the bag is sealed | Order ref + timestamp | Immediate |
+| 5 | **Order short** | WMS → POS | Picker declares a shortfall | Order ref, line, found *n* of *m* | Immediate |
 
-### 9.2 Interfaces
+Five rules make the contract survivable, and each is enforced in one place:
 
-**Inbound to WMS — order created.** POS calls `POST /api/pos/orders` with external order ref, site code, brand code, and lines of `{sku_code | barcode, quantity}`. Idempotent on the external order ref. The WMS allocates and creates a pick task. A webhook is preferred; a polling fallback is acceptable if Hiryu cannot call out.
+- **Absolute quantities, never deltas.** A lost delta is wrong forever; a lost snapshot is
+  corrected by the next one.
+- **Every message idempotent.** Stock keyed on `(site, sku)` — last write wins. Order
+  events on `(order_ref, event)` — a duplicate is a no-op. Assume the POS replays.
+- **Outbox, never a direct call.** If the POS is down, a putaway still completes and the
+  message waits. Already built as `pos_outbox`.
+- **Two lanes.** A stock sync stuck behind two hundred updates is fine; an *order ready*
+  stuck behind them costs a delivery. Order events jump the queue.
+- **Darkstore sites only send message 3.** A hub is a warehouse, not a store — see §5.6.
+  The filter sits at the outbox edge beside the training suppression, not at each call
+  site.
 
-**Outbound from WMS — stock changed.** On every balance change the WMS pushes `{site, sku, available_to_sell}` to a POS endpoint. Batched, at most once per SKU per few seconds, with retry and a reconciliation sweep so a missed push self-heals.
+**Message 5 is a statement of fact, not a request.** The WMS reports *found 2 of 5*; the
+POS decides refund, substitution or cancellation, because the POS owns the customer
+relationship. A warehouse system must not place itself inside Grab's conversation with a
+customer.
 
-**Outbound from WMS — pick complete.** Optional signal to the POS that physical picking is done, so the ticket can advance to packing.
-
-All calls carry a shared secret held in Substrait secrets, never in code.
+**This is a proposal to Ninja's POS team, not an agreement.** It has not been put to them
+as of 10 September 2026. Messages 1, 2, 4 and 5 are blocked on their build; nothing else
+in the warehouse is. See §9.4.
 
 ### 9.3 Dummy order generator (v1 test harness)
 
@@ -736,6 +845,17 @@ Required by the product owner for testing before Hiryu integration exists.
 - **9.3.4** **The generator only targets training sites (M8).** An earlier draft allowed it against any site, which would have had a test order consume real stock and push a wrong number to Grab. Generating against a non-training site is refused by the service, not hidden by a flag.
 
 Building the real integration against the same endpoint the dummy uses means the switch to live Hiryu is configuration, not a rewrite.
+
+### 9.4 Shadow mode is the sequencing advantage
+
+The WMS already computes every stock figure and sends nothing (`POS_PUSH_ENABLED=false`).
+Both sites, the registry, picking, counting and the exception flows can be piloted with
+the boundary switched off — and running one real delivery cycle in shadow produces
+*evidence*: the numbers the WMS would have sent, against what the shelves actually held.
+
+That turns the conversation with the POS team from "please build against our spec" into
+"here is a fortnight of our numbers against reality". Do that before asking.
+
 
 ---
 
@@ -1117,6 +1237,25 @@ P0–P5 are within Ninja's control. **P6 depends on the Hiryu POS team** and sho
 ---
 
 ## 16. Open questions
+
+**Closed on 10 September 2026** — see §5.6, §7.5, §8.9 and §9: stock-number ownership
+(the POS keeps deducting sales); the hub runs the same WMS; overflow is replenish-only
+with three thresholds; the short pick is designed; the putaway signature records rather
+than gates.
+
+**Newly open, and now blocking:**
+
+- **Q20 — Will Ninja's POS team build messages 1, 2, 4 and 5, and when?** Not yet
+  approached as of 10 Sep. Message 3 needs nothing from them if the WMS pushes and they
+  poll. Everything else in the warehouse is unblocked; the order path is not.
+- **Q21 — Does the POS auto-refund a short line, or does a human decide?** Changes how
+  fast message 5 must arrive, and whether it needs an acknowledgement.
+- **Q22 — Who sets the three thresholds per SKU for 118 Wardah SKUs, and from what?**
+  A default from the space model is computable; a per-SKU judgement is 118 decisions
+  somebody has to make before go-live.
+- **Q23 — Does Wardah ship a manifest?** Still unknown. Discovery inbound is being built
+  regardless, but variance detection at hop 1 depends on it.
+
 
 Ordered by how much they block.
 
