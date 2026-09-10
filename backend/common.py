@@ -64,7 +64,14 @@ async def plate_by_code(code: str) -> dict | None:
 
 
 async def slot_for(site_id: int, sku_id: int) -> dict | None:
-    """Where this SKU lives at this site. One answer, by construction (§5.5)."""
+    """The PICK FACE for this SKU at this site — never the overflow.
+
+    Every caller of this function is deciding where to send a person: putaway,
+    picking, order allocation. Overflow is storage, and a picker is never sent
+    there (PRD 7.5), so the role filter below is what keeps that promise. Without
+    it, the moment a SKU gained an overflow basket this could return either one
+    and a picker would be walked to the wrong rack roughly half the time.
+    """
     return await db.fetch_one(
         "SELECT sa.id AS slot_id, sa.basket_id, bk.basket_size, "
         "       l.id AS location_id, l.code AS location_code, "
@@ -74,8 +81,21 @@ async def slot_for(site_id: int, sku_id: int) -> dict | None:
         "JOIN locations l ON l.id = bk.location_id "
         "JOIN levels lv ON lv.id = l.level_id "
         "JOIN racks r ON r.id = lv.rack_id "
-        "WHERE sa.site_id = %s AND sa.sku_id = %s",
+        "WHERE sa.site_id = %s AND sa.sku_id = %s AND sa.slot_role = 'primary'",
         (site_id, sku_id),
+    )
+
+
+async def slot_for_role(site_id: int, sku_id: int, role: str) -> dict | None:
+    """A specific slot by role — for replenishment, which must find the overflow."""
+    return await db.fetch_one(
+        "SELECT sa.id AS slot_id, sa.basket_id, bk.basket_size, "
+        "       l.id AS location_id, l.code AS location_code "
+        "FROM slot_assignments sa "
+        "JOIN baskets bk ON bk.id = sa.basket_id "
+        "JOIN locations l ON l.id = bk.location_id "
+        "WHERE sa.site_id = %s AND sa.sku_id = %s AND sa.slot_role = %s",
+        (site_id, sku_id, role),
     )
 
 

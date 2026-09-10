@@ -239,21 +239,42 @@ async def assign_slot(
         raise HTTPException(
             409, f"That basket already holds {occupied['name_display']}."
         )
-    current = await common.slot_for(body.site_id, body.sku_id)
-    if current:
+    role = body.slot_role if body.slot_role in ("primary", "overflow") else "primary"
+    # A SKU may hold one pick face AND one overflow — that is the whole point of
+    # the role. What it may not do is hold two of either (PRD 7.5).
+    same_role = await db.fetch_one(
+        "SELECT l.code FROM slot_assignments sa "
+        "JOIN baskets bk ON bk.id = sa.basket_id "
+        "JOIN locations l ON l.id = bk.location_id "
+        "WHERE sa.site_id = %s AND sa.sku_id = %s AND sa.slot_role = %s",
+        (body.site_id, body.sku_id, role),
+    )
+    if same_role:
         raise HTTPException(
             409,
-            f"{sku['name_display']} already has a basket at "
-            f"{current['location_code']}. Use relocate to move it.",
+            f"{sku['name_display']} already has a {role} basket at "
+            f"{same_role['code']}. Use relocate to move it.",
         )
+    if role == "overflow":
+        primary = await db.fetch_one(
+            "SELECT id FROM slot_assignments WHERE site_id = %s AND sku_id = %s "
+            "AND slot_role = 'primary'",
+            (body.site_id, body.sku_id),
+        )
+        if not primary:
+            raise HTTPException(
+                409,
+                "Give this product a pick face before an overflow — overflow only "
+                "ever feeds a primary rack.",
+            )
 
     async with db.tx() as cur:
         slot_id = await db.run(
             cur,
             "INSERT INTO slot_assignments (site_id, sku_id, basket_id, created_by, "
-            "created_during_inbound) VALUES (%s,%s,%s,%s,%s)",
+            "created_during_inbound, slot_role) VALUES (%s,%s,%s,%s,%s,%s)",
             (body.site_id, body.sku_id, basket_id, user.email,
-             1 if body.created_during_inbound else 0),
+             1 if body.created_during_inbound else 0, role),
         )
         await ledger.audit(cur, actor_email=user.email, entity="slot",
                            entity_id=slot_id, action="assign",

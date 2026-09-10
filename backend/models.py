@@ -193,6 +193,11 @@ class SlotIn(BaseModel):
     sku_id: int
     basket_id: int | None = None
     created_during_inbound: bool = False
+    slot_role: str = Field(
+        default="primary",
+        description="primary = the pick face. overflow = storage only; a picker "
+                    "is never sent there.",
+    )
 
 
 class Slot(BaseModel):
