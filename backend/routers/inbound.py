@@ -153,6 +153,26 @@ async def scan_into_receipt(
             "message": f"{sku['name_display']} belum punya keranjang di sini. Buat sekarang?",
         }
 
+    # Once the pick face is at its full threshold, surplus goes to overflow —
+    # this is the only path by which stock ever gets INTO overflow, and without
+    # it the whole replenishment cycle has an empty source (PRD 7.5). The pick
+    # face is still preferred whenever it has room, so the common case is
+    # unchanged and the staffer is only ever sent to a second rack when the
+    # first genuinely cannot take more.
+    routed_to_overflow = False
+    reg = await db.fetch_one(
+        "SELECT full_threshold FROM slot_assignments "
+        "WHERE site_id = %s AND sku_id = %s AND slot_role = 'primary'",
+        (site_id, sku["id"]),
+    )
+    if reg and reg["full_threshold"]:
+        at_face = await common.qty_at(site_id, sku["id"], slot["location_id"])
+        if at_face >= reg["full_threshold"]:
+            overflow = await common.slot_for_role(site_id, sku["id"], "overflow")
+            if overflow:
+                slot = overflow
+                routed_to_overflow = True
+
     qty = max(1, body.qty)
     async with db.tx() as cur:
         await ledger.apply(
@@ -185,13 +205,16 @@ async def scan_into_receipt(
 
         result = {
             "accepted": True,
-            "outcome": "over_capacity" if over else "put_away",
+            "outcome": ("overflow" if routed_to_overflow
+                        else "over_capacity" if over else "put_away"),
             "sku": common.sku_dict(sku),
             "location_code": slot["location_code"],
             "location_id": slot["location_id"],
             "qty_in_basket": on_hand,
             "session_total": int(total_row["n"]),
             "message": (
+                f"Rak utama penuh — simpan di rak cadangan {slot['location_code']}."
+                if routed_to_overflow else
                 f"Keranjang penuh ({on_hand} dari kira-kira {cap}). Tetap disimpan."
                 if over else f"Simpan di {slot['location_code']}."
             ),
