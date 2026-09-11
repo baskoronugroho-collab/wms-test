@@ -316,15 +316,15 @@ footer.colophon{
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">
-      <span>Product Requirements</span><span>v0.1</span><span class="muted">Draft for review</span>
+      <span>Product Requirements</span><span>v2.0</span><span class="muted">Decisions locked for build</span>
     </div>
     <h1 class="title" id="doc-title">Ninja Kilat WMS</h1>
-    <p class="standfirst" id="standfirst">The physical-inventory layer underneath the GrabMart Kilat POS: where a unit goes, where a picker finds it, and whether it is actually still there.</p>
+    <p class="standfirst" id="standfirst">The warehouse layer behind GrabMart Kilat and Ninja&rsquo;s own quick-commerce channels: where a unit goes, where a picker finds it, and whether it is actually still there.</p>
     <div class="figs">
       <div class="fig"><b>118</b><i>Wardah SKUs</i></div>
-      <div class="fig"><b>10</b><i>stations at scale</i></div>
-      <div class="fig"><b>28</b><i>exceptions deferred</i></div>
-      <div class="fig"><b>16</b><i>open questions</i></div>
+      <div class="fig"><b>10&ndash;30</b><i>stations in 6 months</i></div>
+      <div class="fig"><b>5</b><i>messages to the POS</i></div>
+      <div class="fig"><b>8</b><i>open questions</i></div>
     </div>
     <dl class="meta-grid" id="meta"></dl>
   </header>
@@ -338,8 +338,8 @@ footer.colophon{
 
   <footer class="colophon">
     <span>Ninja Van &times; GrabMart Kilat &middot; fulfilment</span>
-    <span>Sources: HANDOFF.md &middot; Space Model &middot; Substrait deploy contract</span>
-    <span>3 September 2026</span>
+    <span>Sources: owner decisions 3&ndash;11 Sep &middot; Kilat WMS Audit &middot; deployed app</span>
+    <span>11 September 2026</span>
   </footer>
 </div>
 
