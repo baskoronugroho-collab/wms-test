@@ -603,6 +603,45 @@ Two rules follow, and both are bugs if left implicit:
 A hub does not pick customer orders, run a pick queue board, or publish stock. It
 receives, decants, binds identity, stores and dispatches.
 
+### 5.7 Operating decisions — 11 September 2026 **[DECIDED]**
+
+Answers from the product owner to the audit questionnaire. Where a decision reverses
+something already specified or built, the section it supersedes is named.
+
+| # | Question | Decision | Consequence |
+|---|---|---|---|
+| 1 | Sequence | Re-wire the regressed screens before any new feature | Only 01 and 02 are live today; 16 screens need re-attaching, 20 need handlers |
+| 2 | Second brand | Within 3 months | Scale work (pagination, N+1 queries, multi-station view) moves up |
+| 3 | Oversell buffer | **0** — publish the exact count | Built as a per-site setting defaulting to 0, so it can change without a deploy |
+| 4 | Count method | **Scan every unit** | Counting screen gains a scan zone; keypad stays only as fallback. Supersedes the keypad-only design |
+| 5 | Count frequency | **ABC tiers from day one** | A = top 20% by units picked over 4 weeks, weekly; B/C monthly. New SKUs start as A until they have history |
+| 6 | Count tolerance | **Zero** — any difference flags | Unchanged |
+| 7 | Mismatch | **One forced recount before the system number is revealed** | Closes E19 |
+| 8 | Service targets | Industry defaults | 95% on-time dispatch · pick+pack < 5 min · < 3% out-of-stock · 98% count accuracy |
+| 9 | Grab clock | Starts when the order reaches the POS — the rider is already assigned | `promised_at` = received + 15 min |
+| 10 | Ninja clock | Starts when the customer places the order | `promised_at` = placed + 60 min; the channel must send `placed_at` |
+| 11 | Substitution | None — report only, the POS decides | Unchanged |
+| 12 | Cancel after pick | **Anyone, from a return-to-shelf queue** | New task type; returning stock re-publishes via message 3 |
+| 13 | Overflow | **Pick from overflow until it is empty; new inbound always goes to the original rack** | **Supersedes §7.5's replenishment.** No replenishment task; the low threshold is removed; registry keeps two numbers (full, restock) |
+| 14 | Slotting | By brand / category, assigned manually by a supervisor | Suggester groups by category; no velocity auto-slotting |
+| 15 | Expiry | Not recorded — inbound date only, visible on the label | No FEFO in system; day colour is the only FIFO signal |
+| 16 | Thresholds | Accept system defaults; supervisor tunes over month one | Closes Q22 |
+| 17 | Photos | Admin uploads during SKU onboarding; go-live without is allowed | Photo upload in product admin, using the declared object storage |
+| 18 | Devices | Laptop/tablet + scanner gun; sometimes Android camera | Camera scanning added as a fallback on every scan screen |
+| 19 | Wi-Fi | Unknown | Small client-side scan buffer, replayed on reconnect (idempotency keys make this safe) |
+| 20 | Stations at 6 months | 10–30 | Multi-station view and live updates instead of polling |
+| 22 | First non-Grab channel | WhatsApp | Adds `channel` to orders; WhatsApp uses the same five messages, from a new sender |
+| 23 | Crossdock dwell | 7 days (placeholder) | Flag stock staged at the hub longer than this |
+| 24 | Auto-provision end | Not set | Recommended: switch off once the staff admin screen is live |
+
+**On decision 13 — one FIFO edge case, accepted.** Overflow is usually the same delivery
+as the stock on the rack, so picking it first is FIFO-correct. The exception: if a
+delivery overflows a rack that still holds an *older* batch, picking overflow first
+takes the newer units before the older ones on the rack. The older batch waits only
+until overflow empties. With 24–36 month shelf life and no expiry tracked (decision 15),
+that delay is acceptable. Its real benefit is that overflow slots are freed quickly,
+which matters with 57 spare positions and a second brand inside three months.
+
 ## 6. Domain model and glossary
 
 | Term | Definition |
@@ -706,7 +745,7 @@ Physical requirements, all of which need brand sign-off (§16):
 - **Removable adhesive**, so the customer can peel it cleanly, unless the brand agrees otherwise.
 - Rolls are consumable stock. The WMS tracks which plate ranges have been issued to which site so a supervisor can see when a station is running low, and so a duplicate range from a printer misfeed is detectable.
 
-### 7.5 Slot registry: one pick face, one overflow, three thresholds **[DECIDED 10 Sep 2026]**
+### 7.5 Slot registry: one pick face, one overflow, three thresholds **[PARTLY SUPERSEDED 11 Sep 2026 — see §5.7 decision 13: pick from overflow first, no replenishment task, no low threshold]**
 
 A supervisor assigns each SKU a **primary rack location** once. Everything afterwards is
 decided by three numbers set at the same time.
