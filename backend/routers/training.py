@@ -81,9 +81,13 @@ async def _restock(cur, site_id: int) -> int:
     for s in slots:
         await db.run(
             cur,
+            # This bypasses the ledger on purpose (a reset is not a movement), so
+            # it must stamp stocked_since itself or seeded stock has no arrival
+            # time and the rack-vs-overflow FIFO rule cannot order it.
             "INSERT INTO inventory_balances (site_id, sku_id, location_id, "
-            "qty_on_hand, version) VALUES (%s,%s,%s,%s,1) "
-            "ON DUPLICATE KEY UPDATE qty_on_hand = %s, qty_allocated = 0",
+            "qty_on_hand, version, stocked_since) VALUES (%s,%s,%s,%s,1,NOW()) "
+            "ON DUPLICATE KEY UPDATE qty_on_hand = %s, qty_allocated = 0, "
+            "stocked_since = NOW()",
             (site_id, s["sku_id"], s["location_id"], BASE_QTY, BASE_QTY),
         )
     return len(slots)

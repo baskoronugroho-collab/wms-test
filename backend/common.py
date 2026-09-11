@@ -108,8 +108,13 @@ async def pick_location_for(site_id: int, sku_id: int) -> dict | None:
         "LEFT JOIN inventory_balances ib ON ib.site_id = sa.site_id "
         "     AND ib.sku_id = sa.sku_id AND ib.location_id = l.id "
         "WHERE sa.site_id = %s AND sa.sku_id = %s "
+        # Stocked locations first. Among those, the OLDEST batch wins. A NULL
+        # stocked_since means the stock arrived by a path that did not record
+        # its arrival (seed, reset, bulk upload) -- unknown age is treated as
+        # oldest, because picking it first is the safe FIFO error, and the
+        # value repairs itself the next time the location empties.
         "ORDER BY (COALESCE(ib.qty_on_hand,0) - COALESCE(ib.qty_allocated,0) > 0) DESC, "
-        "         ib.stocked_since IS NULL, ib.stocked_since ASC, "
+        "         ib.stocked_since IS NOT NULL, ib.stocked_since ASC, "
         "         (sa.slot_role = 'primary') DESC "
         "LIMIT 1",
         (site_id, sku_id),
