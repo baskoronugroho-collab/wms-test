@@ -622,7 +622,7 @@ something already specified or built, the section it supersedes is named.
 | 10 | Ninja clock | Starts when the customer places the order | `promised_at` = placed + 60 min; the channel must send `placed_at` |
 | 11 | Substitution | None — report only, the POS decides | Unchanged |
 | 12 | Cancel after pick | **Anyone, from a return-to-shelf queue** | New task type; returning stock re-publishes via message 3 |
-| 13 | Overflow | **Pick from overflow until it is empty; new inbound always goes to the original rack** | **Supersedes §7.5's replenishment.** No replenishment task; the low threshold is removed; registry keeps two numbers (full, restock) |
+| 13 | Overflow | **Pick from whichever location holds the older stock; new inbound always goes to the original rack first, overflow only when it is full** | **Supersedes §7.5's replenishment.** No replenishment task; the low threshold is removed; registry keeps two numbers (full, restock). The WMS tracks when each location's current stock arrived, not dividers |
 | 14 | Slotting | By brand / category, assigned manually by a supervisor | Suggester groups by category; no velocity auto-slotting |
 | 15 | Expiry | Not recorded — inbound date only, visible on the label | No FEFO in system; day colour is the only FIFO signal |
 | 16 | Thresholds | Accept system defaults; supervisor tunes over month one | Closes Q22 |
@@ -634,13 +634,26 @@ something already specified or built, the section it supersedes is named.
 | 23 | Crossdock dwell | 7 days (placeholder) | Flag stock staged at the hub longer than this |
 | 24 | Auto-provision end | Not set | Recommended: switch off once the staff admin screen is live |
 
-**On decision 13 — one FIFO edge case, accepted.** Overflow is usually the same delivery
-as the stock on the rack, so picking it first is FIFO-correct. The exception: if a
-delivery overflows a rack that still holds an *older* batch, picking overflow first
-takes the newer units before the older ones on the rack. The older batch waits only
-until overflow empties. With 24–36 month shelf life and no expiry tracked (decision 15),
-that delay is acceptable. Its real benefit is that overflow slots are freed quickly,
-which matters with 57 spare positions and a second brand inside three months.
+**On decision 13 — how the WMS chooses between rack and overflow.** The picker is
+always sent to one location. When a SKU sits in two, the WMS sends them to the one whose
+current stock arrived first. That is derivable without knowing anything about dividers:
+each location remembers when it last went from empty to stocked (`stocked_since`), and
+the pick goes to the earliest. Within that location, FIFO is the coloured divider, chosen
+by eye. Worked through:
+
+- Rack holds Monday stock, Wednesday delivery overflows → rack (Mon) is picked first, then
+  overflow (Wed). Correct.
+- Rack empties and is refilled Friday while overflow still holds Wednesday → overflow
+  (Wed) is picked first. Correct — the older batch wins even though it is in overflow.
+
+New inbound always fills the original rack first and spills to overflow only past the full
+threshold, so overflow is drained as soon as it is the oldest, and slots are freed quickly.
+
+**Decision 21 — POS sync is deferred.** The five-message contract stands and the outbox
+keeps queuing, but no approach to the POS team yet. **WhatsApp is the first channel to
+build and test**, using the same five messages from its own sender. **Decision 24 —
+auto-provision stays on** until go-live; the staff admin screen must be live and
+controlled before real stock lands.
 
 ## 6. Domain model and glossary
 

@@ -86,6 +86,36 @@ async def slot_for(site_id: int, sku_id: int) -> dict | None:
     )
 
 
+async def pick_location_for(site_id: int, sku_id: int) -> dict | None:
+    """Where to send a PICKER: the location whose current stock is oldest.
+
+    A SKU may sit in its rack and an overflow slot at once. The picker goes to
+    whichever holds the older batch -- usually the rack, but the overflow when
+    the rack has since been emptied and refilled (PRD 5.7, decision 13). Falls
+    back to the pick face when nothing is stocked, so an order can still be
+    short-allocated against a known location.
+    """
+    return await db.fetch_one(
+        "SELECT sa.id AS slot_id, sa.basket_id, sa.slot_role, bk.basket_size, "
+        "       l.id AS location_id, l.code AS location_code, "
+        "       r.code AS rack_code, lv.level_no, "
+        "       COALESCE(ib.qty_on_hand,0) - COALESCE(ib.qty_allocated,0) AS available "
+        "FROM slot_assignments sa "
+        "JOIN baskets bk ON bk.id = sa.basket_id "
+        "JOIN locations l ON l.id = bk.location_id "
+        "JOIN levels lv ON lv.id = l.level_id "
+        "JOIN racks r ON r.id = lv.rack_id "
+        "LEFT JOIN inventory_balances ib ON ib.site_id = sa.site_id "
+        "     AND ib.sku_id = sa.sku_id AND ib.location_id = l.id "
+        "WHERE sa.site_id = %s AND sa.sku_id = %s "
+        "ORDER BY (COALESCE(ib.qty_on_hand,0) - COALESCE(ib.qty_allocated,0) > 0) DESC, "
+        "         ib.stocked_since IS NULL, ib.stocked_since ASC, "
+        "         (sa.slot_role = 'primary') DESC "
+        "LIMIT 1",
+        (site_id, sku_id),
+    )
+
+
 async def slot_for_role(site_id: int, sku_id: int, role: str) -> dict | None:
     """A specific slot by role — for replenishment, which must find the overflow."""
     return await db.fetch_one(

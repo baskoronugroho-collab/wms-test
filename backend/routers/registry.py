@@ -90,7 +90,9 @@ async def _row(site_id: int, sku_id: int) -> dict | None:
             primary["restock_point"] is not None
             and (qty_primary + qty_overflow) <= primary["restock_point"]
         ),
-        "configured": primary["full_threshold"] is not None,
+        # Two numbers matter now (decision 13): full and restock. low is legacy.
+        "configured": primary["full_threshold"] is not None
+                      and primary["restock_point"] is not None,
     }
 
 

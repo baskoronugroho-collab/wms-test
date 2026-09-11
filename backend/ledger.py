@@ -77,8 +77,8 @@ async def apply(
             await db.run(
                 cur,
                 "INSERT INTO inventory_balances "
-                "(site_id, sku_id, location_id, qty_on_hand, version) "
-                "VALUES (%s, %s, %s, %s, 1)",
+                "(site_id, sku_id, location_id, qty_on_hand, version, stocked_since) "
+                "VALUES (%s, %s, %s, %s, 1, NOW())",
                 (site_id, sku_id, location_id, qty_delta),
             )
         else:
@@ -91,10 +91,21 @@ async def apply(
                         f"tried to remove {abs(qty_delta)}."
                     ),
                 )
+            # stocked_since marks when the CURRENT batch at this location began:
+            # set when the location goes from empty to stocked, cleared when it
+            # empties, untouched otherwise. It is how the picker is sent to the
+            # older of a rack and its overflow (PRD 5.7, decision 13).
+            if existing["qty_on_hand"] == 0 and new_qty > 0:
+                since_sql = "stocked_since = NOW()"
+            elif new_qty == 0:
+                since_sql = "stocked_since = NULL"
+            else:
+                since_sql = "stocked_since = stocked_since"
             await db.run(
                 cur,
                 "UPDATE inventory_balances "
-                "SET qty_on_hand = %s, version = version + 1 WHERE id = %s",
+                "SET qty_on_hand = %s, version = version + 1, " + since_sql + " "
+                "WHERE id = %s",
                 (new_qty, existing["id"]),
             )
 

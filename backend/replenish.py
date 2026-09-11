@@ -1,15 +1,11 @@
-"""Replenishment and restock triggers (PRD §7.5).
+"""Restock trigger (PRD 5.7 decision 13, and 7.5).
 
-Two different questions that look alike and must never share a threshold:
+There is no replenishment task any more. When a SKU sits in both its rack and an
+overflow slot, the picker is simply sent to whichever holds the older stock
+(common.pick_location_for), so nothing ever needs moving between the two.
 
-  * **Replenish** — is the *pick face* low, and is there stock in overflow to
-    move? Measured on the primary location alone.
-  * **Restock** — is *everything we hold* low, so the hub should send more?
-    Measured on primary + overflow.
-
-Using a total for the first is the failure this module exists to prevent: a pick
-face at zero with a full overflow still totals healthy, and the picker walks up
-to a bare rack.
+What remains is restock: is EVERYTHING we hold for this SKU low enough that the
+hub should send more? Measured on rack + overflow together.
 """
 import db
 
@@ -27,7 +23,7 @@ async def evaluate(site_id: int, sku_id: int, actor: str | None = None) -> dict:
         "WHERE sa.site_id = %s AND sa.sku_id = %s AND sa.slot_role = 'primary'",
         (site_id, sku_id),
     )
-    if not slot or slot["low_threshold"] is None:
+    if not slot or slot["restock_point"] is None:
         # An unconfigured SKU is not a failure — it simply has no rule yet, and
         # inventing one would fire tasks nobody asked for.
         return {"replenishment": None, "restock": None, "configured": False}
@@ -54,29 +50,6 @@ async def evaluate(site_id: int, sku_id: int, actor: str | None = None) -> dict:
 
     out = {"replenishment": None, "restock": None, "configured": True,
            "qty_primary": qty_primary, "qty_overflow": qty_overflow}
-
-    # --- replenish: pick face only ---------------------------------------
-    if qty_primary <= slot["low_threshold"] and qty_overflow > 0:
-        existing = await db.fetch_one(
-            "SELECT id FROM replenishment_tasks WHERE site_id=%s AND sku_id=%s "
-            "AND status IN ('open','claimed')",
-            (site_id, sku_id),
-        )
-        if not existing:
-            # Move enough to refill the pick face, but never more than overflow
-            # holds. The database cannot express "unique while open", so the
-            # guard above is the enforcement.
-            want = (slot["full_threshold"] or slot["low_threshold"] * 4) - qty_primary
-            move = max(1, min(want, qty_overflow))
-            task_id = await db.execute(
-                "INSERT INTO replenishment_tasks (site_id, sku_id, from_location_id, "
-                "to_location_id, qty_suggested) VALUES (%s,%s,%s,%s,%s)",
-                (site_id, sku_id, overflow["location_id"],
-                 slot["primary_location_id"], move),
-            )
-            out["replenishment"] = {"task_id": task_id, "qty": move}
-        else:
-            out["replenishment"] = {"task_id": existing["id"], "qty": None}
 
     # --- restock: everything held ----------------------------------------
     total = qty_primary + qty_overflow

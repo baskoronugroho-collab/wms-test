@@ -84,7 +84,7 @@ async def receive_order(body: models.OrderIn):
         # picker walks the aisle once in one direction (M5.2.1).
         seq_rows = []
         for sku, qty in resolved:
-            slot = await common.slot_for(site["id"], sku["id"])
+            slot = await common.pick_location_for(site["id"], sku["id"])
             seq_rows.append((sku, qty, slot))
         seq_rows.sort(key=lambda r: (
             r[2]["rack_code"] if r[2] else "zzz",
