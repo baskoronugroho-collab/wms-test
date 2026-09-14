@@ -128,19 +128,31 @@
   };
 
   /* Formatting helpers. Indonesian locale: 1.234 thousands, comma decimal. */
+  /* The server stores and returns UTC, usually without a zone suffix
+     ("2026-09-14 09:24:34"). A bare string like that would be read as the
+     browser's local time, so anything with a clock and no zone is UTC.
+     A plain date ("2026-09-14") stays a calendar date. */
+  NJW.toDate = (iso) => {
+    if (!iso) return null;
+    if (iso instanceof Date) return iso;
+    const s = String(iso);
+    if (s.length <= 10) return new Date(s + 'T00:00:00');
+    const t = s.replace(' ', 'T');
+    return new Date(/(Z|[+-]\d\d:?\d\d)$/.test(t) ? t : t + 'Z');
+  };
+
   NJW.fmt = {
     n: (v) => (v == null ? '—' : Number(v).toLocaleString('id-ID')),
     idr: (v) => (v == null ? '—' : 'Rp ' + Number(v).toLocaleString('id-ID')),
     date: (iso) => {
       if (!iso) return '—';
-      const d = new Date(iso.length <= 10 ? iso + 'T00:00:00' : iso);
-      return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+      return NJW.toDate(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
     },
-    time: (iso) => (iso ? new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '—'),
+    time: (iso) => (iso ? NJW.toDate(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '—'),
     /* Hours left in the 24-hour inbound discrepancy window. */
     hoursLeft: (deadlineIso) => {
       if (!deadlineIso) return null;
-      return Math.max(0, Math.round((new Date(deadlineIso) - Date.now()) / 36e5));
+      return Math.max(0, Math.round((NJW.toDate(deadlineIso) - Date.now()) / 36e5));
     },
   };
 })();

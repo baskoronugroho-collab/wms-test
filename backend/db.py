@@ -30,9 +30,19 @@ def dsn() -> dict:
 
 
 async def connect() -> None:
+    """Open the pool with every session pinned to UTC.
+
+    The cluster's default session zone is UTC+8, so NOW() and DEFAULT
+    CURRENT_TIMESTAMP were writing +8 while Python writes UTC. Pinning the session
+    makes the whole ledger one clock: every naive DATETIME in this database is UTC,
+    which is what daycolor, the queue timers and the age helpers all assume.
+    """
     global _pool
     if os.getenv("DATABASE_URL"):
-        _pool = await asyncmy.create_pool(**dsn(), autocommit=True, minsize=1, maxsize=10)
+        _pool = await asyncmy.create_pool(
+            **dsn(), autocommit=True, minsize=1, maxsize=10,
+            init_command="SET time_zone = '+00:00'",
+        )
 
 
 async def disconnect() -> None:

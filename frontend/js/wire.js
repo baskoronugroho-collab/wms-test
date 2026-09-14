@@ -927,7 +927,7 @@
       if (slips) {
         slips.slips.slice(0, 3).forEach(x => {
           const hrs = NJW.fmt.hoursLeft(
-            new Date(new Date(x.created_at).getTime() + 24 * 36e5).toISOString());
+            new Date(NJW.toDate(x.created_at).getTime() + 24 * 36e5).toISOString());
           if (hrs != null && hrs <= 24) {
             rows.push({
               what: 'Batas selisih barang masuk', what_en: 'Inbound discrepancy window',
@@ -1105,7 +1105,7 @@
       const finished = done.cards.filter(c => c.completed_at && c.created_at);
       if (finished.length) {
         const avg = finished.reduce((n, c) =>
-          n + (new Date(c.completed_at) - new Date(c.created_at)) / 1000, 0) / finished.length;
+          n + (NJW.toDate(c.completed_at) - NJW.toDate(c.created_at)) / 1000, 0) / finished.length;
         bi(field('avg-pick'), Math.floor(avg / 60) + ' mnt ' + Math.round(avg % 60) + ' dtk',
                               Math.floor(avg / 60) + ' min ' + Math.round(avg % 60) + ' s');
       } else {
