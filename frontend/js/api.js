@@ -26,6 +26,8 @@
   const get = (p) => req(p);
   const post = (p, body) => req(p, { method: 'POST', body: JSON.stringify(body) });
   const patch = (p, body) => req(p, { method: 'PATCH', body: JSON.stringify(body) });
+  const put = (p, body) => req(p, { method: 'PUT', body: JSON.stringify(body) });
+  const del = (p) => req(p, { method: 'DELETE' });
   const qs = (o) => {
     const s = new URLSearchParams();
     Object.entries(o || {}).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') s.set(k, v); });
@@ -34,7 +36,7 @@
   };
 
   NJW.api = {
-    raw: { get, post, patch, qs },
+    raw: { get, post, patch, put, del, qs },
 
     me: () => get('/me'),
     health: () => get('/health'),
@@ -63,40 +65,45 @@
     inventory: (p) => get('/inventory' + qs(p)),
     rackMap: (siteId) => get('/sites/' + siteId + '/rack-map'),
     pickTasks: (p) => get('/pick-tasks' + qs(p)),
-    // Being added for the queue board: returns a claimed task to status
-    // 'ready' and clears claimed_by. Supervisor-gated server-side.
+    // Queue board: waiting / picking / done lanes, each card with channel,
+    // delivery mode, promised_at, remaining_seconds and urgency.
+    pickBoard: (p) => get('/pick-tasks/board' + qs(p)),
+    // Returns a claimed task to status 'ready' and clears claimed_by.
+    // Supervisor-gated server-side.
     releasePickTask: (id) => post('/pick-tasks/' + id + '/release', {}),
     opnamePlans: (p) => get('/opname/plans' + qs(p)),
 
-    // --- slotting, replenishment, restock (v3) --------------------------
-    // One pick face per SKU plus an optional overflow, and three thresholds:
-    // full (start using overflow), low (raise a replenishment task) and the
-    // restock point (ask the hub). Only full and low measure the pick face.
-    slotting: (p) => get('/slotting' + qs(p)),
-    updateSlot: (skuId, b) => patch('/slotting/' + skuId, b),
-    bulkSlot: (b) => post('/slotting/bulk', b),
-    replenishTasks: (p) => get('/replenishment/tasks' + qs(p)),
-    completeReplenish: (id, b) => post('/replenishment/tasks/' + id + '/complete', b),
-    restockRequests: (p) => get('/restock/requests' + qs(p)),
-    updateRestock: (id, b) => patch('/restock/requests/' + id, b),
-    sendRestock: (id) => post('/restock/requests/' + id + '/send', {}),
+    // --- SKU & rack registry ---------------------------------------------
+    // One rack face per SKU plus an optional overflow, a full threshold (new
+    // stock starts going to overflow) and a restock point (everything held is
+    // low: ask for more). There is no replenishment task: the picker is sent to
+    // whichever of rack/overflow holds the older stock.
+    registry: (p) => get('/registry' + qs(p)),                   // {site_id,q,...}
+    updateRegistry: (skuId, b) => put('/registry/' + skuId, b),  // RegistryIn
+    bulkRegistry: (b) => post('/registry/bulk', b),
+    suggestSlot: (skuId, p) => get('/registry/suggest/' + skuId + qs(p)),
+    restockRequests: (p) => get('/restock' + qs(p)),             // {site_id,status}
+    sendRestock: (id) => post('/restock/' + id + '/send', {}),
+    lowStock: (p) => get('/inventory/low-stock' + qs(p)),
+    findStock: (p) => get('/inventory/find' + qs(p)),
+    movements: (p) => get('/movements' + qs(p)),
 
-    // --- hub transfers (v3) ---------------------------------------------
+    // --- hub transfers --------------------------------------------------
+    // Frozen pending the restocking model (supplier -> CWH -> dark store),
+    // which sits outside the canonical design; the WMS takes over at inbound.
     transfers: (p) => get('/transfers' + qs(p)),
     createTransfer: (b) => post('/transfers', b),
-    scanIntoTransfer: (id, b) => post('/transfers/' + id + '/scan', b),
-    sealTransfer: (id) => post('/transfers/' + id + '/seal', {}),
-    raiseTransferVariance: (id, b) => post('/transfers/' + id + '/raise', b),
 
-    // --- POS integration (v3) -------------------------------------------
-    // Five message types. The WMS never calls Grab; the POS owns that.
-    // `mode` is server-owned — a client must never be able to make this
-    // look connected while the boundary is deliberately closed.
-    integrationHealth: () => get('/integration/health'),
+    // --- Hiryu boundary -------------------------------------------------
+    // Five messages. The WMS never calls Grab; only Hiryu talks to the WMS.
+    // `mode` is server-owned — a client must never be able to make this look
+    // connected while the boundary is deliberately closed.
+    outbox: (p) => get('/pos/outbox' + qs(p)),
+    cancelOrder: (ref, b) => post('/orders/' + encodeURIComponent(ref) + '/cancel', b || {}),
 
-    // --- short pick (v3) -------------------------------------------------
-    shortPick: (taskId, b) => post('/pick-tasks/' + taskId + '/short', b),
-    locationBatches: (code) => get('/inventory/' + code + '/batches'),
+    // --- short pick -----------------------------------------------------
+    shortPick: (lineId, b) => post('/pick-lines/' + lineId + '/short', b),
+    shortfalls: (p) => get('/shortfalls' + qs(p)),
 
     // --- training / Grab simulator -------------------------------------
     // Training sites ONLY. Gate the UI on site.is_training before calling.

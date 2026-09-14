@@ -1231,6 +1231,20 @@
     setInterval(() => { if (!document.hidden) poll(false); }, 10000);
   };
 
+  /* ======================= shared surface ======================= */
+
+  /* Screen handlers may also live in js/screens/<screen>.js, loaded after this
+     file. They register on NJW.screens and use these same helpers, so every
+     screen boots, fails and speaks both languages the same way. Registration
+     happens while the page parses; dispatch waits for DOMContentLoaded. */
+  NJW.screens = screens;
+  NJW.wire = {
+    CTX, $, $$, field, region, setF, esc, go, key, bi, biAttr, applyLangTo,
+    codeHtml, say, fail, isConsole, paintDayColour, testCodes,
+    me: () => ME,
+    site: () => SITE,
+  };
+
   /* ======================= dispatch ======================= */
 
   window.addEventListener('DOMContentLoaded', async () => {
