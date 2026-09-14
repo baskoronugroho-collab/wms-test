@@ -474,32 +474,32 @@ The second brand arrives within three months and the network grows to 10–30 st
 
 ## 16. Build status
 
-As of 11 September 2026. "Verified" means driven against the live database this month.
+As of 14 September 2026. "Verified" means driven end to end against the live database on the training site on that date.
 
 | Area | Backend | Screens | Notes |
 |---|---|---|---|
-| Ledger, idempotency, audit | Verified | — | No automated tests yet |
-| Inbound receive, putaway, unknown-barcode, new basket | Verified | **Live** (01, 02) | AWB field present |
-| Putaway list, day colours | Verified | Needs wiring | |
-| Barcode registration, license plates | Built | Needs wiring | Mode B untested at volume |
-| Slot registry, overflow, oldest-location picking | Verified | Needs wiring | Registry still accepts a legacy low threshold |
-| Restock requests, transfers | Built | Needs wiring | |
-| Order intake, allocation, guided pick, wrong-item stop | Verified | Needs wiring | Message 1 not yet authenticated |
-| Pick queue, stuck-claim release | Verified | Needs wiring | Sorts by age, not time remaining |
-| Short pick, cancel | Verified | Needs wiring | Picked units on cancel not yet returned |
-| Stock count, sign-off | Verified | Needs wiring | Reveals before recount; keypad-only |
-| Admin, training, Grab simulator | Verified | Needs wiring | |
-| Outbox | Queues | — | **Nothing sends yet**; queues every movement including picks |
-| Replenishment tasks | Built | Designed | **Superseded by §8.4 — remove** |
-| Inbound reference, crossdock | — | — | Decided, not built |
-| `promised_at`, channel, delivery mode | — | — | Decided, not built |
-| Return-to-shelf, ABC schedule, scan counting | — | — | Decided, not built |
-| Camera scanning, scan buffer, photo upload | — | — | Decided, not built |
-| KPIs, network view, pagination | — | — | Decided, not built |
-| WhatsApp simulator and adapter | — | — | Decided, not built |
-| Packaging suggestion (§10.5) | — | — | **Proposed**, spec for review; needs Wardah box sizes and weights |
+| Ledger, idempotency, audit, stock owner | Verified | — | No automated tests yet; one UTC clock across app and database |
+| Inbound receive, putaway, undo last scan, AWB/reference | Verified | Live (01–04, 15) | Receipts list for supervisors |
+| Putaway list, day colours | Verified | Live | Slip built from the ledger, so a split across rack and overflow shows both |
+| Barcode registration, license plates | Built | Live (03, 05, 06) | Mode B untested at volume |
+| Slot registry, overflow, oldest-location picking | Verified | Live | Low/replenishment threshold removed from the UI |
+| Order intake (message 1, Hiryu key), allocation across rack + overflow | Verified | — | No false "short" while overflow holds stock |
+| Guided pick, wrong-item stop, pack (message 4 once) | Verified | Live (07–09) | Right/wrong test barcodes on the training site |
+| Pick queue by time remaining, stuck-claim release | Verified | Live | Channel, delivery mode, urgency |
+| Short pick (message 5) | Built | Live (17) | |
+| Cancel (message 2, Hiryu only) and return to shelf | Verified | Live (18) | Picked units scanned back one by one |
+| Stock count: blind, recount before reveal, approve once | Verified | Live (10–12, console) | Keypad fallback; ABC schedule not built |
+| Stock views, low stock, restock requests | Built | Live | Restock waits on the restocking model (§5) |
+| Admin, training, Hiryu simulator (any channel) | Verified | Live | |
+| Transfers, hub dispatch | Built | Live | Frozen pending the restocking model |
+| Outbox | Queues every change | Live (integration) | **Nothing sends yet** (shadow mode) |
+| Inbound reference with expected quantities, crossdock | — | — | Decided, not built |
+| ABC schedule, camera scanning, scan buffer, photo upload | — | — | Decided, not built |
+| KPIs, network view, push updates | — | — | Decided, not built |
+| WhatsApp adapter (inside Hiryu) | — | — | Simulator built |
+| Packaging suggestion (§10.5) | — | — | **Proposed**, spec for review |
 
-**Only 2 of 38 designed screens are wired to live data.** The design v3 drop overwrote the wiring on the rest. The backend behind them is intact; restoring the screens is the first item in §19.
+**All 38 designed screens run on live data** (14 Sep). Each screen's logic lives in `frontend/js/screens/`, on one shared boot.
 
 ---
 
@@ -560,9 +560,9 @@ As of 11 September 2026. "Verified" means driven against the live database this 
 
 The second brand arrives within three months, so phases 0–5 fit inside that window.
 
-**Phase 0 — make it clickable.** Re-attach the 16 screens that already have working logic; write handlers for the 20 that don't. Supervisors and admins land on the console; sidebar keeps its scroll position; the AWB field moves into the v3 design; replenishment is removed from screens and API.
+**Phase 0 — make it clickable.** *Done 14 Sep:* every screen wired; supervisors and admins land on the console; the sidebar keeps its scroll; the AWB field is in the v3 design; replenishment is gone from screens.
 
-**Phase 1 — make it trustworthy.** Automated tests on the ledger's rules. Build the outbox sender, pointed at the simulator first. Recount before reveal. Lock a receipt against concurrent scanning. *(Done in v2.1: messages 1 and 2 authenticated; message 3 after every change, carrying available.)*
+**Phase 1 — make it trustworthy.** Automated tests on the ledger's rules. Build the outbox sender, pointed at the simulator first. Lock a receipt against concurrent scanning. *(Done in v2.1: messages 1 and 2 authenticated; message 3 after every change, carrying available; recount before reveal; counts approved once.)*
 
 **Phase 2 — the decided model.** Scan counting with the ABC schedule. The "needs a rack" list. Photo upload. Camera scanning. The scan buffer. KPIs.
 

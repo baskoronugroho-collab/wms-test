@@ -303,15 +303,15 @@ footer.colophon{
 <div class="wrap">
   <header class="masthead">
     <div class="eyebrow">
-      <span>Product Requirements</span><span>v2.0</span><span class="muted">Decisions locked for build</span>
+      <span>Product Requirements</span><span>v2.1</span><span class="muted">Aligned to the canonical systems design</span>
     </div>
     <h1 class="title" id="doc-title">Ninja Kilat WMS</h1>
     <p class="standfirst" id="standfirst">The warehouse layer behind GrabMart Kilat and Ninja&rsquo;s own quick-commerce channels: where a unit goes, where a picker finds it, and whether it is actually still there.</p>
     <div class="figs">
       <div class="fig"><b>118</b><i>Wardah SKUs</i></div>
       <div class="fig"><b>10&ndash;30</b><i>stations in 6 months</i></div>
-      <div class="fig"><b>5</b><i>messages to the POS</i></div>
-      <div class="fig"><b>8</b><i>open questions</i></div>
+      <div class="fig"><b>5</b><i>messages with Hiryu</i></div>
+      <div class="fig"><b>38</b><i>screens on live data</i></div>
     </div>
     <dl class="meta-grid" id="meta"></dl>
   </header>
@@ -325,8 +325,8 @@ footer.colophon{
 
   <footer class="colophon">
     <span>Ninja Van &times; GrabMart Kilat &middot; fulfilment</span>
-    <span>Sources: owner decisions 3&ndash;11 Sep &middot; Kilat WMS Audit &middot; deployed app</span>
-    <span>11 September 2026</span>
+    <span>Governed by: QC Systems &mdash; Hiryu, WMS, TMS (ChangWen) &middot; owner decisions 3&ndash;14 Sep &middot; deployed app</span>
+    <span>14 September 2026</span>
   </footer>
 </div>
 
@@ -338,11 +338,12 @@ footer.colophon{
 | | |
 |---|---|
 | **Product** | Ninja Kilat WMS |
-| **Version** | v2.0 — consolidated decisions |
-| **Date** | 11 September 2026 |
+| **Version** | v2.1 — aligned to the canonical systems design |
+| **Date** | 14 September 2026 |
 | **Owner** | Baskoro Nugroho |
 | **Status** | Decisions locked for build · open items in §17 |
-| **Supersedes** | v0.1 of 3 September and its patches — archived at `docs/archive/PRD-v1.md` |
+| **Governed by** | *QC Systems — Hiryu, WMS, TMS* (ChangWen, 11 Sep 2026), `docs/canonical/qc-oms-wms.html`. **Where this PRD and that design differ, the design wins.** |
+| **Supersedes** | v2.0 of 11 September; v0.1 of 3 September archived at `docs/archive/PRD-v1.md` |
 | **Platform** | Substrait · FastAPI · OceanBase · static frontend |
 | **Live** | wms-test.ninjavan.apps.substrait.build |
 | **Pilot** | Wardah — 118 SKUs · second brand within 3 months |
@@ -354,16 +355,18 @@ footer.colophon{
 
 Ninja Van fulfils quick-commerce orders for brands. For the **GrabMart Kilat** channel, Grab owns demand, order creation and delivery; Ninja owns the warehouse. Ninja is also starting to offer **quick-commerce-as-a-service**, taking orders directly from a brand's own channels — **WhatsApp first** — and delivering them with Ninja's own dedicated riders.
 
-Ninja already runs a **POS** (Hiryu) connected to the Grab merchant app. It manages brands, stores and menus, takes Grab orders, prints receipts, holds the compliance photo, and deducts stock when an order completes. It works at small scale but has no racking registry, and listing stock SKU by SKU does not survive a brand the size of Wardah.
+Ninja already runs **Hiryu**, connected to the Grab merchant app. Under the canonical design it becomes the **OMS — the single front door**: every channel (Grab, WhatsApp, brand site, Instagram) connects to Hiryu through its own connector, and Hiryu owns orders and their state, the listing map and split rule, dark-store routing and the last-mile choice. It **stops keeping a stock count of its own**.
 
-This **WMS** is the physical layer underneath. It answers four questions the POS cannot:
+This **WMS** is the physical layer underneath, and **the only stock counter**. It answers four questions Hiryu cannot:
 
 1. **Where does this unit go?** — inbound, putaway, rack and basket
 2. **Where do I find it?** — the location a picker is sent to
 3. **Is it actually there?** — scan-verified picking and weekly counts
 4. **What arrived versus what was promised?** — every hop checked against the one before
 
-The WMS never talks to Grab. It exchanges exactly **five messages** with whatever sits in front of the customer — the POS for Grab, a channel adapter for WhatsApp — and nothing else crosses that line.
+> **Every order enters through Hiryu. Only Hiryu talks to the WMS. Only the WMS counts the shelf.**
+
+The WMS never talks to Grab or any other platform. It exchanges exactly **five messages** with Hiryu, and nothing else crosses that line. A **TMS** carries out the last mile Hiryu chooses. Restocking (supplier → CWH → dark store) is a separate model; the WMS takes over at inbound.
 
 ---
 
@@ -371,15 +374,16 @@ The WMS never talks to Grab. It exchanges exactly **five messages** with whateve
 
 These hold across every section below. A change request that breaks one of them needs to argue against it explicitly.
 
-- **2.1** **The WMS never talks to Grab.** The POS does. The WMS–POS interaction stays at five messages (§12).
-- **2.2** **One writer per event.** The POS deducts sales, as it does today. The WMS records receipts, moves and corrections. The same unit is never subtracted by both.
+- **2.1** **The WMS never talks to a platform.** Channels connect to Hiryu; only Hiryu talks to the WMS, in five messages (§12).
+- **2.2** **One counter.** The WMS ledger is the only count of the shelf. Hiryu no longer deducts a sale: it takes the WMS's **available** (on hand − allocated) and subtracts only orders in transit, normally for about a second. Damage, loss and count corrections reach every listing as one lower number. *(Replaces v2.0's "one writer per event", where the POS deducted sales.)*
 - **2.3** **Every stock movement is scanned.** Picking has a scan gate with no staff-level override — an override that exists gets used, and then the gate is worthless.
 - **2.4** **The ledger is append-only.** Balances are a projection of movements; negative stock is refused by construction; every scan is idempotent so a retry never double-counts.
 - **2.5** **Red means failure and nothing else.** Every state carries colour *and* an icon *and* words. Staff are often high-school graduates on shared devices; the UI must be safe on day one.
 - **2.6** **No free text on the warehouse floor.** Quantities come from steppers and keypads; the only input is the scan target.
 - **2.7** **Bilingual.** Indonesian by default, English one tap away, on every string.
 - **2.8** **Online-only, loudly.** A dropped connection blocks work visibly. A short buffer may hold scans across a blip (§15), but the system never silently degrades.
-- **2.9** **Training can never touch real stock.** The training site is isolated and never reaches the POS or a channel.
+- **2.9** **Training can never touch real stock.** The training site is isolated and never reaches Hiryu or a channel.
+- **2.10** **The stock owner travels with every unit.** The ledger records who owns each unit, not only the brand (§6.4).
 
 ---
 
@@ -427,6 +431,8 @@ Even when a supplier sends no manifest, the second hop is always checkable, beca
 
 ## 5. Restock types
 
+> **Outside the canonical scope.** Restocking — supplier → central warehouse → dark store — is a separate model with its own design; the WMS takes over at inbound. What follows records Ninja's four restock types as input to that model. Restock requests and CWH transfers are built and stay working, but are frozen until that model is agreed.
+
 ### 5.1 Four types, two axes **[DECIDED]**
 
 | | **Store at CWH** | **Crossdock at CWH** | **Direct to darkstore** |
@@ -472,6 +478,20 @@ Even when a supplier sends no manifest, the second hop is always checkable, beca
 - **6.3.3** **A new SKU without a rack at a site appears on the supervisor's "needs a rack" list** until someone assigns one (§8.2). A SKU with no pick face can be received but never picked.
 - **6.3.4** *(Proposed, with §10.5.)* Each SKU can also carry its **retail box size (L × W × H mm), weight (g)** and three flags: **liquid in a bottle, large bottle, fragile**. They drive the packaging suggestion. They are optional at go-live; category defaults fill the gaps.
 
+### 6.4 Stock owner **[DECIDED — canonical]**
+
+Three dark-store models run through the same system, so the ledger records the owner of every unit:
+
+| Model | Example | Stock owner |
+|---|---|---|
+| 1 | Wardah | **Grab** |
+| 2 | Brand consignment | The brand |
+| 3 | Ninja's frozen and chilled range | Ninja |
+
+- **6.4.1** Owner is set per brand (`grab` / `brand` / `ninja`), overridable per brand × site, and stamped on every movement and balance.
+- **6.4.2** Brand and owner differ for Wardah: the stock is Wardah's product and Grab's inventory.
+- **6.4.3** The Malaysia barcode PRD puts racking codes, barcodes and quantities in the POS. Under the canonical design they belong to the WMS: its feature ideas feed the merged feature list (§17), its placement does not.
+
 ---
 
 ## 7. Inbound
@@ -488,7 +508,7 @@ Even when a supplier sends no manifest, the second hop is always checkable, beca
 - **7.2.1** Each scan identifies the SKU and the screen names the destination location in large type.
 - **7.2.2** **New stock always goes to the SKU's assigned rack first.** Only when the rack is at its **full threshold** does it go to the overflow slot (§8.3).
 - **7.2.3** No basket yet for this SKU → the WMS suggests a free slot and the staffer confirms it.
-- **7.2.4** Stock is **sellable from the putaway scan**. Nothing waits for a signature.
+- **7.2.4** Stock is **sellable from the putaway scan**: the receipt changes available, so message 3 goes to Hiryu at once. Nothing waits for a signature.
 
 ### 7.3 Putaway list
 
@@ -554,16 +574,18 @@ When a SKU sits in both its rack and an overflow slot, **the picker goes to whic
 
 ### 9.1 Where orders come from **[DECIDED]**
 
-| Channel | Order reaches the WMS via | Delivery | Promise |
+| Channel | Order reaches the WMS via | Last mile | Promise |
 |---|---|---|---|
-| **GrabMart Kilat** | Customer → Grab (assigns rider) → POS → WMS | Grab rider | **15 min from when the order reaches the POS** |
-| **WhatsApp** (first QCaaS channel) | Customer → WhatsApp → channel adapter → WMS | Ninja dedicated rider | **1 hour from when the customer places the order** |
-| Brand website, Instagram | Later, same pattern as WhatsApp | Ninja rider | 1 hour |
+| **GrabMart Kilat** | Customer → Grab → Grab connector → **Hiryu** → WMS | Grab rider — Grab assigns it before the order reaches us | **15 min from when the order reaches Hiryu** |
+| **WhatsApp** (first QC-as-a-service channel) | Customer pays → WhatsApp adapter → **Hiryu** → WMS | Hiryu chooses, the TMS books | **1 hour from when the customer places the order** |
+| Brand website, Instagram | Later, same pattern: a connector inside Hiryu | Hiryu chooses, the TMS books | 1 hour |
 
-- **9.1.1** Every order carries **`channel`**, **`delivery_mode`** (`grab_rider` / `ninja_rider`) and **`promised_at`**.
+- **9.1.1** Every order carries **`channel`**, **`delivery_mode`** and **`promised_at`**. Delivery modes are Hiryu's four last-mile options: `grab_rider`, `ninja_rider` (dedicated same-day fleet, ≤ ~7 km), `third_party` (on-demand: GrabExpress, Lalamove) and `next_day` (the regular network).
 - **9.1.2** For Grab, `promised_at` = received + 15 min. The rider is already assigned when the order arrives, so the clock is genuinely running.
-- **9.1.3** For Ninja riders, `promised_at` = the customer's order time + 60 min, so the channel must send the time the order was placed.
-- **9.1.4** Stock is **allocated at intake**, so two orders can never be promised the last unit.
+- **9.1.3** For own channels, `promised_at` = the customer's order time + 60 min, so Hiryu sends the time the order was placed. Hiryu may also send `promised_at` itself; the WMS then uses it as given.
+- **9.1.4** Stock is **allocated at intake**, so two orders can never be promised the last unit. Allocation lowers available, so message 3 tells Hiryu in the same second.
+- **9.1.5** **Routing is Hiryu's.** For own channels Hiryu picks the nearest dark store that can fill the whole order within the promise. **No split orders.** Grab orders arrive already routed.
+- **9.1.6** **Phase-1 shortcut.** Until the WhatsApp adapter moves behind Hiryu, it may send message 1 straight to the WMS. The shortcut has a fold-in date (§17); it is not a second front door.
 
 ### 9.2 The pick queue
 
@@ -591,18 +613,18 @@ When stock the system expects is not there:
 - **10.2.2** The picker carries on with the rest of the order.
 - **10.2.3** In one transaction the WMS releases the allocation, corrects on-hand to what was found, sends **message 5**, and raises a supervisor exception naming the staffer.
 - **10.2.4** **The correction is deliberately unsigned** — every other adjustment needs a supervisor, but waiting here keeps selling stock that doesn't exist. The cost is that a staffer can zero a SKU in two taps, so declarations per person are visible to supervisors.
-- **10.2.5** **No substitution.** The WMS reports; the POS or channel decides whether to refund, cancel or offer an alternative.
+- **10.2.5** **No substitution.** The WMS reports; **Hiryu decides** whether to refund, send a partial order or substitute. For Grab it applies Grab's rules; for own channels it asks the customer.
 
 ### 10.3 Pack and hand over **[DECIDED]**
 
 - **10.3.1** The **pack scan** marks the order ready and sends **message 4**. There is no separate double scan.
-- **10.3.2** For Grab, the POS prints the receipt and tells Grab. For Ninja riders, the channel adapter books the rider and messages the customer.
+- **10.3.2** For Grab, Hiryu tells Grab and the Grab rider collects from the counter. For own channels, Hiryu has chosen the last mile and the **TMS** books, hands over and tracks it; the customer hears through the adapter.
 - **10.3.3** The WMS owns **pack → handover → timestamp** only. It does not assign drivers, plan routes or track deliveries.
 
 ### 10.4 Cancellation
 
-- **10.4.1** **Message 2** releases allocations so the stock is sellable again.
-- **10.4.2** Units already picked go to a **return-to-shelf queue**. **Any staff member** can take a return task; they scan the units back to the location the WMS names, and the stock re-publishes.
+- **10.4.1** **Message 2**, from Hiryu only, releases allocations so the stock is sellable again (and message 3 says so).
+- **10.4.2** Units already picked go to a **return-to-shelf queue**. **Any staff member** can take a return task; they scan each unit back at the location it was picked from — scan-verified, no override — and each scan re-publishes the stock.
 
 ### 10.5 Packaging suggestion **[PROPOSED — spec for review, not built]**
 
@@ -671,19 +693,19 @@ A Grab order for Wardah is **10–15 units**. Packing copies what GrabMart Kilat
 
 ---
 
-## 12. Integration: the five messages
+## 12. Integration: the five messages with Hiryu
 
 ### 12.1 The contract **[DECIDED]**
 
 | # | Message | Direction | Fires when | Shape |
 |---|---|---|---|---|
-| 1 | **Order to pick** | Sender → WMS | Grab order reaches the POS, or a channel order is paid | Order ref, site, lines, channel, delivery mode, promised time |
-| 2 | **Order cancelled** | Sender → WMS | Customer or Grab cancels | Order ref |
-| 3 | **Stock level** | WMS → sender | Putaway, return to shelf, signed variance, short-pick correction | **Absolute** quantity per SKU per darkstore |
-| 4 | **Order ready** | WMS → sender | Pack scan | Order ref, timestamp |
-| 5 | **Order short** | WMS → sender | Picker declares a shortfall | Order ref, line, found *n* of *m* |
+| 1 | **Order to pick** | Hiryu → WMS | An order from any channel is accepted | Order ref, site, lines, channel, delivery mode, placed / promised time |
+| 2 | **Order cancelled** | Hiryu → WMS | Customer or platform cancels | Order ref |
+| 3 | **Stock level** | WMS → Hiryu | **Every change**: receipt, allocation, pick, return, signed count, short pick | **Available** = on hand − allocated, absolute, per SKU per darkstore |
+| 4 | **Order ready** | WMS → Hiryu | Pack scan | Order ref, timestamp |
+| 5 | **Order short** | WMS → Hiryu | Picker declares a shortfall | Order ref, line, found *n* of *m* — Hiryu decides refund, partial or substitute |
 
-"Sender" is the POS for Grab and the channel adapter for WhatsApp. The WMS does not change when a channel is added.
+**Hiryu is the only sender and the only receiver.** A new channel is a new connector inside Hiryu; the WMS does not change.
 
 ### 12.2 Rules
 
@@ -692,45 +714,45 @@ A Grab order for Wardah is **10–15 units**. Packing copies what GrabMart Kilat
 - **12.2.3** **Durable outbox, never a direct call.** If the receiver is down, a putaway still completes and the message waits.
 - **12.2.4** **Two lanes.** Order events (4, 5) jump ahead of stock syncs.
 - **12.2.5** **Darkstores only** send message 3, and **training sites send nothing**, both enforced at the single outbound edge.
-- **12.2.6** **Message 3 is never sent for a sale.** Picks deduct in the WMS's own ledger, but the sale deduction the customer-facing system sees is its own (§2.2).
-- **12.2.7** **Oversell buffer: 0** — the exact count is published. It is a per-site setting, so it can change without a deploy.
-- **12.2.8** **Message 1 is authenticated** with a shared secret before any external caller is given the endpoint.
+- **12.2.6** **Message 3 follows every change, sales included.** Hiryu no longer deducts sales, so the WMS number is the one every listing is derived from (§2.2). *(Replaces v2.0's "never sent for a sale"; closes v2.0's Q6.)*
+- **12.2.7** **The WMS publishes the exact available.** Any buffer is Hiryu's split rule: **Grab only, per SKU, default 0**, turning on below a threshold — a Grab customer has already paid, so overselling there means a cancellation. Bundles (⌊available ÷ qty⌋) and per-listing numbers are Hiryu's too.
+- **12.2.8** **Messages 1 and 2 are authenticated**: Hiryu presents a shared secret (`X-Hiryu-Key`); an admin may send them by hand for testing. On the training site the simulator stands in for Hiryu.
 
-### 12.3 POS sync is deferred **[DECIDED]**
+### 12.3 Hiryu sync is deferred **[DECIDED]**
 
-- **12.3.1** The contract stands, but the POS team is **not being approached yet**. The WMS runs in **shadow mode**: it computes and queues every message and sends nothing to the POS.
+- **12.3.1** The contract stands, but the Hiryu team is **not being approached yet**. The WMS runs in **shadow mode**: it computes and queues every message and sends nothing to Hiryu.
 - **12.3.2** The integration is proven first on the **WhatsApp channel**, which Ninja builds and controls end to end.
 
 ---
 
 ## 13. WhatsApp channel (QC-as-a-service)
 
-### 13.1 How a WhatsApp sale reaches the WMS **[DECIDED]**
+### 13.1 How a WhatsApp sale reaches the WMS **[DECIDED — canonical]**
 
-WhatsApp never talks to the WMS. A **channel adapter** in between does, speaking the same five messages as the POS.
+WhatsApp never talks to the WMS. The **WhatsApp adapter is a connector inside Hiryu**, and the order reaches the WMS as message 1 from Hiryu, like any other.
 
 1. The customer browses the brand's **WhatsApp catalog** and sends a structured order message.
-2. The adapter holds the cart, captures the address and decides **which darkstore** serves it.
-3. The adapter sends a **payment link**. Nothing reaches the WMS until payment is confirmed.
-4. On payment, the adapter sends **message 1**. The WMS allocates, queues and guides the pick.
-5. On **message 4**, the adapter books a Ninja rider and tells the customer the order is on its way.
-6. On **message 5**, the adapter asks the customer — send what we have, or refund? — which is better than Grab's automatic refund.
+2. The adapter holds the conversation and cart and sends a **payment link**. Nothing reaches the WMS until payment is confirmed.
+3. Hiryu checks stock live, **routes** to the nearest dark store that can fill the whole order, and sends **message 1**. The WMS allocates, queues and guides the pick.
+4. Message 3 drops available at once, and Hiryu pushes the lower number to Grab in the same second — this is how a WhatsApp sale reaches Grab's shelf count.
+5. On **message 4**, Hiryu chooses the last mile (Ninja rider within ~7 km, else on-demand third party, else next-day) and the **TMS** books it; the customer is told through the adapter.
+6. On **message 5**, Hiryu asks the customer — send what we have, or refund? — which is better than Grab's automatic refund.
+
+**Phase-1 shortcut:** until the fold-in date (§17), the adapter may send message 1 to the WMS directly. Everything else above still holds.
 
 ### 13.2 Ownership
 
-| Adapter owns | WMS owns |
-|---|---|
-| Conversation state, cart, timeouts | Allocation, pick, pack, handover |
-| Catalog product → WMS SKU mapping | Stock and location |
-| Address → darkstore routing | Nothing about the customer |
-| Payment, never visible to the WMS | |
-| Rider booking and customer messages | |
-| Hiding out-of-stock items, from message 3 | |
+| Hiryu (with the adapter) owns | WMS owns | TMS owns |
+|---|---|---|
+| Conversation, cart, payment link, catalog mapping | Allocation, pick, pack, handover | Booking, collection, tracking |
+| Listing map, split rule, buffers, bundles | Stock, location and owner | |
+| Dark-store routing, last-mile choice | Return to shelf | |
+| Customer messages, hiding sold-out items | Nothing about the customer | |
 
 ### 13.3 Build order
 
-- **13.3.1** **A WhatsApp simulator first**, on the training site — type a customer order, choose an address, "pay", and watch it become a pick task and come back as ready. It proves routing, the 1-hour promise and messages 1, 4 and 5 before Meta business verification, which takes weeks.
-- **13.3.2** Then the real adapter: Meta webhook, catalog, payment callback and rider booking in front of code already proven.
+- **13.3.1** **A Hiryu simulator first**, on the training site — compose an order for any channel (Grab, WhatsApp, web, Instagram), watch it become a pick task with the right promise, cancel it, and see messages 1–5 queue. It proves the contract and the 1-hour promise before Meta business verification, which takes weeks. *(Built.)*
+- **13.3.2** Then the real adapter, inside Hiryu: Meta webhook, catalog, payment callback, with routing in Hiryu and rider booking in the TMS.
 
 ---
 
@@ -748,8 +770,8 @@ WhatsApp never talks to the WMS. A **channel adapter** in between does, speaking
 
 ### 14.3 Training mode
 
-- **14.3.1** An isolated training site with a permanent banner, one-tap reset, scripted scenarios, test barcodes that work without a scanner or stock, and simulators for Grab and WhatsApp orders.
-- **14.3.2** Training never reaches the POS or a channel, enforced where messages leave the system.
+- **14.3.1** An isolated training site with a permanent banner, one-tap reset, scripted scenarios, test barcodes that work without a scanner or stock, and a Hiryu simulator for Grab and own-channel orders.
+- **14.3.2** Training never reaches Hiryu or a channel, enforced where messages leave the system.
 
 ---
 
@@ -787,43 +809,57 @@ The second brand arrives within three months and the network grows to 10–30 st
 
 ## 16. Build status
 
-As of 11 September 2026. "Verified" means driven against the live database this month.
+As of 14 September 2026. "Verified" means driven end to end against the live database on the training site on that date.
 
 | Area | Backend | Screens | Notes |
 |---|---|---|---|
-| Ledger, idempotency, audit | Verified | — | No automated tests yet |
-| Inbound receive, putaway, unknown-barcode, new basket | Verified | **Live** (01, 02) | AWB field present |
-| Putaway list, day colours | Verified | Needs wiring | |
-| Barcode registration, license plates | Built | Needs wiring | Mode B untested at volume |
-| Slot registry, overflow, oldest-location picking | Verified | Needs wiring | Registry still accepts a legacy low threshold |
-| Restock requests, transfers | Built | Needs wiring | |
-| Order intake, allocation, guided pick, wrong-item stop | Verified | Needs wiring | Message 1 not yet authenticated |
-| Pick queue, stuck-claim release | Verified | Needs wiring | Sorts by age, not time remaining |
-| Short pick, cancel | Verified | Needs wiring | Picked units on cancel not yet returned |
-| Stock count, sign-off | Verified | Needs wiring | Reveals before recount; keypad-only |
-| Admin, training, Grab simulator | Verified | Needs wiring | |
-| Outbox | Queues | — | **Nothing sends yet**; queues every movement including picks |
-| Replenishment tasks | Built | Designed | **Superseded by §8.4 — remove** |
-| Inbound reference, crossdock | — | — | Decided, not built |
-| `promised_at`, channel, delivery mode | — | — | Decided, not built |
-| Return-to-shelf, ABC schedule, scan counting | — | — | Decided, not built |
-| Camera scanning, scan buffer, photo upload | — | — | Decided, not built |
-| KPIs, network view, pagination | — | — | Decided, not built |
-| WhatsApp simulator and adapter | — | — | Decided, not built |
-| Packaging suggestion (§10.5) | — | — | **Proposed**, spec for review; needs Wardah box sizes and weights |
+| Ledger, idempotency, audit, stock owner | Verified | — | No automated tests yet; one UTC clock across app and database |
+| Inbound receive, putaway, undo last scan, AWB/reference | Verified | Live (01–04, 15) | Receipts list for supervisors |
+| Putaway list, day colours | Verified | Live | Slip built from the ledger, so a split across rack and overflow shows both |
+| Barcode registration, license plates | Built | Live (03, 05, 06) | Mode B untested at volume |
+| Slot registry, overflow, oldest-location picking | Verified | Live | Low/replenishment threshold removed from the UI |
+| Order intake (message 1, Hiryu key), allocation across rack + overflow | Verified | — | No false "short" while overflow holds stock |
+| Guided pick, wrong-item stop, pack (message 4 once) | Verified | Live (07–09) | Right/wrong test barcodes on the training site |
+| Pick queue by time remaining, stuck-claim release | Verified | Live | Channel, delivery mode, urgency |
+| Short pick (message 5) | Built | Live (17) | |
+| Cancel (message 2, Hiryu only) and return to shelf | Verified | Live (18) | Picked units scanned back one by one |
+| Stock count: blind, recount before reveal, approve once | Verified | Live (10–12, console) | Keypad fallback; ABC schedule not built |
+| Stock views, low stock, restock requests | Built | Live | Restock waits on the restocking model (§5) |
+| Admin, training, Hiryu simulator (any channel) | Verified | Live | |
+| Transfers, hub dispatch | Built | Live | Frozen pending the restocking model |
+| Outbox | Queues every change | Live (integration) | **Nothing sends yet** (shadow mode) |
+| Inbound reference with expected quantities, crossdock | — | — | Decided, not built |
+| ABC schedule, camera scanning, scan buffer, photo upload | — | — | Decided, not built |
+| KPIs, network view, push updates | — | — | Decided, not built |
+| WhatsApp adapter (inside Hiryu) | — | — | Simulator built |
+| Packaging suggestion (§10.5) | — | — | **Proposed**, spec for review |
 
-**Only 2 of 38 designed screens are wired to live data.** The design v3 drop overwrote the wiring on the rest. The backend behind them is intact; restoring the screens is the first item in §19.
+**All 38 designed screens run on live data** (14 Sep). Each screen's logic lives in `frontend/js/screens/`, on one shared boot.
 
 ---
 
 ## 17. Open questions
+
+**From the canonical design (§8 of that document):**
+
+| Item | Why it matters | Who |
+|---|---|---|
+| **Feature and screen list** | Merge this PRD with the Malaysia PRD into one list of WMS features and screens — next step | CW |
+| **Grab stock behaviour** | Does Grab lower its displayed stock as soon as an order is placed? Decides how much the buffer matters | Sean |
+| **Rider dispatch tool** | The same-day fleet runs on OPG's daily routing, which isn't instant dispatch for 1-hour orders | Dhinesh |
+| **Grab buffer thresholds** | Per SKU; the setting exists in Hiryu, the numbers don't | — |
+| **Adapter fold-in date** | When the WhatsApp route moves behind Hiryu (§9.1.6) | Baskoro · Sean |
+| **Split orders** | Ruled out for now. Revisit if sold-out shades lose too many sales across 118 near-identical SKUs | — |
+| **Restocking model** | Supplier → CWH → dark store is designed separately; §5 and the transfer screens wait on it | — |
+
+**From this PRD:**
 
 - **Q1** — Does Ninja already have a **WhatsApp Business account** and verified number, or does that start from zero?
 - **Q2** — Which **payment provider** for WhatsApp orders — Midtrans, Xendit, bank transfer?
 - **Q3** — For the WhatsApp test, is it **one darkstore serving one area**, so address routing can wait?
 - **Q4** — **Crossdock dwell**: 7 days is a placeholder. Confirm the real limit.
 - **Q5** — How full does a basket get before it should spill? Sets the **default full threshold** for 118 SKUs.
-- **Q6** — **For the POS sync, when it resumes:** how the POS applies an absolute stock level without re-deducting orders the WMS has already picked. Deferred with the POS conversation.
+- ~~**Q6** — how the POS applies an absolute stock level without re-deducting picked orders.~~ **Closed by the canonical design:** Hiryu stops deducting sales and derives every listing from the WMS's available (§2.2, §12.2.6).
 - **Q7** — **Exceptions still undesigned:** damaged or written-off stock, customer returns, and units found after being written off by a short pick.
 - **Q8** — Who reviews the **Semgrep and Trivy findings** before go-live?
 - **Q9** — **Packaging (§10.5):**
@@ -837,17 +873,21 @@ As of 11 September 2026. "Verified" means driven against the live database this 
 
 | Not doing | Why |
 |---|---|
-| Any WMS link to Grab | The POS owns Grab; a second link means two systems disagreeing about one order |
+| Any WMS link to Grab or another platform | Only Hiryu talks to the WMS; a second link means two systems disagreeing about one order |
+| A stock count in Hiryu | The WMS is the only counter; Hiryu derives each listing's number from it |
+| Routing, last-mile choice, rider booking | Hiryu routes and chooses; the TMS books and tracks |
+| Split orders | Two riders on one small basket costs more than it earns |
+| Settlement and billing | Finance, recorded outside the system for now |
 | Modelling dividers in the WMS | FIFO inside a basket is a human action guided by colour |
 | Expiry dates and FEFO | Decided against; inbound date on the label is enough for 24–36 month shelf life |
 | Automatic velocity slotting | Supervisors assign by brand and category, which new staff learn faster |
-| Substitution in the WMS | The POS or channel owns the customer and decides |
+| Substitution in the WMS | Hiryu owns the customer and decides |
 | Replenishment tasks | The picker follows the oldest stock instead (§8.4) |
-| An oversell buffer by default | Exact counts with scan-verified picking and zero-tolerance counts; the setting exists if needed |
+| An oversell buffer in the WMS | The WMS publishes exact available; a Grab-only buffer is Hiryu's split rule |
 | Double scan at pack | The pack scan is the ready signal |
 | Pick batching, for now | Pays off only above ~15 orders an hour per picker |
-| Delivery management | The WMS owns handover; routing and riders live elsewhere |
-| POS sync, for now | Deferred; WhatsApp proves the contract first |
+| Delivery management | The WMS owns handover; the TMS owns the last mile |
+| Hiryu sync, for now | Deferred; WhatsApp proves the contract first |
 
 ---
 
@@ -855,19 +895,19 @@ As of 11 September 2026. "Verified" means driven against the live database this 
 
 The second brand arrives within three months, so phases 0–5 fit inside that window.
 
-**Phase 0 — make it clickable.** Re-attach the 16 screens that already have working logic; write handlers for the 20 that don't. Supervisors and admins land on the console; sidebar keeps its scroll position; the AWB field moves into the v3 design; replenishment is removed from screens and API.
+**Phase 0 — make it clickable.** *Done 14 Sep:* every screen wired; supervisors and admins land on the console; the sidebar keeps its scroll; the AWB field is in the v3 design; replenishment is gone from screens.
 
-**Phase 1 — make it trustworthy.** Automated tests on the ledger's rules. Authenticate message 1. Build the outbox sender, pointed at the WhatsApp simulator first. Restrict message 3 to non-sale movements. Recount before reveal. Lock a receipt against concurrent scanning.
+**Phase 1 — make it trustworthy.** Automated tests on the ledger's rules. Build the outbox sender, pointed at the simulator first. Lock a receipt against concurrent scanning. *(Done in v2.1: messages 1 and 2 authenticated; message 3 after every change, carrying available; recount before reveal; counts approved once.)*
 
-**Phase 2 — the decided model.** `promised_at`, channel and delivery mode; the queue sorted by time remaining. Return-to-shelf queue. Scan counting with the ABC schedule. The "needs a rack" list. Photo upload. Camera scanning. The scan buffer. KPIs.
+**Phase 2 — the decided model.** Scan counting with the ABC schedule. The "needs a rack" list. Photo upload. Camera scanning. The scan buffer. KPIs.
 
 **Phase 3 — inbound.** Inbound references with live progress, the CSV upload converged into them, crossdock staging with its dwell rule.
 
-**Phase 4 — WhatsApp.** The simulator on the training site, then the real adapter.
+**Phase 4 — WhatsApp.** The real adapter, inside Hiryu (the phase-1 shortcut until its fold-in date). *(The simulator is built.)*
 
 **Phase 5 — before the second brand.** Pagination, single-query lists, the network view, push updates, role-trimmed navigation.
 
-**Later.** POS sync; pick batching when volume justifies it.
+**Later.** Hiryu sync; pick batching when volume justifies it.
 
 ---
 
@@ -875,6 +915,12 @@ The second brand arrives within three months, so phases 0–5 fit inside that wi
 
 | Term | Meaning |
 |---|---|
+| **Hiryu** | The OMS — the single front door. Owns orders, listings, the split rule, routing and the last-mile choice; the only system that talks to the WMS |
+| **Connector** | One per platform, inside Hiryu (Grab connector, WhatsApp adapter, web connector) |
+| **TMS** | Carries out the last mile Hiryu chose: book, hand over, track |
+| **Available** | On hand − allocated, per SKU per darkstore; what message 3 carries |
+| **Stock owner** | Who owns a unit — Grab (Wardah), the brand (consignment) or Ninja (own range) |
+| **Return to shelf** | Picked units of a cancelled order, scanned back onto the rack one by one |
 | **CWH** | Central warehouse — currently Logos Metrolink. Stores, crossdocks and distributes to darkstores |
 | **Darkstore** | A station that holds stock and fulfils customer orders |
 | **Rack / pick face** | The location a SKU is assigned to; where pickers normally go |
@@ -891,7 +937,7 @@ The second brand arrives within three months, so phases 0–5 fit inside that wi
 | **Shadow mode** | The WMS computes every outbound message and sends none |
 | **Training site** | An isolated site for learning and testing that never reaches real systems |
 
-Companion documents: the **Kilat Fulfilment Flow** (process and swimlane diagrams) and the **Kilat WMS Audit** (research and gap analysis).
+Governing document: **QC Systems — Hiryu, WMS, TMS** (`docs/canonical/qc-oms-wms.html`). Companion documents: the **Kilat Fulfilment Flow** (process and swimlane diagrams) and the **Kilat WMS Audit** (research and gap analysis).
 
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>

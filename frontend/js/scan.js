@@ -28,6 +28,23 @@
     } catch (e) { /* audio is never the only feedback */ }
   }
 
+  /* Callers pass the Indonesian label, and the server sends "Indonesian /
+     English" messages. An English reader gets the English half. */
+  const EN = {
+    'Salah barang': 'Wrong item', 'Benar': 'Right', 'Gagal': 'Failed',
+    'Ditolak': 'Refused', 'Diterima': 'Accepted', 'Tidak terhubung': 'Not connected',
+    'Tunggu koneksi kembali': 'Wait for the connection to come back',
+  };
+  function say(text) {
+    if (!text || localStorage.getItem('njw.lang') !== 'en') {
+      const pair = /^(.{6,}?) \/ (.{6,})$/.exec(text || '');
+      return pair ? pair[1] : text;
+    }
+    if (EN[text]) return EN[text];
+    const pair = /^(.{6,}?) \/ (.{6,})$/.exec(text);
+    return pair ? pair[2] : text;
+  }
+
   class ScanZone {
     constructor(root, opts) {
       this.root = root;
@@ -96,6 +113,7 @@
     focus() { try { this.input.focus({ preventScroll: true }); } catch (e) { this.input.focus(); } }
 
     _paint(state, label, prompt) {
+      if (state !== STATE.WAITING) { label = say(label); prompt = say(prompt); }
       this.state = state;
       this.root.classList.remove('is-accepted', 'is-rejected', 'is-offline');
       if (state !== STATE.WAITING) this.root.classList.add('is-' + state);

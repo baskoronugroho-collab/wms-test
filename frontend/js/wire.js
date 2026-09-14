@@ -221,13 +221,24 @@
 
   /* ======================= dispatch ======================= */
 
+  /* The design ships plausible sample values in every hook, and a supervisor
+     cannot tell a sample from a live number. Hooks stay hidden until the
+     screen's first load has painted them — never longer than a few seconds,
+     so a slow network shows a page rather than a blank. */
+  const root = document.documentElement;
+  root.classList.add('njw-loading');
+  const reveal = () => root.classList.remove('njw-loading');
+  setTimeout(reveal, 6000);
+
   window.addEventListener('DOMContentLoaded', async () => {
     const app = $('.app') || $('.shell') || $('[data-screen]');
     const name = app ? app.dataset.screen : '';
-    // The stop screen is where a failed sign-in lands, so it must not sign in.
-    if (name === 'blocked') return screens.blocked && screens.blocked();
-    if (!(await boot())) return;
-    const fn = screens[name];
-    if (fn) { try { await fn(); } catch (e) { fail(e); } }
+    try {
+      // The stop screen is where a failed sign-in lands, so it must not sign in.
+      if (name === 'blocked') return screens.blocked && await screens.blocked();
+      if (!(await boot())) return;
+      const fn = screens[name];
+      if (fn) { try { await fn(); } catch (e) { fail(e); } }
+    } finally { reveal(); }
   });
 })();

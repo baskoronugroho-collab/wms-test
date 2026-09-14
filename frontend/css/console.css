@@ -492,3 +492,7 @@ details[open] > .done-toggle .done-toggle__chev { transform: rotate(90deg); }
    grid, inline-flex), which would otherwise override it, so el.hidden = true
    silently did nothing on a banner or a button. */
 [hidden] { display: none !important; }
+
+/* Sample values from the design stay out of sight until the screen's first
+   live load has replaced them (wire.js removes .njw-loading). */
+.njw-loading [data-region], .njw-loading [data-field] { visibility: hidden; }

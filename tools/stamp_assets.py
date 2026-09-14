@@ -28,7 +28,9 @@ FRONTEND = ROOT / "frontend"
 
 # Local assets only. A CDN or Google Fonts URL is left alone.
 PATTERN = re.compile(
-    r'((?:href|src)=")((?:\.\./)?(?:css|js)/[A-Za-z0-9._-]+\.(?:css|js))(\?v=[^"]*)?(")'
+    # js/screens/<name>.js included: a per-screen handler served stale is the
+    # same bug as a stale stylesheet.
+    r'((?:href|src)=")((?:\.\./)?(?:css|js)/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\.(?:css|js))(\?v=[^"]*)?(")'
 )
 
 
