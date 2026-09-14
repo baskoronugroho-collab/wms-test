@@ -17,9 +17,47 @@ router = APIRouter(prefix="/api", tags=["master data"])
 @router.get("/brands", response_model=list[models.Brand])
 async def list_brands(user: auth.User = Depends(auth.current_user)):
     rows = await db.fetch_all(
-        "SELECT id, code, name, identity_mode, active FROM brands ORDER BY name"
+        "SELECT id, code, name, identity_mode, active, default_stock_owner "
+        "FROM brands ORDER BY name"
     )
     return [dict(r, active=bool(r["active"])) for r in rows]
+
+
+@router.patch("/brands/{brand_id}", response_model=models.Brand)
+async def update_brand(
+    brand_id: int, body: models.BrandPatch,
+    user: auth.User = Depends(auth.require("admin")),
+):
+    """Rename a brand or change who owns its stock.
+
+    The owner is stamped on every movement from the next one on; history keeps
+    the owner it was written with, which is what an audit needs.
+    """
+    if body.default_stock_owner is not None and body.default_stock_owner not in ("grab", "brand", "ninja"):
+        raise HTTPException(400, "default_stock_owner must be grab, brand or ninja")
+    before = await db.fetch_one("SELECT * FROM brands WHERE id = %s", (brand_id,))
+    if not before:
+        raise HTTPException(404, "Brand not found")
+    sets, params = [], []
+    for col in ("name", "default_stock_owner"):
+        val = getattr(body, col)
+        if val is not None:
+            sets.append(f"{col} = %s")
+            params.append(val)
+    if body.active is not None:
+        sets.append("active = %s")
+        params.append(1 if body.active else 0)
+    if sets:
+        async with db.tx() as cur:
+            await db.run(cur, "UPDATE brands SET " + ", ".join(sets) + " WHERE id = %s",
+                         (*params, brand_id))
+            await ledger.audit(cur, actor_email=user.email, entity="brand",
+                               entity_id=brand_id, action="update",
+                               after=body.model_dump(exclude_none=True))
+    row = await db.fetch_one(
+        "SELECT id, code, name, identity_mode, active, default_stock_owner "
+        "FROM brands WHERE id = %s", (brand_id,))
+    return dict(row, active=bool(row["active"]))
 
 
 @router.post("/brands", response_model=models.Brand, status_code=201)
@@ -28,12 +66,15 @@ async def create_brand(
 ):
     if body.identity_mode not in ("sku_barcode", "unit_label"):
         raise HTTPException(400, "identity_mode must be sku_barcode or unit_label")
+    if body.default_stock_owner not in ("grab", "brand", "ninja"):
+        raise HTTPException(400, "default_stock_owner must be grab, brand or ninja")
     async with db.tx() as cur:
         try:
             bid = await db.run(
                 cur,
-                "INSERT INTO brands (code, name, identity_mode) VALUES (%s,%s,%s)",
-                (body.code, body.name, body.identity_mode),
+                "INSERT INTO brands (code, name, identity_mode, default_stock_owner) "
+                "VALUES (%s,%s,%s,%s)",
+                (body.code, body.name, body.identity_mode, body.default_stock_owner),
             )
         except Exception:
             raise HTTPException(409, f"Brand code {body.code} already exists")
@@ -44,6 +85,7 @@ async def create_brand(
     return {
         "id": bid, "code": body.code, "name": body.name,
         "identity_mode": body.identity_mode, "active": True,
+        "default_stock_owner": body.default_stock_owner,
     }
 
 

@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="../css/tokens.css?v=4b107ba">
-<link rel="stylesheet" href="../css/app.css?v=4b107ba">
-<link rel="stylesheet" href="../css/console.css?v=4b107ba">
+<link rel="stylesheet" href="../css/tokens.css?v=856f10e">
+<link rel="stylesheet" href="../css/app.css?v=856f10e">
+<link rel="stylesheet" href="../css/console.css?v=856f10e">
 </head>
 <body>
 <div class="console" data-screen="simulator-grab">
@@ -45,7 +45,7 @@
         <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
         <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
         <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
-        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi POS" data-en="POS integration">Integrasi POS</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
@@ -72,22 +72,19 @@
       <div class="page__heading">
         <span class="page__eyebrow" data-id="Uji coba" data-en="Testing">Uji coba</span>
         <h1 class="page__title" data-id="Simulator Grab" data-en="Grab simulator">Simulator Grab</h1>
-        <p class="page__sub" data-id="Membuat pesanan palsu seperti yang dikirim Grab, untuk melatih staf dan menguji alur ambil pesanan." data-en="Creates fake orders shaped like the ones Grab sends, for training staff and testing the pick flow.">Membuat pesanan palsu seperti yang dikirim Grab, untuk melatih staf dan menguji alur ambil pesanan.</p>
+        <p class="page__sub" data-id="Menggantikan Hiryu (OMS) di lokasi latihan: membuat pesanan uji dari kanal mana pun — Grab, WhatsApp, web, Instagram — lewat jalur yang sama dengan pesanan asli. Pesanan sungguhan hanya pernah datang dari Hiryu; WMS tidak pernah bicara langsung dengan Grab." data-en="Stands in for Hiryu (the OMS) on a training site: creates test orders from any channel — Grab, WhatsApp, web, Instagram — through the same path real orders take. Real orders only ever arrive from Hiryu; the WMS never talks to Grab directly.">Menggantikan Hiryu (OMS) di lokasi latihan: membuat pesanan uji dari kanal mana pun — Grab, WhatsApp, web, Instagram — lewat jalur yang sama dengan pesanan asli. Pesanan sungguhan hanya pernah datang dari Hiryu; WMS tidak pernah bicara langsung dengan Grab.</p>
       </div>
       <div class="page__actions">
-        <div class="seg" role="group" aria-label="Lokasi">
-          <button class="seg__opt is-on" type="button">TRN — latihan</button>
-          <button class="seg__opt" type="button">UT5 — live</button>
-        </div>
+        <div class="seg" role="group" aria-label="Lokasi" data-region="site-seg"></div>
       </div>
     </header>
 
     <div class="gate" data-region="gate">
       <div class="gate__notice">
         <h2 class="gate__title" data-id="Simulator hanya untuk lokasi latihan" data-en="The simulator is for training sites only">Simulator hanya untuk lokasi latihan</h2>
-        <p class="gate__body" data-id="Lokasi aktif sekarang adalah UT5, yang merupakan station live. Pesanan uji di station live akan memotong stok sungguhan dan mengirim angka yang salah ke Grab. Ganti ke lokasi latihan dulu." data-en="The active site is UT5, a live station. A test order there would consume real stock and push a wrong number to Grab. Switch to a training site first.">Lokasi aktif sekarang adalah <strong data-field="gate-site">UT5</strong>, yang merupakan station live. Pesanan uji di station live akan memotong stok sungguhan dan mengirim angka yang salah ke Grab. Ganti ke lokasi latihan dulu.</p>
+        <p class="gate__body"><span data-id="Lokasi aktif sekarang adalah" data-en="The active site is">Lokasi aktif sekarang adalah</span> <strong data-field="gate-site">—</strong><span data-id=", lokasi live. Pesanan uji di lokasi live akan memotong stok sungguhan dan mengirim angka stok yang salah ke Hiryu. Ganti ke lokasi latihan dulu." data-en=", a live site. A test order there would consume real stock and send a wrong stock number to Hiryu. Switch to a training site first.">, lokasi live. Pesanan uji di lokasi live akan memotong stok sungguhan dan mengirim angka stok yang salah ke Hiryu. Ganti ke lokasi latihan dulu.</span></p>
         <div style="display:flex;gap:var(--sp-2)">
-          <button class="cbtn cbtn--primary" type="button" data-id="Ganti ke TRN — lokasi latihan" data-en="Switch to TRN — training site">Ganti ke TRN — lokasi latihan</button>
+          <button class="cbtn cbtn--primary" type="button" data-action="switch-training" data-id="Ganti ke lokasi latihan" data-en="Switch to the training site">Ganti ke lokasi latihan</button>
           <a class="cbtn" href="hub.html" data-id="Lihat daftar hub" data-en="View hubs">Lihat daftar hub</a>
         </div>
       </div>
@@ -95,13 +92,13 @@
       <div class="gate__content" style="display:flex;flex-direction:column;gap:var(--sp-4)">
         <div class="trainbar">
           <span class="trainbar__icon" aria-hidden="true">!</span>
-          <span class="trainbar__text"><strong data-id="Lokasi latihan TRN" data-en="Training site TRN">Lokasi latihan TRN</strong> — <span data-id="stok di sini palsu dan tidak dikirim ke Grab. Aman untuk dicoba." data-en="stock here is fake and never reaches Grab. Safe to experiment.">stok di sini palsu dan tidak dikirim ke Grab. Aman untuk dicoba.</span></span>
+          <span class="trainbar__text"><strong data-field="train-site">—</strong> — <span data-id="stok di sini latihan dan tidak pernah dikirim ke Hiryu. Aman untuk dicoba." data-en="stock here is for practice and never reaches Hiryu. Safe to experiment.">stok di sini latihan dan tidak pernah dikirim ke Hiryu. Aman untuk dicoba.</span></span>
         </div>
 
         <section class="section" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:var(--sp-3)">
           <div class="ccard">
             <h2 class="ccard__title" data-id="Buat pesanan acak" data-en="Generate random orders">Buat pesanan acak</h2>
-            <p class="page__sub" data-id="Untuk melatih kecepatan: sistem memilih SKU yang benar-benar ada stoknya di lokasi latihan." data-en="For speed drills: the system picks SKUs that actually have stock at the training site.">Untuk melatih kecepatan: sistem memilih SKU yang benar-benar ada stoknya di lokasi latihan.</p>
+            <p class="page__sub" data-id="Untuk melatih kecepatan: sistem memilih SKU yang benar-benar ada stoknya di lokasi latihan. Pesanan acak masuk sebagai pesanan Grab (siap dalam 15 menit)." data-en="For speed drills: the system picks SKUs that actually have stock at the training site. Random orders arrive as Grab orders (ready within 15 minutes).">Untuk melatih kecepatan: sistem memilih SKU yang benar-benar ada stoknya di lokasi latihan. Pesanan acak masuk sebagai pesanan Grab (siap dalam 15 menit).</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)">
               <label class="field"><span class="field__label" data-id="Jumlah pesanan" data-en="How many orders">Jumlah pesanan</span>
                 <span class="stepper"><button class="stepper__btn" type="button" data-step="down">−</button><span class="stepper__val" data-field="gen-count">5</span><button class="stepper__btn" type="button" data-step="up">+</button></span></label>
@@ -114,14 +111,29 @@
           <div class="ccard">
             <h2 class="ccard__title" data-id="Susun satu pesanan" data-en="Compose one order">Susun satu pesanan</h2>
             <p class="page__sub" data-id="Untuk menguji kasus tertentu — misalnya dua shade yang mirip dalam satu pesanan." data-en="For testing a specific case — two near-identical shades in one order, say.">Untuk menguji kasus tertentu — misalnya dua shade yang mirip dalam satu pesanan.</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--sp-3)">
+              <div class="field"><span class="field__label" data-id="Kanal" data-en="Channel">Kanal</span>
+                <span class="seg" role="group" aria-label="Kanal" data-region="channel">
+                  <button class="seg__opt is-on" type="button" data-channel="grab">Grab</button>
+                  <button class="seg__opt" type="button" data-channel="whatsapp">WhatsApp</button>
+                  <button class="seg__opt" type="button" data-channel="web">Web</button>
+                  <button class="seg__opt" type="button" data-channel="instagram">Instagram</button>
+                </span></div>
+              <label class="field" data-region="delivery"><span class="field__label" data-id="Cara kirim" data-en="Delivery">Cara kirim</span>
+                <select class="select" data-field="delivery-mode">
+                  <option value="ninja_rider" data-id="Kurir Ninja" data-en="Ninja rider">Kurir Ninja</option>
+                  <option value="third_party" data-id="Kurir pihak ketiga" data-en="Third-party courier">Kurir pihak ketiga</option>
+                  <option value="next_day" data-id="Kirim besok" data-en="Next day">Kirim besok</option>
+                </select></label>
+            </div>
+            <div class="inline-note" data-field="promise-note"></div>
             <label class="search" style="flex:1 1 auto">
               <span class="search__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></span>
-              <input class="search__input" type="search" placeholder="Cari SKU untuk ditambahkan…" aria-label="Cari SKU">
+              <input class="search__input" type="search" data-field="sku-search" placeholder="Cari SKU untuk ditambahkan…" aria-label="Cari SKU">
             </label>
+            <div class="linelist" data-region="sku-results"></div>
             <div class="linelist" data-region="compose-lines">
-              <span class="lineitem"><span class="lineitem__name">Glasting Liquid Lip 07 Rouge Flare</span><span class="td-code" style="color:var(--muted)">WDH-GLL-07</span><span class="stepper"><button class="stepper__btn" type="button" data-step="down">−</button><span class="stepper__val">2</span><button class="stepper__btn" type="button" data-step="up">+</button></span><button class="cbtn cbtn--sm cbtn--ghost" type="button" aria-label="Hapus baris">✕</button></span>
-              <span class="lineitem"><span class="lineitem__name">Glasting Liquid Lip 08 Coral Dust</span><span class="td-code" style="color:var(--muted)">WDH-GLL-08</span><span class="stepper"><button class="stepper__btn" type="button" data-step="down">−</button><span class="stepper__val">1</span><button class="stepper__btn" type="button" data-step="up">+</button></span><button class="cbtn cbtn--sm cbtn--ghost" type="button" aria-label="Hapus baris">✕</button></span>
-              <span class="lineitem"><span class="lineitem__name">UV Shield Airy Smooth Sunscreen SPF 50</span><span class="td-code" style="color:var(--muted)">WDH-UVS-030</span><span class="stepper"><button class="stepper__btn" type="button" data-step="down">−</button><span class="stepper__val">3</span><button class="stepper__btn" type="button" data-step="up">+</button></span><button class="cbtn cbtn--sm cbtn--ghost" type="button" aria-label="Hapus baris">✕</button></span>
+              <span style="color:var(--muted);font-size:var(--fs-c-body)" data-id="Belum ada barang. Cari SKU di atas." data-en="No items yet. Search for a SKU above.">Belum ada barang. Cari SKU di atas.</span>
             </div>
             <div class="inline-note"><span data-id="07 dan 08 dalam satu pesanan adalah kasus latihan terbaik — inilah error paling sering di lapangan." data-en="07 and 08 in one order is the best drill there is — that confusion is the most common error on the floor.">07 dan 08 dalam satu pesanan adalah kasus latihan terbaik — inilah error paling sering di lapangan.</span></div>
             <button class="cbtn cbtn--primary" type="button" data-action="compose" data-id="Kirim pesanan" data-en="Send order">Kirim pesanan</button>
@@ -132,12 +144,14 @@
           <div class="toolbar">
             <h2 class="section__title" data-id="Pesanan uji terakhir" data-en="Recent test orders">Pesanan uji terakhir</h2>
             <span class="toolbar__spacer"></span>
-            <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v4h-4"/></svg><span data-id="Muat ulang" data-en="Refresh">Muat ulang</span></button>
+            <button class="cbtn" type="button" data-action="refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v4h-4"/></svg><span data-id="Muat ulang" data-en="Refresh">Muat ulang</span></button>
           </div>
     <div class="table-scroll">
       <table class="dtable" id="tbl-testorders">
         <thead><tr>
           <th class="is-sortable" data-id="Referensi" data-en="Reference">Referensi<span class="sort">↕</span></th>
+          <th data-id="Kanal · kirim" data-en="Channel · delivery">Kanal · kirim</th>
+          <th data-id="Janji siap" data-en="Promised">Janji siap</th>
           <th class="td-num" data-id="Baris" data-en="Lines">Baris</th>
           <th class="td-num" data-id="Unit" data-en="Units">Unit</th>
           <th class="td-num" data-id="Kurang" data-en="Short">Kurang</th>
@@ -146,51 +160,7 @@
           <th class="td-actions" data-id="" data-en=""></th>
         </tr></thead>
         <tbody data-region="testorders">
-          <tr>
-            <td class="td-code td-strong">GM-TEST-8841</td>
-            <td class="td-num">5</td>
-            <td class="td-num">7</td>
-            <td class="td-num">—</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Diterima" data-en="Accepted">Diterima</span></span></td>
-            <td><span class="spill spill--info"><span class="spill__dot"></span><span data-id="Sedang diambil" data-en="Picking">Sedang diambil</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../07-ambil-pesanan.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka tugas ambil" data-en="Open pick task">Buka tugas ambil</span></a></td>
-          </tr>
-          <tr>
-            <td class="td-code td-strong">GM-TEST-8840</td>
-            <td class="td-num">3</td>
-            <td class="td-num">4</td>
-            <td class="td-num">—</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Diterima" data-en="Accepted">Diterima</span></span></td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Selesai" data-en="Done">Selesai</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../07-ambil-pesanan.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka tugas ambil" data-en="Open pick task">Buka tugas ambil</span></a></td>
-          </tr>
-          <tr>
-            <td class="td-code td-strong">GM-TEST-8839</td>
-            <td class="td-num">2</td>
-            <td class="td-num">2</td>
-            <td class="td-num"><span style="color:var(--caution);font-weight:700">1</span></td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Diterima" data-en="Accepted">Diterima</span></span></td>
-            <td><span class="spill spill--warn"><span class="spill__dot"></span><span data-id="Kurang barang" data-en="Short">Kurang barang</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../07-ambil-pesanan.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka tugas ambil" data-en="Open pick task">Buka tugas ambil</span></a></td>
-          </tr>
-          <tr>
-            <td class="td-code td-strong">GM-TEST-8838</td>
-            <td class="td-num">4</td>
-            <td class="td-num">6</td>
-            <td class="td-num">—</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Diterima" data-en="Accepted">Diterima</span></span></td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Selesai" data-en="Done">Selesai</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../07-ambil-pesanan.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka tugas ambil" data-en="Open pick task">Buka tugas ambil</span></a></td>
-          </tr>
-          <tr>
-            <td class="td-code td-strong">GM-TEST-8837</td>
-            <td class="td-num">1</td>
-            <td class="td-num">1</td>
-            <td class="td-num">—</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Diterima" data-en="Accepted">Diterima</span></span></td>
-            <td><span class="spill spill--neutral"><span class="spill__dot"></span><span data-id="Menunggu" data-en="Pending">Menunggu</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../07-ambil-pesanan.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka tugas ambil" data-en="Open pick task">Buka tugas ambil</span></a></td>
-          </tr>
+          <tr><td colspan="9" class="note" data-id="Memuat…" data-en="Loading…">Memuat…</td></tr>
         </tbody>
       </table>
     </div>
@@ -200,26 +170,21 @@
   </main>
 </div>
 
-<script src="../js/api.js?v=4b107ba"></script>
-<script src="../js/app.js?v=4b107ba"></script>
-<script src="../js/console.js?v=4b107ba"></script>
-<script>
-  /* POST /api/training/orders/generate {site_id,count,max_lines} -> {created[],message}
-     POST /api/training/orders/compose  {site_id,lines:[{sku_id,quantity}],external_ref}
-     GET  /api/training/orders?site_id= -> {orders:[TestOrderRow]}
+<div class="scrim"></div>
+<div class="cdialog" id="dlg-cancel" role="dialog" aria-modal="true" aria-labelledby="dlg-cancel-title">
+  <h2 class="cdialog__title" id="dlg-cancel-title" data-id="Batalkan pesanan uji ini?" data-en="Cancel this test order?">Batalkan pesanan uji ini?</h2>
+  <p class="cdialog__body"><strong data-field="cancel-ref" style="font-family:var(--font-code)">—</strong></p>
+  <p class="cdialog__body" data-id="Sebagai Hiryu, simulator mengirim pesan 2 (Pesanan dibatalkan). Barang yang belum diambil langsung bisa dijual lagi; yang sudah diambil masuk daftar Kembalikan ke rak." data-en="Acting as Hiryu, the simulator sends message 2 (Order cancelled). Units not yet picked are sellable again at once; units already picked go on the Return-to-shelf list.">Sebagai Hiryu, simulator mengirim pesan 2 (Pesanan dibatalkan). Barang yang belum diambil langsung bisa dijual lagi; yang sudah diambil masuk daftar Kembalikan ke rak.</p>
+  <div class="cdialog__actions">
+    <button class="cbtn cbtn--primary" type="button" data-action="confirm-cancel" style="flex:1 1 auto" data-id="Ya, batalkan" data-en="Yes, cancel it">Ya, batalkan</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Kembali" data-en="Back">Kembali</button>
+  </div>
+</div>
 
-     The gate is not decoration. The API refuses a test order on a live site,
-     but the user must never reach that refusal: read is_training off the
-     selected site and block the whole panel before the click. */
-  window.addEventListener('load', async () => {
-    try {
-      const { sites } = await NJW.api.sites();
-      const active = sites.find(s => s.code === (document.querySelector('[data-field="site-code"]') || {}).textContent) || sites[0];
-      NJW.setTrainingGate(!!(active && active.is_training), active && active.code);
-    } catch (e) {
-      NJW.setTrainingGate(false, '—');   // fail closed
-    }
-  });
-</script>
+<script src="../js/api.js?v=856f10e"></script>
+<script src="../js/app.js?v=856f10e"></script>
+<script src="../js/console.js?v=856f10e"></script>
+<script src="../js/wire.js?v=856f10e"></script>
+<script src="../js/screens/simulator-grab.js?v=4b107ba"></script>
 </body>
 </html>

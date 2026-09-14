@@ -40,8 +40,16 @@
         if (asc) th.classList.add('is-asc');
         const val = tr => {
           const cell = tr.children[idx];
-          const raw = cell ? (cell.dataset.sortValue ?? cell.textContent) : '';
-          return numeric ? parseFloat(String(raw).replace(/[^0-9.\-]/g, '')) || 0 : String(raw).trim().toLowerCase();
+          if (!cell) return numeric ? 0 : '';
+          // data-sort-value is machine-written: a plain number or a sortable key.
+          if (cell.dataset.sortValue != null) {
+            return numeric ? parseFloat(cell.dataset.sortValue) || 0 : cell.dataset.sortValue.toLowerCase();
+          }
+          const raw = cell.textContent;
+          // Visible numbers are in the Indonesian locale: "1.284" is one
+          // thousand two hundred and eighty-four and "3,5" is three and a half.
+          return numeric ? parseFloat(raw.replace(/[^0-9,\-]/g, '').replace(',', '.')) || 0
+            : raw.trim().toLowerCase();
         };
         rowsOf(table)
           .sort((a, b) => (val(a) > val(b) ? 1 : val(a) < val(b) ? -1 : 0) * (asc ? 1 : -1))
@@ -147,14 +155,14 @@
                 'No pick queue at a hub',
                 'Papan ini memantau pesanan pelanggan yang menunggu diambil. Hub tidak punya jam lima belas menit dan tidak punya antrean.',
                 'This board watches customer orders waiting to be picked. A hub has no fifteen-minute clock and no queue.'],
-    'stok-perhatian': ['Hub tidak punya rak ambil',
-                'A hub has no pick faces',
-                'Batas isi ulang mengukur rak ambil darkstore. Hub menyimpan stok curah dan mengirimnya lewat transfer, jadi tidak ada rak ambil yang bisa menipis.',
-                'Replenishment thresholds measure a darkstore pick face. A hub holds bulk stock and moves it by transfer, so there is no face to run low.'],
-    'integrasi': ['Hub tidak mengirim stok ke POS',
-                'A hub does not publish stock to the POS',
-                'Hanya darkstore yang menerbitkan angka stok, karena hanya stok darkstore yang bisa dijual lewat GrabMart Kilat. Stok hub tidak pernah muncul di POS.',
-                'Only a darkstore publishes stock, because only darkstore stock can be sold through GrabMart Kilat. Hub stock never reaches the POS.'],
+    'stok-perhatian': ['Hub tidak punya titik restock',
+                'A hub has no restock point',
+                'Titik restock mengukur stok sebuah darkstore. Hub menyimpan stok curah dan mengirimnya lewat transfer, jadi tidak ada yang perlu diminta ulang di sini.',
+                'A restock point measures the stock of a darkstore. A hub holds bulk stock and sends it by transfer, so there is nothing to ask for here.'],
+    'integrasi': ['Hub tidak mengirim stok ke Hiryu',
+                'A hub does not publish stock to Hiryu',
+                'Hanya darkstore yang menerbitkan angka stok (pesan 3), karena hanya stok darkstore yang bisa dijual. Stok hub tidak pernah muncul di Hiryu.',
+                'Only a darkstore publishes stock (message 3), because only darkstore stock can be sold. Hub stock never reaches Hiryu.'],
   };
 
   NJW.applySiteType = function (siteType, siteCode) {
@@ -176,8 +184,26 @@
     if (NJW.applyLang) NJW.applyLang();
   };
 
+  /* ---- sidebar keeps its scroll across pages ----------------------- */
+  /* Every console screen is its own document, so the sidebar is rebuilt on
+     each click and jumps back to the top — on a laptop the lower half of the
+     menu then needs re-scrolling after every navigation. */
+  function wireSidebarScroll() {
+    const scroller = document.querySelector('.sidebar');   // overflow-y: auto
+    if (!scroller) return;
+    try {
+      const y = +sessionStorage.getItem('njw.sidebarY');
+      if (y) scroller.scrollTop = y;
+    } catch (e) { /* storage blocked: start at the top */ }
+    const save = () => {
+      try { sessionStorage.setItem('njw.sidebarY', String(scroller.scrollTop)); } catch (e) {}
+    };
+    scroller.addEventListener('scroll', save, { passive: true });
+    window.addEventListener('pagehide', save);
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
-    wireSearch(); wireSort(); wireBulk(); wireDrawer(); wireSteppers();
+    wireSearch(); wireSort(); wireBulk(); wireDrawer(); wireSteppers(); wireSidebarScroll();
     /* ?site=hub previews the hub view of any screen without a live API. */
     if (new URLSearchParams(location.search).get('site') === 'hub') NJW.applySiteType('hub', 'LGS');
   });

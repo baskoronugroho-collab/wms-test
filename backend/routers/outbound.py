@@ -12,6 +12,7 @@ import db
 import ledger
 import models
 import replenish
+from routers import returns
 
 router = APIRouter(prefix="/api", tags=["outbound"])
 
@@ -60,6 +61,20 @@ def _promise(body) -> tuple[datetime | None, datetime]:
     if body.channel in SLA_MINUTES:
         return placed, now + timedelta(minutes=SLA_MINUTES[body.channel])
     return placed, (placed or now) + timedelta(minutes=DEFAULT_OWN_CHANNEL_SLA)
+
+
+def _outstanding_allocation(line: dict) -> int:
+    """What a pick line still holds reserved: its allocation not yet picked."""
+    allocated = int(line.get("qty_allocated") or 0)
+    return max(0, allocated - min(int(line.get("qty_picked") or 0), allocated))
+
+
+def _release_for_pick(line: dict, qty: int) -> int:
+    """How much of a line's reservation a pick of `qty` more units consumes."""
+    allocated = int(line.get("qty_allocated") or 0)
+    before = min(int(line.get("qty_picked") or 0), allocated)
+    after = min(int(line.get("qty_picked") or 0) + qty, allocated)
+    return max(0, after - before)
 
 
 async def hiryu_or_admin(
@@ -144,25 +159,35 @@ async def receive_order(body: models.OrderIn):
                  "VALUES (%s,%s,'ready')", (order_id, site["id"]),
         )
 
-        # Sequence by pick path — rack, then level, then position — so the
-        # picker walks the aisle once in one direction (M5.2.1).
-        seq_rows = []
+        # Allocate each line across locations, oldest stock first: usually all
+        # of it from one basket, but when the rack holds 1 and the order wants
+        # 2, the second comes from overflow instead of the line going short.
+        # One pick line per location, each holding its own reservation.
+        pick_rows = []
         for sku, qty in resolved:
-            slot = await common.pick_location_for(site["id"], sku["id"])
-            seq_rows.append((sku, qty, slot))
-        seq_rows.sort(key=lambda r: (
-            r[2]["rack_code"] if r[2] else "zzz",
-            r[2]["level_no"] if r[2] else 99,
-            r[2]["location_code"] if r[2] else "",
-        ))
-
-        for i, (sku, qty, slot) in enumerate(seq_rows, start=1):
-            allocated = 0
-            if slot:
-                allocated = await ledger.allocate(
+            locations = await common.pick_locations_for(site["id"], sku["id"])
+            parts, remaining = [], qty
+            for loc in locations:
+                if remaining <= 0:
+                    break
+                take = await ledger.allocate(
                     cur, site_id=site["id"], sku_id=sku["id"],
-                    location_id=slot["location_id"], qty=qty,
+                    location_id=loc["location_id"], qty=remaining,
                 )
+                if take:
+                    parts.append({"loc": loc, "required": take, "allocated": take})
+                    remaining -= take
+            allocated = qty - remaining
+            if remaining > 0:
+                # What cannot be reserved still goes on the first location the
+                # picker visits: the ledger may be wrong, and if the units are
+                # there the order ships whole. If not, the picker declares it
+                # short and message 5 goes to Hiryu.
+                if parts:
+                    parts[0]["required"] += remaining
+                else:
+                    parts.append({"loc": locations[0] if locations else None,
+                                  "required": remaining, "allocated": 0})
             status = "allocated" if allocated >= qty else "short"
             if status == "short":
                 short += 1
@@ -172,12 +197,25 @@ async def receive_order(body: models.OrderIn):
                 "qty_allocated, status) VALUES (%s,%s,%s,%s,%s)",
                 (order_id, sku["id"], qty, allocated, status),
             )
+            for part in parts:
+                pick_rows.append((line_id, sku, part))
+
+        # Sequence by pick path — rack, then level, then position — so the
+        # picker walks the aisle once in one direction (M5.2.1).
+        pick_rows.sort(key=lambda r: (
+            r[2]["loc"]["rack_code"] if r[2]["loc"] else "zzz",
+            r[2]["loc"]["level_no"] if r[2]["loc"] else 99,
+            r[2]["loc"]["location_code"] if r[2]["loc"] else "",
+        ))
+        for i, (line_id, sku, part) in enumerate(pick_rows, start=1):
             await db.run(
                 cur,
                 "INSERT INTO pick_lines (pick_task_id, order_line_id, sku_id, "
-                "location_id, sequence_no, qty_required) VALUES (%s,%s,%s,%s,%s,%s)",
+                "location_id, sequence_no, qty_required, qty_allocated) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s)",
                 (task_id, line_id, sku["id"],
-                 slot["location_id"] if slot else None, i, qty),
+                 part["loc"]["location_id"] if part["loc"] else None, i,
+                 part["required"], part["allocated"]),
             )
 
     return {
@@ -190,15 +228,24 @@ async def receive_order(body: models.OrderIn):
 
 async def _task_payload(task_id: int) -> dict:
     task = await db.fetch_one(
-        "SELECT pt.*, o.external_ref, o.is_test FROM pick_tasks pt "
+        "SELECT pt.*, o.external_ref, o.is_test, o.channel, o.delivery_mode, "
+        "       o.promised_at FROM pick_tasks pt "
         "JOIN orders o ON o.id = pt.order_id WHERE pt.id = %s", (task_id,)
     )
     if not task:
         raise HTTPException(404, "Pick task not found")
     lines = await db.fetch_all(
         "SELECT pl.*, s.name_display, s.photo_key, s.identity_mode, "
-        "       l.code AS location_code, r.code AS rack_code, lv.level_no "
+        "       s.brand_sku_code, s.unit_size, "
+        "       l.code AS location_code, r.code AS rack_code, lv.level_no, "
+        "       ib.stocked_since, "
+        "       (SELECT sa.slot_role FROM slot_assignments sa "
+        "         JOIN baskets bk ON bk.id = sa.basket_id "
+        "         WHERE bk.location_id = pl.location_id AND sa.sku_id = pl.sku_id "
+        "         LIMIT 1) AS slot_role "
         "FROM pick_lines pl JOIN skus s ON s.id = pl.sku_id "
+        "LEFT JOIN inventory_balances ib ON ib.location_id = pl.location_id "
+        "      AND ib.sku_id = pl.sku_id "
         "LEFT JOIN locations l ON l.id = pl.location_id "
         "LEFT JOIN levels lv ON lv.id = l.level_id "
         "LEFT JOIN racks r ON r.id = lv.rack_id "
@@ -218,6 +265,8 @@ async def _task_payload(task_id: int) -> dict:
         "created_at": str(created) if created else None,
         "claimed_at": str(task["claimed_at"]) if task.get("claimed_at") else None,
         "age_seconds": age,
+        "channel": task.get("channel"), "delivery_mode": task.get("delivery_mode"),
+        "promised_at": str(task["promised_at"]) if task.get("promised_at") else None,
         "lines": [{
             "id": l["id"], "sequence_no": l["sequence_no"], "sku_id": l["sku_id"],
             "sku_name": l["name_display"], "photo_key": l["photo_key"],
@@ -225,6 +274,13 @@ async def _task_payload(task_id: int) -> dict:
             "rack_code": l["rack_code"], "level_no": l["level_no"],
             "qty_required": l["qty_required"], "qty_picked": l["qty_picked"],
             "status": l["status"], "identity_mode": l["identity_mode"],
+            "brand_sku_code": l["brand_sku_code"], "unit_size": l["unit_size"],
+            "slot_role": l["slot_role"],
+            # The colour of the batch that has sat longest at this location:
+            # the day it went from empty to stocked. Unknown (seeded stock)
+            # is None, and the screen then says "take the oldest first".
+            "oldest_day_color": (daycolor.for_moment(l["stocked_since"])
+                                 if l["stocked_since"] else None),
         } for l in lines],
     }
 
@@ -250,11 +306,16 @@ async def claim_task(task_id: int, user: auth.User = Depends(auth.current_user))
     The conditional UPDATE is the lock: two pickers racing for the same task,
     exactly one wins, decided by the database rather than by timing.
     """
+    head = await db.fetch_one("SELECT site_id FROM pick_tasks WHERE id = %s", (task_id,))
+    if not head:
+        raise HTTPException(404, "Pick task not found")
+    # Access is checked before the claim is written, not after it.
+    await auth.assert_site_access(user, head["site_id"])
     async with db.tx() as cur:
         task = await db.one(cur, "SELECT * FROM pick_tasks WHERE id = %s FOR UPDATE",
                             (task_id,))
-        if not task:
-            raise HTTPException(404, "Pick task not found")
+        if task["status"] == "cancelled":
+            raise HTTPException(409, "Pesanan ini dibatalkan. / This order was cancelled.")
         if task["status"] == "claimed" and task["claimed_by"] != user.email:
             raise HTTPException(
                 409, f"{task['claimed_by']} is already picking this order."
@@ -266,7 +327,6 @@ async def claim_task(task_id: int, user: auth.User = Depends(auth.current_user))
             "UPDATE pick_tasks SET status='claimed', claimed_by=%s, claimed_at=NOW() "
             "WHERE id = %s", (user.email, task_id),
         )
-    await auth.assert_site_access(user, task["site_id"])
     return await _task_payload(task_id)
 
 
@@ -294,6 +354,10 @@ async def confirm_pick(
     if not line:
         raise HTTPException(404, "Pick line not found")
     site = await auth.assert_site_access(user, line["site_id"])
+    if line["task_status"] in ("cancelled", "completed"):
+        raise HTTPException(409, "Pesanan ini sudah " + (
+            "dibatalkan. / This order was cancelled." if line["task_status"] == "cancelled"
+            else "selesai. / This order is already done."))
     if line["claimed_by"] and line["claimed_by"] != user.email:
         raise HTTPException(409, f"{line['claimed_by']} is picking this order.")
 
@@ -356,8 +420,11 @@ async def confirm_pick(
             scan_source="plate" if plate else "scan",
             is_training=bool(site["is_training"]),
         )
+        # Release only what THIS line reserved. Units picked beyond it (the
+        # unreserved remainder) must not eat another order's reservation.
         await ledger.release(cur, site_id=line["site_id"], sku_id=line["sku_id"],
-                             location_id=line["location_id"], qty=qty)
+                             location_id=line["location_id"],
+                             qty=_release_for_pick(line, qty))
         if plate:
             await db.run(cur, "UPDATE unit_plates SET state='picked', "
                               "last_seen_at=NOW() WHERE id = %s", (plate["id"],))
@@ -368,9 +435,13 @@ async def confirm_pick(
             cur, "UPDATE pick_lines SET qty_picked=%s, status=%s WHERE id=%s",
             (picked, "picked" if done else "pending", line_id),
         )
+        # An order line may have several pick lines (rack and overflow), so it
+        # accumulates. MySQL applies SET left to right: `status` sees the new
+        # qty_picked.
         await db.run(
-            cur, "UPDATE order_lines SET qty_picked=%s, status=%s WHERE id=%s",
-            (picked, "picked" if done else "allocated", line["order_line_id"]),
+            cur, "UPDATE order_lines SET qty_picked = qty_picked + %s, "
+                 "status = IF(qty_picked >= qty_ordered, 'picked', status) WHERE id = %s",
+            (qty, line["order_line_id"]),
         )
 
         nxt = await db.one(
@@ -419,12 +490,34 @@ async def complete_task(task_id: int, user: auth.User = Depends(auth.current_use
         raise HTTPException(404, "Pick task not found")
     await auth.assert_site_access(user, task["site_id"])
     async with db.tx() as cur:
+        # Locked and re-checked: message 4 must go once, and never for an order
+        # Hiryu has already cancelled.
+        task = await db.one(cur, "SELECT * FROM pick_tasks WHERE id = %s FOR UPDATE",
+                            (task_id,))
+        if task["status"] == "completed":
+            raise HTTPException(409, "Pesanan ini sudah selesai. / This order is already done.")
+        if task["status"] == "cancelled":
+            raise HTTPException(409, "Pesanan ini dibatalkan. / This order was cancelled.")
+        open_lines = await db.one(
+            cur, "SELECT COUNT(*) AS n FROM pick_lines WHERE pick_task_id = %s "
+                 "AND qty_picked < qty_required AND status <> 'short'", (task_id,))
+        if open_lines["n"]:
+            raise HTTPException(
+                409, "Masih ada barang yang belum diambil. / Items are still to be picked.")
         await db.run(cur, "UPDATE pick_tasks SET status='completed', "
                           "completed_at=NOW() WHERE id=%s", (task_id,))
         await db.run(cur, "UPDATE orders SET status='picked' WHERE id=%s",
                      (task["order_id"],))
-        await db.run(cur, "UPDATE unit_plates SET state='shipped' "
-                          "WHERE state='picked' AND site_id=%s", (task["site_id"],))
+        # Only the units picked for THIS order leave. The whole site's picked
+        # plates used to be marked shipped, including other orders' totes and
+        # cancelled units waiting to go back on the shelf.
+        await db.run(
+            cur,
+            "UPDATE unit_plates up "
+            "JOIN stock_movements m ON m.plate_id = up.id AND m.ref_type = 'pick_line' "
+            "JOIN pick_lines pl ON pl.id = m.ref_id "
+            "SET up.state = 'shipped' "
+            "WHERE pl.pick_task_id = %s AND up.state = 'picked'", (task_id,))
 
         # Message 4 -- the bag is sealed. This is the trigger the POS turns into a
         # receipt and passes to Grab; it is the only thing standing between a
@@ -482,6 +575,67 @@ def _jakarta_day_start_utc() -> datetime:
         hour=0, minute=0, second=0, microsecond=0
     )
     return local_midnight.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+@router.get("/orders", response_model=models.OrderList)
+async def list_orders(
+    site_id: int,
+    status: str | None = Query(default=None),
+    channel: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    user: auth.User = Depends(auth.current_user),
+):
+    """Order history at a site, newest first, in one query.
+
+    The queue board shows what is live; this is everything, cancelled and
+    finished included, for a supervisor answering "what happened to order X".
+    """
+    await auth.assert_site_access(user, site_id)
+    where, params = ["o.site_id = %s"], [site_id]
+    if status:
+        where.append("o.status = %s")
+        params.append(status)
+    if channel:
+        where.append("o.channel = %s")
+        params.append(channel)
+    clause = " AND ".join(where)
+    rows = await db.fetch_all(
+        "SELECT o.id, o.external_ref, o.status, o.is_test, o.channel, o.delivery_mode, "
+        "       o.created_at, o.placed_at, o.promised_at, "
+        "       pt.id AS pick_task_id, pt.status AS pick_status, pt.claimed_by, "
+        "       pt.completed_at, "
+        "       (SELECT COUNT(*) FROM order_lines ol WHERE ol.order_id = o.id) AS line_count, "
+        "       (SELECT COALESCE(SUM(ol.qty_ordered),0) FROM order_lines ol "
+        "         WHERE ol.order_id = o.id) AS units, "
+        "       (SELECT COALESCE(SUM(ol.qty_picked),0) FROM order_lines ol "
+        "         WHERE ol.order_id = o.id) AS units_picked, "
+        "       (SELECT COUNT(*) FROM order_lines ol WHERE ol.order_id = o.id "
+        "         AND ol.status = 'short') AS short_lines, "
+        "       TIMESTAMPDIFF(SECOND, NOW(), o.promised_at) AS remaining_seconds "
+        "FROM orders o LEFT JOIN pick_tasks pt ON pt.order_id = o.id "
+        f"WHERE {clause} ORDER BY o.created_at DESC, o.id DESC LIMIT %s OFFSET %s",
+        (*params, limit, offset),
+    )
+    total = await db.fetch_one(f"SELECT COUNT(*) AS n FROM orders o WHERE {clause}",
+                               tuple(params))
+    ts = lambda v: str(v) if v else None
+    return {
+        "orders": [{
+            "order_id": r["id"], "external_ref": r["external_ref"], "status": r["status"],
+            "is_test": bool(r["is_test"]), "channel": r["channel"],
+            "delivery_mode": r["delivery_mode"], "created_at": ts(r["created_at"]),
+            "placed_at": ts(r["placed_at"]), "promised_at": ts(r["promised_at"]),
+            "pick_task_id": r["pick_task_id"], "pick_status": r["pick_status"],
+            "claimed_by": r["claimed_by"], "completed_at": ts(r["completed_at"]),
+            "line_count": int(r["line_count"] or 0), "units": int(r["units"] or 0),
+            "units_picked": int(r["units_picked"] or 0),
+            "short_lines": int(r["short_lines"] or 0),
+            "remaining_seconds": (int(r["remaining_seconds"])
+                                  if r["remaining_seconds"] is not None else None),
+        } for r in rows],
+        "total": int(total["n"]),
+    }
 
 
 @router.get("/pick-tasks/board", response_model=models.PickQueueBoard)
@@ -675,6 +829,8 @@ async def declare_short(
     await auth.assert_site_access(user, line["site_id"])
     if line["status"] == "picked":
         raise HTTPException(409, "Baris ini sudah selesai diambil.")
+    if line["task_status"] in ("cancelled", "completed"):
+        raise HTTPException(409, "Pesanan ini sudah ditutup. / This order is closed.")
 
     required = line["qty_required"] - line["qty_picked"]
     found = max(0, min(body.qty_found, required))
@@ -687,11 +843,11 @@ async def declare_short(
     )
 
     async with db.tx() as cur:
-        # 1. Stop promising what is not there.
+        # 1. Stop promising what is not there — this line's reservation only.
         if line["location_id"]:
             await ledger.release(
                 cur, site_id=line["site_id"], sku_id=line["sku_id"],
-                location_id=line["location_id"], qty=required,
+                location_id=line["location_id"], qty=_outstanding_allocation(line),
             )
 
         # 2. Correct on-hand to what the picker actually found. Only the
@@ -704,7 +860,11 @@ async def declare_short(
                 (line["site_id"], line["sku_id"], line["location_id"]),
             )
             on_hand = int(bal["qty_on_hand"]) if bal else 0
-            write_off = min(missing, on_hand)
+            # The picker found `found` units here and is taking all of them, so
+            # that is what the location really held. Bring the ledger to it.
+            # (Writing off only `missing` left the found units short of cover:
+            # the pick below then tried to go negative and was refused.)
+            write_off = max(0, on_hand - found)
             if write_off:
                 await ledger.apply(
                     cur, site_id=line["site_id"], sku_id=line["sku_id"],
@@ -731,8 +891,9 @@ async def declare_short(
         )
         await db.run(
             cur,
-            "UPDATE order_lines SET qty_picked = %s, status = 'short' WHERE id = %s",
-            (line["qty_picked"] + found, line["order_line_id"]),
+            "UPDATE order_lines SET qty_picked = qty_picked + %s, status = 'short' "
+            "WHERE id = %s",
+            (found, line["order_line_id"]),
         )
 
         # 4. Message 5 -- a statement of fact. The POS decides refund,
@@ -782,43 +943,54 @@ async def declare_short(
 
 
 @router.post("/orders/{external_ref}/cancel", response_model=models.Ok)
-async def cancel_order(external_ref: str, user: auth.User = Depends(auth.current_user)):
-    """Message 2 -- the POS tells us Grab or the customer cancelled.
+async def cancel_order_http(external_ref: str, caller: str = Depends(hiryu_or_admin)):
+    """Message 2 -- Hiryu tells us the order is cancelled.
 
-    Allocations are released so the stock becomes sellable again. Anything
-    already physically picked is NOT returned to stock automatically: those units
-    are off the shelf and in a tote, and putting them back in the ledger without
-    someone walking them to the rack would be a lie. That path is undesigned.
+    Only Hiryu sends this, for the same reason only Hiryu sends message 1: the
+    order lives in Hiryu, and a cancel made anywhere else would leave Hiryu
+    promising a customer something the WMS has already dropped.
+    """
+    return await cancel_order(external_ref)
+
+
+async def cancel_order(external_ref: str, site_id: int | None = None):
+    """Release what was only allocated; send what was already picked back.
+
+    Allocated-but-unpicked units are released on the spot, so the stock is
+    sellable again at once (and message 3 tells Hiryu). Picked units are in a
+    tote, not on a shelf, so they become return-to-shelf tasks and re-enter the
+    ledger only when someone scans each one back at the rack.
     """
     order = await db.fetch_one(
-        "SELECT o.*, pt.id AS task_id FROM orders o "
+        "SELECT o.*, pt.id AS task_id, s.is_training FROM orders o "
+        "JOIN sites s ON s.id = o.site_id "
         "LEFT JOIN pick_tasks pt ON pt.order_id = o.id WHERE o.external_ref = %s",
         (external_ref,),
     )
-    if not order:
+    if not order or (site_id is not None and order["site_id"] != site_id):
         raise HTTPException(404, "Order not found")
-    await auth.assert_site_access(user, order["site_id"])
     if order["status"] == "cancelled":
         return {"ok": True, "message": "Already cancelled."}
 
-    picked_back = 0
     async with db.tx() as cur:
+        # Per pick line: each holds its own reservation at its own location,
+        # and its picked units go back to that same location.
         lines = await db.many(
             cur,
-            "SELECT ol.id, ol.sku_id, ol.qty_allocated, ol.qty_picked, "
-            "       pl.location_id FROM order_lines ol "
-            "LEFT JOIN pick_lines pl ON pl.order_line_id = ol.id "
+            "SELECT pl.id, pl.sku_id, pl.location_id, pl.qty_picked, "
+            "       pl.qty_allocated FROM pick_lines pl "
+            "JOIN order_lines ol ON ol.id = pl.order_line_id "
             "WHERE ol.order_id = %s",
             (order["id"],),
         )
         for l in lines:
-            outstanding = (l["qty_allocated"] or 0) - (l["qty_picked"] or 0)
+            outstanding = _outstanding_allocation(l)
             if outstanding > 0 and l["location_id"]:
                 await ledger.release(
                     cur, site_id=order["site_id"], sku_id=l["sku_id"],
                     location_id=l["location_id"], qty=outstanding,
                 )
-            picked_back += l["qty_picked"] or 0
+        picked_back = await returns.create_for_cancel(cur, order=order, lines=lines)
 
         await db.run(cur, "UPDATE orders SET status='cancelled' WHERE id=%s",
                      (order["id"],))
@@ -829,7 +1001,7 @@ async def cancel_order(external_ref: str, user: auth.User = Depends(auth.current
     return {
         "ok": True,
         "message": (
-            str(picked_back) + " unit(s) already picked need returning to the shelf "
-            "by hand." if picked_back else "Cancelled; nothing was picked."
+            f"Cancelled. {picked_back} picked unit(s) added to the return-to-shelf list."
+            if picked_back else "Cancelled; nothing was picked."
         ),
     }

@@ -3,10 +3,7 @@
   "info": {
     "title": "Ninja Kilat WMS",
     "description": "Warehouse management for Ninja Van's GrabMart Kilat fulfilment: inbound and putaway, guided picking, weekly stock opname, barcode and license-plate registration, and an isolated training mode.",
-    "version": "0.1.0",
-    "contact": {
-      "name": "Ninja Van — Kilat fulfilment"
-    }
+    "version": "0.1.0"
   },
   "paths": {
     "/health": {
@@ -14,7 +11,7 @@
         "tags": [
           "platform"
         ],
-        "summary": "Readiness probe — reports liveness and database connectivity",
+        "summary": "Health",
         "description": "Readiness probe.\n\nReports database state without failing on it: a database blip should show up\nin the payload, not take the pod out of rotation on its own.",
         "operationId": "health_health_get",
         "responses": {
@@ -36,9 +33,9 @@
         "tags": [
           "platform"
         ],
-        "summary": "The browser's heartbeat",
+        "summary": "Api Health",
         "description": "The browser's heartbeat.\n\nSame answer as /health, reachable through the ingress. Once a frontend/ is\nshipped the ingress routes everything except /api to nginx, so a browser\nasking for /health gets index.html back with a cheerful 200 — which would\nmake the connection indicator claim the app is up while the backend or the\ndatabase is down. The station app is online-only and blocks work loudly on a\ndropped connection, so that heartbeat has to reach the backend.\n\nHEAD is declared explicitly. Plain Starlette adds HEAD to any GET route, but\nFastAPI's APIRoute does not — and the frontend's heartbeat sends HEAD, so\nwithout this it collects a 405 every 20 s and reports the app as offline\nforever.",
-        "operationId": "api_health_api_health_head",
+        "operationId": "api_health_api_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -56,9 +53,9 @@
         "tags": [
           "platform"
         ],
-        "summary": "The browser's heartbeat",
+        "summary": "Api Health",
         "description": "The browser's heartbeat.\n\nSame answer as /health, reachable through the ingress. Once a frontend/ is\nshipped the ingress routes everything except /api to nginx, so a browser\nasking for /health gets index.html back with a cheerful 200 — which would\nmake the connection indicator claim the app is up while the backend or the\ndatabase is down. The station app is online-only and blocks work loudly on a\ndropped connection, so that heartbeat has to reach the backend.\n\nHEAD is declared explicitly. Plain Starlette adds HEAD to any GET route, but\nFastAPI's APIRoute does not — and the frontend's heartbeat sends HEAD, so\nwithout this it collects a 405 every 20 s and reports the app as offline\nforever.",
-        "operationId": "api_health_api_health_head",
+        "operationId": "api_health_api_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -78,7 +75,7 @@
         "tags": [
           "platform"
         ],
-        "summary": "Who the signed-in user is, their role, and the sites they may work at",
+        "summary": "Whoami",
         "description": "The frontend asks \"who am I?\" here — the browser never sees the SSO headers.",
         "operationId": "whoami_api_me_get",
         "parameters": [
@@ -128,7 +125,7 @@
         "tags": [
           "master data"
         ],
-        "summary": "List every brand Ninja fulfils for",
+        "summary": "List Brands",
         "operationId": "list_brands_api_brands_get",
         "parameters": [
           {
@@ -179,7 +176,7 @@
         "tags": [
           "master data"
         ],
-        "summary": "Onboard a new brand and set its default identity mode",
+        "summary": "Create Brand",
         "operationId": "create_brand_api_brands_post",
         "parameters": [
           {
@@ -233,12 +230,81 @@
         }
       }
     },
+    "/api/brands/{brand_id}": {
+      "patch": {
+        "tags": [
+          "master data"
+        ],
+        "summary": "Update Brand",
+        "description": "Rename a brand or change who owns its stock.\n\nThe owner is stamped on every movement from the next one on; history keeps\nthe owner it was written with, which is what an audit needs.",
+        "operationId": "update_brand_api_brands__brand_id__patch",
+        "parameters": [
+          {
+            "name": "brand_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Brand Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrandPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Brand"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/skus": {
       "get": {
         "tags": [
           "master data"
         ],
-        "summary": "Search a brand's SKUs by name or code",
+        "summary": "List Skus",
         "operationId": "list_skus_api_skus_get",
         "parameters": [
           {
@@ -354,7 +420,7 @@
         "tags": [
           "master data"
         ],
-        "summary": "Create one SKU under a brand",
+        "summary": "Create Sku",
         "operationId": "create_sku_api_skus_post",
         "parameters": [
           {
@@ -413,7 +479,7 @@
         "tags": [
           "master data"
         ],
-        "summary": "Bulk-import a brand's SKUs from CSV — preview by default, commit on request",
+        "summary": "Import Skus",
         "description": "Bulk import from CSV. Preview by default; pass commit=true to apply.\n\nColumn names are matched loosely rather than pinned to one file's exact\nshape — the Wardah source is an OCR artefact with a trailing formula row and\nno stable SKU-code column, and hard-coding it would contradict G5 (onboarding\na brand should be configuration, not code).",
         "operationId": "import_skus_api_skus_import_post",
         "parameters": [
@@ -492,7 +558,7 @@
         "tags": [
           "master data"
         ],
-        "summary": "Live check while a staffer bulk-scans under one locked SKU",
+        "summary": "Check Barcode",
         "description": "Live check while a staffer bulk-scans under one locked SKU.\n\nA repeated scan of the same barcode is the normal case — a carton of 40\nidentical units — so it is 'already registered', not an error (M1.3.4).",
         "operationId": "check_barcode_api_barcodes_check_get",
         "parameters": [
@@ -560,7 +626,7 @@
         "tags": [
           "master data"
         ],
-        "summary": "Bind a batch of scanned barcodes to one pre-selected SKU",
+        "summary": "Register Barcodes",
         "description": "Bind a batch of scanned barcodes to one pre-selected SKU.\n\nA barcode may resolve to exactly one SKU — enforced by the unique index, not\nonly by this check (M1.3.7).",
         "operationId": "register_barcodes_api_barcodes_register_post",
         "parameters": [
@@ -620,7 +686,7 @@
         "tags": [
           "master data"
         ],
-        "summary": "Unbinding DELETEs the row and writes the audit trail (PRD §11)",
+        "summary": "Unbind Barcode",
         "description": "Unbinding DELETEs the row and writes the audit trail (PRD §11).",
         "operationId": "unbind_barcode_api_barcodes__barcode__delete",
         "parameters": [
@@ -688,7 +754,7 @@
         "tags": [
           "locations"
         ],
-        "summary": "List the stations and hubs the user may work at",
+        "summary": "List Sites",
         "operationId": "list_sites_api_sites_get",
         "parameters": [
           {
@@ -749,7 +815,7 @@
         "tags": [
           "locations"
         ],
-        "summary": "Register a new station, hub, or training site",
+        "summary": "Create Site",
         "operationId": "create_site_api_sites_post",
         "parameters": [
           {
@@ -803,12 +869,75 @@
         }
       }
     },
+    "/api/sites/destinations": {
+      "get": {
+        "tags": [
+          "locations"
+        ],
+        "summary": "Dispatch Destinations",
+        "description": "Every darkstore a hub may send a tote to.\n\nGET /sites lists only a person's own sites, which is right everywhere except\nhere: a hub operator dispatches to stations they never work at. Training\nstays with training, so practice totes never land at a real station.",
+        "operationId": "dispatch_destinations_api_sites_destinations_get",
+        "parameters": [
+          {
+            "name": "from_site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "From Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Site"
+                  },
+                  "title": "Response Dispatch Destinations Api Sites Destinations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sites/{site_id}/racks/generate": {
       "post": {
         "tags": [
           "locations"
         ],
-        "summary": "Build the standard layout in one action, so opening station 8 takes a",
+        "summary": "Generate Racks",
         "description": "Build the standard layout in one action, so opening station 8 takes a\nminute rather than an afternoon (M2.1.5).",
         "operationId": "generate_racks_api_sites__site_id__racks_generate_post",
         "parameters": [
@@ -877,7 +1006,7 @@
         "tags": [
           "locations"
         ],
-        "summary": "The one dense screen in the product: the whole station at a glance",
+        "summary": "Rack Map",
         "description": "The one dense screen in the product: the whole station at a glance.",
         "operationId": "rack_map_api_sites__site_id__rack_map_get",
         "parameters": [
@@ -936,7 +1065,7 @@
         "tags": [
           "locations"
         ],
-        "summary": "Recommend a basket size and a free location",
+        "summary": "Suggest Slot",
         "description": "Recommend a basket size and a free location.\n\nSlotting rules (PRD §7.3): fast movers to levels 2-3, slow movers to level 5\nwhich sits at ~2.0 m and needs a step stool.",
         "operationId": "suggest_slot_api_slots_suggest_get",
         "parameters": [
@@ -1004,7 +1133,7 @@
         "tags": [
           "locations"
         ],
-        "summary": "Give a SKU its basket at a site — one SKU per basket, one basket per SKU",
+        "summary": "Assign Slot",
         "description": "Bind a SKU to a basket. One SKU per basket, one slot per SKU per site —\nboth enforced by unique constraint, not only by this check (M2.2.2).",
         "operationId": "assign_slot_api_slots_post",
         "parameters": [
@@ -1064,7 +1193,7 @@
         "tags": [
           "locations"
         ],
-        "summary": "Moving a SKU is an explicit action that writes movements, not an edit",
+        "summary": "Relocate Slot",
         "description": "Moving a SKU is an explicit action that writes movements, not an edit\n(M2.2.3). Stock follows the SKU to the new basket.",
         "operationId": "relocate_slot_api_slots__slot_id__relocate_post",
         "parameters": [
@@ -1132,7 +1261,7 @@
         "tags": [
           "locations"
         ],
-        "summary": "Add one rack to a site that already has some",
+        "summary": "Add Rack",
         "description": "Add one rack to a site that already has some.\n\ngenerate_racks refuses to run twice and tells the reader to \"add racks\nindividually\" -- which had no endpoint behind it. A station that fills up,\nor one that needs somewhere to put overflow, has to be able to grow by one\nrack without tearing down the layout it already has.",
         "operationId": "add_rack_api_sites__site_id__racks_post",
         "parameters": [
@@ -1201,7 +1330,7 @@
         "tags": [
           "scanning"
         ],
-        "summary": "Resolve any scanned code to either a SKU (Mode A) or one physical unit (Mode B)",
+        "summary": "Resolve",
         "operationId": "resolve_api_scan_resolve_get",
         "parameters": [
           {
@@ -1273,11 +1402,102 @@
       }
     },
     "/api/receipts": {
+      "get": {
+        "tags": [
+          "inbound"
+        ],
+        "summary": "List Receipts",
+        "description": "Every receipt at a site, newest first, open ones included.\n\nThe slip archive only knows completed receipts; a supervisor also needs to\nsee the delivery still being scanned, and by whom.",
+        "operationId": "list_receipts_api_receipts_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(all|open|completed|discrepancy_raised)$",
+              "default": "all",
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "inbound"
         ],
-        "summary": "Open an inbound receipt against a brand delivery or a hub transfer",
+        "summary": "Open Receipt",
         "operationId": "open_receipt_api_receipts_post",
         "parameters": [
           {
@@ -1336,7 +1556,7 @@
         "tags": [
           "inbound"
         ],
-        "summary": "Attach an AWB/reference number a brand happened to supply",
+        "summary": "Update Receipt",
         "description": "Attach an AWB/reference number a brand happened to supply.\n\nOptional and free-text — there is no known-good list to validate against\nyet (M3 addendum). It carries no expected-quantity behaviour of its own;\nit is only recorded for the summary/slip so it can be searched later.",
         "operationId": "update_receipt_api_receipts__receipt_id__patch",
         "parameters": [
@@ -1405,7 +1625,7 @@
         "tags": [
           "inbound"
         ],
-        "summary": "Scan a unit into a receipt and be told which basket it goes in",
+        "summary": "Scan Into Receipt",
         "description": "The receiving scan loop — the core interaction, tuned for the burst.\n\nNever dead-ends: an unknown barcode or a SKU with no basket both return an\noutcome the UI can offer a way out of, rather than an error (M3.3.4/5).",
         "operationId": "scan_into_receipt_api_receipts__receipt_id__scan_post",
         "parameters": [
@@ -1469,12 +1689,81 @@
         }
       }
     },
+    "/api/receipts/{receipt_id}/scan/undo": {
+      "post": {
+        "tags": [
+          "inbound"
+        ],
+        "summary": "Undo Receipt Scan",
+        "description": "Take back this person's last scan on an open receipt.\n\nA double-fire from the gun, or a unit scanned then set aside as damaged,\notherwise sits in stock until the next count. Only your own scans, only the\nlast one, only while the receipt is open: past that it is an adjustment,\nwhich a supervisor signs.",
+        "operationId": "undo_receipt_scan_api_receipts__receipt_id__scan_undo_post",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Receipt Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiptUndoIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptUndoResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/receipts/{receipt_id}/complete": {
       "post": {
         "tags": [
           "inbound"
         ],
-        "summary": "Close a receipt and start the 24-hour discrepancy clock",
+        "summary": "Complete Receipt",
         "operationId": "complete_receipt_api_receipts__receipt_id__complete_post",
         "parameters": [
           {
@@ -1532,7 +1821,7 @@
         "tags": [
           "inbound"
         ],
-        "summary": "What a receipt took in, with expected-versus-received variance",
+        "summary": "Receipt Summary",
         "operationId": "receipt_summary_api_receipts__receipt_id__summary_get",
         "parameters": [
           {
@@ -1590,7 +1879,7 @@
         "tags": [
           "plates (Mode B)"
         ],
-        "summary": "Mint a block of sequential, unbound plates and materialise them",
+        "summary": "Issue Range",
         "description": "Mint a block of sequential, unbound plates and materialise them.\n\nA plate exists from the moment it is issued: issuing 5,000 creates 5,000\nrows, so a scan of any of them is a known object rather than a guess.",
         "operationId": "issue_range_api_plates_ranges_post",
         "parameters": [
@@ -1650,7 +1939,7 @@
         "tags": [
           "plates (Mode B)"
         ],
-        "summary": "How many unbound license plates a site has left",
+        "summary": "Plate Stock",
         "operationId": "plate_stock_api_plates_stock_get",
         "parameters": [
           {
@@ -1708,7 +1997,7 @@
         "tags": [
           "plates (Mode B)"
         ],
-        "summary": "Bind a freshly-applied license plate to a SKU and put the unit away in one action",
+        "summary": "Bind Plate",
         "description": "Apply-then-scan. Binding and putaway are one action, never two (M1.4.2.8).\n\nThe staffer sticks a label on the item and scans it; the scan resolves the\nSKU, the SKU resolves the basket, and the screen shows where to put it. The\nsame unit is never scanned twice.",
         "operationId": "bind_plate_api_plates_bind_post",
         "parameters": [
@@ -1768,7 +2057,7 @@
         "tags": [
           "plates (Mode B)"
         ],
-        "summary": "Release a license plate so the label can be peeled and reused",
+        "summary": "Unbind Plate",
         "description": "Undo — peel the label and rebind it cleanly (M1.4.2.6).",
         "operationId": "unbind_plate_api_plates__code__unbind_post",
         "parameters": [
@@ -1837,7 +2126,7 @@
         "tags": [
           "plates (Mode B)"
         ],
-        "summary": "Where one license-plated unit is, and its history",
+        "summary": "Get Plate",
         "operationId": "get_plate_api_plates__code__get",
         "parameters": [
           {
@@ -1895,7 +2184,7 @@
         "tags": [
           "outbound"
         ],
-        "summary": "Message 1 over HTTP: Hiryu hands the WMS an order to pick",
+        "summary": "Receive Order Http",
         "description": "Message 1 over HTTP: Hiryu hands the WMS an order to pick.",
         "operationId": "receive_order_http_api_pos_orders_post",
         "parameters": [
@@ -1971,7 +2260,7 @@
         "tags": [
           "outbound"
         ],
-        "summary": "Pick tasks waiting at a station",
+        "summary": "List Tasks",
         "operationId": "list_tasks_api_pick_tasks_get",
         "parameters": [
           {
@@ -2039,7 +2328,7 @@
         "tags": [
           "outbound"
         ],
-        "summary": "A claimed task is invisible to other pickers (M5.2.2)",
+        "summary": "Claim Task",
         "description": "A claimed task is invisible to other pickers (M5.2.2).\n\nThe conditional UPDATE is the lock: two pickers racing for the same task,\nexactly one wins, decided by the database rather than by timing.",
         "operationId": "claim_task_api_pick_tasks__task_id__claim_post",
         "parameters": [
@@ -2098,7 +2387,7 @@
         "tags": [
           "outbound"
         ],
-        "summary": "Confirm a pick by scanning — blocks the wrong shade before it reaches the bag",
+        "summary": "Confirm Pick",
         "description": "The shade-confusion gate. Shade 07 versus 08 is caught here and nowhere else.\n\nA wrong scan is blocking, with no staff-level override — an override that\nexists gets used, and then the gate has no value (M5.2.5, and E13 in §15).",
         "operationId": "confirm_pick_api_pick_lines__line_id__confirm_post",
         "parameters": [
@@ -2167,7 +2456,7 @@
         "tags": [
           "outbound"
         ],
-        "summary": "Finish a pick task and hand the order to the packing station",
+        "summary": "Complete Task",
         "operationId": "complete_task_api_pick_tasks__task_id__complete_post",
         "parameters": [
           {
@@ -2220,12 +2509,126 @@
         }
       }
     },
+    "/api/orders": {
+      "get": {
+        "tags": [
+          "outbound"
+        ],
+        "summary": "List Orders",
+        "description": "Order history at a site, newest first, in one query.\n\nThe queue board shows what is live; this is everything, cancelled and\nfinished included, for a supervisor answering \"what happened to order X\".",
+        "operationId": "list_orders_api_orders_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Channel"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/pick-tasks/board": {
       "get": {
         "tags": [
           "outbound"
         ],
-        "summary": "Everything waiting, everything being picked, and what finished today",
+        "summary": "Queue Board",
         "description": "Everything waiting, everything being picked, and what finished today.\n\nOne aggregate query rather than the per-task fan-out `list_tasks` does: a\nboard showing fifty cards would otherwise run a hundred round trips, and\nthis is the screen most likely to be left open and refreshing all shift.",
         "operationId": "queue_board_api_pick_tasks_board_get",
         "parameters": [
@@ -2284,7 +2687,7 @@
         "tags": [
           "outbound"
         ],
-        "summary": "Hand a claimed order back to the queue",
+        "summary": "Release Task",
         "description": "Hand a claimed order back to the queue.\n\nWithout this a claim is permanent: `claim` hides a task from every other\npicker, so a dead tablet or an abandoned shift strands the order where\nnobody can see it while Grab keeps counting.\n\nAnyone may release their own claim; releasing someone else's needs\nsupervisor, because it takes work off a colleague who may simply be walking\nback from the far rack.\n\nLines already picked keep their progress — the stock has physically moved\nand the ledger says so. The next picker resumes at the first pending line\nrather than starting the order again.",
         "operationId": "release_task_api_pick_tasks__task_id__release_post",
         "parameters": [
@@ -2353,7 +2756,7 @@
         "tags": [
           "outbound"
         ],
-        "summary": "The picker cannot find the stock",
+        "summary": "Declare Short",
         "description": "The picker cannot find the stock. Two taps, and the POS hears immediately.\n\nGrab refunds the customer and charges the merchant by default, so the whole\npoint of this endpoint is reaching the POS before the charge does.\n\nThe stock correction here is DELIBERATELY unsigned, unlike every other\nadjustment in this product (M6.3.3). If it waited for a supervisor the system\nwould keep selling stock that does not exist and produce a second short pick,\nthen a third. The signature catches up; the bleeding stops now. The cost is\nthat a staffer can zero a SKU with two taps -- which is why the exception row\nnames them and is indexed for repeat offenders.",
         "operationId": "declare_short_api_pick_lines__line_id__short_post",
         "parameters": [
@@ -2422,9 +2825,9 @@
         "tags": [
           "outbound"
         ],
-        "summary": "Message 2 -- the POS tells us Grab or the customer cancelled",
-        "description": "Message 2 -- the POS tells us Grab or the customer cancelled.\n\nAllocations are released so the stock becomes sellable again. Anything\nalready physically picked is NOT returned to stock automatically: those units\nare off the shelf and in a tote, and putting them back in the ledger without\nsomeone walking them to the rack would be a lie. That path is undesigned.",
-        "operationId": "cancel_order_api_orders__external_ref__cancel_post",
+        "summary": "Cancel Order Http",
+        "description": "Message 2 -- Hiryu tells us the order is cancelled.\n\nOnly Hiryu sends this, for the same reason only Hiryu sends message 1: the\norder lives in Hiryu, and a cancel made anywhere else would leave Hiryu\npromising a customer something the WMS has already dropped.",
+        "operationId": "cancel_order_http_api_orders__external_ref__cancel_post",
         "parameters": [
           {
             "name": "external_ref",
@@ -2433,6 +2836,22 @@
             "schema": {
               "type": "string",
               "title": "External Ref"
+            }
+          },
+          {
+            "name": "x-hiryu-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Hiryu-Key"
             }
           },
           {
@@ -2481,7 +2900,7 @@
         "tags": [
           "stock opname"
         ],
-        "summary": "Create a stock-count plan over a site's baskets",
+        "summary": "Create Plan",
         "operationId": "create_plan_api_opname_plans_post",
         "parameters": [
           {
@@ -2538,7 +2957,7 @@
         "tags": [
           "stock opname"
         ],
-        "summary": "Recent count plans at a site",
+        "summary": "List Plans",
         "description": "Recent count plans at a site.\n\nDeclared BEFORE /opname/plans/{plan_id}: FastAPI matches in registration\norder, and a literal path registered after a parameterised sibling is\nshadowed by it.",
         "operationId": "list_plans_api_opname_plans_get",
         "parameters": [
@@ -2608,7 +3027,7 @@
         "tags": [
           "stock opname"
         ],
-        "summary": "A count plan's progress, and every basket in it",
+        "summary": "Plan Detail",
         "operationId": "plan_detail_api_opname_plans__plan_id__get",
         "parameters": [
           {
@@ -2666,7 +3085,7 @@
         "tags": [
           "stock opname"
         ],
-        "summary": "Claim a basket to count it",
+        "summary": "Claim Basket",
         "description": "Claim a basket to count it.\n\nThe UNIQUE(plan_id, basket_id) index is the claim: two staff racing for the\nsame basket, exactly one wins, and the loser is told who holds it. This is\nthe direct answer to concurrent staff on one station (M6.2.2).\n\nThe expected quantity is deliberately NOT returned. Showing it invites\nconfirming the number instead of counting it (M6.2.3).",
         "operationId": "claim_basket_api_opname_sessions_post",
         "parameters": [
@@ -2721,12 +3140,130 @@
         }
       }
     },
+    "/api/opname/sessions/{session_id}/release": {
+      "post": {
+        "tags": [
+          "stock opname"
+        ],
+        "summary": "Release Basket",
+        "description": "Put a basket back for someone else to count.\n\nSkipping a basket used to leave it locked to the person who skipped it, so\nnobody else could count it until a supervisor cleared the plan.",
+        "operationId": "release_basket_api_opname_sessions__session_id__release_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/opname/sessions/{session_id}/recount": {
+      "post": {
+        "tags": [
+          "stock opname"
+        ],
+        "summary": "Request Recount",
+        "description": "A supervisor sends a finished count back: the basket returns to pending.\n\nOnly before approval. Once approved the adjustment is in the ledger, and a\ncount in the next plan is the honest way to revisit it.",
+        "operationId": "request_recount_api_opname_sessions__session_id__recount_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/opname/sessions/{session_id}/scan": {
       "post": {
         "tags": [
           "stock opname"
         ],
-        "summary": "Scan a unit into the count",
+        "summary": "Count Scan",
         "description": "Scan a unit into the count.\n\nA foreign SKU is recorded, not rejected — finding the wrong product in a\nbasket is a real and common outcome, and a system that refuses to hear it\njust loses the information (M6.2.5).",
         "operationId": "count_scan_api_opname_sessions__session_id__scan_post",
         "parameters": [
@@ -2795,8 +3332,8 @@
         "tags": [
           "stock opname"
         ],
-        "summary": "Reveal expected vs counted",
-        "description": "Reveal expected vs counted — and only now.\n\nNOTE (flagged in review): prompting for a recount AFTER showing the expected\nnumber defeats the blind count. The recount prompt is returned as a flag and\nthe client should ask before revealing. Left as-is pending a decision on the\ninteraction; see §15 E19.",
+        "summary": "Finish Session",
+        "description": "Reveal expected vs counted — but a mismatch is recounted first.\n\nPRD 11.2.5: on a first mismatch the counter is told only that the count does\nnot match; the tally resets and they count the basket again. The system\nnumber is revealed after the second count, whatever it says. Asking for a\nrecount AFTER showing the number would defeat the blind count.",
         "operationId": "finish_session_api_opname_sessions__session_id__finish_post",
         "parameters": [
           {
@@ -2864,7 +3401,7 @@
         "tags": [
           "stock opname"
         ],
-        "summary": "Sorted by rupiah value, so a supervisor triages the top of the list rather",
+        "summary": "Variance Report",
         "description": "Sorted by rupiah value, so a supervisor triages the top of the list rather\nthan reading all 118 rows (M6.3.2).",
         "operationId": "variance_report_api_opname_plans__plan_id__variance_report_get",
         "parameters": [
@@ -2923,7 +3460,7 @@
         "tags": [
           "stock opname"
         ],
-        "summary": "Counting never moves stock by itself",
+        "summary": "Approve Adjustments",
         "description": "Counting never moves stock by itself. A supervisor reviews and approves,\nand only then does the ledger change (M6.3.3).",
         "operationId": "approve_adjustments_api_opname_adjustments_approve_post",
         "parameters": [
@@ -2983,7 +3520,7 @@
         "tags": [
           "inventory"
         ],
-        "summary": "On-hand stock at a site, by SKU and location",
+        "summary": "Inventory",
         "operationId": "inventory_api_inventory_get",
         "parameters": [
           {
@@ -3039,6 +3576,17 @@
             }
           },
           {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
             "name": "x-forwarded-email",
             "in": "header",
             "required": false,
@@ -3084,7 +3632,7 @@
         "tags": [
           "inventory"
         ],
-        "summary": "Scan or type anything and be told where it is",
+        "summary": "Find",
         "description": "Scan or type anything and be told where it is. After the guided flows,\nthe most-used screen in the product (M7.2).",
         "operationId": "find_api_inventory_find_get",
         "parameters": [
@@ -3152,8 +3700,8 @@
         "tags": [
           "inventory"
         ],
-        "summary": "Feeds replenishment (M4.6)",
-        "description": "Feeds replenishment (M4.6) — it suggests, a human decides.",
+        "summary": "Low Stock",
+        "description": "SKUs running low, one row per SKU — rack and overflow together.\n\nLow is measured on everything the station holds for the SKU, the same way\nthe restock point is: stock in overflow is stock. Without `threshold`, each\nSKU is compared with its own restock point (10 when none is set). A SKU with\na rack but no stock at all is listed at zero rather than missing.\nIt suggests; a supervisor decides whether to ask the hub.",
         "operationId": "low_stock_api_inventory_low_stock_get",
         "parameters": [
           {
@@ -3170,8 +3718,14 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "default": 10,
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "Threshold"
             }
           },
@@ -3221,7 +3775,7 @@
         "tags": [
           "inventory"
         ],
-        "summary": "The append-only stock ledger — what moved, when, and who moved it",
+        "summary": "Movements",
         "description": "The immutable ledger. Answers 'where did this stock go'.",
         "operationId": "movements_api_movements_get",
         "parameters": [
@@ -3876,7 +4430,7 @@
         "tags": [
           "slips"
         ],
-        "summary": "Today's batch colour, plus the week, for the label screen and the wall",
+        "summary": "Day Colors",
         "description": "Today's batch colour, plus the week, for the label screen and the wall.",
         "operationId": "day_colors_api_day_colors_get",
         "parameters": [
@@ -3926,7 +4480,7 @@
         "tags": [
           "slips"
         ],
-        "summary": "The slip for a receipt, issuing it on first request after completion",
+        "summary": "Receipt Slip",
         "description": "The slip for a receipt, issuing it on first request after completion.",
         "operationId": "receipt_slip_api_receipts__receipt_id__putaway_slip_get",
         "parameters": [
@@ -3985,7 +4539,7 @@
         "tags": [
           "slips"
         ],
-        "summary": "The supervisor's archive: every slip this site has issued, newest first",
+        "summary": "List Slips",
         "description": "The supervisor's archive: every slip this site has issued, newest first.",
         "operationId": "list_slips_api_putaway_slips_get",
         "parameters": [
@@ -4007,6 +4561,17 @@
               "maximum": 200,
               "default": 50,
               "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
             }
           },
           {
@@ -4160,7 +4725,7 @@
         "tags": [
           "admin"
         ],
-        "summary": "Register a staff email against a role and the sites they may work at",
+        "summary": "Create User",
         "description": "Register a staff email against a role and the sites they may work at.",
         "operationId": "create_user_api_admin_users_post",
         "parameters": [
@@ -4220,7 +4785,7 @@
         "tags": [
           "admin"
         ],
-        "summary": "Change a role, the sites someone may work at, or switch them off",
+        "summary": "Update User",
         "description": "Change a role, the sites someone may work at, or switch them off.",
         "operationId": "update_user_api_admin_users__user_id__patch",
         "parameters": [
@@ -4289,7 +4854,7 @@
         "tags": [
           "admin"
         ],
-        "summary": "Hubs with their rack layout and how full each one is",
+        "summary": "List Sites",
         "description": "Hubs with their rack layout and how full each one is.\n\nSupervisor rather than admin: a station supervisor needs to see their own\nracks, and the payload carries no personal data beyond a headcount.",
         "operationId": "list_sites_api_admin_sites_get",
         "parameters": [
@@ -4407,7 +4972,7 @@
         "tags": [
           "registry"
         ],
-        "summary": "Every SKU with a pick face at this site, with its thresholds and stock",
+        "summary": "List Registry",
         "description": "Every SKU with a pick face at this site, with its thresholds and stock.",
         "operationId": "list_registry_api_registry_get",
         "parameters": [
@@ -4503,7 +5068,7 @@
         "tags": [
           "registry"
         ],
-        "summary": "Set the three thresholds for one SKU's pick face",
+        "summary": "Set Thresholds",
         "description": "Set the three thresholds for one SKU's pick face.",
         "operationId": "set_thresholds_api_registry__sku_id__put",
         "parameters": [
@@ -4572,7 +5137,7 @@
         "tags": [
           "registry"
         ],
-        "summary": "Apply one set of thresholds across many SKUs",
+        "summary": "Bulk Thresholds",
         "description": "Apply one set of thresholds across many SKUs.\n\n118 SKUs set one at a time will not happen, and a registry nobody fills in is\na registry that silently never fires a replenishment.",
         "operationId": "bulk_thresholds_api_registry_bulk_post",
         "parameters": [
@@ -4632,7 +5197,7 @@
         "tags": [
           "registry"
         ],
-        "summary": "Derive a starting point from the space model",
+        "summary": "Suggest Thresholds",
         "description": "Derive a starting point from the space model.\n\nA supervisor correcting a suggestion will fill this in; a supervisor facing\nthree empty boxes for 118 SKUs will not.",
         "operationId": "suggest_thresholds_api_registry_suggest__sku_id__get",
         "parameters": [
@@ -4700,7 +5265,7 @@
         "tags": [
           "flow"
         ],
-        "summary": "Open moves from overflow to the pick face, most urgent first",
+        "summary": "List Replenishment",
         "description": "Open moves from overflow to the pick face, most urgent first.\n\nA pick face at zero outranks one merely low: the first stops picking, the\nsecond only threatens to.",
         "operationId": "list_replenishment_api_replenishment_get",
         "parameters": [
@@ -4759,7 +5324,7 @@
         "tags": [
           "flow"
         ],
-        "summary": "Book the physical move: units leave overflow and land on the pick face",
+        "summary": "Complete Replenishment",
         "description": "Book the physical move: units leave overflow and land on the pick face.\n\nTwo ledger movements, not one. A relocation that wrote a single row would\nlose which location the stock left, and the rack map would be wrong until the\nnext count.",
         "operationId": "complete_replenishment_api_replenishment__task_id__complete_post",
         "parameters": [
@@ -4886,7 +5451,7 @@
         "tags": [
           "flow"
         ],
-        "summary": "A supervisor confirms the quantity and sends the request to the hub",
+        "summary": "Send Restock",
         "description": "A supervisor confirms the quantity and sends the request to the hub.",
         "operationId": "send_restock_api_restock__request_id__send_post",
         "parameters": [
@@ -4954,7 +5519,7 @@
         "tags": [
           "flow"
         ],
-        "summary": "Dispatch a tote from the hub to a darkstore",
+        "summary": "Create Transfer",
         "description": "Dispatch a tote from the hub to a darkstore.\n\nThe dispatched quantity is what makes the receiving end checkable even when\nthe brand sent no manifest — this number is ours, so hop 2 of the chain of\ncustody always has an authority (PRD 5.6). Stock leaves the hub's ledger now;\nit enters the darkstore's when someone receives it.",
         "operationId": "create_transfer_api_transfers_post",
         "parameters": [
@@ -5012,7 +5577,7 @@
         "tags": [
           "flow"
         ],
-        "summary": "Transfers touching this site, in either direction",
+        "summary": "List Transfers",
         "description": "Transfers touching this site, in either direction.",
         "operationId": "list_transfers_api_transfers_get",
         "parameters": [
@@ -5082,7 +5647,7 @@
         "tags": [
           "flow"
         ],
-        "summary": "What the boundary is doing",
+        "summary": "Outbox Health",
         "description": "What the boundary is doing — or, during the pilot, deliberately not doing.\n\nThe most valuable thing on this endpoint is `push_enabled`. A supervisor\nlooking at a healthy-looking queue must be able to tell that nothing is being\nsent on purpose, rather than concluding the integration works.",
         "operationId": "outbox_health_api_pos_outbox_get",
         "parameters": [
@@ -5148,7 +5713,7 @@
         "tags": [
           "flow"
         ],
-        "summary": "Declared shortfalls, and who declared them",
+        "summary": "List Shortfalls",
         "description": "Declared shortfalls, and who declared them.\n\nA short pick corrects stock without a signature, so the only control on it is\nthat someone reviews these — and that a person declaring them far more often\nthan their colleagues is visible (PRD 8.9.5).",
         "operationId": "list_shortfalls_api_shortfalls_get",
         "parameters": [
@@ -5218,7 +5783,7 @@
         "tags": [
           "training"
         ],
-        "summary": "The training fixture library",
+        "summary": "List Scenarios",
         "operationId": "list_scenarios_api_training_scenarios_get",
         "parameters": [
           {
@@ -5267,7 +5832,7 @@
         "tags": [
           "training"
         ],
-        "summary": "Restore a training site to a known state, deterministically",
+        "summary": "Reset",
         "description": "Back to a known state. The same reset always produces the same warehouse.",
         "operationId": "reset_api_training_reset_post",
         "parameters": [
@@ -5327,7 +5892,7 @@
         "tags": [
           "training"
         ],
-        "summary": "Load a named fixture, and print what it created",
+        "summary": "Load Scenario",
         "description": "Load a named fixture, and print what it created — so a trainer knows what\nthe right answer is supposed to be (M8.3.3).",
         "operationId": "load_scenario_api_training_load_post",
         "parameters": [
@@ -5387,7 +5952,7 @@
         "tags": [
           "training"
         ],
-        "summary": "Test orders, through the same endpoint the real POS will use",
+        "summary": "Generate Orders",
         "description": "Test orders, through the same endpoint the real POS will use.\n\nTraining sites only. An earlier draft allowed this against any site, which\nwould have had a test order consume real stock and push a wrong number to\nGrab (PRD §9.3.4).",
         "operationId": "generate_orders_api_training_orders_generate_post",
         "parameters": [
@@ -5447,7 +6012,7 @@
         "tags": [
           "training"
         ],
-        "summary": "Printable test barcodes, so training works with no physical stock (M8.4.4)",
+        "summary": "Barcode Sheet",
         "description": "Printable test barcodes, so training works with no physical stock (M8.4.4).",
         "operationId": "barcode_sheet_api_training_barcode_sheet_get",
         "parameters": [
@@ -5517,7 +6082,7 @@
         "tags": [
           "training"
         ],
-        "summary": "Who has actually practised, and who has clicked past it (M8.4.3)",
+        "summary": "Activity",
         "description": "Who has actually practised, and who has clicked past it (M8.4.3).",
         "operationId": "activity_api_training_activity_get",
         "parameters": [
@@ -5592,7 +6157,7 @@
         "tags": [
           "training"
         ],
-        "summary": "Build one specific test order",
+        "summary": "Compose Order",
         "description": "Build one specific test order — chosen SKUs and quantities.\n\n`generate` makes random orders, which is right for load and for practice but\nuseless when you need to reproduce a particular case: a two-line order, a\nline that will go short, the exact shade that keeps being mispicked.\n\nTraining sites only, for the same reason `generate` is: a test order against\na live site would consume real stock and push a wrong number to Grab\n(PRD §9.3.4).",
         "operationId": "compose_order_api_training_orders_compose_post",
         "parameters": [
@@ -5647,12 +6212,71 @@
         }
       }
     },
+    "/api/training/orders/{external_ref}/cancel": {
+      "post": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Cancel Test Order",
+        "description": "Message 2 from the simulator, which stands in for Hiryu on a training site.\n\nThe real cancel is Hiryu-only. Here anyone practising can cancel, so they can\nsee what happens to picked units: they land on the return-to-shelf list.",
+        "operationId": "cancel_test_order_api_training_orders__external_ref__cancel_post",
+        "parameters": [
+          {
+            "name": "external_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "External Ref"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/training/orders": {
       "get": {
         "tags": [
           "training"
         ],
-        "summary": "Recent orders at a training site, with what happened to each",
+        "summary": "List Test Orders",
         "description": "Recent orders at a training site, with what happened to each.",
         "operationId": "list_test_orders_api_training_orders_get",
         "parameters": [
@@ -5700,6 +6324,156 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TestOrderList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/returns": {
+      "get": {
+        "tags": [
+          "returns"
+        ],
+        "summary": "List Returns",
+        "operationId": "list_returns_api_returns_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(open|done|all)$",
+              "default": "open",
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReturnTaskList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/returns/{task_id}/scan": {
+      "post": {
+        "tags": [
+          "returns"
+        ],
+        "summary": "Scan Return",
+        "description": "One unit back on the shelf. Scan-verified, no override.",
+        "operationId": "scan_return_api_returns__task_id__scan_post",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReturnScanIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReturnScanResult"
                 }
               }
             }
@@ -6259,6 +7033,11 @@
           "active": {
             "type": "boolean",
             "title": "Active"
+          },
+          "default_stock_owner": {
+            "type": "string",
+            "title": "Default Stock Owner",
+            "default": "brand"
           }
         },
         "type": "object",
@@ -6285,6 +7064,11 @@
             "type": "string",
             "title": "Identity Mode",
             "default": "sku_barcode"
+          },
+          "default_stock_owner": {
+            "type": "string",
+            "title": "Default Stock Owner",
+            "default": "brand"
           }
         },
         "type": "object",
@@ -6293,6 +7077,45 @@
           "name"
         ],
         "title": "BrandIn"
+      },
+      "BrandPatch": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "default_stock_owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Stock Owner"
+          },
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active"
+          }
+        },
+        "type": "object",
+        "title": "BrandPatch"
       },
       "ComposeOrderIn": {
         "properties": {
@@ -6625,6 +7448,39 @@
               }
             ],
             "title": "Last Counted At"
+          },
+          "stock_owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Owner"
+          },
+          "stocked_since": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stocked Since"
+          },
+          "restock_point": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restock Point"
           }
         },
         "type": "object",
@@ -7042,7 +7898,14 @@
       "OpnameFinishResult": {
         "properties": {
           "qty_expected": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Qty Expected"
           },
           "qty_counted": {
@@ -7050,7 +7913,14 @@
             "title": "Qty Counted"
           },
           "variance": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Variance"
           },
           "foreign_items": {
@@ -7076,9 +7946,7 @@
         },
         "type": "object",
         "required": [
-          "qty_expected",
           "qty_counted",
-          "variance",
           "foreign_items",
           "needs_recount",
           "message"
@@ -7121,6 +7989,34 @@
           "variances": {
             "type": "integer",
             "title": "Variances"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "scope": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Scope",
+            "default": {}
           }
         },
         "type": "object",
@@ -7584,6 +8480,185 @@
         ],
         "title": "OrderLineIn"
       },
+      "OrderList": {
+        "properties": {
+          "orders": {
+            "items": {
+              "$ref": "#/components/schemas/OrderRow"
+            },
+            "type": "array",
+            "title": "Orders"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "orders",
+          "total"
+        ],
+        "title": "OrderList"
+      },
+      "OrderRow": {
+        "properties": {
+          "order_id": {
+            "type": "integer",
+            "title": "Order Id"
+          },
+          "external_ref": {
+            "type": "string",
+            "title": "External Ref"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "is_test": {
+            "type": "boolean",
+            "title": "Is Test"
+          },
+          "channel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channel"
+          },
+          "delivery_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Mode"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "placed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Placed At"
+          },
+          "promised_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Promised At"
+          },
+          "pick_task_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pick Task Id"
+          },
+          "pick_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pick Status"
+          },
+          "claimed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed By"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "line_count": {
+            "type": "integer",
+            "title": "Line Count",
+            "default": 0
+          },
+          "units": {
+            "type": "integer",
+            "title": "Units",
+            "default": 0
+          },
+          "units_picked": {
+            "type": "integer",
+            "title": "Units Picked",
+            "default": 0
+          },
+          "short_lines": {
+            "type": "integer",
+            "title": "Short Lines",
+            "default": 0
+          },
+          "remaining_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remaining Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id",
+          "external_ref",
+          "status",
+          "is_test"
+        ],
+        "title": "OrderRow"
+      },
       "OutboxHealth": {
         "properties": {
           "push_enabled": {
@@ -7854,6 +8929,51 @@
           "identity_mode": {
             "type": "string",
             "title": "Identity Mode"
+          },
+          "brand_sku_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Sku Code"
+          },
+          "unit_size": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Size"
+          },
+          "slot_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slot Role"
+          },
+          "oldest_day_color": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oldest Day Color"
           }
         },
         "type": "object",
@@ -8195,6 +9315,39 @@
               }
             ],
             "title": "Age Seconds"
+          },
+          "channel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channel"
+          },
+          "delivery_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Mode"
+          },
+          "promised_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Promised At"
           }
         },
         "type": "object",
@@ -8646,6 +9799,17 @@
             "type": "string",
             "title": "Source Type"
           },
+          "external_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Reference"
+          },
           "inbound_date": {
             "type": "string",
             "title": "Inbound Date"
@@ -8743,6 +9907,33 @@
             "type": "string",
             "title": "Day Label"
           },
+          "week_parity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Week Parity"
+          },
+          "external_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Reference"
+          },
+          "variance_lines": {
+            "type": "integer",
+            "title": "Variance Lines",
+            "default": 0
+          },
           "total_lines": {
             "type": "integer",
             "title": "Total Lines"
@@ -8836,6 +10027,15 @@
               }
             ],
             "title": "Level No"
+          },
+          "locations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Locations",
+            "default": []
           },
           "qty_received": {
             "type": "integer",
@@ -9056,6 +10256,18 @@
           "banner": {
             "type": "string",
             "title": "Banner"
+          },
+          "day_color": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Day Color"
           }
         },
         "type": "object",
@@ -9111,6 +10323,27 @@
         ],
         "title": "ReceiptIn"
       },
+      "ReceiptList": {
+        "properties": {
+          "receipts": {
+            "items": {
+              "$ref": "#/components/schemas/ReceiptRow"
+            },
+            "type": "array",
+            "title": "Receipts"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "receipts",
+          "total"
+        ],
+        "title": "ReceiptList"
+      },
       "ReceiptPatch": {
         "properties": {
           "external_reference": {
@@ -9127,6 +10360,123 @@
         },
         "type": "object",
         "title": "ReceiptPatch"
+      },
+      "ReceiptRow": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "brand_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Id"
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "opened_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opened By"
+          },
+          "opened_at": {
+            "type": "string",
+            "title": "Opened At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "external_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Reference"
+          },
+          "banner": {
+            "type": "string",
+            "title": "Banner"
+          },
+          "day_color": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Day Color"
+          },
+          "line_count": {
+            "type": "integer",
+            "title": "Line Count",
+            "default": 0
+          },
+          "units": {
+            "type": "integer",
+            "title": "Units",
+            "default": 0
+          },
+          "slip_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slip Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "site_id",
+          "brand_id",
+          "source_type",
+          "status",
+          "opened_by",
+          "opened_at",
+          "banner"
+        ],
+        "title": "ReceiptRow"
       },
       "ReceiptScanIn": {
         "properties": {
@@ -9311,6 +10661,56 @@
           "variance"
         ],
         "title": "ReceiptSummaryLine"
+      },
+      "ReceiptUndoIn": {
+        "properties": {
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          }
+        },
+        "type": "object",
+        "title": "ReceiptUndoIn"
+      },
+      "ReceiptUndoResult": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "sku_name": {
+            "type": "string",
+            "title": "Sku Name"
+          },
+          "qty": {
+            "type": "integer",
+            "title": "Qty"
+          },
+          "session_total": {
+            "type": "integer",
+            "title": "Session Total"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "sku_name",
+          "qty",
+          "session_total",
+          "message"
+        ],
+        "title": "ReceiptUndoResult"
       },
       "RegistryBulkIn": {
         "properties": {
@@ -9834,6 +11234,192 @@
           "created_at"
         ],
         "title": "RestockRequest"
+      },
+      "ReturnScanIn": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "ReturnScanIn"
+      },
+      "ReturnScanResult": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "task": {
+            "$ref": "#/components/schemas/ReturnTask"
+          },
+          "done": {
+            "type": "boolean",
+            "title": "Done"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "task",
+          "done",
+          "message"
+        ],
+        "title": "ReturnScanResult"
+      },
+      "ReturnTask": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_name": {
+            "type": "string",
+            "title": "Sku Name"
+          },
+          "brand_sku_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Sku Code"
+          },
+          "external_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Ref"
+          },
+          "location_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Id"
+          },
+          "location_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Code"
+          },
+          "qty": {
+            "type": "integer",
+            "title": "Qty"
+          },
+          "qty_returned": {
+            "type": "integer",
+            "title": "Qty Returned"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "age_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "site_id",
+          "sku_id",
+          "sku_name",
+          "qty",
+          "qty_returned",
+          "reason",
+          "status"
+        ],
+        "title": "ReturnTask"
+      },
+      "ReturnTaskList": {
+        "properties": {
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/ReturnTask"
+            },
+            "type": "array",
+            "title": "Tasks"
+          },
+          "open_count": {
+            "type": "integer",
+            "title": "Open Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tasks",
+          "open_count"
+        ],
+        "title": "ReturnTaskList"
       },
       "ScanResolved": {
         "properties": {
@@ -11042,6 +12628,39 @@
           "created_at": {
             "type": "string",
             "title": "Created At"
+          },
+          "channel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channel"
+          },
+          "delivery_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Mode"
+          },
+          "promised_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Promised At"
           }
         },
         "type": "object",
@@ -11381,6 +13000,22 @@
       },
       "VarianceRow": {
         "properties": {
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "recounted": {
+            "type": "boolean",
+            "title": "Recounted",
+            "default": false
+          },
           "basket_id": {
             "type": "integer",
             "title": "Basket Id"

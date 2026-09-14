@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="../css/tokens.css?v=4b107ba">
-<link rel="stylesheet" href="../css/app.css?v=4b107ba">
-<link rel="stylesheet" href="../css/console.css?v=4b107ba">
+<link rel="stylesheet" href="../css/tokens.css?v=856f10e">
+<link rel="stylesheet" href="../css/app.css?v=856f10e">
+<link rel="stylesheet" href="../css/console.css?v=856f10e">
 </head>
 <body>
 <div class="console" data-screen="mode-latihan">
@@ -45,7 +45,7 @@
         <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
         <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
         <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
-        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi POS" data-en="POS integration">Integrasi POS</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
@@ -76,56 +76,65 @@
       </div>
 
     </header>
-    <div class="trainbar">
-      <span class="trainbar__icon" aria-hidden="true">!</span>
-      <span class="trainbar__text"><strong data-id="Hanya berlaku di TRN" data-en="Applies to TRN only">Hanya berlaku di TRN</strong> — <span data-id="reset tidak akan pernah menyentuh stok station live." data-en="a reset never touches stock at a live station.">reset tidak akan pernah menyentuh stok station live.</span></span>
+    <div class="gate" data-region="gate">
+      <div class="gate__notice">
+        <h2 class="gate__title" data-id="Mode latihan hanya untuk lokasi latihan" data-en="Training mode is for training sites only">Mode latihan hanya untuk lokasi latihan</h2>
+        <p class="gate__body" data-field="gate-body">—</p>
+        <div style="display:flex;gap:var(--sp-2)">
+          <button class="cbtn cbtn--primary" type="button" data-action="switch-training" data-field="switch-label">—</button>
+          <a class="cbtn" href="hub.html" data-id="Lihat daftar lokasi" data-en="View sites">Lihat daftar lokasi</a>
+        </div>
+      </div>
+
+      <div class="gate__content" style="display:flex;flex-direction:column;gap:var(--sp-4)">
+        <div class="trainbar">
+          <span class="trainbar__icon" aria-hidden="true">!</span>
+          <span class="trainbar__text" data-field="train-site">—</span>
+        </div>
+
+        <div class="toolbar">
+          <h2 class="section__title" data-id="Skenario" data-en="Scenarios">Skenario</h2>
+          <span class="toolbar__spacer"></span>
+          <button class="cbtn" type="button" data-action="reset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v4h-4"/></svg><span data-id="Reset ke awal" data-en="Reset to start">Reset ke awal</span></button>
+        </div>
+        <section class="section" data-region="scenarios" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:var(--sp-3)">
+          <p class="note" data-id="Memuat skenario…" data-en="Loading scenarios…">Memuat skenario…</p>
+        </section>
+
+        <section class="ccard" data-region="result" style="display:none">
+          <h2 class="ccard__title" data-field="result-title">—</h2>
+          <p class="page__sub" data-id="Ini yang baru dibuat — jawaban yang benar untuk latihan ini. Catat sebelum staf mulai." data-en="This is what was just created — the right answers for this drill. Note them before staff start.">Ini yang baru dibuat — jawaban yang benar untuk latihan ini. Catat sebelum staf mulai.</p>
+          <dl class="deflist" data-region="fixture"></dl>
+        </section>
+
+        <section class="section">
+          <h2 class="section__title" data-id="Aktivitas latihan" data-en="Training activity">Aktivitas latihan</h2>
+          <p class="page__sub" data-id="Siapa yang benar-benar berlatih, dan siapa yang hanya melewatinya." data-en="Who has actually practised, and who has only clicked past it.">Siapa yang benar-benar berlatih, dan siapa yang hanya melewatinya.</p>
+          <div class="table-scroll">
+            <table class="dtable" id="tbl-activity">
+              <thead><tr>
+                <th data-id="Siapa" data-en="Who">Siapa</th>
+                <th data-id="Alur" data-en="Flow">Alur</th>
+                <th data-id="Kejadian" data-en="Event">Kejadian</th>
+                <th data-id="Waktu" data-en="When">Waktu</th>
+              </tr></thead>
+              <tbody data-region="activity">
+                <tr><td colspan="4" class="note" data-id="Memuat…" data-en="Loading…">Memuat…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="inline-note inline-note--warn"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5v17"/><path d="M6.5 4.5h11l-2.2 4.2 2.2 4.2h-11"/></svg></span><span data-id="Reset dan setiap skenario menghapus stok, pesanan, dan hitungan di lokasi latihan, lalu mengisi ulang semua keranjang. Tidak bisa dibatalkan — tapi karena datanya latihan, tidak ada yang hilang." data-en="A reset and every scenario wipe stock, orders and counts at the training site, then refill every basket. It cannot be undone — but the data is practice data, so nothing is lost.">Reset dan setiap skenario menghapus stok, pesanan, dan hitungan di lokasi latihan, lalu mengisi ulang semua keranjang. Tidak bisa dibatalkan — tapi karena datanya latihan, tidak ada yang hilang.</span></div>
+      </div>
     </div>
-    <section class="section" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:var(--sp-3)">
-      <div class="ccard">
-        <h2 class="ccard__title" data-id="Gudang bersih" data-en="Clean warehouse">Gudang bersih</h2>
-        <p class="page__sub" data-id="Rak kosong, tanpa stok. Untuk mengajarkan alur barang masuk dari nol." data-en="Empty racks, no stock. Teaches inbound from zero.">Rak kosong, tanpa stok. Untuk mengajarkan alur barang masuk dari nol.</p>
-        <span class="toolbar__spacer"></span>
-        <button class="cbtn cbtn--primary" type="button" data-scenario="clean" data-id="Muat skenario" data-en="Load scenario">Muat skenario</button>
-      </div>
-      <div class="ccard">
-        <h2 class="ccard__title" data-id="Gudang terisi" data-en="Stocked warehouse">Gudang terisi</h2>
-        <p class="page__sub" data-id="Stok tersebar di 3 rak. Untuk latihan ambil pesanan." data-en="Stock across 3 racks. For pick drills.">Stok tersebar di 3 rak. Untuk latihan ambil pesanan.</p>
-        <span class="toolbar__spacer"></span>
-        <button class="cbtn cbtn--primary" type="button" data-scenario="stocked" data-id="Muat skenario" data-en="Load scenario">Muat skenario</button>
-      </div>
-      <div class="ccard">
-        <h2 class="ccard__title" data-id="Shade mirip" data-en="Near-identical shades">Shade mirip</h2>
-        <p class="page__sub" data-id="Glasting 07 dan 08 di keranjang bersebelahan. Melatih mata, bukan kecepatan." data-en="Glasting 07 and 08 in adjacent baskets. Trains the eye, not speed.">Glasting 07 dan 08 di keranjang bersebelahan. Melatih mata, bukan kecepatan.</p>
-        <span class="toolbar__spacer"></span>
-        <button class="cbtn cbtn--primary" type="button" data-scenario="shades" data-id="Muat skenario" data-en="Load scenario">Muat skenario</button>
-      </div>
-      <div class="ccard">
-        <h2 class="ccard__title" data-id="Ada selisih" data-en="With variance">Ada selisih</h2>
-        <p class="page__sub" data-id="Tiga keranjang sengaja dibuat tidak cocok. Untuk latihan hitung stok." data-en="Three baskets deliberately mismatched. For counting drills.">Tiga keranjang sengaja dibuat tidak cocok. Untuk latihan hitung stok.</p>
-        <span class="toolbar__spacer"></span>
-        <button class="cbtn cbtn--primary" type="button" data-scenario="variance" data-id="Muat skenario" data-en="Load scenario">Muat skenario</button>
-      </div>
-      <div class="ccard">
-        <h2 class="ccard__title" data-id="Barcode tidak dikenal" data-en="Unknown barcodes">Barcode tidak dikenal</h2>
-        <p class="page__sub" data-id="Sebagian barcode belum terdaftar. Melatih jalur pendaftaran." data-en="Some barcodes unregistered. Trains the register path.">Sebagian barcode belum terdaftar. Melatih jalur pendaftaran.</p>
-        <span class="toolbar__spacer"></span>
-        <button class="cbtn cbtn--primary" type="button" data-scenario="unknown" data-id="Muat skenario" data-en="Load scenario">Muat skenario</button>
-      </div>
-      <div class="ccard">
-        <h2 class="ccard__title" data-id="Koneksi putus" data-en="Connection lost">Koneksi putus</h2>
-        <p class="page__sub" data-id="Mensimulasikan layar terkunci. Melatih staf memanggil supervisor." data-en="Simulates the blocked screen. Trains calling a supervisor.">Mensimulasikan layar terkunci. Melatih staf memanggil supervisor.</p>
-        <span class="toolbar__spacer"></span>
-        <button class="cbtn cbtn--primary" type="button" data-scenario="blocked" data-id="Muat skenario" data-en="Load scenario">Muat skenario</button>
-      </div>
-    </section>
-    <div class="inline-note inline-note--warn"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5v17"/><path d="M6.5 4.5h11l-2.2 4.2 2.2 4.2h-11"/></svg></span><span data-id="Reset menghapus semua stok dan pesanan di TRN, lalu memuat ulang fixture skenario. Tidak bisa dibatalkan — tapi karena datanya palsu, tidak ada yang hilang." data-en="A reset wipes all stock and orders at TRN, then reloads the scenario fixture. It cannot be undone — but the data is fake, so nothing is lost.">Reset menghapus semua stok dan pesanan di TRN, lalu memuat ulang fixture skenario. Tidak bisa dibatalkan — tapi karena datanya palsu, tidak ada yang hilang.</span></div>
   </main>
 </div>
 
-<script src="../js/api.js?v=4b107ba"></script>
-<script src="../js/app.js?v=4b107ba"></script>
-<script src="../js/console.js?v=4b107ba"></script>
-<script>/* GET /api/training/scenarios -> {scenarios:[{key,name_id,name_en,teaches}]}
-     POST /api/training/reset {site_id, scenario} -> {ok, site_code, fixture, message} */</script>
+<script src="../js/api.js?v=856f10e"></script>
+<script src="../js/app.js?v=856f10e"></script>
+<script src="../js/console.js?v=856f10e"></script>
+<script src="../js/wire.js?v=856f10e"></script>
+<script src="../js/screens/mode-latihan.js?v=4b107ba"></script>
 </body>
 </html>

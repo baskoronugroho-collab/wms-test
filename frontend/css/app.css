@@ -533,3 +533,8 @@ strong { font-weight: 600; }
 }
 .stat--highlight .stat__num { color: var(--action); font-size: 40px; }
 .daystrip__date { font-family: var(--font-code); font-size: 18px; font-weight: 500; color: var(--muted); }
+
+/* The hidden attribute always wins. Components here set display (flex,
+   grid, inline-flex), which would otherwise override it, so el.hidden = true
+   silently did nothing on a banner or a button. */
+[hidden] { display: none !important; }

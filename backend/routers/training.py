@@ -65,6 +65,7 @@ async def _wipe(cur, site_id: int) -> None:
     await db.run(cur, "DELETE FROM inbound_receipts WHERE site_id = %s", (site_id,))
     await db.run(cur, "DELETE FROM stock_movements WHERE site_id = %s", (site_id,))
     await db.run(cur, "DELETE FROM pos_outbox WHERE site_id = %s", (site_id,))
+    await db.run(cur, "DELETE FROM return_tasks WHERE site_id = %s", (site_id,))
     await db.run(cur, "UPDATE unit_plates SET state='unbound', sku_id=NULL, "
                       "location_id=NULL, expiry_date=NULL, bound_by=NULL, "
                       "bound_at=NULL, last_seen_at=NULL WHERE site_id = %s", (site_id,))
@@ -360,6 +361,24 @@ async def compose_order(
     ))
 
 
+@router.post("/orders/{external_ref}/cancel", response_model=models.Ok)
+async def cancel_test_order(
+    external_ref: str, user: auth.User = Depends(auth.current_user)
+):
+    """Message 2 from the simulator, which stands in for Hiryu on a training site.
+
+    The real cancel is Hiryu-only. Here anyone practising can cancel, so they can
+    see what happens to picked units: they land on the return-to-shelf list.
+    """
+    order = await db.fetch_one(
+        "SELECT site_id FROM orders WHERE external_ref = %s", (external_ref,))
+    if not order:
+        raise HTTPException(404, "Order not found")
+    await auth.assert_training_site(order["site_id"])
+    await auth.assert_site_access(user, order["site_id"])
+    return await outbound.cancel_order(external_ref, site_id=order["site_id"])
+
+
 @router.get("/orders", response_model=models.TestOrderList)
 async def list_test_orders(
     site_id: int,
@@ -370,6 +389,7 @@ async def list_test_orders(
     await auth.assert_training_site(site_id)
     rows = await db.fetch_all(
         "SELECT o.id, o.external_ref, o.status, o.is_test, o.created_at, "
+        "       o.channel, o.delivery_mode, o.promised_at, "
         "       pt.id AS pick_task_id, pt.status AS pick_status, "
         "       COUNT(ol.id) AS line_count, "
         "       COALESCE(SUM(ol.qty_ordered),0) AS total_qty, "
@@ -379,7 +399,7 @@ async def list_test_orders(
         "LEFT JOIN order_lines ol ON ol.order_id = o.id "
         "WHERE o.site_id = %s "
         "GROUP BY o.id, o.external_ref, o.status, o.is_test, o.created_at, "
-        "         pt.id, pt.status "
+        "         o.channel, o.delivery_mode, o.promised_at, pt.id, pt.status "
         "ORDER BY o.created_at DESC LIMIT %s",
         (site_id, limit),
     )
@@ -391,4 +411,6 @@ async def list_test_orders(
         "short_lines": int(r["short_lines"] or 0),
         "pick_task_id": r["pick_task_id"], "pick_status": r["pick_status"],
         "created_at": str(r["created_at"]),
+        "channel": r["channel"], "delivery_mode": r["delivery_mode"],
+        "promised_at": str(r["promised_at"]) if r["promised_at"] else None,
     } for r in rows]}

@@ -39,7 +39,7 @@
       const name = document.createElement('div');
       name.className = 'rack__name';
       name.textContent = rack.name;
-      if (rack.overflow) name.title = 'Cadangan — pemetik tidak pernah dikirim ke sini';
+      if (rack.overflow) name.title = 'Cadangan — pemetik dikirim ke sini bila stoknya lebih lama / Overflow — pickers come here when it holds the older stock';
       col.appendChild(name);
       rack.levels.forEach(level => {
         const lv = document.createElement('div');

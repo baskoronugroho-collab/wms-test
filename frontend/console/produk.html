@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="../css/tokens.css?v=4b107ba">
-<link rel="stylesheet" href="../css/app.css?v=4b107ba">
-<link rel="stylesheet" href="../css/console.css?v=4b107ba">
+<link rel="stylesheet" href="../css/tokens.css?v=856f10e">
+<link rel="stylesheet" href="../css/app.css?v=856f10e">
+<link rel="stylesheet" href="../css/console.css?v=856f10e">
 </head>
 <body>
 <div class="console" data-screen="produk">
@@ -45,7 +45,7 @@
         <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
         <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
         <a class="sidebar__link is-current" href="produk.html" aria-current="page"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
-        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi POS" data-en="POS integration">Integrasi POS</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
@@ -72,50 +72,46 @@
       <div class="page__heading">
         <span class="page__eyebrow" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
         <h1 class="page__title" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</h1>
-        <p class="page__sub" data-id="118 SKU Wardah, banyak di antaranya beda tipis. Foto adalah pembeda utama — kolom foto bukan hiasan." data-en="118 Wardah SKUs, many nearly identical. The photo is the primary disambiguator — that column is not decoration.">118 SKU Wardah, banyak di antaranya beda tipis. Foto adalah pembeda utama — kolom foto bukan hiasan.</p>
+        <p class="page__sub" data-id="Banyak SKU Wardah yang beda tipis. Foto adalah pembeda utama — kolom foto bukan hiasan." data-en="Many Wardah SKUs are nearly identical. The photo is the primary disambiguator — that column is not decoration.">Banyak SKU Wardah yang beda tipis. Foto adalah pembeda utama — kolom foto bukan hiasan.</p>
       </div>
       <div class="page__actions">
-        <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14.5v-11"/><path d="M8 7.5l4-4 4 4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Impor CSV" data-en="Import CSV">Impor CSV</span></button>
-        <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M8 10.5l4 4 4-4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Ekspor" data-en="Export">Ekspor</span></button>
-        <button class="cbtn cbtn--primary" type="button" data-drawer-open="#drawer-sku"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-id="Tambah SKU" data-en="Add SKU">Tambah SKU</span></button>
+        <button class="cbtn" type="button" data-action="import"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14.5v-11"/><path d="M8 7.5l4-4 4 4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Impor CSV" data-en="Import CSV">Impor CSV</span></button>
+        <a class="cbtn" href="/api/admin/product-master/export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M8 10.5l4 4 4-4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Ekspor daftar produk" data-en="Export product list">Ekspor daftar produk</span></a>
+        <button class="cbtn cbtn--primary" type="button" data-action="new-sku"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-id="Tambah SKU" data-en="Add SKU">Tambah SKU</span></button>
       </div>
     </header>
     <section class="kpis">
       <div class="kpi-card">
         <span class="kpi-card__label" data-id="SKU aktif" data-en="Active SKUs">SKU aktif</span>
-        <span class="kpi-card__num" data-field="kpi-skus">118</span>
-        <span class="kpi-card__foot" data-id="Wardah Official Store" data-en="Wardah Official Store">Wardah Official Store</span>
+        <span class="kpi-card__num" data-field="kpi-skus">—</span>
+        <span class="kpi-card__foot" data-field="kpi-skus-foot" data-id="memuat…" data-en="loading…">memuat…</span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-card__label" data-id="Barcode terdaftar" data-en="Barcodes registered">Barcode terdaftar</span>
-        <span class="kpi-card__num" data-field="kpi-barcodes">241</span>
-        <span class="kpi-card__foot" data-id="rata-rata 2 per SKU" data-en="avg 2 per SKU">rata-rata 2 per SKU</span>
+        <span class="kpi-card__label" data-id="Pakai label unit" data-en="Use unit labels">Pakai label unit</span>
+        <span class="kpi-card__num" data-field="kpi-unitlabel">—</span>
+        <span class="kpi-card__foot" data-id="tanpa barcode pabrik — ditempel stiker Ninja" data-en="no maker barcode — Ninja sticker per unit">tanpa barcode pabrik — ditempel stiker Ninja</span>
       </div>
-      <div class="kpi-card kpi-card--caution">
-        <span class="kpi-card__label" data-id="Belum punya barcode" data-en="Without a barcode">Belum punya barcode</span>
-        <span class="kpi-card__num" data-field="kpi-nobarcode">12</span>
-        <span class="kpi-card__foot" data-id="akan berhenti saat dipindai" data-en="will stop at scan">akan berhenti saat dipindai</span>
-      </div>
-      <div class="kpi-card kpi-card--stop">
+      <div class="kpi-card">
         <span class="kpi-card__label" data-id="Belum ada foto" data-en="Without a photo">Belum ada foto</span>
-        <span class="kpi-card__num" data-field="kpi-nophoto">118</span>
+        <span class="kpi-card__num" data-field="kpi-nophoto">—</span>
         <span class="kpi-card__foot" data-id="pembeda utama masih kosong" data-en="primary disambiguator missing">pembeda utama masih kosong</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Daftar produk untuk unggah stok" data-en="Product list for stock upload">Daftar produk untuk unggah stok</span>
+        <span class="kpi-card__num" data-field="kpi-master">—</span>
+        <span class="kpi-card__foot" data-id="pasangan brand + nama produk" data-en="brand + product name pairs">pasangan brand + nama produk</span>
       </div>
     </section>
     <div class="toolbar">
         <label class="search">
           <span class="search__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></span>
-          <input class="search__input" type="search" data-search-for="#tbl-sku" placeholder="Cari nama produk, kode SKU, atau barcode…" aria-label="Cari nama produk, kode SKU, atau barcode…">
+          <input class="search__input" type="search" data-field="search" placeholder="Cari nama produk atau kode SKU…" aria-label="Cari nama produk atau kode SKU…">
         </label>
-      <span class="seg" role="group">
-        <button class="seg__opt is-on" type="button" data-id="Semua" data-en="All">Semua</button>
-        <button class="seg__opt" type="button">Lip</button>
-        <button class="seg__opt" type="button">Face</button>
-        <button class="seg__opt" type="button">Skincare</button>
-      </span>
+      <select class="select" data-field="brand-filter" style="width:auto" aria-label="Brand">
+        <option value="" data-id="Semua brand" data-en="All brands">Semua brand</option>
+      </select>
       <span class="toolbar__spacer"></span>
-      <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16M7 12h10M10 17.5h4"/></svg><span data-id="Brand" data-en="Brand">Brand</span></button>
-      <span class="pager__info"><strong data-field="result-count">12</strong> <span data-id="tampil" data-en="shown">tampil</span></span>
+      <span class="pager__info"><strong data-field="result-count">0</strong> <span data-id="tampil" data-en="shown">tampil</span></span>
     </div>
     <div class="table-scroll">
       <table class="dtable dtable--rows-tall" id="tbl-sku">
@@ -124,171 +120,15 @@
           <th class="td-thumb" data-id="Foto" data-en="Photo">Foto</th>
           <th class="is-sortable" data-id="Nama produk" data-en="Product name">Nama produk<span class="sort">↕</span></th>
           <th class="is-sortable" data-id="Kode SKU" data-en="SKU code">Kode SKU<span class="sort">↕</span></th>
+          <th class="is-sortable" data-id="Brand" data-en="Brand">Brand<span class="sort">↕</span></th>
           <th class="is-sortable" data-id="Kategori" data-en="Category">Kategori<span class="sort">↕</span></th>
           <th data-id="Ukuran" data-en="Size">Ukuran</th>
           <th data-id="Identitas" data-en="Identity">Identitas</th>
-          <th class="is-sortable td-num" data-sort="num" data-id="Barcode" data-en="Barcodes">Barcode<span class="sort">↕</span></th>
-          <th data-id="Keranjang" data-en="Basket">Keranjang</th>
           <th data-id="Kadaluarsa" data-en="Expiry">Kadaluarsa</th>
           <th class="td-actions"></th>
         </tr></thead>
         <tbody data-region="skus">
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-GLL-07"></td>
-            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-gll-07" alt=""></td>
-            <td class="td-strong">Glasting Liquid Lip 07 Rouge Flare</td>
-            <td class="td-code">WDH-GLL-07</td>
-            <td>Lip</td>
-            <td class="td-code">3,5 g</td>
-            <td><span class="spill spill--neutral"><span data-id="Barcode SKU" data-en="SKU barcode">Barcode SKU</span></span></td>
-            <td class="td-num">3</td>
-            <td class="td-code">S</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Stabil" data-en="Stable">Stabil</span></span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Barcode" data-en="Barcodes">Barcode</button><button class="cbtn cbtn--sm" type="button" data-id="Ubah" data-en="Edit">Ubah</button></td>
-          </tr>
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-GLL-08"></td>
-            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-gll-08" alt=""></td>
-            <td class="td-strong">Glasting Liquid Lip 08 Coral Dust</td>
-            <td class="td-code">WDH-GLL-08</td>
-            <td>Lip</td>
-            <td class="td-code">3,5 g</td>
-            <td><span class="spill spill--neutral"><span data-id="Barcode SKU" data-en="SKU barcode">Barcode SKU</span></span></td>
-            <td class="td-num">2</td>
-            <td class="td-code">S</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Stabil" data-en="Stable">Stabil</span></span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Barcode" data-en="Barcodes">Barcode</button><button class="cbtn cbtn--sm" type="button" data-id="Ubah" data-en="Edit">Ubah</button></td>
-          </tr>
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-GLL-01"></td>
-            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-gll-01" alt=""></td>
-            <td class="td-strong">Glasting Liquid Lip 01 Caramel Coat</td>
-            <td class="td-code">WDH-GLL-01</td>
-            <td>Lip</td>
-            <td class="td-code">3,5 g</td>
-            <td><span class="spill spill--neutral"><span data-id="Barcode SKU" data-en="SKU barcode">Barcode SKU</span></span></td>
-            <td class="td-num">3</td>
-            <td class="td-code">S</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Stabil" data-en="Stable">Stabil</span></span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Barcode" data-en="Barcodes">Barcode</button><button class="cbtn cbtn--sm" type="button" data-id="Ubah" data-en="Edit">Ubah</button></td>
-          </tr>
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-CVM-04"></td>
-            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-cvm-04" alt=""></td>
-            <td class="td-strong">Colorfit Velvet Matte Lipstick 04 Dusty Rose</td>
-            <td class="td-code">WDH-CVM-04</td>
-            <td>Lip</td>
-            <td class="td-code">2,5 g</td>
-            <td><span class="spill spill--neutral"><span data-id="Barcode SKU" data-en="SKU barcode">Barcode SKU</span></span></td>
-            <td class="td-num">1</td>
-            <td class="td-code">S</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Stabil" data-en="Stable">Stabil</span></span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Barcode" data-en="Barcodes">Barcode</button><button class="cbtn cbtn--sm" type="button" data-id="Ubah" data-en="Edit">Ubah</button></td>
-          </tr>
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-CML-12"></td>
-            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-cml-12" alt=""></td>
-            <td class="td-strong">Colorfit Matte Lipstick 12 Deep Ruby</td>
-            <td class="td-code">WDH-CML-12</td>
-            <td>Lip</td>
-            <td class="td-code">2,5 g</td>
-            <td><span class="spill spill--neutral"><span data-id="Barcode SKU" data-en="SKU barcode">Barcode SKU</span></span></td>
-            <td class="td-num">2</td>
-            <td class="td-code">S</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Stabil" data-en="Stable">Stabil</span></span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Barcode" data-en="Barcodes">Barcode</button><button class="cbtn cbtn--sm" type="button" data-id="Ubah" data-en="Edit">Ubah</button></td>
-          </tr>
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-UVS-030"></td>
-            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-uvs-030" alt=""></td>
-            <td class="td-strong">UV Shield Airy Smooth Sunscreen SPF 50 PA+++</td>
-            <td class="td-code">WDH-UVS-030</td>
-            <td>Skincare</td>
-            <td class="td-code">30 ml</td>
-            <td><span class="spill spill--neutral"><span data-id="Barcode SKU" data-en="SKU barcode">Barcode SKU</span></span></td>
-            <td class="td-num">4</td>
-            <td class="td-code">M</td>
-            <td><span class="spill spill--accent"><span class="spill__dot"></span><span data-id="Pantau" data-en="Watch">Pantau</span></span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Barcode" data-en="Barcodes">Barcode</button><button class="cbtn cbtn--sm" type="button" data-id="Ubah" data-en="Edit">Ubah</button></td>
-          </tr>
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-LDC-030"></td>
-            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-ldc-030" alt=""></td>
-            <td class="td-strong">Lightening Day Cream SPF 30</td>
-            <td class="td-code">WDH-LDC-030</td>
-            <td>Skincare</td>
-            <td class="td-code">30 g</td>
-            <td><span class="spill spill--neutral"><span data-id="Barcode SKU" data-en="SKU barcode">Barcode SKU</span></span></td>
-            <td class="td-num">2</td>
-            <td class="td-code">M</td>
-            <td><span class="spill spill--accent"><span class="spill__dot"></span><span data-id="Pantau" data-en="Watch">Pantau</span></span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Barcode" data-en="Barcodes">Barcode</button><button class="cbtn cbtn--sm" type="button" data-id="Ubah" data-en="Edit">Ubah</button></td>
-          </tr>
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-IMP-02"></td>
-            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-imp-02" alt=""></td>
-            <td class="td-strong">Instaperfect Mattesetter Lip Matte Paint 02</td>
-            <td class="td-code">WDH-IMP-02</td>
-            <td>Lip</td>
-            <td class="td-code">4 g</td>
-            <td><span class="spill spill--info"><span data-id="Label unit" data-en="Unit label">Label unit</span></span></td>
-            <td class="td-num" style="color:var(--caution);font-weight:700">0</td>
-            <td class="td-code">S</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Stabil" data-en="Stable">Stabil</span></span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Barcode" data-en="Barcodes">Barcode</button><button class="cbtn cbtn--sm" type="button" data-id="Ubah" data-en="Edit">Ubah</button></td>
-          </tr>
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-CSH-020"></td>
-            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-csh-020" alt=""></td>
-            <td class="td-strong">Crystal Secret Hyaluron Serum</td>
-            <td class="td-code">WDH-CSH-020</td>
-            <td>Skincare</td>
-            <td class="td-code">20 ml</td>
-            <td><span class="spill spill--neutral"><span data-id="Barcode SKU" data-en="SKU barcode">Barcode SKU</span></span></td>
-            <td class="td-num">1</td>
-            <td class="td-code">M</td>
-            <td><span class="spill spill--warn"><span class="spill__dot"></span><span data-id="Pendek" data-en="Short">Pendek</span></span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Barcode" data-en="Barcodes">Barcode</button><button class="cbtn cbtn--sm" type="button" data-id="Ubah" data-en="Edit">Ubah</button></td>
-          </tr>
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-PBM-100"></td>
-            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-pbm-100" alt=""></td>
-            <td class="td-strong">Perfect Bright Micellar Water</td>
-            <td class="td-code">WDH-PBM-100</td>
-            <td>Skincare</td>
-            <td class="td-code">100 ml</td>
-            <td><span class="spill spill--neutral"><span data-id="Barcode SKU" data-en="SKU barcode">Barcode SKU</span></span></td>
-            <td class="td-num">2</td>
-            <td class="td-code">L</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Stabil" data-en="Stable">Stabil</span></span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Barcode" data-en="Barcodes">Barcode</button><button class="cbtn cbtn--sm" type="button" data-id="Ubah" data-en="Edit">Ubah</button></td>
-          </tr>
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-CPF-03"></td>
-            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-cpf-03" alt=""></td>
-            <td class="td-strong">Colorfit Powder Foundation 03 Natural</td>
-            <td class="td-code">WDH-CPF-03</td>
-            <td>Face</td>
-            <td class="td-code">12 g</td>
-            <td><span class="spill spill--neutral"><span data-id="Barcode SKU" data-en="SKU barcode">Barcode SKU</span></span></td>
-            <td class="td-num">3</td>
-            <td class="td-code">M</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Stabil" data-en="Stable">Stabil</span></span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Barcode" data-en="Barcodes">Barcode</button><button class="cbtn cbtn--sm" type="button" data-id="Ubah" data-en="Edit">Ubah</button></td>
-          </tr>
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih WDH-ECF-02"></td>
-            <td class="td-thumb"><img class="thumb" src="../assets/products/placeholder.svg" data-photo-key="wdh-ecf-02" alt=""></td>
-            <td class="td-strong">Everyday Cushion Foundation 02 Light Beige</td>
-            <td class="td-code">WDH-ECF-02</td>
-            <td>Face</td>
-            <td class="td-code">15 g</td>
-            <td><span class="spill spill--info"><span data-id="Label unit" data-en="Unit label">Label unit</span></span></td>
-            <td class="td-num" style="color:var(--caution);font-weight:700">0</td>
-            <td class="td-code">M</td>
-            <td><span class="spill spill--accent"><span class="spill__dot"></span><span data-id="Pantau" data-en="Watch">Pantau</span></span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Barcode" data-en="Barcodes">Barcode</button><button class="cbtn cbtn--sm" type="button" data-id="Ubah" data-en="Edit">Ubah</button></td>
-          </tr>
+          <tr><td colspan="10" class="note" data-id="Memuat…" data-en="Loading…">Memuat…</td></tr>
         </tbody>
       </table>
     </div>
@@ -296,23 +136,38 @@
       <span class="bulkbar__count" data-field="bulk-count">0</span>
       <span data-id="SKU dipilih" data-en="SKUs selected">SKU dipilih</span>
       <span class="toolbar__spacer"></span>
-      <button class="cbtn" type="button" data-id="Ubah ukuran keranjang" data-en="Set basket size">Ubah ukuran keranjang</button>
-      <button class="cbtn" type="button" data-id="Ekspor pilihan" data-en="Export selection">Ekspor pilihan</button>
+      <button class="cbtn" type="button" data-action="export-selected" data-id="Ekspor pilihan" data-en="Export selection">Ekspor pilihan</button>
       <button class="cbtn cbtn--ghost" type="button" data-action="bulk-clear" data-id="Batal" data-en="Clear">Batal</button>
     </div>
       <div class="pager">
-        <span class="pager__info"><strong data-field="range">1–12</strong> <span data-id="dari" data-en="of">dari</span> <strong data-field="total">118</strong> <span data-id="baris" data-en="rows">baris</span></span>
-        <div class="pager__nav">
-          <button class="pager__page" type="button" aria-label="Sebelumnya">‹</button>
-          <button class="pager__page is-on" type="button">1</button>
-          <button class="pager__page" type="button">2</button>
-          <button class="pager__page" type="button">3</button>
-          <span class="pager__gap">…</span>
-          <button class="pager__page" type="button">12</button>
-          <button class="pager__page" type="button" aria-label="Berikutnya">›</button>
-        </div>
+        <span class="pager__info"><strong data-field="range">0–0</strong> <span data-id="dari" data-en="of">dari</span> <strong data-field="total">0</strong> <span data-id="baris" data-en="rows">baris</span></span>
+        <div class="pager__nav"></div>
       </div>
     <div class="inline-note inline-note--warn"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span data-id="Foto produk belum ada di sistem. Sampai foto asli masuk, staf hanya punya nama untuk membedakan 07 dari 08 — ini penyebab error paling sering." data-en="Product photos are not in the system yet. Until real photos land, staff only have the name to tell 07 from 08 — the most common error in the app.">Foto produk belum ada di sistem. Sampai foto asli masuk, staf hanya punya nama untuk membedakan 07 dari 08 — ini penyebab error paling sering.</span></div>
+
+    <section class="section">
+      <div class="toolbar">
+        <h2 class="section__title" data-id="Brand dan pemilik stok" data-en="Brands and stock owner">Brand dan pemilik stok</h2>
+        <span class="toolbar__spacer"></span>
+        <button class="cbtn" type="button" data-action="new-brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-id="Tambah brand" data-en="Add brand">Tambah brand</span></button>
+      </div>
+      <p class="page__sub" data-id="Pemilik stok menentukan milik siapa setiap unit di rak: Wardah milik Grab, konsinyasi milik brand, produk Ninja milik Ninja." data-en="The stock owner decides whose every unit on the shelf is: Wardah belongs to Grab, consignment to the brand, the Ninja range to Ninja.">Pemilik stok menentukan milik siapa setiap unit di rak: Wardah milik Grab, konsinyasi milik brand, produk Ninja milik Ninja.</p>
+      <div class="table-scroll">
+        <table class="dtable" id="tbl-brands">
+          <thead><tr>
+            <th data-id="Kode" data-en="Code">Kode</th>
+            <th data-id="Nama brand" data-en="Brand name">Nama brand</th>
+            <th data-id="Identitas" data-en="Identity">Identitas</th>
+            <th data-id="Pemilik stok" data-en="Stock owner">Pemilik stok</th>
+            <th data-id="Status" data-en="Status">Status</th>
+          </tr></thead>
+          <tbody data-region="brands">
+            <tr><td colspan="5" class="note" data-id="Memuat…" data-en="Loading…">Memuat…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <span class="inline-note"><span data-id="Mengganti pemilik berlaku untuk stok yang masuk sesudahnya. Unit yang sudah di rak tetap tercatat dengan pemilik lamanya." data-en="Changing the owner applies to stock received afterwards. Units already on the shelf keep the owner they were booked with.">Mengganti pemilik berlaku untuk stok yang masuk sesudahnya. Unit yang sudah di rak tetap tercatat dengan pemilik lamanya.</span></span>
+    </section>
   </main>
 </div>
 <div class="scrim"></div>
@@ -322,45 +177,116 @@
     <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
   </div>
   <div class="drawer__body">
-    <label class="field"><span class="field__label" data-id="Brand" data-en="Brand">Brand</span><select class="select"><option>Wardah Official Store</option></select></label>
-    <label class="field"><span class="field__label" data-id="Nama produk" data-en="Product name">Nama produk</span><input class="input" type="text" placeholder="Glasting Liquid Lip 09 …">
+    <label class="field"><span class="field__label" data-id="Brand" data-en="Brand">Brand</span><select class="select" data-field="sku-brand"></select></label>
+    <label class="field"><span class="field__label" data-id="Nama produk" data-en="Product name">Nama produk</span><input class="input" type="text" data-field="sku-name" placeholder="Glasting Liquid Lip 09 …">
       <span class="field__hint" data-id="Tulis nomor shade di nama — staf mencarinya lewat nomor." data-en="Put the shade number in the name — staff search by number.">Tulis nomor shade di nama — staf mencarinya lewat nomor.</span></label>
-    <label class="field"><span class="field__label" data-id="Kode SKU" data-en="SKU code">Kode SKU</span><input class="input" type="text" placeholder="WDH-GLL-09"></label>
+    <label class="field"><span class="field__label" data-id="Kode SKU" data-en="SKU code">Kode SKU</span><input class="input" type="text" data-field="sku-code" placeholder="WDH-GLL-09"></label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)">
-      <label class="field"><span class="field__label" data-id="Kategori" data-en="Category">Kategori</span><select class="select"><option>Lip</option><option>Face</option><option>Skincare</option></select></label>
-      <label class="field"><span class="field__label" data-id="Ukuran" data-en="Size">Ukuran</span><input class="input" type="text" placeholder="3,5 g"></label>
+      <label class="field"><span class="field__label" data-id="Kategori" data-en="Category">Kategori</span><input class="input" type="text" data-field="sku-category" list="sku-categories" placeholder="Lip"><datalist id="sku-categories"><option value="Lip"><option value="Face"><option value="Skincare"></datalist></label>
+      <label class="field"><span class="field__label" data-id="Ukuran" data-en="Size">Ukuran</span><input class="input" type="text" data-field="sku-size" placeholder="3,5 g"></label>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)">
-      <label class="field"><span class="field__label" data-id="Ukuran keranjang" data-en="Basket size">Ukuran keranjang</span><select class="select"><option>S — sampai 20</option><option selected>M — sampai 40</option><option>L — sampai 80</option><option>Rak terbuka</option></select></label>
-      <label class="field"><span class="field__label" data-id="Kadaluarsa" data-en="Expiry tier">Kadaluarsa</span><select class="select"><option value="stable">Stabil</option><option value="watch">Pantau</option><option value="short">Pendek</option></select></label>
+      <label class="field"><span class="field__label" data-id="Volume unit (cm³)" data-en="Unit volume (cm³)">Volume unit (cm³)</span><input class="input" type="number" min="1" data-field="sku-cube" placeholder="60">
+        <span class="field__hint" data-id="Dipakai untuk menyarankan ukuran keranjang." data-en="Used to suggest the basket size.">Dipakai untuk menyarankan ukuran keranjang.</span></label>
+      <label class="field"><span class="field__label" data-id="Kadaluarsa" data-en="Expiry tier">Kadaluarsa</span><select class="select" data-field="sku-expiry"><option value="stable">Stabil</option><option value="watch">Pantau</option><option value="short">Pendek</option></select></label>
     </div>
-    <label class="field"><span class="field__label" data-id="Cara identitas" data-en="Identity mode">Cara identitas</span><select class="select"><option value="sku_barcode">Barcode SKU — pindai barcode pabrik</option><option value="unit_label">Label unit — tempel stiker Ninja per unit</option></select></label>
-    <label class="field"><span class="field__label" data-id="Catatan tempel stiker" data-en="Label placement note">Catatan tempel stiker</span><input class="input" type="text" placeholder="Di badan kemasan, di bawah barcode brand"></label>
+    <label class="field"><span class="field__label" data-id="Cara identitas" data-en="Identity mode">Cara identitas</span><select class="select" data-field="sku-mode"><option value="">Ikuti brand</option><option value="sku_barcode">Barcode SKU — pindai barcode pabrik</option><option value="unit_label">Label unit — tempel stiker Ninja per unit</option></select></label>
+    <label class="field"><span class="field__label" data-id="Catatan tempel stiker" data-en="Label placement note">Catatan tempel stiker</span><input class="input" type="text" data-field="sku-note" placeholder="Di badan kemasan, di bawah barcode brand"></label>
     <div class="field">
       <span class="field__label" data-id="Foto produk" data-en="Product photo">Foto produk</span>
       <div style="display:flex;gap:var(--sp-3);align-items:center">
         <img class="thumb thumb--lg" src="../assets/products/placeholder.svg" alt="">
-        <span class="field__hint" data-id="1:1, minimal 800 × 800 px, produk di tengah dengan latar putih. Nama file = kode SKU huruf kecil (wdh-gll-09.jpg)." data-en="1:1, at least 800 × 800 px, product centred on white. Filename = lowercase SKU code (wdh-gll-09.jpg).">1:1, minimal 800 × 800 px, produk di tengah dengan latar putih. Nama file = kode SKU huruf kecil (wdh-gll-09.jpg).</span>
+        <span class="field__hint" data-id="Belum bisa diunggah dari sini. Spesifikasi: 1:1, minimal 800 × 800 px, produk di tengah dengan latar putih. Nama file = kode SKU huruf kecil (wdh-gll-09.jpg)." data-en="Cannot be uploaded from here yet. Spec: 1:1, at least 800 × 800 px, product centred on white. Filename = lowercase SKU code (wdh-gll-09.jpg).">Belum bisa diunggah dari sini. Spesifikasi: 1:1, minimal 800 × 800 px, produk di tengah dengan latar putih. Nama file = kode SKU huruf kecil (wdh-gll-09.jpg).</span>
       </div>
     </div>
   </div>
   <div class="drawer__foot">
-    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-id="Simpan SKU" data-en="Save SKU">Simpan SKU</button>
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-action="save-sku" data-id="Simpan SKU" data-en="Save SKU">Simpan SKU</button>
     <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
   </div>
 </aside>
-<script src="../js/api.js?v=4b107ba"></script>
-<script src="../js/app.js?v=4b107ba"></script>
-<script src="../js/console.js?v=4b107ba"></script>
-<script>
-  /* GET /api/skus?brand_id=&q=&limit=&offset= -> {skus:[Sku], total}
-     POST /api/skus (SkuIn) · POST /api/skus/import?brand_id=&commit=
-     GET /api/barcodes/check?barcode=&sku_id= -> {state:new|already_this_sku|conflict}
-     POST /api/barcodes/register {sku_id, barcodes[]}
-     118 rows: paginate server-side (limit/offset), do not fetch all. */
-  window.addEventListener('load', async () => {
-    try { const r = await NJW.api.skus({ limit: 50, offset: 0 }); } catch (e) {}
-  });
-</script>
+<aside class="drawer" id="drawer-barcode" aria-label="Barcode">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-id="Daftarkan barcode" data-en="Register barcodes">Daftarkan barcode</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span style="font-size:var(--fs-c-label);font-weight:600" data-field="bc-sku-name">—</span>
+      <span class="td-code" style="color:var(--muted);font-size:var(--fs-c-meta)" data-field="bc-sku-code">—</span>
+    </div>
+    <label class="field"><span class="field__label" data-id="Pindai atau ketik barcode" data-en="Scan or type a barcode">Pindai atau ketik barcode</span>
+      <input class="input" type="text" data-field="bc-input" autocomplete="off" placeholder="8993137…">
+      <span class="field__hint" data-id="Tekan Enter setelah tiap barcode. Satu barcode hanya boleh milik satu SKU — yang bentrok tidak didaftarkan." data-en="Press Enter after each barcode. A barcode may belong to one SKU only — a clash is not registered.">Tekan Enter setelah tiap barcode. Satu barcode hanya boleh milik satu SKU — yang bentrok tidak didaftarkan.</span></label>
+    <div class="table-scroll">
+      <table class="dtable">
+        <thead><tr><th data-id="Barcode" data-en="Barcode">Barcode</th><th data-id="Hasil cek" data-en="Check">Hasil cek</th></tr></thead>
+        <tbody data-region="bc-list"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-action="register-barcodes" data-id="Daftarkan" data-en="Register">Daftarkan</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Tutup" data-en="Close">Tutup</button>
+  </div>
+</aside>
+<aside class="drawer" id="drawer-brand" aria-label="Tambah brand">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-id="Tambah brand" data-en="Add brand">Tambah brand</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <label class="field"><span class="field__label" data-id="Kode brand" data-en="Brand code">Kode brand</span><input class="input" type="text" data-field="brand-code" placeholder="WRD"></label>
+    <label class="field"><span class="field__label" data-id="Nama brand" data-en="Brand name">Nama brand</span><input class="input" type="text" data-field="brand-name" placeholder="Wardah Official Store"></label>
+    <label class="field"><span class="field__label" data-id="Cara identitas" data-en="Identity mode">Cara identitas</span><select class="select" data-field="brand-mode"><option value="sku_barcode">Barcode SKU — pindai barcode pabrik</option><option value="unit_label">Label unit — tempel stiker Ninja per unit</option></select></label>
+    <label class="field"><span class="field__label" data-id="Pemilik stok" data-en="Stock owner">Pemilik stok</span><select class="select" data-field="brand-owner"><option value="grab" data-id="Grab (mis. Wardah)" data-en="Grab (e.g. Wardah)">Grab (mis. Wardah)</option><option value="brand" selected data-id="Brand (konsinyasi)" data-en="Brand (consignment)">Brand (konsinyasi)</option><option value="ninja" data-id="Ninja" data-en="Ninja">Ninja</option></select>
+      <span class="field__hint" data-id="Milik siapa setiap unit brand ini di rak." data-en="Whose every unit of this brand on the shelf is.">Milik siapa setiap unit brand ini di rak.</span></label>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-action="save-brand" data-id="Simpan brand" data-en="Save brand">Simpan brand</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
+  </div>
+</aside>
+<aside class="drawer" id="drawer-import" aria-label="Impor CSV">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-id="Impor CSV" data-en="Import CSV">Impor CSV</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <div class="field">
+      <span class="field__label" data-id="Jenis file" data-en="File type">Jenis file</span>
+      <div class="chipset">
+        <label class="chipbox"><input type="radio" name="import-mode" value="master" checked><span data-id="Daftar produk (brand + nama)" data-en="Product list (brand + name)">Daftar produk (brand + nama)</span></label>
+        <label class="chipbox"><input type="radio" name="import-mode" value="skus"><span data-id="SKU lengkap satu brand" data-en="Full SKUs for one brand">SKU lengkap satu brand</span></label>
+      </div>
+    </div>
+    <div data-region="import-master">
+      <span class="field__hint" data-id="Dua kolom: brand, product name. Brand dan SKU yang belum ada dibuat otomatis. Daftar ini yang dicocokkan saat unggah stok." data-en="Two columns: brand, product name. Missing brands and SKUs are created. Stock uploads are checked against this list.">Dua kolom: brand, product name. Brand dan SKU yang belum ada dibuat otomatis. Daftar ini yang dicocokkan saat unggah stok.</span>
+      <div style="margin-top:6px"><a class="cbtn cbtn--sm" href="/api/admin/product-master/template" data-id="Unduh template" data-en="Download template">Unduh template</a></div>
+    </div>
+    <div data-region="import-skus" style="display:none">
+      <label class="field"><span class="field__label" data-id="Brand" data-en="Brand">Brand</span><select class="select" data-field="import-brand"></select></label>
+      <span class="field__hint" data-id="Kolom dicocokkan longgar: product name / nama, sku code / kode, category, size, price, volume. Pratinjau dulu, lalu impor." data-en="Columns are matched loosely: product name, sku code, category, size, price, volume. Preview first, then import.">Kolom dicocokkan longgar: product name / nama, sku code / kode, category, size, price, volume. Pratinjau dulu, lalu impor.</span>
+    </div>
+    <label class="field"><span class="field__label" data-id="File CSV" data-en="CSV file">File CSV</span><input class="input" type="file" accept=".csv,text/csv" data-field="import-file" style="height:auto;padding:6px"></label>
+    <span class="inline-note" data-region="import-result" style="display:none"><span data-field="import-message"></span></span>
+    <div class="table-scroll" data-region="import-rows-wrap" style="display:none">
+      <table class="dtable">
+        <thead><tr><th data-id="Baris" data-en="Row">Baris</th><th data-id="Hasil" data-en="Result">Hasil</th></tr></thead>
+        <tbody data-region="import-rows"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn" type="button" data-action="import-preview" style="display:none" data-id="Pratinjau" data-en="Preview">Pratinjau</button>
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-action="import-run" data-id="Impor" data-en="Import">Impor</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Tutup" data-en="Close">Tutup</button>
+  </div>
+</aside>
+<script src="../js/api.js?v=856f10e"></script>
+<script src="../js/app.js?v=856f10e"></script>
+<script src="../js/console.js?v=856f10e"></script>
+<script src="../js/wire.js?v=856f10e"></script>
+<script src="../js/screens/produk.js?v=4b107ba"></script>
 </body>
 </html>

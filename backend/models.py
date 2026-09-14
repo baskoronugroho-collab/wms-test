@@ -45,12 +45,22 @@ class Brand(BaseModel):
     name: str
     identity_mode: str
     active: bool
+    # Who owns the stock (canonical design): grab (Wardah), brand
+    # (consignment) or ninja (own range).
+    default_stock_owner: str = "brand"
 
 
 class BrandIn(BaseModel):
     code: str
     name: str
     identity_mode: str = "sku_barcode"
+    default_stock_owner: str = "brand"
+
+
+class BrandPatch(BaseModel):
+    name: str | None = None
+    default_stock_owner: str | None = None
+    active: bool | None = None
 
 
 class Sku(BaseModel):
@@ -242,6 +252,30 @@ class Receipt(BaseModel):
     completed_at: str | None = None
     external_reference: str | None = None
     banner: str
+    day_color: dict | None = None
+
+
+class ReceiptRow(Receipt):
+    line_count: int = 0
+    units: int = 0
+    slip_id: int | None = None
+
+
+class ReceiptList(BaseModel):
+    receipts: list[ReceiptRow]
+    total: int
+
+
+class ReceiptUndoIn(BaseModel):
+    idempotency_key: str | None = None
+
+
+class ReceiptUndoResult(BaseModel):
+    ok: bool
+    sku_name: str
+    qty: int
+    session_total: int
+    message: str
 
 
 class ReceiptScanIn(BaseModel):
@@ -366,6 +400,32 @@ class OrderIn(BaseModel):
     )
 
 
+class OrderRow(BaseModel):
+    order_id: int
+    external_ref: str
+    status: str
+    is_test: bool
+    channel: str | None = None
+    delivery_mode: str | None = None
+    created_at: str | None = None
+    placed_at: str | None = None
+    promised_at: str | None = None
+    pick_task_id: int | None = None
+    pick_status: str | None = None
+    claimed_by: str | None = None
+    completed_at: str | None = None
+    line_count: int = 0
+    units: int = 0
+    units_picked: int = 0
+    short_lines: int = 0
+    remaining_seconds: int | None = None
+
+
+class OrderList(BaseModel):
+    orders: list[OrderRow]
+    total: int
+
+
 class OrderAccepted(BaseModel):
     order_id: int
     external_ref: str
@@ -389,6 +449,10 @@ class PickLine(BaseModel):
     qty_picked: int
     status: str
     identity_mode: str
+    brand_sku_code: str | None = None
+    unit_size: str | None = None
+    slot_role: str | None = None
+    oldest_day_color: dict | None = None
 
 
 class PickTask(BaseModel):
@@ -403,6 +467,9 @@ class PickTask(BaseModel):
     created_at: str | None = None
     claimed_at: str | None = None
     age_seconds: int | None = None
+    channel: str | None = None
+    delivery_mode: str | None = None
+    promised_at: str | None = None
 
 
 class PickTaskList(BaseModel):
@@ -456,6 +523,9 @@ class OpnamePlan(BaseModel):
     total_baskets: int
     counted: int
     variances: int
+    created_at: str | None = None
+    created_by: str | None = None
+    scope: dict = {}
 
 
 class OpnamePlanDetail(BaseModel):
@@ -502,9 +572,9 @@ class OpnameFinishIn(BaseModel):
 
 
 class OpnameFinishResult(BaseModel):
-    qty_expected: int
+    qty_expected: int | None = None
     qty_counted: int
-    variance: int
+    variance: int | None = None
     foreign_items: int
     missing_plates: list[str] = []
     needs_recount: bool
@@ -512,6 +582,8 @@ class OpnameFinishResult(BaseModel):
 
 
 class VarianceRow(BaseModel):
+    session_id: int | None = None
+    recounted: bool = False
     basket_id: int
     location_code: str
     sku_id: int | None
@@ -547,6 +619,9 @@ class InventoryRow(BaseModel):
     available: int
     expiry_tier: str
     last_counted_at: str | None = None
+    stock_owner: str | None = None
+    stocked_since: str | None = None
+    restock_point: int | None = None
 
 
 class InventoryList(BaseModel):
@@ -738,6 +813,7 @@ class PutawaySlipLine(BaseModel):
     location_code: str | None = None
     rack_code: str | None = None
     level_no: int | None = None
+    locations: list[dict] = []
     qty_received: int
     qty_expected: int | None = None
     variance: int | None = None
@@ -750,6 +826,7 @@ class PutawaySlip(BaseModel):
     site_id: int
     site_code: str
     source_type: str
+    external_reference: str | None = None
     inbound_date: str
     day_color: DayColor
     received_by: str | None
@@ -768,6 +845,9 @@ class PutawaySlipBrief(BaseModel):
     inbound_date: str
     day_color_hex: str
     day_label: str
+    week_parity: str | None = None
+    external_reference: str | None = None
+    variance_lines: int = 0
     total_lines: int
     total_units: int
     received_by: str | None
@@ -877,6 +957,9 @@ class TestOrderRow(BaseModel):
     pick_task_id: int | None
     pick_status: str | None
     created_at: str
+    channel: str | None = None
+    delivery_mode: str | None = None
+    promised_at: str | None = None
 
 
 class TestOrderList(BaseModel):
@@ -1131,3 +1214,39 @@ class AddRackIn(BaseModel):
     level_count: int = 5
     positions_per_level: int = 5
     basket_size: str = "M"
+
+
+# --- return to shelf --------------------------------------------------------
+
+class ReturnTask(BaseModel):
+    id: int
+    site_id: int
+    sku_id: int
+    sku_name: str
+    brand_sku_code: str | None = None
+    external_ref: str | None = None
+    location_id: int | None = None
+    location_code: str | None = None
+    qty: int
+    qty_returned: int
+    reason: str
+    status: str
+    created_at: str | None = None
+    age_seconds: int | None = None
+
+
+class ReturnTaskList(BaseModel):
+    tasks: list[ReturnTask]
+    open_count: int
+
+
+class ReturnScanIn(BaseModel):
+    code: str
+    idempotency_key: str | None = None
+
+
+class ReturnScanResult(BaseModel):
+    ok: bool
+    task: ReturnTask
+    done: bool
+    message: str

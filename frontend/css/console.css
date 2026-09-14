@@ -380,7 +380,7 @@ details[open] > .done-toggle .done-toggle__chev { transform: rotate(90deg); }
    marks in the wrong ORDER — which is a configuration error, not a stock
    problem, and is flagged as such. */
 .thbar { display: flex; flex-direction: column; gap: 5px; min-width: 190px; }
-.thbar__track { position: relative; height: 20px; border-radius: var(--radius-chip); background: var(--ground-sunk); overflow: hidden; }
+.thbar__track { position: relative; height: 20px; border-radius: var(--radius-chip); background: var(--ground-sunk); }
 .thbar__fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: var(--radius-chip); background: var(--action); transition: width var(--dur-2) var(--ease); }
 .thbar__fill.is-low { background: var(--accent); }
 .thbar__fill.is-empty { background: var(--caution); }
@@ -487,3 +487,8 @@ details[open] > .done-toggle .done-toggle__chev { transform: rotate(90deg); }
   .page__head { flex-direction: column; }
   .kpis { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 }
+
+/* The hidden attribute always wins. Components here set display (flex,
+   grid, inline-flex), which would otherwise override it, so el.hidden = true
+   silently did nothing on a banner or a button. */
+[hidden] { display: none !important; }

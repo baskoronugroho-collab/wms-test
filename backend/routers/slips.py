@@ -38,32 +38,56 @@ async def _build_payload(receipt: dict) -> dict:
     )
     lines = await db.fetch_all(
         "SELECT rl.sku_id, rl.qty_expected, rl.qty_received, "
-        "       s.name_display, s.brand_sku_code, "
-        "       l.code AS location_code, r.code AS rack_code, lv.level_no "
-        "FROM receipt_lines rl "
-        "JOIN skus s ON s.id = rl.sku_id "
-        "LEFT JOIN locations l ON l.id = rl.location_id "
+        "       s.name_display, s.brand_sku_code "
+        "FROM receipt_lines rl JOIN skus s ON s.id = rl.sku_id "
+        "WHERE rl.receipt_id = %s",
+        (receipt["id"],),
+    )
+    # Where each unit went comes from the ledger, not receipt_lines: a line
+    # keeps one location per SKU, but a delivery that fills the rack and spills
+    # into overflow put units in two places — and that split is exactly the
+    # case a supervisor reads the slip for. Undone scans net out here too.
+    placed = await db.fetch_all(
+        "SELECT m.sku_id, l.code AS location_code, r.code AS rack_code, "
+        "       lv.level_no, SUM(m.qty_delta) AS qty "
+        "FROM stock_movements m "
+        "JOIN locations l ON l.id = m.location_id "
         "LEFT JOIN levels lv ON lv.id = l.level_id "
         "LEFT JOIN racks r ON r.id = lv.rack_id "
-        "WHERE rl.receipt_id = %s "
+        "WHERE m.ref_type = 'receipt' AND m.ref_id = %s "
+        "  AND m.movement_type IN ('receipt_in', 'receipt_undo') "
+        "GROUP BY m.sku_id, l.code, r.code, lv.level_no "
+        "HAVING SUM(m.qty_delta) > 0 "
         # Walking order, so the slip reads the way the aisle is walked.
         "ORDER BY r.code, lv.level_no, l.code",
         (receipt["id"],),
     )
+    where: dict[int, list[dict]] = {}
+    for p in placed:
+        where.setdefault(p["sku_id"], []).append(p)
+
     out = []
     for l in lines:
         exp = l["qty_expected"]
+        locs = where.get(l["sku_id"], [])
+        first = locs[0] if locs else {}
         out.append({
             "sku_id": l["sku_id"],
             "sku_name": l["name_display"],
             "brand_sku_code": l["brand_sku_code"],
-            "location_code": l["location_code"],
-            "rack_code": l["rack_code"],
-            "level_no": l["level_no"],
+            "location_code": (
+                first.get("location_code") if len(locs) <= 1 else
+                " + ".join(f"{x['location_code']} ({int(x['qty'])})" for x in locs)),
+            "rack_code": first.get("rack_code"),
+            "level_no": first.get("level_no"),
+            "locations": [{"location_code": x["location_code"], "qty": int(x["qty"])}
+                          for x in locs],
             "qty_received": l["qty_received"],
             "qty_expected": exp,
             "variance": (l["qty_received"] - exp) if exp is not None else None,
         })
+    out.sort(key=lambda x: (x["rack_code"] or "~", x["level_no"] or 0,
+                            x["location_code"] or ""))
     return {"site_code": site["code"] if site else "?", "lines": out}
 
 
@@ -89,6 +113,7 @@ async def _issue(receipt: dict, actor: str) -> dict:
         "site_id": receipt["site_id"],
         "site_code": payload["site_code"],
         "source_type": receipt["source_type"],
+        "external_reference": receipt.get("external_reference"),
         "day_color": colour,
         "received_by": receipt.get("opened_by") or actor,
         "lines": payload["lines"],
@@ -128,6 +153,7 @@ def _hydrate(row: dict) -> dict:
         "site_id": row["site_id"],
         "site_code": body.get("site_code", ""),
         "source_type": body.get("source_type", ""),
+        "external_reference": body.get("external_reference"),
         "inbound_date": str(row["inbound_date"]),
         "day_color": body["day_color"],
         "received_by": row["received_by"],
@@ -162,24 +188,38 @@ async def receipt_slip(
 async def list_slips(
     site_id: int,
     limit: int = Query(default=50, le=200),
+    offset: int = Query(default=0, ge=0),
     user: auth.User = Depends(auth.require("supervisor")),
 ):
     """The supervisor's archive: every slip this site has issued, newest first."""
     await auth.assert_site_access(user, site_id)
     rows = await db.fetch_all(
-        "SELECT ps.*, s.code AS site_code FROM putaway_slips ps "
+        "SELECT ps.*, s.code AS site_code, ir.external_reference "
+        "FROM putaway_slips ps "
         "JOIN sites s ON s.id = ps.site_id "
-        "WHERE ps.site_id = %s ORDER BY ps.created_at DESC LIMIT %s",
-        (site_id, limit),
+        "LEFT JOIN inbound_receipts ir ON ir.id = ps.receipt_id "
+        "WHERE ps.site_id = %s ORDER BY ps.created_at DESC LIMIT %s OFFSET %s",
+        (site_id, limit, offset),
     )
     total = await db.fetch_one(
         "SELECT COUNT(*) AS n FROM putaway_slips WHERE site_id = %s", (site_id,)
     )
+
+    def variance_lines(r) -> int:
+        try:
+            lines = json.loads(r["payload_json"]).get("lines", [])
+        except (TypeError, ValueError):
+            return 0
+        return sum(1 for l in lines if l.get("variance"))
+
     return {
         "slips": [{
             "id": r["id"], "slip_no": r["slip_no"], "receipt_id": r["receipt_id"],
             "site_code": r["site_code"], "inbound_date": str(r["inbound_date"]),
             "day_color_hex": r["day_color_hex"], "day_label": r["day_label_id"],
+            "week_parity": r.get("week_parity"),
+            "external_reference": r.get("external_reference"),
+            "variance_lines": variance_lines(r),
             "total_lines": r["total_lines"], "total_units": r["total_units"],
             "received_by": r["received_by"], "created_at": str(r["created_at"]),
         } for r in rows],

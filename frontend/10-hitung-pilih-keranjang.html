@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=4b107ba">
-<link rel="stylesheet" href="css/app.css?v=4b107ba">
+<link rel="stylesheet" href="css/tokens.css?v=856f10e">
+<link rel="stylesheet" href="css/app.css?v=856f10e">
 </head>
 <body>
 <div class="app" data-screen="count-list">
@@ -16,7 +16,7 @@
       <span class="chrome__mark">NINJA</span>
       <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
       <span class="chrome__sep"></span>
-      <span class="chrome__mode" data-id="Hitung stok · minggu 36" data-en="Stock count · week 36">Hitung stok · minggu 36</span>
+      <span class="chrome__mode" data-id="Hitung stok" data-en="Stock count">Hitung stok</span>
       <span class="spacer"></span>
       <span class="conn" role="status">
         <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
@@ -34,51 +34,20 @@
           <span class="eyebrow" data-id="Urut sesuai jalan kaki" data-en="In walking order">Urut sesuai jalan kaki</span>
           <h1 class="h1" data-id="Pilih keranjang untuk dihitung" data-en="Choose a basket to count">Pilih keranjang untuk dihitung</h1>
         </div>
-        <span class="progress__count">18 / 42 <span class="note" data-id="keranjang selesai" data-en="baskets done">keranjang selesai</span></span>
+        <span class="progress__count"></span>
       </div>
-      <div class="list">
-        <div class="row row--next">
-          <span class="row__code code code--md">UT5-A-3-02</span>
-          <span class="row__name">Glasting Liquid Lip 07 Rouge Flare</span>
-          <span class="eyebrow eyebrow--action" data-id="Berikutnya" data-en="Next">Berikutnya</span>
-          <a class="btn btn--primary" href="11-hitung-menghitung.html" data-id="Mulai hitung" data-en="Start counting">Mulai hitung</a>
-        </div>
-        <div class="row">
-          <span class="row__code code code--md">UT5-A-3-05</span>
-          <span class="row__name">Colorfit Velvet Matte Lipstick 04 Dusty Rose</span>
-          
-          <a class="btn btn--outline" href="11-hitung-menghitung.html" data-id="Hitung" data-en="Count">Hitung</a>
-        </div>
-        <div class="row row--claimed">
-          <span class="row__code code code--md">UT5-B-1-05</span>
-          <span class="row__name">Instaperfect Mattesetter Lip Matte Paint 02</span>
-          <span class="row__state"><span class="code code--sm">!</span><span data-id="Sedang dihitung: Rina Puspita" data-en="Being counted: Rina Puspita">Sedang dihitung: Rina Puspita</span></span>
-          <span class="btn is-locked" aria-disabled="true" data-id="Terkunci" data-en="Locked">Terkunci</span>
-        </div>
-        <div class="row">
-          <span class="row__code code code--md">UT5-C-5-04</span>
-          <span class="row__name">UV Shield Airy Smooth Sunscreen SPF 50 PA+++</span>
-          
-          <a class="btn btn--outline" href="11-hitung-menghitung.html" data-id="Hitung" data-en="Count">Hitung</a>
-        </div>
-        <div class="row row--done">
-          <span class="row__code code code--md">UT5-D-2-01</span>
-          <span class="row__name">Lightening Day Cream SPF 30</span>
-          <span class="row__state"><span class="pill"><span class="pill__mark">✓</span></span><span data-id="Sudah dihitung · Dwi L." data-en="Counted · Dwi L.">Sudah dihitung · Dwi L.</span></span>
-          <span class="btn is-locked" aria-disabled="true" data-id="Selesai" data-en="Done">Selesai</span>
-        </div>
-        <div class="row">
-          <span class="row__code code code--md">UT5-G-1-03</span>
-          <span class="row__name">Colorfit Matte Lipstick 12 Deep Ruby</span>
-          
-          <a class="btn btn--outline" href="11-hitung-menghitung.html" data-id="Hitung" data-en="Count">Hitung</a>
-        </div>
+      <!-- Rows are rendered from GET /api/opname/plans/{id} by js/screens/count-list.js,
+           one variant per state: next, to count, yours in progress, locked, done. -->
+      <div class="list" data-region="baskets">
+        <p class="note" data-id="Memuat keranjang…" data-en="Loading baskets…">Memuat keranjang…</p>
       </div>
     </main>
 </div>
-<script src="js/api.js?v=4b107ba"></script>
-<script src="js/scan.js?v=4b107ba"></script>
-<script src="js/app.js?v=4b107ba"></script>
+<script src="js/api.js?v=856f10e"></script>
+<script src="js/scan.js?v=856f10e"></script>
+<script src="js/app.js?v=856f10e"></script>
+<script src="js/wire.js?v=856f10e"></script>
+<script src="js/screens/count-list.js?v=4b107ba"></script>
 
 </body>
 </html>

@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="../css/tokens.css?v=4b107ba">
-<link rel="stylesheet" href="../css/app.css?v=4b107ba">
-<link rel="stylesheet" href="../css/console.css?v=4b107ba">
+<link rel="stylesheet" href="../css/tokens.css?v=856f10e">
+<link rel="stylesheet" href="../css/app.css?v=856f10e">
+<link rel="stylesheet" href="../css/console.css?v=856f10e">
 </head>
 <body>
 <div class="console" data-screen="staf">
@@ -45,7 +45,7 @@
         <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
         <a class="sidebar__link is-current" href="staf.html" aria-current="page"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
         <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
-        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi POS" data-en="POS integration">Integrasi POS</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
@@ -75,23 +75,25 @@
         <p class="page__sub" data-id="Email, role, dan lokasi yang boleh dikerjakan. Mengubah role berlaku saat orangnya masuk berikutnya." data-en="Emails, roles and which sites each person may work at. A role change applies at their next sign-in.">Email, role, dan lokasi yang boleh dikerjakan. Mengubah role berlaku saat orangnya masuk berikutnya.</p>
       </div>
       <div class="page__actions">
-        <button class="cbtn cbtn--primary" type="button" data-drawer-open="#drawer-staff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-id="Tambah staf" data-en="Add staff">Tambah staf</span></button>
+        <button class="cbtn cbtn--primary" type="button" data-action="new-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-id="Tambah staf" data-en="Add staff">Tambah staf</span></button>
       </div>
     </header>
     <div class="inline-note"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span data-id="Dua hal yang tidak bisa dilakukan ke akun sendiri: menonaktifkan, dan mengubah role. Tombolnya dimatikan di baris Anda — minta admin lain." data-en="Two things you cannot do to your own account: deactivate it, or change its role. Those controls are disabled on your row — ask another admin.">Dua hal yang tidak bisa dilakukan ke akun sendiri: menonaktifkan, dan mengubah role. Tombolnya dimatikan di baris Anda — minta admin lain.</span></div>
     <div class="toolbar">
         <label class="search">
           <span class="search__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></span>
-          <input class="search__input" type="search" data-search-for="#tbl-staff" placeholder="Cari nama atau email…" data-id-placeholder="Cari nama atau email…" data-en-placeholder="Search name or email…" aria-label="Cari nama atau email…">
+          <input class="search__input" type="search" data-search-for="#tbl-staff" data-field="search" placeholder="Cari nama atau email…" data-id-placeholder="Cari nama atau email…" data-en-placeholder="Search name or email…" aria-label="Cari nama atau email…">
         </label>
-      <span class="seg" role="group">
-        <button class="seg__opt is-on" type="button" data-id="Semua" data-en="All">Semua</button>
-        <button class="seg__opt" type="button" data-id="Aktif" data-en="Active">Aktif</button>
-        <button class="seg__opt" type="button" data-id="Nonaktif" data-en="Inactive">Nonaktif</button>
+      <span class="seg" role="group" data-region="status-filter">
+        <button class="seg__opt is-on" type="button" data-filter="all" data-id="Semua" data-en="All">Semua</button>
+        <button class="seg__opt" type="button" data-filter="active" data-id="Aktif" data-en="Active">Aktif</button>
+        <button class="seg__opt" type="button" data-filter="inactive" data-id="Nonaktif" data-en="Inactive">Nonaktif</button>
       </span>
       <span class="toolbar__spacer"></span>
-      <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16M7 12h10M10 17.5h4"/></svg><span data-id="Role" data-en="Role">Role</span></button>
-      <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M8 10.5l4 4 4-4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Ekspor" data-en="Export">Ekspor</span></button>
+      <select class="select" data-field="role-filter" style="width:auto" aria-label="Role">
+        <option value="" data-id="Semua role" data-en="All roles">Semua role</option>
+      </select>
+      <button class="cbtn" type="button" data-action="export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M8 10.5l4 4 4-4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Ekspor" data-en="Export">Ekspor</span></button>
     </div>
     <div class="table-scroll">
       <table class="dtable dtable--rows-tall" id="tbl-staff">
@@ -105,102 +107,7 @@
           <th class="td-actions"></th>
         </tr></thead>
         <tbody data-region="staff">
-            <tr data-self="true">
-              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih budi.hartono@ninjavan.co"></td>
-              <td class="td-strong">Budi Hartono <span class="tagline" data-id="akun Anda" data-en="your account">akun Anda</span></td>
-              <td class="td-code">budi.hartono@ninjavan.co</td>
-              <td><span class="spill spill--accent"><span class="role">admin</span></span></td>
-              <td class="td-code">UT5, UT2, TRN</td>
-              <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Aktif" data-en="Active">Aktif</span></span></td>
-              <td class="td-actions">
-                <button class="cbtn cbtn--sm is-disabled" type="button" disabled title="Tidak bisa mengubah role akun sendiri — minta admin lain." data-id="Ubah role" data-en="Change role">Ubah role</button>
-                <button class="cbtn cbtn--sm is-disabled" type="button" disabled title="Tidak bisa menonaktifkan akun sendiri — minta admin lain." data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
-              </td>
-            </tr>
-            <tr>
-              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih sari.wijaya@ninjavan.co"></td>
-              <td class="td-strong">Sari Wijaya</td>
-              <td class="td-code">sari.wijaya@ninjavan.co</td>
-              <td><span class="spill spill--accent"><span class="role">admin</span></span></td>
-              <td class="td-code">Semua</td>
-              <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Aktif" data-en="Active">Aktif</span></span></td>
-              <td class="td-actions">
-                <button class="cbtn cbtn--sm" type="button" data-id="Ubah role" data-en="Change role">Ubah role</button>
-                <button class="cbtn cbtn--sm" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
-              </td>
-            </tr>
-            <tr>
-              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih rina.puspita@ninjavan.co"></td>
-              <td class="td-strong">Rina Puspita</td>
-              <td class="td-code">rina.puspita@ninjavan.co</td>
-              <td><span class="spill spill--info"><span class="role">supervisor</span></span></td>
-              <td class="td-code">UT5, TRN</td>
-              <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Aktif" data-en="Active">Aktif</span></span></td>
-              <td class="td-actions">
-                <button class="cbtn cbtn--sm" type="button" data-id="Ubah role" data-en="Change role">Ubah role</button>
-                <button class="cbtn cbtn--sm" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
-              </td>
-            </tr>
-            <tr>
-              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih dwi.lestari@ninjavan.co"></td>
-              <td class="td-strong">Dwi Lestari</td>
-              <td class="td-code">dwi.lestari@ninjavan.co</td>
-              <td><span class="spill spill--neutral"><span class="role">hub_operator</span></span></td>
-              <td class="td-code">UT5</td>
-              <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Aktif" data-en="Active">Aktif</span></span></td>
-              <td class="td-actions">
-                <button class="cbtn cbtn--sm" type="button" data-id="Ubah role" data-en="Change role">Ubah role</button>
-                <button class="cbtn cbtn--sm" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
-              </td>
-            </tr>
-            <tr>
-              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih agus.setiawan@ninjavan.co"></td>
-              <td class="td-strong">Agus Setiawan</td>
-              <td class="td-code">agus.setiawan@ninjavan.co</td>
-              <td><span class="spill spill--neutral"><span class="role">staff</span></span></td>
-              <td class="td-code">UT5</td>
-              <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Aktif" data-en="Active">Aktif</span></span></td>
-              <td class="td-actions">
-                <button class="cbtn cbtn--sm" type="button" data-id="Ubah role" data-en="Change role">Ubah role</button>
-                <button class="cbtn cbtn--sm" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
-              </td>
-            </tr>
-            <tr>
-              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih siti.n@ninjavan.co"></td>
-              <td class="td-strong">Siti Nurhaliza</td>
-              <td class="td-code">siti.n@ninjavan.co</td>
-              <td><span class="spill spill--neutral"><span class="role">staff</span></span></td>
-              <td class="td-code">UT5</td>
-              <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Aktif" data-en="Active">Aktif</span></span></td>
-              <td class="td-actions">
-                <button class="cbtn cbtn--sm" type="button" data-id="Ubah role" data-en="Change role">Ubah role</button>
-                <button class="cbtn cbtn--sm" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
-              </td>
-            </tr>
-            <tr>
-              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih eko.prasetyo@ninjavan.co"></td>
-              <td class="td-strong">Eko Prasetyo</td>
-              <td class="td-code">eko.prasetyo@ninjavan.co</td>
-              <td><span class="spill spill--neutral"><span class="role">staff</span></span></td>
-              <td class="td-code">UT2</td>
-              <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Aktif" data-en="Active">Aktif</span></span></td>
-              <td class="td-actions">
-                <button class="cbtn cbtn--sm" type="button" data-id="Ubah role" data-en="Change role">Ubah role</button>
-                <button class="cbtn cbtn--sm" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
-              </td>
-            </tr>
-            <tr class="is-inactive">
-              <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih maya.a@ninjavan.co"></td>
-              <td class="td-strong">Maya Anggraini</td>
-              <td class="td-code">maya.a@ninjavan.co</td>
-              <td><span class="spill spill--neutral"><span class="role">staff</span></span></td>
-              <td class="td-code">TRN</td>
-              <td><span class="spill spill--neutral"><span class="spill__dot"></span><span data-id="Nonaktif" data-en="Inactive">Nonaktif</span></span></td>
-              <td class="td-actions">
-                <button class="cbtn cbtn--sm" type="button" data-id="Ubah role" data-en="Change role">Ubah role</button>
-                <button class="cbtn cbtn--sm" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
-              </td>
-            </tr>
+          <tr><td colspan="7" class="note" data-id="Memuat…" data-en="Loading…">Memuat…</td></tr>
         </tbody>
       </table>
     </div>
@@ -208,84 +115,75 @@
       <span class="bulkbar__count" data-field="bulk-count">0</span>
       <span data-id="baris dipilih" data-en="rows selected">baris dipilih</span>
       <span class="toolbar__spacer"></span>
-      <button class="cbtn" type="button" data-id="Tetapkan lokasi" data-en="Assign sites">Tetapkan lokasi</button>
-      <button class="cbtn" type="button" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
+      <button class="cbtn" type="button" data-action="bulk-sites" data-id="Tambah lokasi" data-en="Add sites">Tambah lokasi</button>
+      <button class="cbtn" type="button" data-action="bulk-deactivate" data-id="Nonaktifkan" data-en="Deactivate">Nonaktifkan</button>
       <button class="cbtn cbtn--ghost" type="button" data-action="bulk-clear" data-id="Batal" data-en="Clear">Batal</button>
     </div>
       <div class="pager">
-        <span class="pager__info"><strong data-field="range">1–8</strong> <span data-id="dari" data-en="of">dari</span> <strong data-field="total">8</strong> <span data-id="baris" data-en="rows">baris</span></span>
-        <div class="pager__nav">
-          <button class="pager__page" type="button" aria-label="Sebelumnya">‹</button>
-          <button class="pager__page is-on" type="button">1</button>
-          <button class="pager__page" type="button">2</button>
-          <button class="pager__page" type="button">3</button>
-          <span class="pager__gap">…</span>
-          <button class="pager__page" type="button">12</button>
-          <button class="pager__page" type="button" aria-label="Berikutnya">›</button>
-        </div>
+        <span class="pager__info"><strong data-field="range">0–0</strong> <span data-id="dari" data-en="of">dari</span> <strong data-field="total">0</strong> <span data-id="baris" data-en="rows">baris</span></span>
+        <div class="pager__nav"></div>
       </div>
   </main>
 </div>
 <div class="scrim"></div>
-<aside class="drawer" id="drawer-staff" aria-label="Tambah staf">
+<aside class="drawer" id="drawer-staff" aria-label="Staf">
   <div class="drawer__head">
-    <h2 class="drawer__title" data-id="Tambah staf" data-en="Add staff">Tambah staf</h2>
+    <h2 class="drawer__title" data-field="staff-drawer-title" data-id="Tambah staf" data-en="Add staff">Tambah staf</h2>
     <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
   </div>
   <div class="drawer__body">
     <label class="field">
       <span class="field__label" data-id="Email" data-en="Email">Email</span>
-      <input class="input" type="email" placeholder="nama@ninjavan.co">
-      <span class="field__hint" data-id="Harus email Ninja Van — ini yang dipakai untuk masuk." data-en="Must be a Ninja Van address — this is the sign-in identity.">Harus email Ninja Van — ini yang dipakai untuk masuk.</span>
+      <input class="input" type="email" data-field="u-email" placeholder="nama@ninjavan.co" autocomplete="off">
+      <span class="field__hint" data-id="Harus email @ninjavan.co — ini yang dipakai untuk masuk lewat Google." data-en="Must be an @ninjavan.co address — it is the Google sign-in identity.">Harus email @ninjavan.co — ini yang dipakai untuk masuk lewat Google.</span>
     </label>
     <label class="field">
       <span class="field__label" data-id="Nama" data-en="Name">Nama</span>
-      <input class="input" type="text" placeholder="Nama lengkap">
+      <input class="input" type="text" data-field="u-name" placeholder="Nama lengkap">
     </label>
     <label class="field">
       <span class="field__label" data-id="Role" data-en="Role">Role</span>
-      <select class="select">
+      <select class="select" data-field="u-role">
         <option value="admin">Admin</option>
         <option value="supervisor">Supervisor</option>
         <option value="hub_operator">Operator hub</option>
         <option value="staff" selected>Staf</option>
       </select>
+      <span class="field__hint" data-field="u-role-hint" style="display:none" data-id="Tidak bisa mengubah role akun sendiri — minta admin lain." data-en="You cannot change your own role — ask another admin.">Tidak bisa mengubah role akun sendiri — minta admin lain.</span>
     </label>
     <label class="field">
       <span class="field__label" data-id="Lokasi utama" data-en="Default site">Lokasi utama</span>
-      <select class="select"><option>UT5 — Ninja Kilat Untung Jawa 5</option><option>UT2 — Ninja Kilat Untung Jawa 2</option><option>TRN — Lokasi latihan</option></select>
+      <select class="select" data-field="u-default"></select>
     </label>
     <div class="field">
       <span class="field__label" data-id="Boleh bekerja di" data-en="May work at">Boleh bekerja di</span>
-      <div class="chipset">
-        <label class="chipbox"><input type="checkbox" checked>UT5</label>
-        <label class="chipbox"><input type="checkbox">UT2</label>
-        <label class="chipbox"><input type="checkbox">UT7</label>
-        <label class="chipbox"><input type="checkbox" checked>TRN</label>
-      </div>
+      <div class="chipset" data-region="u-sites"></div>
       <span class="field__hint" data-id="Staf baru sebaiknya dapat lokasi latihan dulu." data-en="New staff should get the training site first.">Staf baru sebaiknya dapat lokasi latihan dulu.</span>
     </div>
   </div>
   <div class="drawer__foot">
-    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-id="Simpan staf" data-en="Save staff">Simpan staf</button>
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-action="save-user" data-id="Simpan staf" data-en="Save staff">Simpan staf</button>
     <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
   </div>
 </aside>
-<script src="../js/api.js?v=4b107ba"></script>
-<script src="../js/app.js?v=4b107ba"></script>
-<script src="../js/console.js?v=4b107ba"></script>
-<script>
-  /* GET /api/admin/users -> {users, roles}; POST /api/admin/users; PATCH /api/admin/users/{id}
-     The API returns 422 for self-deactivate and self-role-change. The row for
-     the current user (data-self) must keep those controls disabled so the
-     click never happens. */
-  window.addEventListener('load', async () => {
-    try {
-      const me = await NJW.api.me();
-      const { users } = await NJW.api.users();
-      // render rows into [data-region="staff"], setting data-self on me.email
-    } catch (e) {}
-  });
-</script>
+<aside class="drawer" id="drawer-bulk-sites" aria-label="Tambah lokasi">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-id="Tambah lokasi ke pilihan" data-en="Add sites to selection">Tambah lokasi ke pilihan</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <span class="inline-note"><span><strong data-field="bulk-echo">0</strong> <span data-id="orang akan mendapat lokasi ini, di samping lokasi yang sudah mereka punya." data-en="people will get these sites, on top of the sites they already have.">orang akan mendapat lokasi ini, di samping lokasi yang sudah mereka punya.</span></span></span>
+    <div class="chipset" data-region="bulk-sites"></div>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-action="apply-bulk-sites" data-id="Terapkan" data-en="Apply">Terapkan</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
+  </div>
+</aside>
+<script src="../js/api.js?v=856f10e"></script>
+<script src="../js/app.js?v=856f10e"></script>
+<script src="../js/console.js?v=856f10e"></script>
+<script src="../js/wire.js?v=856f10e"></script>
+<script src="../js/screens/staf.js?v=4b107ba"></script>
 </body>
 </html>

@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="../css/tokens.css?v=4b107ba">
-<link rel="stylesheet" href="../css/app.css?v=4b107ba">
-<link rel="stylesheet" href="../css/console.css?v=4b107ba">
+<link rel="stylesheet" href="../css/tokens.css?v=856f10e">
+<link rel="stylesheet" href="../css/app.css?v=856f10e">
+<link rel="stylesheet" href="../css/console.css?v=856f10e">
 </head>
 <body>
 <div class="console" data-screen="pesanan">
@@ -45,7 +45,7 @@
         <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
         <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
         <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
-        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi POS" data-en="POS integration">Integrasi POS</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
@@ -72,7 +72,7 @@
       <div class="page__heading">
         <span class="page__eyebrow" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk & keluar</span>
         <h1 class="page__title" data-id="Pesanan" data-en="Orders">Pesanan</h1>
-        <p class="page__sub" data-id="Pesanan dari GrabMart Kilat dan tugas ambil yang dihasilkannya. Grab memiliki permintaan; Ninja memiliki gudang." data-en="Orders from GrabMart Kilat and the pick tasks they create. Grab owns demand; Ninja owns the warehouse.">Pesanan dari GrabMart Kilat dan tugas ambil yang dihasilkannya. Grab memiliki permintaan; Ninja memiliki gudang.</p>
+        <p class="page__sub" data-id="Pesanan yang dikirim Hiryu dari semua kanal — Grab, WhatsApp, web, Instagram — dan tugas ambilnya. Hiryu memiliki pesanan; WMS memiliki rak." data-en="Orders Hiryu sends from every channel — Grab, WhatsApp, web, Instagram — and their pick tasks. Hiryu owns the order; the WMS owns the shelf.">Pesanan yang dikirim Hiryu dari semua kanal — Grab, WhatsApp, web, Instagram — dan tugas ambilnya. Hiryu memiliki pesanan; WMS memiliki rak.</p>
       </div>
 
     </header>
@@ -95,19 +95,27 @@
       <div class="kpi-card kpi-card--caution">
         <span class="kpi-card__label" data-id="Kurang barang" data-en="Short lines">Kurang barang</span>
         <span class="kpi-card__num" data-field="kpi-short">3</span>
-        <span class="kpi-card__foot" data-id="Grab menagih merchant" data-en="Grab charges the merchant">Grab menagih merchant</span>
+        <span class="kpi-card__foot" data-id="Hiryu yang memutuskan" data-en="Hiryu decides">Hiryu yang memutuskan</span>
       </div>
     </section>
     <div class="toolbar">
         <label class="search">
           <span class="search__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></span>
-          <input class="search__input" type="search" data-search-for="#tbl-orders" placeholder="Cari referensi pesanan…" aria-label="Cari referensi pesanan…">
+          <input class="search__input" type="search" data-search-for="#tbl-orders" placeholder="Cari di halaman ini…" aria-label="Cari di halaman ini">
         </label>
       <span class="seg" role="group">
-        <button class="seg__opt is-on" type="button" data-id="Semua" data-en="All">Semua</button>
-        <button class="seg__opt" type="button" data-id="Menunggu" data-en="Pending">Menunggu</button>
-        <button class="seg__opt" type="button" data-id="Kurang barang" data-en="Short">Kurang barang</button>
+        <button class="seg__opt is-on" type="button" data-status="" data-id="Semua" data-en="All">Semua</button>
+        <button class="seg__opt" type="button" data-status="received" data-id="Berjalan" data-en="Open">Berjalan</button>
+        <button class="seg__opt" type="button" data-status="picked" data-id="Siap" data-en="Ready">Siap</button>
+        <button class="seg__opt" type="button" data-status="cancelled" data-id="Dibatalkan" data-en="Cancelled">Dibatalkan</button>
       </span>
+      <select class="select" data-field="channel-filter" aria-label="Kanal" style="width:auto">
+        <option value="" data-id="Semua kanal" data-en="All channels">Semua kanal</option>
+        <option value="grab">Grab</option>
+        <option value="whatsapp">WhatsApp</option>
+        <option value="web">Web</option>
+        <option value="instagram">Instagram</option>
+      </select>
       <span class="toolbar__spacer"></span>
       <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M8 10.5l4 4 4-4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Ekspor" data-en="Export">Ekspor</span></button>
     </div>
@@ -115,7 +123,9 @@
       <table class="dtable dtable--rows-tall" id="tbl-orders">
         <thead><tr>
           <th class="is-sortable" data-id="Referensi" data-en="Reference">Referensi<span class="sort">↕</span></th>
-          <th class="is-sortable" data-id="Masuk" data-en="Received">Masuk<span class="sort">↕</span></th>
+          <th class="is-sortable" data-id="Kanal · kirim" data-en="Channel · delivery">Kanal · kirim<span class="sort">↕</span></th>
+          <th class="is-sortable" data-sort="num" data-id="Masuk" data-en="Received">Masuk<span class="sort">↕</span></th>
+          <th class="is-sortable" data-sort="num" data-id="Janji siap" data-en="Promised">Janji siap<span class="sort">↕</span></th>
           <th class="td-num" data-id="Baris" data-en="Lines">Baris</th>
           <th class="td-num" data-id="Unit" data-en="Units">Unit</th>
           <th class="td-num" data-id="Kurang" data-en="Short">Kurang</th>
@@ -124,76 +134,7 @@
           <th class="td-actions" data-id="" data-en=""></th>
         </tr></thead>
         <tbody data-region="orders">
-          <tr>
-            <td class="td-code td-strong">GM-8845</td>
-            <td class="td-code">14.31</td>
-            <td class="td-num">3</td>
-            <td class="td-num">4</td>
-            <td class="td-num">—</td>
-            <td style="color:var(--muted)">—</td>
-            <td><span class="spill spill--neutral"><span class="spill__dot"></span><span data-id="Menunggu" data-en="Pending">Menunggu</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../07-ambil-pesanan.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka" data-en="Open">Buka</span></a></td>
-          </tr>
-          <tr>
-            <td class="td-code td-strong">GM-8844</td>
-            <td class="td-code">14.29</td>
-            <td class="td-num">2</td>
-            <td class="td-num">2</td>
-            <td class="td-num">—</td>
-            <td style="color:var(--muted)">—</td>
-            <td><span class="spill spill--neutral"><span class="spill__dot"></span><span data-id="Menunggu" data-en="Pending">Menunggu</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../07-ambil-pesanan.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka" data-en="Open">Buka</span></a></td>
-          </tr>
-          <tr>
-            <td class="td-code td-strong">GM-8843</td>
-            <td class="td-code">14.26</td>
-            <td class="td-num">5</td>
-            <td class="td-num">7</td>
-            <td class="td-num">—</td>
-            <td style="color:var(--muted)">Agus S.</td>
-            <td><span class="spill spill--stop"><span class="spill__dot"></span><span data-id="Terkunci" data-en="Blocked">Terkunci</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../07-ambil-pesanan.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka" data-en="Open">Buka</span></a></td>
-          </tr>
-          <tr>
-            <td class="td-code td-strong">GM-8842</td>
-            <td class="td-code">14.22</td>
-            <td class="td-num">4</td>
-            <td class="td-num">5</td>
-            <td class="td-num"><span style="color:var(--caution);font-weight:700">1</span></td>
-            <td style="color:var(--muted)">Siti N.</td>
-            <td><span class="spill spill--info"><span class="spill__dot"></span><span data-id="Sedang diambil" data-en="Picking">Sedang diambil</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../07-ambil-pesanan.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka" data-en="Open">Buka</span></a></td>
-          </tr>
-          <tr>
-            <td class="td-code td-strong">GM-8841</td>
-            <td class="td-code">14.18</td>
-            <td class="td-num">5</td>
-            <td class="td-num">7</td>
-            <td class="td-num">—</td>
-            <td style="color:var(--muted)">Agus S.</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Selesai" data-en="Done">Selesai</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../07-ambil-pesanan.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka" data-en="Open">Buka</span></a></td>
-          </tr>
-          <tr>
-            <td class="td-code td-strong">GM-8840</td>
-            <td class="td-code">14.09</td>
-            <td class="td-num">2</td>
-            <td class="td-num">3</td>
-            <td class="td-num">—</td>
-            <td style="color:var(--muted)">Dwi L.</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Selesai" data-en="Done">Selesai</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../07-ambil-pesanan.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka" data-en="Open">Buka</span></a></td>
-          </tr>
-          <tr>
-            <td class="td-code td-strong">GM-8839</td>
-            <td class="td-code">13.58</td>
-            <td class="td-num">6</td>
-            <td class="td-num">9</td>
-            <td class="td-num"><span style="color:var(--caution);font-weight:700">2</span></td>
-            <td style="color:var(--muted)">Siti N.</td>
-            <td><span class="spill spill--warn"><span class="spill__dot"></span><span data-id="Kurang barang" data-en="Short">Kurang barang</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../07-ambil-pesanan.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka" data-en="Open">Buka</span></a></td>
-          </tr>
+          <tr><td colspan="10" class="note" data-id="Memuat pesanan…" data-en="Loading orders…">Memuat pesanan…</td></tr>
         </tbody>
       </table>
     </div>
@@ -212,9 +153,23 @@
   </main>
 </div>
 
-<script src="../js/api.js?v=4b107ba"></script>
-<script src="../js/app.js?v=4b107ba"></script>
-<script src="../js/console.js?v=4b107ba"></script>
-<script>/* GET /api/pick-tasks?site_id=&status= -> {tasks:[PickTask]} */</script>
+<!-- Training only. On a live site, cancelling is Hiryu's message 2 and never a
+     WMS button; on a training site the simulator stands in for Hiryu. -->
+<div class="scrim"></div>
+<div class="cdialog" id="dlg-cancel" role="dialog" aria-modal="true" aria-labelledby="dlg-cancel-title">
+  <h2 class="cdialog__title" id="dlg-cancel-title" data-id="Batalkan pesanan uji ini?" data-en="Cancel this test order?">Batalkan pesanan uji ini?</h2>
+  <p class="cdialog__body"><strong data-field="cancel-ref" style="font-family:var(--font-code)">—</strong></p>
+  <p class="cdialog__body" data-id="Simulator menggantikan Hiryu di lokasi latihan dan mengirim pesan 2 (Pesanan dibatalkan). Barang yang belum diambil langsung bisa dijual lagi; yang sudah diambil masuk daftar Kembalikan ke rak." data-en="The simulator stands in for Hiryu on a training site and sends message 2 (Order cancelled). Units not yet picked are sellable again at once; units already picked go on the Return-to-shelf list.">Simulator menggantikan Hiryu di lokasi latihan dan mengirim pesan 2 (Pesanan dibatalkan). Barang yang belum diambil langsung bisa dijual lagi; yang sudah diambil masuk daftar Kembalikan ke rak.</p>
+  <div class="cdialog__actions">
+    <button class="cbtn cbtn--primary" type="button" data-action="confirm-cancel" style="flex:1 1 auto" data-id="Ya, batalkan" data-en="Yes, cancel it">Ya, batalkan</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Kembali" data-en="Back">Kembali</button>
+  </div>
+</div>
+
+<script src="../js/api.js?v=856f10e"></script>
+<script src="../js/app.js?v=856f10e"></script>
+<script src="../js/console.js?v=856f10e"></script>
+<script src="../js/wire.js?v=856f10e"></script>
+<script src="../js/screens/pesanan.js?v=4b107ba"></script>
 </body>
 </html>

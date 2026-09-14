@@ -32,6 +32,7 @@ from routers import (
     plates,
     product_master,
     registry,
+    returns,
     scan,
     slips,
     stock_upload,
@@ -136,5 +137,6 @@ async def unhandled(request: Request, exc: Exception):
 for module in (
     master, locations, scan, inbound, plates, outbound, opname, inventory,
     stock_upload, product_master, slips, admin, registry, flow, training,
+    returns,
 ):
     app.include_router(module.router)

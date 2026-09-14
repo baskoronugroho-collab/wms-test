@@ -56,7 +56,16 @@
     }
 
     _bind() {
-      const refocus = () => { if (document.visibilityState === 'visible') this.focus(); };
+      // Take focus back only when nothing else wants it. A page with a search
+      // box, a stepper or an AWB field next to the scan zone must be typeable;
+      // stealing focus from those made them unusable.
+      const refocus = () => {
+        if (document.visibilityState !== 'visible') return;
+        const a = document.activeElement;
+        if (a && a !== this.input && a !== document.body &&
+            a.matches('input, select, textarea, [contenteditable="true"]')) return;
+        this.focus();
+      };
       this.input.addEventListener('blur', () => setTimeout(refocus, 0));
       document.addEventListener('visibilitychange', refocus);
       document.addEventListener('pointerdown', (e) => {
@@ -105,6 +114,9 @@
     }
 
     reject(label, detail) {
+      // An accept's pending auto-clear must not wipe a rejection that follows
+      // it within the hold time: the rejection is the one that matters.
+      clearTimeout(this._hold);
       this._paint(STATE.REJECTED, label || 'Salah barang', detail || '');
       if (this.opts.sound) beep('reject');
       // a rejection is held until the person acts on it — no auto-clear

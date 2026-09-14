@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="../css/tokens.css?v=4b107ba">
-<link rel="stylesheet" href="../css/app.css?v=4b107ba">
-<link rel="stylesheet" href="../css/console.css?v=4b107ba">
+<link rel="stylesheet" href="../css/tokens.css?v=856f10e">
+<link rel="stylesheet" href="../css/app.css?v=856f10e">
+<link rel="stylesheet" href="../css/console.css?v=856f10e">
 </head>
 <body>
 <div class="console" data-screen="transfer">
@@ -45,7 +45,7 @@
         <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
         <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
         <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
-        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi POS" data-en="POS integration">Integrasi POS</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
@@ -76,30 +76,32 @@
       </div>
       <div class="page__actions">
         <a class="cbtn" href="../19-gudang-kirim.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka layar kirim di hub" data-en="Open hub dispatch">Buka layar kirim di hub</span></a>
-        <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M8 10.5l4 4 4-4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Ekspor" data-en="Export">Ekspor</span></button>
+        <button class="cbtn" type="button" data-action="export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M8 10.5l4 4 4-4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Ekspor" data-en="Export">Ekspor</span></button>
       </div>
     </header>
+
+    <div class="inline-note"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v4.5"/><circle cx="12" cy="15.8" r=".9" fill="currentColor"/></svg></span><span data-id="Transfer antar gudang bagian dari alur restock (minta stok baru), yang masih menunggu desainnya sendiri di luar WMS. Layar ini menampilkan apa yang sudah didukung sistem; alurnya bisa berubah." data-en="Transfers between warehouses belong to the restock flow (asking for more stock), which is still waiting for its own design outside the WMS. This screen shows what the system already supports; the flow may change.">Transfer antar gudang bagian dari alur restock (minta stok baru), yang masih menunggu desainnya sendiri di luar WMS. Layar ini menampilkan apa yang sudah didukung sistem; alurnya bisa berubah.</span></div>
 
     <section class="kpis">
       <div class="kpi-card">
         <span class="kpi-card__label" data-id="Dalam perjalanan" data-en="In transit">Dalam perjalanan</span>
-        <span class="kpi-card__num" data-field="kpi-transit">1</span>
-        <span class="kpi-card__foot" data-id="TT-LGS-004417 · 198 unit" data-en="TT-LGS-004417 · 198 units">TT-LGS-004417 · 198 unit</span>
+        <span class="kpi-card__num" data-field="kpi-transit">—</span>
+        <span class="kpi-card__foot" data-field="kpi-transit-foot" data-id="memuat…" data-en="loading…">memuat…</span>
       </div>
       <div class="kpi-card">
         <span class="kpi-card__label" data-id="Diterima hari ini" data-en="Received today">Diterima hari ini</span>
-        <span class="kpi-card__num" data-field="kpi-received">2</span>
-        <span class="kpi-card__foot" data-id="264 dari 264 unit cocok" data-en="264 of 264 units matched">264 dari 264 unit cocok</span>
+        <span class="kpi-card__num" data-field="kpi-received">—</span>
+        <span class="kpi-card__foot" data-field="kpi-received-foot" data-id="memuat…" data-en="loading…">memuat…</span>
       </div>
-      <div class="kpi-card kpi-card--caution">
-        <span class="kpi-card__label" data-id="Selisih belum diangkat" data-en="Variances not yet raised">Selisih belum diangkat</span>
-        <span class="kpi-card__num" data-field="kpi-variance">2</span>
-        <span class="kpi-card__foot" data-id="satu batas 24 jam berjalan" data-en="one 24-hour window running">satu batas 24 jam berjalan</span>
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Selisih, batas 24 jam berjalan" data-en="Variances, 24 h window open">Selisih, batas 24 jam berjalan</span>
+        <span class="kpi-card__num" data-field="kpi-variance">—</span>
+        <span class="kpi-card__foot" data-field="kpi-variance-foot" data-id="memuat…" data-en="loading…">memuat…</span>
       </div>
       <div class="kpi-card">
         <span class="kpi-card__label" data-id="Draf belum dikirim" data-en="Drafts not dispatched">Draf belum dikirim</span>
-        <span class="kpi-card__num" data-field="kpi-draft">1</span>
-        <span class="kpi-card__foot" data-id="di Gudang Logos" data-en="at the Logos hub">di Gudang Logos</span>
+        <span class="kpi-card__num" data-field="kpi-draft">—</span>
+        <span class="kpi-card__foot" data-field="kpi-draft-foot" data-id="memuat…" data-en="loading…">memuat…</span>
       </div>
     </section>
 
@@ -108,13 +110,13 @@
     <div class="toolbar">
         <label class="search">
           <span class="search__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></span>
-          <input class="search__input" type="search" data-search-for="#tbl-transfer" placeholder="Cari nomor tote atau tujuan…" aria-label="Cari nomor tote atau tujuan…">
+          <input class="search__input" type="search" data-field="search" placeholder="Cari nomor tote atau tujuan…" aria-label="Cari nomor tote atau tujuan…">
         </label>
-      <span class="seg" role="group">
-        <button class="seg__opt is-on" type="button" data-id="Semua" data-en="All">Semua</button>
-        <button class="seg__opt" type="button" data-id="Ada selisih" data-en="With variance">Ada selisih</button>
-        <button class="seg__opt" type="button" data-id="Dalam perjalanan" data-en="In transit">Dalam perjalanan</button>
-        <button class="seg__opt" type="button" data-id="Draf" data-en="Draft">Draf</button>
+      <span class="seg" role="group" data-region="filter">
+        <button class="seg__opt is-on" type="button" data-filter="all" data-id="Semua" data-en="All">Semua</button>
+        <button class="seg__opt" type="button" data-filter="variance" data-id="Ada selisih" data-en="With variance">Ada selisih</button>
+        <button class="seg__opt" type="button" data-filter="dispatched" data-id="Dalam perjalanan" data-en="In transit">Dalam perjalanan</button>
+        <button class="seg__opt" type="button" data-filter="draft" data-id="Draf" data-en="Draft">Draf</button>
       </span>
     </div>
 
@@ -134,132 +136,49 @@
           <th class="td-actions" data-id="" data-en=""></th>
         </tr></thead>
         <tbody data-region="transfer">
-          <tr>
-            <td class="td-code td-strong">TT-LGS-004417</td>
-            <td class="td-code" style="color:var(--muted)">LGS</td>
-            <td class="td-code td-strong">UT5</td>
-            <td>10 Sep 08.14</td>
-            <td class="td-num">5</td>
-            <td class="td-num">198</td>
-            <td class="td-num"><span class="na">—</span></td>
-            <td class="td-num"><span class="na">—</span></td>
-            <td><span class="spill spill--info"><span class="spill__dot"></span><span data-id="Dalam perjalanan" data-en="In transit">Dalam perjalanan</span></span></td>
-            <td><span class="na">—</span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Lihat isi" data-en="View contents">Lihat isi</button></td>
-          </tr>
-          <tr>
-            <td class="td-code td-strong">TT-LGS-004416</td>
-            <td class="td-code" style="color:var(--muted)">LGS</td>
-            <td class="td-code td-strong">UT2</td>
-            <td>10 Sep 07.50</td>
-            <td class="td-num">7</td>
-            <td class="td-num">264</td>
-            <td class="td-num">264</td>
-            <td class="td-num"><span style="color:var(--accept);font-weight:700">0</span></td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Diterima, cocok" data-en="Received, matched">Diterima, cocok</span></span></td>
-            <td><span class="na">—</span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Lihat isi" data-en="View contents">Lihat isi</button></td>
-          </tr>
-          <tr class="is-variance">
-            <td class="td-code td-strong">TT-LGS-004415</td>
-            <td class="td-code" style="color:var(--muted)">LGS</td>
-            <td class="td-code td-strong">UT5</td>
-            <td>9 Sep 16.22</td>
-            <td class="td-num">6</td>
-            <td class="td-num">210</td>
-            <td class="td-num">204</td>
-            <td class="td-num">-6</td>
-            <td><span class="spill spill--warn"><span class="spill__dot"></span><span data-id="Diterima, selisih" data-en="Received, variance">Diterima, selisih</span></span></td>
-            <td><span class="clockpill clockpill--running" data-id="Sisa 4 jam" data-en="4 h left">Sisa 4 jam</span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm cbtn--primary" type="button" data-id="Angkat ke hub" data-en="Raise with the hub">Angkat ke hub</button></td>
-          </tr>
-          <tr class="is-variance">
-            <td class="td-code td-strong">TT-LGS-004414</td>
-            <td class="td-code" style="color:var(--muted)">LGS</td>
-            <td class="td-code td-strong">UT7</td>
-            <td>9 Sep 15.05</td>
-            <td class="td-num">4</td>
-            <td class="td-num">132</td>
-            <td class="td-num">134</td>
-            <td class="td-num">+2</td>
-            <td><span class="spill spill--warn"><span class="spill__dot"></span><span data-id="Diterima, selisih" data-en="Received, variance">Diterima, selisih</span></span></td>
-            <td><span class="clockpill clockpill--soon" data-id="Sisa 19 jam" data-en="19 h left">Sisa 19 jam</span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm cbtn--primary" type="button" data-id="Angkat ke hub" data-en="Raise with the hub">Angkat ke hub</button></td>
-          </tr>
-          <tr>
-            <td class="td-code td-strong">TT-LGS-004413</td>
-            <td class="td-code" style="color:var(--muted)">LGS</td>
-            <td class="td-code td-strong">UT5</td>
-            <td>9 Sep 09.40</td>
-            <td class="td-num">8</td>
-            <td class="td-num">320</td>
-            <td class="td-num">320</td>
-            <td class="td-num"><span style="color:var(--accept);font-weight:700">0</span></td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Diterima, cocok" data-en="Received, matched">Diterima, cocok</span></span></td>
-            <td><span class="na">—</span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Lihat isi" data-en="View contents">Lihat isi</button></td>
-          </tr>
-          <tr class="is-variance">
-            <td class="td-code td-strong">TT-LGS-004412</td>
-            <td class="td-code" style="color:var(--muted)">LGS</td>
-            <td class="td-code td-strong">KB3</td>
-            <td>8 Sep 16.55</td>
-            <td class="td-num">3</td>
-            <td class="td-num">96</td>
-            <td class="td-num">90</td>
-            <td class="td-num">-6</td>
-            <td><span class="spill spill--warn"><span class="spill__dot"></span><span data-id="Diterima, selisih" data-en="Received, variance">Diterima, selisih</span></span></td>
-            <td><span class="clockpill clockpill--closed" data-id="Lewat batas" data-en="Window closed">Lewat batas</span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Lihat isi" data-en="View contents">Lihat isi</button></td>
-          </tr>
-          <tr>
-            <td class="td-code td-strong">TT-LGS-004411</td>
-            <td class="td-code" style="color:var(--muted)">LGS</td>
-            <td class="td-code td-strong">UT2</td>
-            <td>8 Sep 08.30</td>
-            <td class="td-num">9</td>
-            <td class="td-num">372</td>
-            <td class="td-num">372</td>
-            <td class="td-num"><span style="color:var(--accept);font-weight:700">0</span></td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Diterima, cocok" data-en="Received, matched">Diterima, cocok</span></span></td>
-            <td><span class="na">—</span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Lihat isi" data-en="View contents">Lihat isi</button></td>
-          </tr>
-          <tr>
-            <td class="td-code td-strong">TT-LGS-004418</td>
-            <td class="td-code" style="color:var(--muted)">LGS</td>
-            <td class="td-code td-strong">UT5</td>
-            <td>10 Sep 09.02</td>
-            <td class="td-num">2</td>
-            <td class="td-num">48</td>
-            <td class="td-num"><span class="na">—</span></td>
-            <td class="td-num"><span class="na">—</span></td>
-            <td><span class="spill spill--neutral"><span class="spill__dot"></span><span data-id="Draf" data-en="Draft">Draf</span></span></td>
-            <td><span class="na">—</span></td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Lihat isi" data-en="View contents">Lihat isi</button></td>
-          </tr>
+          <tr><td colspan="11" class="note" data-id="Memuat…" data-en="Loading…">Memuat…</td></tr>
         </tbody>
       </table>
     </div>
       <div class="pager">
-        <span class="pager__info"><strong data-field="range">1–8</strong> <span data-id="dari" data-en="of">dari</span> <strong data-field="total">442</strong> <span data-id="baris" data-en="rows">baris</span></span>
-        <div class="pager__nav">
-          <button class="pager__page" type="button" aria-label="Sebelumnya">‹</button>
-          <button class="pager__page is-on" type="button">1</button>
-          <button class="pager__page" type="button">2</button>
-          <button class="pager__page" type="button">3</button>
-          <span class="pager__gap">…</span>
-          <button class="pager__page" type="button">56</button>
-          <button class="pager__page" type="button" aria-label="Berikutnya">›</button>
-        </div>
+        <span class="pager__info"><strong data-field="range">0–0</strong> <span data-id="dari" data-en="of">dari</span> <strong data-field="total">0</strong> <span data-id="baris" data-en="rows">baris</span></span>
+        <div class="pager__nav"></div>
       </div>
   </main>
 </div>
-
-<script src="../js/api.js?v=4b107ba"></script>
-<script src="../js/app.js?v=4b107ba"></script>
-<script src="../js/console.js?v=4b107ba"></script>
-<script src="../js/wire.js?v=4b107ba"></script>
-
+<div class="scrim"></div>
+<aside class="drawer" id="drawer-transfer" aria-label="Isi transfer">
+  <div class="drawer__head">
+    <h2 class="drawer__title td-code" data-field="tr-ref">—</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <dl class="deflist">
+      <dt data-id="Dari → ke" data-en="From → to">Dari → ke</dt><dd class="mono" data-field="tr-route">—</dd>
+      <dt data-id="Status" data-en="Status">Status</dt><dd data-field="tr-status">—</dd>
+      <dt data-id="Dikirim" data-en="Dispatched">Dikirim</dt><dd class="mono" data-field="tr-sent-at">—</dd>
+      <dt data-id="Diterima" data-en="Received">Diterima</dt><dd class="mono" data-field="tr-recv-at">—</dd>
+    </dl>
+    <div class="table-scroll">
+      <table class="dtable">
+        <thead><tr>
+          <th data-id="Produk" data-en="Product">Produk</th>
+          <th class="td-num" data-id="Dikirim" data-en="Sent">Dikirim</th>
+          <th class="td-num" data-id="Diterima" data-en="Received">Diterima</th>
+          <th class="td-num" data-id="Selisih" data-en="Variance">Selisih</th>
+        </tr></thead>
+        <tbody data-region="tr-lines"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn" type="button" style="flex:1 1 auto" data-drawer-close data-id="Tutup" data-en="Close">Tutup</button>
+  </div>
+</aside>
+<script src="../js/api.js?v=856f10e"></script>
+<script src="../js/app.js?v=856f10e"></script>
+<script src="../js/console.js?v=856f10e"></script>
+<script src="../js/wire.js?v=856f10e"></script>
+<script src="../js/screens/transfer.js?v=4b107ba"></script>
 </body>
 </html>

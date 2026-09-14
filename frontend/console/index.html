@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="../css/tokens.css?v=4b107ba">
-<link rel="stylesheet" href="../css/app.css?v=4b107ba">
-<link rel="stylesheet" href="../css/console.css?v=4b107ba">
+<link rel="stylesheet" href="../css/tokens.css?v=856f10e">
+<link rel="stylesheet" href="../css/app.css?v=856f10e">
+<link rel="stylesheet" href="../css/console.css?v=856f10e">
 </head>
 <body>
 <div class="console" data-screen="index">
@@ -45,7 +45,7 @@
         <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
         <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
         <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
-        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi POS" data-en="POS integration">Integrasi POS</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
@@ -70,7 +70,7 @@
   <main class="page">
     <header class="page__head">
       <div class="page__heading">
-        <span class="page__eyebrow" data-id="Station UT5 · hari ini" data-en="Station UT5 · today">Station UT5 · hari ini</span>
+        <span class="page__eyebrow" data-field="eyebrow" data-id="Station · hari ini" data-en="Station · today">Station · hari ini</span>
         <h1 class="page__title" data-id="Ringkasan" data-en="Overview">Ringkasan</h1>
         <p class="page__sub" data-id="Angka di halaman ini hidup dari API — tidak ada yang ditulis tangan." data-en="Every number here comes from the API — none are hardcoded.">Angka di halaman ini hidup dari API — tidak ada yang ditulis tangan.</p>
       </div>
@@ -82,35 +82,47 @@
     <section class="section">
       <div data-region="day-color">
         <div class="daychip daychip--lg">
-          <span class="daychip__block" data-field="day-block" style="background:#1A73C8;color:#fff">B</span>
+          <span class="daychip__block" data-field="day-block" style="background:var(--ground-sunk);color:var(--muted)">—</span>
           <span class="daychip__text">
-            <span class="daychip__day"><span data-id="Warna hari ini" data-en="Today's colour">Warna hari ini</span> · <span data-field="day-name">Rabu</span></span>
-            <span class="daychip__date"><span data-field="day-date">9 Sep 2026</span> · <span data-field="day-week">Minggu B · W37</span></span>
+            <span class="daychip__day"><span data-id="Warna hari ini" data-en="Today's colour">Warna hari ini</span> · <span data-field="day-name">—</span></span>
+            <span class="daychip__date"><span data-field="day-date">—</span> · <span data-field="day-week">—</span></span>
           </span>
         </div>
       </div>
       <div class="inline-note"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="7" height="6" rx="1"/><rect x="13.5" y="4.5" width="7" height="6" rx="1"/><rect x="3.5" y="13.5" width="7" height="6" rx="1"/><rect x="13.5" y="13.5" width="7" height="6" rx="1"/></svg></span><span data-id="Warna berulang tiap 7 hari, stok disimpan sampai 14 hari — tanggal selalu ikut ditulis, jangan andalkan warna saja." data-en="Colours repeat weekly but stock is held up to 14 days — always write the date; never rely on colour alone.">Warna berulang tiap 7 hari, stok disimpan sampai 14 hari — tanggal selalu ikut ditulis, jangan andalkan warna saja.</span></div>
     </section>
+    <!-- Every number starts as a dash: a plausible placeholder that survives a
+         failed call is indistinguishable from a real count. -->
     <section class="kpis">
       <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Pesanan menunggu diambil" data-en="Orders waiting to pick">Pesanan menunggu diambil</span>
+        <span class="kpi-card__num" data-field="kpi-orders">—</span>
+        <span class="kpi-card__foot" data-field="kpi-orders-foot" data-id="memuat…" data-en="loading…">memuat…</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Selesai diambil hari ini" data-en="Picked today">Selesai diambil hari ini</span>
+        <span class="kpi-card__num" data-field="kpi-picked">—</span>
+        <span class="kpi-card__foot" data-field="kpi-picked-foot" data-id="memuat…" data-en="loading…">memuat…</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Kurang barang hari ini" data-en="Short picks today">Kurang barang hari ini</span>
+        <span class="kpi-card__num" data-field="kpi-short">—</span>
+        <span class="kpi-card__foot" data-field="kpi-short-foot" data-id="memuat…" data-en="loading…">memuat…</span>
+      </div>
+      <div class="kpi-card">
         <span class="kpi-card__label" data-id="Unit diterima hari ini" data-en="Units received today">Unit diterima hari ini</span>
-        <span class="kpi-card__num" data-field="kpi-received">1.284</span>
-        <span class="kpi-card__foot" data-id="dari 3 kiriman" data-en="across 3 deliveries">dari 3 kiriman</span>
+        <span class="kpi-card__num" data-field="kpi-received">—</span>
+        <span class="kpi-card__foot" data-field="kpi-received-foot" data-id="memuat…" data-en="loading…">memuat…</span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-card__label" data-id="Pesanan menunggu diambil" data-en="Orders awaiting pick">Pesanan menunggu diambil</span>
-        <span class="kpi-card__num" data-field="kpi-orders">7</span>
-        <span class="kpi-card__foot" data-id="rata-rata 4 mnt 12 dtk" data-en="avg 4 min 12 s">rata-rata 4 mnt 12 dtk</span>
-      </div>
-      <div class="kpi-card kpi-card--caution">
-        <span class="kpi-card__label" data-id="Selisih belum ditandatangani" data-en="Variances awaiting sign-off">Selisih belum ditandatangani</span>
-        <span class="kpi-card__num" data-field="kpi-variance">4</span>
-        <span class="kpi-card__foot" data-id="batas 24 jam berjalan" data-en="24-hour window running">batas 24 jam berjalan</span>
+        <span class="kpi-card__label" data-id="SKU stok habis" data-en="SKUs out of stock">SKU stok habis</span>
+        <span class="kpi-card__num" data-field="kpi-alerts">—</span>
+        <span class="kpi-card__foot" data-field="kpi-alerts-foot" data-id="memuat…" data-en="loading…">memuat…</span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-card__label" data-id="Posisi rak terpakai" data-en="Rack positions in use">Posisi rak terpakai</span>
-        <span class="kpi-card__num" data-field="kpi-occupancy">122 / 175</span>
-        <span class="kpi-card__foot" data-id="4 keranjang lewah kapasitas" data-en="4 baskets over capacity">4 keranjang lewah kapasitas</span>
+        <span class="kpi-card__label" data-id="Pesan ke Hiryu antre" data-en="Messages to Hiryu queued">Pesan ke Hiryu antre</span>
+        <span class="kpi-card__num" data-field="kpi-outbox">—</span>
+        <span class="kpi-card__foot" data-field="kpi-outbox-foot" data-id="memuat…" data-en="loading…">memuat…</span>
       </div>
     </section>
     <section class="section">
@@ -125,11 +137,7 @@
             <th class="td-actions"></th>
           </tr></thead>
           <tbody data-region="attention">
-            <tr><td class="td-strong" data-id="Selisih hitung stok" data-en="Count variance">Selisih hitung stok</td><td class="td-code">UT5-A-3-02</td><td>Glasting Liquid Lip 07 · −3 unit · Siti N.</td><td><span class="spill spill--warn"><span class="spill__dot"></span><span data-id="Perlu tanda tangan" data-en="Needs sign-off">Perlu tanda tangan</span></span></td><td class="td-actions"><a class="cbtn cbtn--sm" href="hitung-stok.html" data-id="Tinjau" data-en="Review">Tinjau</a></td></tr>
-            <tr><td class="td-strong" data-id="Batas selisih inbound" data-en="Inbound discrepancy window">Batas selisih inbound</td><td class="td-code">PA-UT5-000318</td><td data-id="Sisa 6 jam sebelum jadi tanggungan station" data-en="6 hours left before the station bears it">Sisa 6 jam sebelum jadi tanggungan station</td><td><span class="spill spill--stop"><span class="spill__dot"></span><span data-id="Mendesak" data-en="Urgent">Mendesak</span></span></td><td class="td-actions"><a class="cbtn cbtn--sm" href="slip-putaway.html" data-id="Buka slip" data-en="Open slip">Buka slip</a></td></tr>
-            <tr><td class="td-strong" data-id="Keranjang lewah kapasitas" data-en="Basket over capacity">Keranjang lewah kapasitas</td><td class="td-code">UT5-C-5-04</td><td>UV Shield SPF 50 · 46 / 40 unit</td><td><span class="spill spill--warn"><span class="spill__dot"></span><span data-id="Pindahkan" data-en="Needs moving">Pindahkan</span></span></td><td class="td-actions"><a class="cbtn cbtn--sm" href="stok.html" data-id="Lihat" data-en="View">Lihat</a></td></tr>
-            <tr><td class="td-strong" data-id="Rak ambil kosong" data-en="Pick face at zero">Rak ambil kosong</td><td class="td-code">UT5-A-3-02</td><td>Glasting Liquid Lip 07 · cadangan punya 24 unit</td><td><span class="spill spill--warn"><span class="spill__dot"></span><span data-id="Isi ulang" data-en="Refill">Isi ulang</span></span></td><td class="td-actions"><a class="cbtn cbtn--sm" href="stok-perhatian.html" data-id="Buka" data-en="Open">Buka</a></td></tr>
-            <tr><td class="td-strong" data-id="Barcode belum terdaftar" data-en="Unregistered barcodes">Barcode belum terdaftar</td><td>Wardah</td><td data-id="12 SKU belum punya barcode" data-en="12 SKUs have no barcode">12 SKU belum punya barcode</td><td><span class="spill spill--info"><span class="spill__dot"></span><span data-id="Perlu didaftarkan" data-en="Needs registering">Perlu didaftarkan</span></span></td><td class="td-actions"><a class="cbtn cbtn--sm" href="produk.html" data-id="Daftarkan" data-en="Register">Daftarkan</a></td></tr>
+            <tr><td colspan="5" class="note" data-id="Memuat…" data-en="Loading…">Memuat…</td></tr>
           </tbody>
         </table>
       </div>
@@ -137,17 +145,10 @@
   </main>
 </div>
 
-<script src="../js/api.js?v=4b107ba"></script>
-<script src="../js/app.js?v=4b107ba"></script>
-<script src="../js/console.js?v=4b107ba"></script>
-<script>
-  /* GET /api/day-colors + the site's own summary endpoints. */
-  window.addEventListener('load', async () => {
-    try {
-      const dc = await NJW.api.dayColors();
-      NJW.paintDayColor(dc.today);
-    } catch (e) { /* markup already shows a readable fallback */ }
-  });
-</script>
+<script src="../js/api.js?v=856f10e"></script>
+<script src="../js/app.js?v=856f10e"></script>
+<script src="../js/console.js?v=856f10e"></script>
+<script src="../js/wire.js?v=856f10e"></script>
+<script src="../js/screens/index.js?v=4b107ba"></script>
 </body>
 </html>

@@ -87,7 +87,13 @@ async def slot_for(site_id: int, sku_id: int) -> dict | None:
 
 
 async def pick_location_for(site_id: int, sku_id: int) -> dict | None:
-    """Where to send a PICKER: the location whose current stock is oldest.
+    """The single location a picker would go to first. See pick_locations_for."""
+    rows = await pick_locations_for(site_id, sku_id)
+    return rows[0] if rows else None
+
+
+async def pick_locations_for(site_id: int, sku_id: int) -> list[dict]:
+    """Where to send a PICKER, in order: the location whose stock is oldest first.
 
     A SKU may sit in its rack and an overflow slot at once. The picker goes to
     whichever holds the older batch -- usually the rack, but the overflow when
@@ -95,7 +101,7 @@ async def pick_location_for(site_id: int, sku_id: int) -> dict | None:
     back to the pick face when nothing is stocked, so an order can still be
     short-allocated against a known location.
     """
-    return await db.fetch_one(
+    return await db.fetch_all(
         "SELECT sa.id AS slot_id, sa.basket_id, sa.slot_role, bk.basket_size, "
         "       l.id AS location_id, l.code AS location_code, "
         "       r.code AS rack_code, lv.level_no, "
@@ -115,8 +121,7 @@ async def pick_location_for(site_id: int, sku_id: int) -> dict | None:
         # value repairs itself the next time the location empties.
         "ORDER BY (COALESCE(ib.qty_on_hand,0) - COALESCE(ib.qty_allocated,0) > 0) DESC, "
         "         ib.stocked_since IS NOT NULL, ib.stocked_since ASC, "
-        "         (sa.slot_role = 'primary') DESC "
-        "LIMIT 1",
+        "         (sa.slot_role = 'primary') DESC",
         (site_id, sku_id),
     )
 

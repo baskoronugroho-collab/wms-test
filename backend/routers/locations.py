@@ -28,6 +28,27 @@ async def list_sites(
             for r in rows]
 
 
+@router.get("/sites/destinations", response_model=list[models.Site])
+async def dispatch_destinations(
+    from_site_id: int, user: auth.User = Depends(auth.current_user)
+):
+    """Every darkstore a hub may send a tote to.
+
+    GET /sites lists only a person's own sites, which is right everywhere except
+    here: a hub operator dispatches to stations they never work at. Training
+    stays with training, so practice totes never land at a real station.
+    """
+    src = await auth.assert_site_access(user, from_site_id)
+    rows = await db.fetch_all(
+        "SELECT id, code, name, address, site_type, is_training, active FROM sites "
+        "WHERE active = 1 AND site_type = 'darkstore' AND id <> %s AND is_training = %s "
+        "ORDER BY code",
+        (from_site_id, 1 if src["is_training"] else 0),
+    )
+    return [dict(r, is_training=bool(r["is_training"]), active=bool(r["active"]))
+            for r in rows]
+
+
 @router.post("/sites", response_model=models.Site, status_code=201)
 async def create_site(
     body: models.SiteIn, user: auth.User = Depends(auth.require("admin"))

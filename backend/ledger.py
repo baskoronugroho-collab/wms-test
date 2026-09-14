@@ -28,6 +28,8 @@ MovementType = Literal[
     "relocate_out",
     "relocate_in",
     "label_bind",
+    "return_in",
+    "receipt_undo",
 ]
 
 # Movement types that may drive a balance negative are none of them; a negative

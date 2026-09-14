@@ -3,20 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pindai di rak tujuan — Ninja Kilat WMS</title>
+<title>Pindai di rak — Ninja Kilat WMS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=4b107ba">
-<link rel="stylesheet" href="css/app.css?v=4b107ba">
+<link rel="stylesheet" href="css/tokens.css?v=856f10e">
+<link rel="stylesheet" href="css/app.css?v=856f10e">
 </head>
 <body>
-<div class="app" data-screen="replenish-scan" data-screen-label="18b">
+<div class="app" data-screen="return-scan" data-screen-label="18b">
     <header class="chrome">
       <span class="chrome__mark">NINJA</span>
       <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
       <span class="chrome__sep"></span>
-      <span class="chrome__mode" data-id="Isi ulang rak · UT5" data-en="Replenishment · UT5">Isi ulang rak · UT5</span>
+      <span class="chrome__mode" data-keep="1" data-id="Kembalikan ke rak" data-en="Return to shelf">Kembalikan ke rak</span>
       <span class="spacer"></span>
       <span class="conn" role="status">
         <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
@@ -32,45 +32,46 @@
       <div class="row-split">
         <div class="col col--grow">
           <div class="col">
-            <span class="eyebrow" data-id="Ambil dari cadangan" data-en="Take from overflow">Ambil dari cadangan</span>
+            <span class="eyebrow" data-id="Dari pesanan yang dibatalkan" data-en="From the cancelled order">Dari pesanan yang dibatalkan</span>
             <div class="instr">
               <span class="instr__arrow" aria-hidden="true">→</span>
-              <span class="code code--lg">UT5-OV-2-04</span>
+              <span class="code code--lg" data-field="order-ref">—</span>
             </div>
-            <span class="eyebrow" style="margin-top:8px" data-id="Lalu isi ke rak ambil" data-en="Then fill the pick face">Lalu isi ke rak ambil</span>
+            <span class="eyebrow" style="margin-top:8px" data-id="Kembalikan ke rak" data-en="Put it back on the rack">Kembalikan ke rak</span>
             <div class="instr">
               <span class="instr__arrow" aria-hidden="true">→</span>
-              <span class="code code--xl">UT5-<span class="code__hl">A</span>-<span class="code__hl">3</span>-02</span>
+              <span class="code code--xl" data-field="location-code">—</span>
             </div>
           </div>
           <div class="counter">
             <div class="col" style="gap:6px">
-              <span class="eyebrow" data-id="Pindahkan" data-en="Move">Pindahkan</span>
-              <span class="lede" data-id="Rak ambil sekarang kosong" data-en="The pick face is empty right now">Rak ambil sekarang kosong</span>
+              <span class="eyebrow" data-id="Masih perlu dipindai" data-en="Still to scan">Masih perlu dipindai</span>
+              <span class="lede" data-id="Pindai setiap barang saat menaruhnya di rak" data-en="Scan each item as you put it on the rack">Pindai setiap barang saat menaruhnya di rak</span>
             </div>
-            <span class="counter__num">24</span>
+            <span class="counter__num" data-field="remaining">0</span>
           </div>
-          <div class="scanzone" data-scan-label="Pindai satu barang di rak tujuan" data-offline-msg="Tunggu koneksi kembali">
+          <div class="scanzone" data-scan-label="Pindai satu barang di rak" data-offline-msg="Tunggu koneksi kembali">
             <span class="scanzone__state" data-id="Menunggu pindaian" data-en="Waiting for scan">Menunggu pindaian</span>
-            <span class="scanzone__prompt" data-id="Pindai satu barang di rak tujuan" data-en="Scan one item at the destination rack">Pindai satu barang di rak tujuan</span>
-            <input class="scanzone__input" aria-label="Pindai satu barang di rak tujuan">
+            <span class="scanzone__prompt" data-id="Pindai satu barang di rak" data-en="Scan one item at the rack">Pindai satu barang di rak</span>
+            <input class="scanzone__input" aria-label="Pindai satu barang di rak">
           </div>
-          <a class="btn btn--lg btn--block" href="18-isi-ulang.html" data-id="Kembali ke daftar" data-en="Back to the list">Kembali ke daftar</a>
+          <a class="btn btn--lg btn--block" href="18-kembalikan.html" data-id="Kembali ke daftar" data-en="Back to the list">Kembali ke daftar</a>
         </div>
         <div class="col" style="flex:0 0 380px">
-          <img class="product__photo product__photo--fill" src="assets/products/placeholder.svg" data-photo-key="wdh-gll-07" alt="Glasting Liquid Lip 07 Rouge Flare">
+          <img class="product__photo product__photo--fill" src="assets/products/placeholder.svg" data-field="photo" alt="">
           <div class="col" style="gap:6px">
-            <span class="product__meta">Wardah · 3,5 g · WDH-GLL-07</span>
-            <span class="product__name">Glasting Liquid Lip <span class="product__shade">07</span> Rouge Flare</span>
+            <span class="product__meta" data-field="sku-meta">—</span>
+            <span class="product__name" data-field="sku-name">—</span>
           </div>
         </div>
       </div>
     </main>
 </div>
-<script src="js/api.js?v=4b107ba"></script>
-<script src="js/scan.js?v=4b107ba"></script>
-<script src="js/app.js?v=4b107ba"></script>
-<script src="js/wire.js?v=4b107ba"></script>
+<script src="js/api.js?v=856f10e"></script>
+<script src="js/scan.js?v=856f10e"></script>
+<script src="js/app.js?v=856f10e"></script>
+<script src="js/wire.js?v=856f10e"></script>
+<script src="js/screens/return-scan.js?v=4b107ba"></script>
 
 </body>
 </html>

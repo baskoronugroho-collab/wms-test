@@ -83,7 +83,7 @@
     bulkRegistry: (b) => post('/registry/bulk', b),
     suggestSlot: (skuId, p) => get('/registry/suggest/' + skuId + qs(p)),
     restockRequests: (p) => get('/restock' + qs(p)),             // {site_id,status}
-    sendRestock: (id) => post('/restock/' + id + '/send', {}),
+    sendRestock: (id, qty) => post('/restock/' + id + '/send' + qs({ qty }), {}),  // qty required
     lowStock: (p) => get('/inventory/low-stock' + qs(p)),
     findStock: (p) => get('/inventory/find' + qs(p)),
     movements: (p) => get('/movements' + qs(p)),
@@ -98,8 +98,14 @@
     // Five messages. The WMS never calls Grab; only Hiryu talks to the WMS.
     // `mode` is server-owned — a client must never be able to make this look
     // connected while the boundary is deliberately closed.
+    // Message 2 (cancel) is Hiryu-only; the UI never sends it. On a training
+    // site the simulator stands in for Hiryu: see cancelTestOrder below.
     outbox: (p) => get('/pos/outbox' + qs(p)),
-    cancelOrder: (ref, b) => post('/orders/' + encodeURIComponent(ref) + '/cancel', b || {}),
+
+    // --- return to shelf ------------------------------------------------
+    // Picked units of a cancelled order, walked back and scanned in one by one.
+    returns: (p) => get('/returns' + qs(p)),                       // {site_id,status}
+    returnScan: (id, b) => post('/returns/' + id + '/scan', b),    // {code,idempotency_key}
 
     // --- short pick -----------------------------------------------------
     shortPick: (lineId, b) => post('/pick-lines/' + lineId + '/short', b),
@@ -112,6 +118,7 @@
     testOrders: (p) => get('/training/orders' + qs(p)),          // {site_id}
     scenarios: () => get('/training/scenarios'),
     resetTraining: (b) => post('/training/reset', b),            // {site_id,scenario}
+    cancelTestOrder: (ref) => post('/training/orders/' + encodeURIComponent(ref) + '/cancel', {}),
   };
 
   /* Product photos.

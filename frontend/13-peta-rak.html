@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=4b107ba">
-<link rel="stylesheet" href="css/app.css?v=4b107ba">
+<link rel="stylesheet" href="css/tokens.css?v=856f10e">
+<link rel="stylesheet" href="css/app.css?v=856f10e">
 </head>
 <body>
 <div class="app" data-screen="rack-map">
@@ -16,7 +16,7 @@
       <span class="chrome__mark">NINJA</span>
       <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
       <span class="chrome__sep"></span>
-      <span class="chrome__mode" data-id="Peta rak · Station UT5" data-en="Rack map · Station UT5">Peta rak · Station UT5</span>
+      <span class="chrome__mode" data-id="Peta rak" data-en="Rack map">Peta rak</span>
       <span class="spacer"></span>
       <span class="conn" role="status">
         <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
@@ -32,16 +32,16 @@
       <div class="row-split">
         <div class="col" style="flex:1 1 auto;min-width:0">
           <div class="legend">
-            <h1 class="h2" data-id="7 rak ambil · 175 posisi · 1 rak cadangan" data-en="7 pick racks · 175 positions · 1 overflow rack">7 rak ambil · 175 posisi · 1 rak cadangan</h1>
+            <h1 class="h2" data-field="map-title" data-id="Peta rak" data-en="Rack map">Peta rak</h1>
             <span class="spacer"></span>
             <span class="legend__item"><span class="legend__swatch cell is-free"></span><span data-id="Kosong" data-en="Free">Kosong</span></span>
             <span class="legend__item"><span class="legend__swatch cell is-occ"></span><span data-id="Terisi" data-en="Occupied">Terisi</span></span>
             <span class="legend__item"><span class="legend__swatch cell is-over"></span><span data-id="Lewah kapasitas" data-en="Over capacity">Lewah kapasitas</span></span>
-            <span class="legend__item"><span class="legend__swatch cell is-count"></span><span data-id="Perlu dihitung" data-en="Needs counting">Perlu dihitung</span></span>
-            <span class="legend__item"><span class="legend__swatch legend__swatch--hatch"></span><span data-id="Cadangan — tidak pernah diambil" data-en="Overflow — never picked from">Cadangan — tidak pernah diambil</span></span>
+            <span class="legend__item"><span class="legend__swatch cell is-count"></span><span data-id="Belum dihitung 30 hari" data-en="Not counted in 30 days">Belum dihitung 30 hari</span></span>
+            <span class="legend__item"><span class="legend__swatch legend__swatch--hatch"></span><span data-id="Cadangan (overflow)" data-en="Overflow">Cadangan (overflow)</span></span>
           </div>
           <div class="rackmap" data-region="rackmap" aria-label="Peta rak"></div>
-          <span class="note" data-id="Kolom bergaris adalah rak cadangan. Pemetik tidak pernah dikirim ke sana — isinya sampai ke rak ambil lewat tugas isi ulang. Posisi terpakai di kanan hanya menghitung rak ambil." data-en="The hatched column is the overflow rack. A picker is never sent there — its stock reaches a pick face through a replenishment task. The positions-in-use figure on the right counts pick faces only.">Kolom bergaris adalah rak cadangan. Pemetik tidak pernah dikirim ke sana — isinya sampai ke rak ambil lewat tugas isi ulang. Posisi terpakai di kanan hanya menghitung rak ambil.</span>
+          <span class="note" data-id="Kotak bergaris adalah keranjang cadangan: stok yang tidak muat lagi di rak. Pemetik dikirim ke stok yang lebih lama — di rak atau di cadangan — jadi tidak ada tugas isi ulang. Posisi terpakai di kanan hanya menghitung rak, bukan cadangan." data-en="Hatched boxes are overflow baskets: stock that no longer fit on the rack. The picker is sent to the older stock — rack or overflow — so there is no refill task. The positions-in-use figure counts rack positions only, not overflow.">Kotak bergaris adalah keranjang cadangan: stok yang tidak muat lagi di rak. Pemetik dikirim ke stok yang lebih lama — di rak atau di cadangan — jadi tidak ada tugas isi ulang. Posisi terpakai di kanan hanya menghitung rak, bukan cadangan.</span>
         </div>
         <div class="col" style="flex:0 0 340px">
           <div class="panel">
@@ -49,31 +49,23 @@
               <span class="eyebrow" data-id="Hari ini" data-en="Today">Hari ini</span>
               <span class="kpi"><span data-id="Posisi terpakai" data-en="Positions in use">Posisi terpakai</span><span class="kpi__num" data-field="used">—</span></span>
               <span class="kpi" style="color:var(--caution)"><span data-id="Lewah kapasitas" data-en="Over capacity">Lewah kapasitas</span><span class="kpi__num" data-field="over">—</span></span>
-              <span class="kpi" style="color:var(--action)"><span data-id="Perlu dihitung" data-en="Needs counting">Perlu dihitung</span><span class="kpi__num" data-field="tocount">—</span></span>
+              <span class="kpi" style="color:var(--action)"><span data-id="Belum dihitung 30 hari" data-en="Not counted in 30 days">Belum dihitung 30 hari</span><span class="kpi__num" data-field="tocount">—</span></span>
             </div>
           </div>
-          <div class="panel" style="flex:1 1 auto">
+          <div class="panel" style="flex:1 1 auto" data-region="variances">
             <div class="panel__head" style="color:var(--caution)" data-id="Selisih menunggu tanda tangan" data-en="Variance awaiting sign-off">Selisih menunggu tanda tangan</div>
-            <div class="varrow"><span class="varrow__top"><span class="code code--sm">UT5-A-3-02</span><span class="varrow__delta">−3</span></span><span class="note">Glasting Liquid Lip 07 · Siti N.</span></div>
-            <div class="varrow"><span class="varrow__top"><span class="code code--sm">UT5-C-5-04</span><span class="varrow__delta">+2</span></span><span class="note">UV Shield SPF 50 · Dwi L.</span></div>
-            <div class="varrow"><span class="varrow__top"><span class="code code--sm">UT5-B-1-05</span><span class="varrow__delta">−1</span></span><span class="note">Instaperfect Lip Matte 02 · Rina P.</span></div>
-            <div class="varrow"><span class="varrow__top"><span class="code code--sm">UT5-F-4-01</span><span class="varrow__delta">−2</span></span><span class="note">Lightening Day Cream · Agus S.</span></div>
+            <div class="varrow"><span class="note" data-id="Memuat…" data-en="Loading…">Memuat…</span></div>
           </div>
-          <button class="btn btn--primary btn--lg btn--block" type="button" data-id="Tinjau 4 selisih" data-en="Review 4 variances">Tinjau 4 selisih</button>
+          <a class="btn btn--primary btn--lg btn--block" href="console/hitung-stok.html" data-action="review" data-id="Buka hitung stok" data-en="Open stock count">Buka hitung stok</a>
         </div>
       </div>
     </main>
 </div>
-<script src="js/api.js?v=4b107ba"></script>
-<script src="js/scan.js?v=4b107ba"></script>
-<script src="js/app.js?v=4b107ba"></script>
-<script src="js/rack-map.js?v=4b107ba"></script>
-<script>
-  window.addEventListener('load', () => {
-    fetch('data/racks.json').then(r => r.json())
-      .then(data => NJW.renderRackMap(document.querySelector('[data-region="rackmap"]'), data))
-      .catch(() => NJW.renderRackMap(document.querySelector('[data-region="rackmap"]'), NJW.demoRacks()));
-  });
-</script>
+<script src="js/api.js?v=856f10e"></script>
+<script src="js/scan.js?v=856f10e"></script>
+<script src="js/app.js?v=856f10e"></script>
+<script src="js/rack-map.js?v=856f10e"></script>
+<script src="js/wire.js?v=856f10e"></script>
+<script src="js/screens/rack-map.js?v=4b107ba"></script>
 </body>
 </html>

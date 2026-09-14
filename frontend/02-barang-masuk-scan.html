@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=4b107ba">
-<link rel="stylesheet" href="css/app.css?v=4b107ba">
+<link rel="stylesheet" href="css/tokens.css?v=856f10e">
+<link rel="stylesheet" href="css/app.css?v=856f10e">
 </head>
 <body>
 <div class="app" data-screen="inbound-scan">
@@ -49,12 +49,7 @@
       </div>
       <div class="refstrip">
         <label class="refstrip__label" for="refInput" data-id="Nomor referensi / AWB (opsional)" data-en="Reference / AWB number (optional)">Nomor referensi / AWB (opsional)</label>
-        <input class="refstrip__input" id="refInput" type="text" list="refSamples" placeholder="mis. WRD-2609-02" aria-label="Nomor referensi atau AWB, opsional">
-        <datalist id="refSamples">
-          <option value="WRD-2609-02"></option>
-          <option value="WRD-2609-01"></option>
-          <option value="WRD-2508-14"></option>
-        </datalist>
+        <input class="refstrip__input" id="refInput" type="text" maxlength="64" autocomplete="off" placeholder="mis. WRD-2609-02" aria-label="Nomor referensi atau AWB, opsional">
         <span class="refstrip__hint" data-id="Isi kalau brand kasih nomor AWB/referensi. Kalau tidak ada, lewati saja." data-en="Fill in if the brand gives an AWB/reference number. Skip it if there isn't one.">Isi kalau brand kasih nomor AWB/referensi. Kalau tidak ada, lewati saja.</span>
       </div>
       <div class="row-split">
@@ -102,11 +97,11 @@
       </div>
     </main>
 </div>
-<script src="js/api.js?v=4b107ba"></script>
-<script src="js/scan.js?v=4b107ba"></script>
-<script src="js/app.js?v=4b107ba"></script>
-<script src="js/wire.js?v=4b107ba"></script>
-
+<script src="js/api.js?v=856f10e"></script>
+<script src="js/scan.js?v=856f10e"></script>
+<script src="js/app.js?v=856f10e"></script>
+<script src="js/wire.js?v=856f10e"></script>
+<script src="js/screens/inbound-scan.js?v=4b107ba"></script>
 
 </body>
 </html>

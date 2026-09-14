@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="../css/tokens.css?v=4b107ba">
-<link rel="stylesheet" href="../css/app.css?v=4b107ba">
-<link rel="stylesheet" href="../css/console.css?v=4b107ba">
+<link rel="stylesheet" href="../css/tokens.css?v=856f10e">
+<link rel="stylesheet" href="../css/app.css?v=856f10e">
+<link rel="stylesheet" href="../css/console.css?v=856f10e">
 </head>
 <body>
 <div class="console" data-screen="hitung-stok">
@@ -45,7 +45,7 @@
         <a class="sidebar__link" href="hub.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
         <a class="sidebar__link" href="staf.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
         <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
-        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi POS" data-en="POS integration">Integrasi POS</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
@@ -70,38 +70,39 @@
   <main class="page">
     <header class="page__head">
       <div class="page__heading">
-        <span class="page__eyebrow" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk & keluar</span>
+        <span class="page__eyebrow" data-id="Stok" data-en="Stock">Stok</span>
         <h1 class="page__title" data-id="Hitung stok" data-en="Stock count">Hitung stok</h1>
-        <p class="page__sub" data-id="Rencana opname dan selisihnya. Jumlah di sistem disembunyikan dari petugas sampai hitungannya disimpan — itu yang membuat angkanya jujur." data-en="Opname plans and their variances. The system quantity is hidden from the counter until the count is saved — that is what keeps the number honest.">Rencana opname dan selisihnya. Jumlah di sistem disembunyikan dari petugas sampai hitungannya disimpan — itu yang membuat angkanya jujur.</p>
+        <p class="page__sub" data-id="Rencana opname dan selisihnya. Jumlah di sistem disembunyikan dari petugas sampai hitungannya disimpan — itu yang membuat angkanya jujur. Setiap selisih, sekecil apa pun, menunggu tanda tangan supervisor sebelum stok berubah." data-en="Opname plans and their variances. The system quantity is hidden from the counter until the count is saved — that is what keeps the number honest. Every variance, however small, waits for a supervisor's signature before stock changes.">Rencana opname dan selisihnya. Jumlah di sistem disembunyikan dari petugas sampai hitungannya disimpan — itu yang membuat angkanya jujur. Setiap selisih, sekecil apa pun, menunggu tanda tangan supervisor sebelum stok berubah.</p>
       </div>
       <div class="page__actions">
-        <button class="cbtn cbtn--primary" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-id="Buat rencana" data-en="New plan">Buat rencana</span></button>
+        <button class="cbtn cbtn--primary" type="button" data-action="new-plan" data-drawer-open="#drawer-plan" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-id="Buat rencana" data-en="New plan">Buat rencana</span></button>
       </div>
     </header>
     <section class="kpis">
       <div class="kpi-card">
         <span class="kpi-card__label" data-id="Keranjang selesai" data-en="Baskets counted">Keranjang selesai</span>
-        <span class="kpi-card__num" data-field="kpi-counted">18 / 42</span>
-        <span class="kpi-card__foot" data-id="rencana minggu 37" data-en="week 37 plan">rencana minggu 37</span>
+        <span class="kpi-card__num" data-field="kpi-counted">—</span>
+        <span class="kpi-card__foot" data-field="kpi-counted-foot"></span>
       </div>
       <div class="kpi-card kpi-card--caution">
         <span class="kpi-card__label" data-id="Selisih ditemukan" data-en="Variances found">Selisih ditemukan</span>
-        <span class="kpi-card__num" data-field="kpi-variances">4</span>
+        <span class="kpi-card__num" data-field="kpi-variances">—</span>
         <span class="kpi-card__foot" data-id="menunggu tanda tangan" data-en="awaiting sign-off">menunggu tanda tangan</span>
       </div>
       <div class="kpi-card">
         <span class="kpi-card__label" data-id="Nilai selisih" data-en="Variance value">Nilai selisih</span>
-        <span class="kpi-card__num" data-field="kpi-value">Rp 1.212.000</span>
-        <span class="kpi-card__foot" data-id="bersih, 4 baris" data-en="net, 4 lines">bersih, 4 baris</span>
+        <span class="kpi-card__num" data-field="kpi-value">—</span>
+        <span class="kpi-card__foot" data-field="kpi-value-foot"></span>
       </div>
       <div class="kpi-card">
         <span class="kpi-card__label" data-id="Belum dihitung 30 hari" data-en="Uncounted 30 days">Belum dihitung 30 hari</span>
-        <span class="kpi-card__num" data-field="kpi-stale">18</span>
-        <span class="kpi-card__foot" data-id="prioritas berikutnya" data-en="next priority">prioritas berikutnya</span>
+        <span class="kpi-card__num" data-field="kpi-stale">—</span>
+        <span class="kpi-card__foot" data-id="produk, prioritas hitung berikutnya" data-en="products, next to count">produk, prioritas hitung berikutnya</span>
       </div>
     </section>
     <section class="section">
       <h2 class="section__title" data-id="Selisih menunggu tanda tangan" data-en="Variances awaiting sign-off">Selisih menunggu tanda tangan</h2>
+      <div class="inline-note inline-note--warn" data-field="sign-note" hidden><span aria-hidden="true">!</span><span data-field="sign-note-text"></span></div>
     <div class="table-scroll">
       <table class="dtable dtable--rows-tall" id="tbl-variance">
         <thead><tr>
@@ -116,50 +117,7 @@
           <th class="td-actions" data-id="" data-en=""></th>
         </tr></thead>
         <tbody data-region="variance">
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih UT5-A-3-02"></td>
-            <td class="td-code td-strong">UT5-A-3-02</td>
-            <td>Glasting Liquid Lip 07 Rouge Flare</td>
-            <td class="td-num" style="color:var(--muted)">12</td>
-            <td class="td-num">9</td>
-            <td class="td-num" style="color:var(--caution);font-weight:700">-3</td>
-            <td class="td-num">Rp 303.000</td>
-            <td style="color:var(--muted)">Siti N.</td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Hitung ulang" data-en="Recount">Hitung ulang</button><button class="cbtn cbtn--sm cbtn--primary" type="button" data-id="Setujui" data-en="Approve">Setujui</button></td>
-          </tr>
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih UT5-C-5-04"></td>
-            <td class="td-code td-strong">UT5-C-5-04</td>
-            <td>UV Shield Airy Smooth Sunscreen SPF 50</td>
-            <td class="td-num" style="color:var(--muted)">44</td>
-            <td class="td-num">46</td>
-            <td class="td-num" style="color:var(--caution);font-weight:700">+2</td>
-            <td class="td-num">Rp 178.000</td>
-            <td style="color:var(--muted)">Dwi L.</td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Hitung ulang" data-en="Recount">Hitung ulang</button><button class="cbtn cbtn--sm cbtn--primary" type="button" data-id="Setujui" data-en="Approve">Setujui</button></td>
-          </tr>
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih UT5-B-1-05"></td>
-            <td class="td-code td-strong">UT5-B-1-05</td>
-            <td>Instaperfect Mattesetter Lip Matte Paint 02</td>
-            <td class="td-num" style="color:var(--muted)">19</td>
-            <td class="td-num">18</td>
-            <td class="td-num" style="color:var(--caution);font-weight:700">-1</td>
-            <td class="td-num">Rp 89.000</td>
-            <td style="color:var(--muted)">Rina P.</td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Hitung ulang" data-en="Recount">Hitung ulang</button><button class="cbtn cbtn--sm cbtn--primary" type="button" data-id="Setujui" data-en="Approve">Setujui</button></td>
-          </tr>
-          <tr>
-            <td class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih UT5-F-4-01"></td>
-            <td class="td-code td-strong">UT5-F-4-01</td>
-            <td>Lightening Day Cream SPF 30</td>
-            <td class="td-num" style="color:var(--muted)">24</td>
-            <td class="td-num">22</td>
-            <td class="td-num" style="color:var(--caution);font-weight:700">-2</td>
-            <td class="td-num">Rp 998.000</td>
-            <td style="color:var(--muted)">Agus S.</td>
-            <td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-id="Hitung ulang" data-en="Recount">Hitung ulang</button><button class="cbtn cbtn--sm cbtn--primary" type="button" data-id="Setujui" data-en="Approve">Setujui</button></td>
-          </tr>
+          <tr><td colspan="9" class="note" data-id="Memuat…" data-en="Loading…">Memuat…</td></tr>
         </tbody>
       </table>
     </div>
@@ -167,8 +125,7 @@
       <span class="bulkbar__count" data-field="bulk-count">0</span>
       <span data-id="selisih dipilih" data-en="variances selected">selisih dipilih</span>
       <span class="toolbar__spacer"></span>
-      <button class="cbtn" type="button" data-id="Setujui penyesuaian" data-en="Approve adjustments">Setujui penyesuaian</button>
-      <button class="cbtn" type="button" data-id="Minta hitung ulang" data-en="Request recount">Minta hitung ulang</button>
+      <button class="cbtn" type="button" data-action="approve-selected" data-id="Setujui penyesuaian" data-en="Approve adjustments">Setujui penyesuaian</button>
       <button class="cbtn cbtn--ghost" type="button" data-action="bulk-clear" data-id="Batal" data-en="Clear">Batal</button>
     </div>
     </section>
@@ -187,57 +144,55 @@
           <th class="td-actions" data-id="" data-en=""></th>
         </tr></thead>
         <tbody data-region="plans">
-          <tr>
-            <td class="td-strong">Opname minggu 37</td>
-            <td style="color:var(--muted)">7 Sep</td>
-            <td>Semua rak</td>
-            <td class="td-num">42</td>
-            <td class="td-num">18</td>
-            <td class="td-num">4</td>
-            <td><span class="spill spill--accent"><span class="spill__dot"></span><span data-id="Berjalan" data-en="Running">Berjalan</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../10-hitung-pilih-keranjang.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka" data-en="Open">Buka</span></a></td>
-          </tr>
-          <tr>
-            <td class="td-strong">Opname minggu 36</td>
-            <td style="color:var(--muted)">31 Agu</td>
-            <td>Semua rak</td>
-            <td class="td-num">42</td>
-            <td class="td-num">42</td>
-            <td class="td-num">2</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Ditutup" data-en="Closed">Ditutup</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../10-hitung-pilih-keranjang.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka" data-en="Open">Buka</span></a></td>
-          </tr>
-          <tr>
-            <td class="td-strong">Audit rak C</td>
-            <td style="color:var(--muted)">28 Agu</td>
-            <td>Rak C saja</td>
-            <td class="td-num">25</td>
-            <td class="td-num">25</td>
-            <td class="td-num">—</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Ditutup" data-en="Closed">Ditutup</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../10-hitung-pilih-keranjang.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka" data-en="Open">Buka</span></a></td>
-          </tr>
-          <tr>
-            <td class="td-strong">Opname minggu 35</td>
-            <td style="color:var(--muted)">24 Agu</td>
-            <td>Semua rak</td>
-            <td class="td-num">40</td>
-            <td class="td-num">40</td>
-            <td class="td-num">5</td>
-            <td><span class="spill spill--ok"><span class="spill__dot"></span><span data-id="Ditutup" data-en="Closed">Ditutup</span></span></td>
-            <td class="td-actions"><a class="cbtn cbtn--sm" href="../10-hitung-pilih-keranjang.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg><span data-id="Buka" data-en="Open">Buka</span></a></td>
-          </tr>
+          <tr><td colspan="8" class="note" data-id="Memuat…" data-en="Loading…">Memuat…</td></tr>
         </tbody>
       </table>
     </div>
     </section>
   </main>
 </div>
+<div class="scrim"></div>
 
-<script src="../js/api.js?v=4b107ba"></script>
-<script src="../js/app.js?v=4b107ba"></script>
-<script src="../js/console.js?v=4b107ba"></script>
-<script>/* GET /api/opname/plans?site_id= ; GET /api/opname/plans/{id}/variance ;
-     POST /api/opname/adjustments {session_ids[], reason_code} */</script>
+<!-- New count plan: POST /api/opname/plans {site_id, name, rack_codes?} (supervisor). -->
+<aside class="drawer" id="drawer-plan" aria-label="Buat rencana hitung">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-id="Buat rencana hitung" data-en="New count plan">Buat rencana hitung</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <label class="field"><span class="field__label" data-id="Nama rencana" data-en="Plan name">Nama rencana</span><input class="input" type="text" data-field="plan-name" maxlength="160"></label>
+    <div class="field">
+      <span class="field__label" data-id="Rak yang dihitung" data-en="Racks to count">Rak yang dihitung</span>
+      <label class="checkline"><input class="checkbox" type="checkbox" data-field="plan-all" checked><span data-id="Semua rak" data-en="All racks">Semua rak</span></label>
+      <div class="chipset" data-region="plan-racks"></div>
+      <span class="field__hint" data-id="Hanya keranjang yang berisi barang ikut dihitung. Petugas tidak melihat jumlah di sistem." data-en="Only baskets that hold a product are included. Counters never see the system quantity.">Hanya keranjang yang berisi barang ikut dihitung. Petugas tidak melihat jumlah di sistem.</span>
+    </div>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-action="create-plan" data-id="Buat rencana" data-en="Create plan">Buat rencana</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
+  </div>
+</aside>
+
+<!-- Sign-off: POST /api/opname/adjustments/approve {session_ids[], reason_code}.
+     This is the only thing that moves stock after a count. -->
+<div class="cdialog" id="dlg-approve" role="dialog" aria-modal="true" aria-labelledby="dlg-approve-title">
+  <h2 class="cdialog__title" id="dlg-approve-title" data-field="approve-title" data-id="Setujui penyesuaian?" data-en="Approve the adjustment?">Setujui penyesuaian?</h2>
+  <p class="cdialog__body" data-field="approve-body"></p>
+  <div class="cdialog__actions">
+    <button class="cbtn cbtn--primary" type="button" data-action="confirm-approve" data-id="Setujui dan ubah stok" data-en="Approve and change stock">Setujui dan ubah stok</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
+  </div>
+</div>
+<style>
+  /* These carry their own display, which beats the UA's [hidden]. */
+  [data-screen="hitung-stok"] [hidden] { display: none !important; }
+</style>
+
+<script src="../js/api.js?v=856f10e"></script>
+<script src="../js/app.js?v=856f10e"></script>
+<script src="../js/console.js?v=856f10e"></script>
+<script src="../js/wire.js?v=856f10e"></script>
+<script src="../js/screens/hitung-stok.js?v=4b107ba"></script>
 </body>
 </html>

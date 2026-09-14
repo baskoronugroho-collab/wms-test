@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=4b107ba">
-<link rel="stylesheet" href="css/app.css?v=4b107ba">
+<link rel="stylesheet" href="css/tokens.css?v=856f10e">
+<link rel="stylesheet" href="css/app.css?v=856f10e">
 </head>
 <body>
 <div class="app" data-screen="counting">
@@ -16,7 +16,7 @@
       <span class="chrome__mark">NINJA</span>
       <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
       <span class="chrome__sep"></span>
-      <span class="chrome__mode" data-id="Hitung stok · UT5-A-3-02" data-en="Stock count · UT5-A-3-02">Hitung stok · UT5-A-3-02</span>
+      <span class="chrome__mode" data-id="Hitung stok" data-en="Stock count">Hitung stok</span>
       <span class="spacer"></span>
       <span class="conn" role="status">
         <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
@@ -28,26 +28,32 @@
       <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
       <span class="chrome__user">Siti N. · UT5</span>
     </header>
-    <main class="main main--tight">
+    <main class="main main--tight main--dense">
       <div class="row-split">
         <div class="col" style="flex:0 0 420px">
           <div class="col" style="gap:8px">
             <span class="eyebrow" data-id="Keranjang" data-en="Basket">Keranjang</span>
-            <span class="code code--lg">UT5-<span class="code__hl">A</span>-<span class="code__hl">3</span>-02</span>
+            <span class="code code--lg" data-field="location">—</span>
           </div>
-          <img class="product__photo product__photo--fill" src="assets/products/placeholder.svg" data-photo-key="wdh-gll-07" alt="Glasting Liquid Lip 07 Rouge Flare">
+          <img class="product__photo product__photo--fill" src="assets/products/placeholder.svg" data-photo-key="" alt="">
           <div class="col" style="gap:6px">
-            <span class="product__meta">Wardah · 3,5 g · WDH-GLL-07</span>
-            <span class="product__name">Glasting Liquid Lip <span class="product__shade">07</span> Rouge Flare</span>
+            <span class="product__meta" data-field="meta"></span>
+            <span class="product__name" data-field="sku-name">—</span>
           </div>
-          <p class="panel note" style="padding:14px 16px;margin:0" data-id="Jumlah di sistem sengaja disembunyikan. Hitung apa yang benar-benar ada di keranjang." data-en="The system quantity is deliberately hidden. Count what is actually in the basket.">Jumlah di sistem sengaja disembunyikan. Hitung apa yang benar-benar ada di keranjang.</p>
+          <p class="panel note" style="padding:14px 16px;margin:0" data-field="blind-note" data-id="Jumlah di sistem sengaja disembunyikan. Pindai setiap barang satu per satu. Barcode rusak? Tambah pakai tombol +." data-en="The system quantity is deliberately hidden. Scan every item, one by one. Barcode unreadable? Add it with the + button.">Jumlah di sistem sengaja disembunyikan. Pindai setiap barang satu per satu. Barcode rusak? Tambah pakai tombol +.</p>
         </div>
         <div class="col col--grow">
+          <div class="scanzone" data-scan-label="Pindai setiap barang di keranjang" data-offline-msg="Tunggu koneksi kembali">
+            <span class="scanzone__state" data-id="Menunggu pindaian" data-en="Waiting for scan">Menunggu pindaian</span>
+            <span class="scanzone__prompt" data-id="Pindai setiap barang di keranjang" data-en="Scan every item in the basket">Pindai setiap barang di keranjang</span>
+            <input class="scanzone__input" aria-label="Pindai setiap barang di keranjang">
+          </div>
           <div class="counter">
             <button class="step step--minus" type="button" data-action="dec" aria-label="Kurangi">−</button>
             <span class="counter__col">
               <span class="eyebrow" data-id="Hitungan kamu" data-en="Your count">Hitungan kamu</span>
-              <span class="counter__num" data-field="count">9</span>
+              <span class="counter__num" data-field="count">0</span>
+              <span class="note" data-field="count-split"></span>
             </span>
             <button class="step step--plus" type="button" data-action="inc" aria-label="Tambah">+</button>
           </div>
@@ -67,31 +73,21 @@
           </div>
           <div class="stats">
             <a class="btn btn--outline btn--lg" href="10-hitung-pilih-keranjang.html" style="flex:0 0 260px" data-id="Lewati keranjang ini" data-en="Skip this basket">Lewati keranjang ini</a>
-            <a class="btn btn--primary btn--lg btn--grow" href="12-hasil-hitung.html" data-id="Simpan hitungan" data-en="Save count">Simpan hitungan</a>
+            <a class="btn btn--primary btn--lg btn--grow" href="12-hasil-hitung.html" data-action="save" data-id="Simpan hitungan" data-en="Save count">Simpan hitungan</a>
           </div>
         </div>
       </div>
     </main>
 </div>
-<script src="js/api.js?v=4b107ba"></script>
-<script src="js/scan.js?v=4b107ba"></script>
-<script src="js/app.js?v=4b107ba"></script>
-<script>
-  /* No free text anywhere: the count only changes through the stepper and keypad. */
-  window.addEventListener('load', () => {
-    const out = document.querySelector('[data-field="count"]');
-    let typed = '';
-    const set = n => { out.textContent = String(Math.max(0, Math.min(999, n))); };
-    document.querySelector('[data-action="inc"]').onclick = () => { typed = ''; set(+out.textContent + 1); };
-    document.querySelector('[data-action="dec"]').onclick = () => { typed = ''; set(+out.textContent - 1); };
-    document.querySelectorAll('.keypad__key').forEach(k => k.onclick = () => {
-      const v = k.dataset.key;
-      if (v === 'del') typed = typed.slice(0, -1);
-      else if (v === 'zero') typed = '0';
-      else typed = (typed + v).slice(0, 3);
-      set(+(typed || 0));
-    });
-  });
-</script>
+<style>
+  /* One block more than the design (the scan zone) must still fit 1366x768
+     without scrolling to the save button; the keys stay well above 48 px. */
+  [data-screen="counting"] .keypad__key { min-height: 60px; }
+</style>
+<script src="js/api.js?v=856f10e"></script>
+<script src="js/scan.js?v=856f10e"></script>
+<script src="js/app.js?v=856f10e"></script>
+<script src="js/wire.js?v=856f10e"></script>
+<script src="js/screens/counting.js?v=4b107ba"></script>
 </body>
 </html>
