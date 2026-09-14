@@ -1,7 +1,9 @@
 """M5 / §9 — Order intake from the POS, allocation, and guided picking."""
-from datetime import datetime, timezone
+import hmac
+import os
+from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 
 import auth
 import common
@@ -27,7 +29,66 @@ async def _resolve_line_sku(line: models.OrderLineIn) -> dict | None:
     return None
 
 
+SLA_MINUTES = {"grab": 15}
+DEFAULT_OWN_CHANNEL_SLA = 60
+
+
+def _parse_ts(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        ts = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        raise HTTPException(422, f"Not an ISO 8601 time: {value}")
+    if ts.tzinfo is not None:
+        ts = ts.astimezone(timezone.utc).replace(tzinfo=None)
+    return ts
+
+
+def _promise(body) -> tuple[datetime | None, datetime]:
+    """When this order must be ready, stored as naive UTC like every other time.
+
+    Grab: 15 minutes from reaching Hiryu -- Grab has already assigned the rider.
+    Own channels: 1 hour from when the customer placed it (canonical §5).
+    An explicit promised_at from Hiryu always wins.
+    """
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    placed = _parse_ts(body.placed_at)
+    explicit = _parse_ts(body.promised_at)
+    if explicit:
+        return placed, explicit
+    if body.channel in SLA_MINUTES:
+        return placed, now + timedelta(minutes=SLA_MINUTES[body.channel])
+    return placed, (placed or now) + timedelta(minutes=DEFAULT_OWN_CHANNEL_SLA)
+
+
+async def hiryu_or_admin(
+    x_hiryu_key: str | None = Header(default=None),
+    x_forwarded_email: str | None = Header(default=None),
+) -> str:
+    """Message 1 comes from Hiryu and nothing else (canonical design).
+
+    Hiryu presents POS_SHARED_SECRET in X-Hiryu-Key -- the only way in once the
+    route is exempted from SSO for machine calls. Until then an admin signed in
+    through SSO may call it for testing. Everyone else is refused.
+    """
+    secret = os.getenv("POS_SHARED_SECRET", "")
+    if secret and x_hiryu_key and hmac.compare_digest(x_hiryu_key, secret):
+        return "hiryu"
+    user = await auth.current_user(x_forwarded_email)
+    if not user.at_least("admin"):
+        raise HTTPException(403, "Only Hiryu may send orders to the WMS.")
+    return user.email
+
+
 @router.post("/pos/orders", response_model=models.OrderAccepted, status_code=201)
+async def receive_order_http(
+    body: models.OrderIn, caller: str = Depends(hiryu_or_admin)
+):
+    """Message 1 over HTTP: Hiryu hands the WMS an order to pick."""
+    return await receive_order(body)
+
+
 async def receive_order(body: models.OrderIn):
     """The POS creates an order here. The dummy generator uses the same endpoint,
     so switching to live Hiryu is configuration rather than a rewrite (§9.3).
@@ -68,12 +129,15 @@ async def receive_order(body: models.OrderIn):
 
     short = 0
     async with db.tx() as cur:
+        placed, promised = _promise(body)
         order_id = await db.run(
             cur,
-            "INSERT INTO orders (external_ref, site_id, brand_id, status, is_test) "
-            "VALUES (%s,%s,%s,'received',%s)",
+            "INSERT INTO orders (external_ref, site_id, brand_id, status, is_test, "
+            "channel, delivery_mode, placed_at, promised_at) "
+            "VALUES (%s,%s,%s,'received',%s,%s,%s,%s,%s)",
             (body.external_ref, site["id"], resolved[0][0]["brand_id"],
-             1 if body.is_test else 0),
+             1 if body.is_test else 0, body.channel, body.delivery_mode,
+             placed, promised),
         )
         task_id = await db.run(
             cur, "INSERT INTO pick_tasks (order_id, site_id, status) "
@@ -395,6 +459,17 @@ async def complete_task(task_id: int, user: auth.User = Depends(auth.current_use
 AGE_THRESHOLDS = {"ageing_seconds": 300, "late_seconds": 600}
 
 
+def _urgency(remaining, window) -> str:
+    """Late once the promise has passed; ageing in its final third."""
+    if remaining is None:
+        return "normal"
+    if remaining <= 0:
+        return "late"
+    if window and remaining <= max(60, int(window) // 3):
+        return "ageing"
+    return "normal"
+
+
 def _jakarta_day_start_utc() -> datetime:
     """UTC instant of the current Jakarta midnight.
 
@@ -425,6 +500,9 @@ async def queue_board(
     rows = await db.fetch_all(
         "SELECT pt.id, pt.order_id, pt.status, pt.claimed_by, pt.claimed_at, "
         "       pt.completed_at, pt.created_at, o.external_ref, o.is_test, "
+        "       o.channel, o.delivery_mode, o.promised_at, "
+        "       TIMESTAMPDIFF(SECOND, NOW(), o.promised_at) AS remaining_seconds, "
+        "       TIMESTAMPDIFF(SECOND, pt.created_at, o.promised_at) AS window_seconds, "
         "       TIMESTAMPDIFF(SECOND, pt.created_at, NOW()) AS age_seconds, "
         "       TIMESTAMPDIFF(SECOND, pt.claimed_at, NOW()) AS held_seconds, "
         "       COUNT(DISTINCT pl.id) AS line_count, "
@@ -447,7 +525,8 @@ async def queue_board(
         # every completed task would make the board grow without bound.
         "       OR (pt.status = 'completed' AND pt.completed_at >= %s)) "
         "GROUP BY pt.id, pt.order_id, pt.status, pt.claimed_by, pt.claimed_at, "
-        "         pt.completed_at, pt.created_at, o.external_ref, o.is_test, u.name "
+        "         pt.completed_at, pt.created_at, o.external_ref, o.is_test, "
+        "         o.channel, o.delivery_mode, o.promised_at, u.name "
         "ORDER BY pt.created_at",
         (site_id, day_start),
     )
@@ -469,12 +548,24 @@ async def queue_board(
             "picked_units": int(r["picked_units"] or 0),
             "short_lines": int(r["short_lines"] or 0),
             "racks": racks,
+            "channel": r["channel"] or "grab",
+            "delivery_mode": r["delivery_mode"] or "grab_rider",
+            "promised_at": str(r["promised_at"]) if r["promised_at"] else None,
+            "remaining_seconds": (int(r["remaining_seconds"])
+                                  if r["remaining_seconds"] is not None else None),
+            "urgency": _urgency(r["remaining_seconds"], r["window_seconds"]),
         }
 
     cards = [card(r) for r in rows]
     lanes = []
     for key, members in (
-        ("waiting", [c for c in cards if c["status"] in ("ready", "blocked")]),
+        # Waiting orders are worked in order of time remaining, not age: with a
+        # 15-minute Grab promise and a 1-hour own-channel promise in one room,
+        # age would rank a comfortable order level with a late one.
+        ("waiting", sorted(
+            [c for c in cards if c["status"] in ("ready", "blocked")],
+            key=lambda c: (c["remaining_seconds"] if c["remaining_seconds"] is not None
+                           else 10**9))),
         ("picking", [c for c in cards if c["status"] == "claimed"]),
         ("done_today", [c for c in cards if c["status"] == "completed"]),
     ):

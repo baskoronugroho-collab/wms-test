@@ -135,6 +135,7 @@ Even when a supplier sends no manifest, the second hop is always checkable, beca
 - **6.3.1** An admin registers each SKU with brand, name, size, unit cube and category.
 - **6.3.2** An admin uploads a **product photo** during onboarding. It is **optional for go-live**; a placeholder shows until it exists. Spec: 1:1, at least 800 × 800, product centred on white, filename the lowercase SKU code. For 118 near-identical shades the photo is the primary disambiguator on the pick and wrong-item screens.
 - **6.3.3** **A new SKU without a rack at a site appears on the supervisor's "needs a rack" list** until someone assigns one (§8.2). A SKU with no pick face can be received but never picked.
+- **6.3.4** *(Proposed, with §10.5.)* Each SKU can also carry its **retail box size (L × W × H mm), weight (g)** and three flags: **liquid in a bottle, large bottle, fragile**. They drive the packaging suggestion. They are optional at go-live; category defaults fill the gaps.
 
 ---
 
@@ -267,6 +268,49 @@ When stock the system expects is not there:
 
 - **10.4.1** **Message 2** releases allocations so the stock is sellable again.
 - **10.4.2** Units already picked go to a **return-to-shelf queue**. **Any staff member** can take a return task; they scan the units back to the location the WMS names, and the stock re-publishes.
+
+### 10.5 Packaging suggestion **[PROPOSED — spec for review, not built]**
+
+A Grab order for Wardah is **10–15 units**. Packing copies what GrabMart Kilat (powered by Astro) customers already get: **two pack types, a paper bag and a carton**, plus small inserts. The WMS knows every line the moment message 1 arrives, so it can tell the packer which pack to take before the first unit is picked. The packer should never have to judge it.
+
+- **10.5.1** **When.** Computed at order intake, after allocation (§9.1.4). Recomputed after a short pick (§10.2) or a cancelled line. Stored on the order.
+- **10.5.2** **Where it shows.** A chip on the pick-queue card (*Kantong* / *Kardus*), the guided-pick header, and the pack screen: *"Ambil: Kardus 25 × 20 × 10 + 1 plastik klip + 2 bubble"*. Bilingual like every string (§2.7).
+- **10.5.3** **The rule, in order.**
+  1. Order totals: volume **V** = Σ qty × box L × W × H; weight **G** = Σ qty × weight; longest item **Lmax**; count of large bottles **Nbig**.
+  2. Try pack types in priority order, smallest first. A pack fits when **V ≤ usable volume**, **G ≤ maximum load**, **Lmax fits its longest inner side**, and, for a bag, **Nbig < 2**. Two or more large bottles tear a bag and crush the rest.
+  3. The first pack that fits is the suggestion. If none fits, suggest two of the largest carton and flag the order as *split pack*.
+  4. Inserts: **plastik klip** (ziplock) = ⌈bottled-liquid volume ÷ ziplock volume⌉, zero if none; **bubble sheet** = one per fragile unit; **seal sticker** for a bag; **tape** for a carton.
+- **10.5.4** **Missing data never blocks a pick.** If a line has no box size or weight, the category default fills in and the suggestion shows an *estimated* badge (grey, with the word, per §2.5).
+- **10.5.5** **Override in two taps.** The packer picks another pack type, then a reason from a fixed list: *tidak muat / kemasan rusak / stok kemasan habis / permintaan pelanggan*. No free text (§2.6). The pack scan records the pack actually used.
+- **10.5.6** **Tuning.** A weekly supervisor view shows overrides by pack type and by SKU. Frequent *tidak muat* on one SKU means its box data is wrong. Frequent overrides on one pack type mean its limits are wrong.
+- **10.5.7** **No change to the five messages (§12).** Packaging is internal to the WMS.
+- **10.5.8** **Later:** deduct packaging stock per site at the pack scan, so bags and cartons get a restock point like any SKU.
+
+**New data.**
+
+| Where | Field | Notes |
+|---|---|---|
+| `skus` | `box_l_mm`, `box_w_mm`, `box_h_mm`, `weight_g` | Retail box. Unit cube derives from them when present. From the Wardah product master. |
+| `skus` | `is_liquid_bottle`, `is_large_bottle`, `is_fragile` | Liquid in a bottle, leak risk (micellar, mist, shampoo, oil, remover). Large bottle is 150 ml or more. Fragile is mirror, pressed powder or glass. |
+| `packaging_types` (new, admin) | code, name ID/EN, kind (`bag` / `carton` / `insert`), inner L × W × H mm, usable fill, max load g, priority, active per site | Seeded with the table below |
+| `orders` | `pack_suggested`, `pack_count`, `inserts_json`, `pack_estimated`, `pack_used`, `pack_override_reason` | |
+
+**Seed values.** From the space model order simulation: 20,000 orders of 10–15 units from the Wardah range.
+
+| Pack | Inner size | Usable | Max load | Share of orders |
+|---|---|---|---|---|
+| Paper bag, kraft with handles | 200 × 100 × 300 mm | 3.8 L (top folded 60 mm, 80% fill) | 3,000 g **TBC by test** | ~87% |
+| Carton, single wall | 250 × 200 × 100 mm | 4.0 L (80% fill) | 5,000 g **TBC** | ~13% (2+ large bottles, or too big for the bag) |
+| Plastik klip (ziplock) | 200 × 300 mm | ~1.3 L | — | 0.83 per order |
+| Bubble sheet | 300 × 400 mm | — | — | one per cushion / powder |
+
+**Acceptance examples.**
+
+1. 12 lip + 1 micellar 100 ml → paper bag + 1 plastik klip + seal sticker.
+2. 10 lip + 2 shampoo 170 ml → carton + 1 plastik klip + tape.
+3. 13 units including 2 cushions → paper bag + 2 bubble sheets.
+4. A new SKU with no box size → suggestion shown with the *estimated* badge; pick proceeds.
+5. The packer overrides bag → carton with *tidak muat* → logged against the order and each SKU in it.
 
 ---
 
@@ -431,6 +475,7 @@ As of 11 September 2026. "Verified" means driven against the live database this 
 | Camera scanning, scan buffer, photo upload | — | — | Decided, not built |
 | KPIs, network view, pagination | — | — | Decided, not built |
 | WhatsApp simulator and adapter | — | — | Decided, not built |
+| Packaging suggestion (§10.5) | — | — | **Proposed**, spec for review; needs Wardah box sizes and weights |
 
 **Only 2 of 38 designed screens are wired to live data.** The design v3 drop overwrote the wiring on the rest. The backend behind them is intact; restoring the screens is the first item in §19.
 
@@ -446,6 +491,10 @@ As of 11 September 2026. "Verified" means driven against the live database this 
 - **Q6** — **For the POS sync, when it resumes:** how the POS applies an absolute stock level without re-deducting orders the WMS has already picked. Deferred with the POS conversation.
 - **Q7** — **Exceptions still undesigned:** damaged or written-off stock, customer returns, and units found after being written off by a short pick.
 - **Q8** — Who reviews the **Semgrep and Trivy findings** before go-live?
+- **Q9** — **Packaging (§10.5):**
+  - Does Grab have a Kilat bag and carton spec we must match?
+  - What load does our paper bag really take? Test with 2 shampoos and 12 lip.
+  - Will Wardah supply box sizes and weights per SKU?
 
 ---
 

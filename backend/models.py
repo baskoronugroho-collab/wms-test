@@ -343,12 +343,27 @@ class OrderLineIn(BaseModel):
 
 
 class OrderIn(BaseModel):
+    """Message 1. Every order enters through Hiryu, from any channel
+    (canonical design, docs/canonical/qc-oms-wms.html)."""
     external_ref: str
     site_code: str | None = None
     site_id: int | None = None
     brand_code: str | None = None
     lines: list[OrderLineIn]
     is_test: bool = False
+    channel: str = Field(default="grab", description="grab | whatsapp | web | instagram")
+    delivery_mode: str = Field(
+        default="grab_rider",
+        description="grab_rider | ninja_rider | third_party | next_day",
+    )
+    placed_at: str | None = Field(
+        default=None, description="When the customer placed it (ISO 8601). Own channels only."
+    )
+    promised_at: str | None = Field(
+        default=None,
+        description="Ready-by time. If absent: Grab = received + 15 min; "
+                    "own channels = placed + 60 min.",
+    )
 
 
 class OrderAccepted(BaseModel):
@@ -847,6 +862,8 @@ class ComposeOrderIn(BaseModel):
     site_id: int
     lines: list[ComposeOrderLineIn]
     external_ref: str | None = None
+    channel: str = "grab"
+    delivery_mode: str | None = None
 
 
 class TestOrderRow(BaseModel):
@@ -877,7 +894,14 @@ class PickQueueCard(BaseModel):
     created_at: str
     claimed_at: str | None = None
     completed_at: str | None = None
-    age_seconds: int = Field(description="Since the order arrived — the queue's key number")
+    age_seconds: int = Field(description="Since the order arrived")
+    channel: str = "grab"
+    delivery_mode: str = "grab_rider"
+    promised_at: str | None = None
+    remaining_seconds: int | None = Field(
+        default=None, description="Until promised_at; negative once late. The queue sorts on this."
+    )
+    urgency: str = Field(default="normal", description="normal | ageing | late, against the promise")
     held_seconds: int | None = Field(
         default=None, description="How long the current picker has held it"
     )

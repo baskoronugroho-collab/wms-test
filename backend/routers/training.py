@@ -9,6 +9,7 @@ own flag. Reset on a live station is impossible, not merely discouraged (M8.2.5)
 import json
 import random
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -342,10 +343,18 @@ async def compose_order(
         raise HTTPException(422, "Pilih minimal satu barang.")
 
     ref = body.external_ref or f"TEST-{uuid.uuid4().hex[:10].upper()}"
+    channel = body.channel if body.channel in ("grab", "whatsapp", "web", "instagram") else "grab"
+    mode = body.delivery_mode or ("grab_rider" if channel == "grab" else "ninja_rider")
+    # The simulator stands in for Hiryu: every order enters through Hiryu,
+    # whichever channel it came from (canonical design §1).
     return await outbound.receive_order(models.OrderIn(
         external_ref=ref,
         site_id=body.site_id,
         is_test=True,
+        channel=channel,
+        delivery_mode=mode,
+        placed_at=(None if channel == "grab"
+                   else datetime.now(timezone.utc).isoformat()),
         lines=[models.OrderLineIn(sku_id=l.sku_id, quantity=max(1, l.quantity))
                for l in body.lines],
     ))

@@ -1,0 +1,473 @@
+<title>QC Systems — Hiryu, WMS, TMS</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{
+  --bg:#f7f6f3; --card:#ffffff; --ink:#1f1d1c; --ink-2:#4a4644; --ink-3:#7a7572;
+  --line:#dcd7d1; --soft:#f0ede8; --accent:#c8102e; --accent-soft:#fbe9ec;
+  --wms:#1d6f8c; --wms-soft:#e4f1f5; --ok:#2f7d4f; --ok-soft:#e5f3ea; --warn:#a8650a; --warn-soft:#fbf0de;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#161514; --card:#1f1e1c; --ink:#ecebe8; --ink-2:#c3bfbb; --ink-3:#8f8a86;
+  --line:#3a3734; --soft:#282624; --accent:#ff5a6e; --accent-soft:#3a1f24;
+  --wms:#62b6d3; --wms-soft:#172c33; --ok:#6cc494; --ok-soft:#18291f; --warn:#e3a54a; --warn-soft:#33260f;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1240px;margin:0 auto;padding:40px 24px 80px;display:grid;grid-template-columns:190px minmax(0,1fr);gap:40px}
+nav{position:sticky;top:32px;align-self:start;font-size:14px}
+nav .lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+nav a{display:block;color:var(--ink-2);text-decoration:none;padding:6px 0 6px 12px;border-left:2px solid var(--line)}
+nav a:hover{color:var(--accent);border-left-color:var(--accent)}
+main{min-width:0}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+h1{font-size:34px;line-height:1.15;margin:10px 0 12px;letter-spacing:-.01em}
+.sub{color:var(--ink-2);font-size:18px;max-width:64ch;margin:0}
+.rule{margin-top:22px;padding:16px 20px;border-radius:14px;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--accent);font-size:18px;font-weight:600}
+section{margin-top:56px;scroll-margin-top:24px}
+h2{font-size:24px;margin:0 0 6px}
+h2 .n{color:var(--ink-3);font-weight:500;margin-right:8px}
+.lede{color:var(--ink-2);margin:0 0 18px;max-width:70ch}
+h3{font-size:17px;margin:26px 0 10px}
+p{max-width:72ch}
+figure{margin:0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px}
+.svgscroll{overflow-x:auto}
+figure svg{display:block;width:100%;height:auto;min-width:760px;color:var(--ink)}
+figcaption{font-size:14px;color:var(--ink-2);margin-top:10px;max-width:none}
+/* svg styling from the page */
+svg .bx{fill:var(--card);stroke:var(--line);stroke-width:1.5}
+svg .bx-soft{fill:var(--soft);stroke:var(--line);stroke-width:1.5}
+svg .grp-hiryu{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5}
+svg .grp-wms{fill:var(--wms-soft);stroke:var(--wms);stroke-width:2}
+svg .grp-tms{fill:var(--soft);stroke:currentColor;stroke-width:1.5;stroke-opacity:.55}
+svg .out{fill:none;stroke:currentColor;stroke-width:1.5;stroke-dasharray:6 5;stroke-opacity:.6}
+svg .ln{stroke:currentColor;stroke-width:1.6;fill:none}
+svg .ln-acc{stroke:var(--accent);stroke-width:2.2;fill:none}
+svg .ln-wms{stroke:var(--wms);stroke-width:2.2;fill:none}
+svg .ln-dash{stroke:currentColor;stroke-width:1.5;fill:none;stroke-dasharray:6 5;stroke-opacity:.7}
+svg .ah{fill:currentColor} svg .ah-acc{fill:var(--accent)} svg .ah-wms{fill:var(--wms)}
+svg text{fill:currentColor;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif}
+svg .t{font-size:14px;font-weight:600}
+svg .s{font-size:12px;fill:var(--ink-2)}
+svg .h{font-size:15px;font-weight:700;letter-spacing:.02em}
+svg .h-acc{fill:var(--accent)} svg .h-wms{fill:var(--wms)}
+svg .m{font-size:12px;font-weight:600}
+svg .m-acc{fill:var(--accent)} svg .m-wms{fill:var(--wms)}
+svg .lane{fill:var(--soft)} svg .lane2{fill:var(--card)}
+svg .lanelbl{font-size:13px;font-weight:700;fill:var(--ink-2)}
+svg .dot{fill:var(--accent)} svg .dotw{fill:var(--wms)} svg .dott{fill:var(--ink-2)}
+svg .dn{font-size:12px;font-weight:700;fill:#fff}
+svg .bad{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.5}
+svg .good{fill:var(--ok-soft);stroke:var(--ok);stroke-width:1.5}
+svg .bad-t{fill:var(--warn);font-size:12px;font-weight:700}
+svg .good-t{fill:var(--ok);font-size:12px;font-weight:700}
+/* tables */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600;background:var(--soft)}
+tr:last-child td{border-bottom:0}
+td.f{font-weight:600;white-space:nowrap}
+td.num{font-family:var(--mono);font-weight:700;text-align:right;white-space:nowrap}
+td.hl{color:var(--accent)}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.pill.h{background:var(--accent-soft);color:var(--accent)}
+.pill.w{background:var(--wms-soft);color:var(--wms)}
+.pill.t{background:var(--soft);color:var(--ink-2)}
+.pill.o{background:transparent;border:1px dashed var(--line);color:var(--ink-3)}
+.callout{border-left:4px solid var(--warn);background:var(--warn-soft);border-radius:0 12px 12px 0;padding:14px 18px;margin:18px 0}
+.callout b{color:var(--warn)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 22px}
+.card h4{margin:0 0 8px;font-size:16px}
+.card ul{margin:0;padding-left:18px;color:var(--ink-2)} .card li{margin:5px 0}
+.opt{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.opt .card{padding:14px 16px}
+.opt .k{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.opt .v{font-weight:700;margin:4px 0 6px}
+.opt p{margin:0;font-size:14px;color:var(--ink-2)}
+ol.steps{margin:0;padding-left:22px} ol.steps li{margin:6px 0}
+code{font-family:var(--mono);font-size:.9em;background:var(--soft);padding:1px 6px;border-radius:5px}
+footer{margin-top:48px;font-size:13px;color:var(--ink-3)}
+@media (max-width:900px){.wrap{grid-template-columns:1fr;gap:0} nav{display:none} .grid2,.opt{grid-template-columns:1fr} h1{font-size:27px}}
+@media print{nav{display:none}.wrap{grid-template-columns:1fr}section,figure{break-inside:avoid}}
+</style>
+
+<div class="wrap">
+<nav>
+  <div class="lbl">Contents</div>
+  <a href="#map">1 · System map</a>
+  <a href="#owns">2 · Who owns what</a>
+  <a href="#stock">3 · Stock</a>
+  <a href="#messages">4 · The five messages</a>
+  <a href="#order">5 · One order, end to end</a>
+  <a href="#routing">6 · Routing &amp; last mile</a>
+  <a href="#changes">7 · What changes</a>
+  <a href="#open">8 · Open &amp; next</a>
+</nav>
+
+<main>
+<header>
+  <div class="eyebrow">Dark-store quick commerce · Systems design</div>
+  <h1>Hiryu, the WMS and the TMS — who does what</h1>
+  <p class="sub">The target design for the build and business teams. It fixes the boundary between orders, the warehouse floor and delivery, so each job is built once, in one place.</p>
+  <div class="rule">Every order enters through Hiryu. Only Hiryu talks to the WMS. Only the WMS counts the shelf.</div>
+</header>
+
+<!-- ============ 1. SYSTEM MAP ============ -->
+<section id="map" style="margin-top:40px">
+  <h2><span class="n">1</span>System map</h2>
+  <p class="lede">Channels on the left, the warehouse on the right, delivery below. Hiryu sits in the middle and is the only thing touching both sides.</p>
+  <figure>
+    <div class="svgscroll">
+    <svg viewBox="0 0 1080 590" role="img" aria-label="System map: four sales channels connect through per-platform connectors into Hiryu, the order system. Hiryu alone exchanges five messages with the WMS, which holds the only physical stock count. Hiryu chooses a last-mile option carried out by the TMS. Restocking feeds the WMS from outside.">
+      <defs>
+        <marker id="m1a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="m1h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-acc" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="m1w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-wms" d="M0,0 L10,5 L0,10 z"/></marker>
+      </defs>
+
+      <!-- column headers -->
+      <text class="s" x="96" y="18" text-anchor="middle">SALES CHANNELS</text>
+      <text class="s" x="213" y="18" text-anchor="middle">orders in</text>
+      <text class="s" x="213" y="32" text-anchor="middle">stock out</text>
+
+      <!-- channels -->
+      <rect class="bx" x="16" y="78" width="160" height="54" rx="10"/>
+      <text class="t" x="96" y="102" text-anchor="middle">Grab</text><text class="s" x="96" y="120" text-anchor="middle">GrabMart / Kilat</text>
+      <rect class="bx" x="16" y="158" width="160" height="54" rx="10"/>
+      <text class="t" x="96" y="182" text-anchor="middle">WhatsApp</text><text class="s" x="96" y="200" text-anchor="middle">QC-as-a-service, first</text>
+      <rect class="bx" x="16" y="238" width="160" height="54" rx="10"/>
+      <text class="t" x="96" y="262" text-anchor="middle">Brand site · IG</text><text class="s" x="96" y="280" text-anchor="middle">QC-as-a-service, later</text>
+      <rect class="out" x="16" y="318" width="160" height="54" rx="10"/>
+      <text class="t" x="96" y="342" text-anchor="middle">Next platform</text><text class="s" x="96" y="360" text-anchor="middle">same pattern</text>
+
+
+      <!-- HIRYU group -->
+      <rect class="grp-hiryu" x="236" y="42" width="360" height="352" rx="16"/>
+      <text class="h h-acc" x="252" y="66">HIRYU — OMS</text>
+      <text class="s" x="580" y="66" text-anchor="end">the single front door</text>
+      <!-- connectors column -->
+      <rect class="bx" x="252" y="80" width="104" height="50" rx="8"/><text class="m" x="304" y="101" text-anchor="middle">Grab</text><text class="s" x="304" y="118" text-anchor="middle">connector</text>
+      <rect class="bx" x="252" y="160" width="104" height="50" rx="8"/><text class="m" x="304" y="181" text-anchor="middle">WhatsApp</text><text class="s" x="304" y="198" text-anchor="middle">adapter</text>
+      <rect class="bx" x="252" y="240" width="104" height="50" rx="8"/><text class="m" x="304" y="261" text-anchor="middle">Web</text><text class="s" x="304" y="278" text-anchor="middle">connector</text>
+      <rect class="out" x="252" y="320" width="104" height="50" rx="8"/><text class="m" x="304" y="341" text-anchor="middle">Next</text><text class="s" x="304" y="358" text-anchor="middle">connector</text>
+      <!-- core column -->
+      <rect class="bx" x="370" y="80" width="212" height="50" rx="8"/><text class="t" x="476" y="101" text-anchor="middle">Orders + state</text><text class="s" x="476" y="118" text-anchor="middle">every channel, one queue</text>
+      <rect class="bx" x="370" y="160" width="212" height="50" rx="8"/><text class="t" x="476" y="181" text-anchor="middle">Listing map + split rule</text><text class="s" x="476" y="198" text-anchor="middle">sellable number per listing</text>
+      <rect class="bx" x="370" y="240" width="212" height="50" rx="8"/><text class="t" x="476" y="261" text-anchor="middle">Routing</text><text class="s" x="476" y="278" text-anchor="middle">which dark store fills it</text>
+      <rect class="bx" x="370" y="320" width="212" height="50" rx="8"/><text class="t" x="476" y="341" text-anchor="middle">Last-mile choice</text><text class="s" x="476" y="358" text-anchor="middle">one of four options</text>
+      <!-- channel <-> connector arrows (double-headed), drawn above the Hiryu fill -->
+      <line class="ln" x1="178" y1="105" x2="250" y2="105" marker-start="url(#m1a)" marker-end="url(#m1a)"/>
+      <line class="ln" x1="178" y1="185" x2="250" y2="185" marker-start="url(#m1a)" marker-end="url(#m1a)"/>
+      <line class="ln" x1="178" y1="265" x2="250" y2="265" marker-start="url(#m1a)" marker-end="url(#m1a)"/>
+      <line class="ln-dash" x1="178" y1="345" x2="250" y2="345" marker-start="url(#m1a)" marker-end="url(#m1a)"/>
+
+      <!-- WMS group -->
+      <rect class="grp-wms" x="756" y="42" width="308" height="352" rx="16"/>
+      <text class="h h-wms" x="772" y="66">WMS — PHYSICAL STOCK</text>
+      <rect class="bx" x="772" y="80" width="276" height="50" rx="8"/><text class="t" x="910" y="101" text-anchor="middle">Allocate · pick · pack</text><text class="s" x="910" y="118" text-anchor="middle">every unit scanned, no override</text>
+      <rect class="bx" x="772" y="160" width="276" height="50" rx="8"/><text class="t" x="910" y="181" text-anchor="middle">Stock ledger — the only counter</text><text class="s" x="910" y="198" text-anchor="middle">SKU × location × dark store × owner</text>
+      <rect class="bx" x="772" y="240" width="276" height="50" rx="8"/><text class="t" x="910" y="261" text-anchor="middle">Counts + adjustments</text><text class="s" x="910" y="278" text-anchor="middle">supervisor signs every change</text>
+      <rect class="bx" x="772" y="320" width="276" height="50" rx="8"/><text class="t" x="910" y="341" text-anchor="middle">Inbound + putaway</text><text class="s" x="910" y="358" text-anchor="middle">rack, overflow, day colour</text>
+
+      <!-- Hiryu <-> WMS messages -->
+      <line class="ln-acc" x1="598" y1="96" x2="754" y2="96" marker-end="url(#m1h)"/>
+      <text class="m m-acc" x="676" y="88" text-anchor="middle">① order to pick · ② cancel</text>
+      <line class="ln-wms" x1="754" y1="120" x2="598" y2="120" marker-end="url(#m1w)"/>
+      <text class="m m-wms" x="676" y="138" text-anchor="middle">④ ready · ⑤ short</text>
+      <line class="ln-wms" x1="754" y1="185" x2="598" y2="185" marker-end="url(#m1w)"/>
+      <text class="m m-wms" x="676" y="177" text-anchor="middle">③ available</text>
+      <text class="s" x="676" y="203" text-anchor="middle">on-hand − allocated</text>
+      <text class="s" x="676" y="218" text-anchor="middle">after every change</text>
+
+      <!-- Hiryu -> TMS -->
+      <line class="ln" x1="476" y1="372" x2="476" y2="438" marker-end="url(#m1a)"/>
+      <text class="s" x="486" y="414">book delivery</text>
+
+      <!-- TMS group -->
+      <rect class="grp-tms" x="236" y="440" width="360" height="136" rx="16"/>
+      <text class="h" x="252" y="464">TMS — LAST MILE</text>
+      <rect class="bx" x="252" y="476" width="164" height="40" rx="8"/><text class="m" x="334" y="501" text-anchor="middle">Grab rider</text>
+      <rect class="bx" x="420" y="476" width="164" height="40" rx="8"/><text class="m" x="502" y="501" text-anchor="middle">Ninja dedicated rider</text>
+      <rect class="bx" x="252" y="524" width="164" height="40" rx="8"/><text class="m" x="334" y="549" text-anchor="middle">On-demand third party</text>
+      <rect class="bx" x="420" y="524" width="164" height="40" rx="8"/><text class="m" x="502" y="549" text-anchor="middle">Next-day network</text>
+
+      <!-- TMS -> customer -->
+      <rect class="bx-soft" x="16" y="480" width="160" height="54" rx="10"/>
+      <text class="t" x="96" y="504" text-anchor="middle">Customer</text><text class="s" x="96" y="522" text-anchor="middle">receives the order</text>
+      <line class="ln" x1="234" y1="507" x2="178" y2="507" marker-end="url(#m1a)"/>
+      <text class="s" x="206" y="498" text-anchor="middle">delivers</text>
+
+
+      <!-- restocking, outside -->
+      <rect class="out" x="772" y="470" width="276" height="54" rx="10"/>
+      <text class="t" x="910" y="494" text-anchor="middle">Restocking — separate model</text><text class="s" x="910" y="512" text-anchor="middle">supplier → central warehouse → dark store</text>
+      <line class="ln-dash" x1="910" y1="468" x2="910" y2="374" marker-end="url(#m1a)"/>
+      <text class="s" x="920" y="428">stock arrives</text>
+      <text class="s" x="910" y="548" text-anchor="middle">outside this design — WMS job ends at putaway</text>
+    </svg>
+    </div>
+    <figcaption><b>Red</b> is Hiryu and the messages it sends; <b>blue</b> is the WMS and what it sends back. Dashed means outside this design or later. Channels never touch the WMS; the WMS never touches a platform. The rider collects from the dark-store counter after the WMS sends ④ ready. Grab assigns its own rider, so for Grab orders the TMS box is a pass-through.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 2. WHO OWNS WHAT ============ -->
+<section id="owns">
+  <h2><span class="n">2</span>Who owns what</h2>
+  <p class="lede">One job, one owner. If two boxes both think they own a job, the two numbers drift apart.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>System</th><th>Owns</th><th>Never does</th></tr></thead>
+    <tbody>
+      <tr><td class="f"><span class="pill h">Connectors</span></td><td>One per platform, inside Hiryu. Translate that platform to Hiryu and back. The WhatsApp adapter keeps conversation, cart, payment link and catalog mapping</td><td>Routing, stock decisions, booking delivery</td></tr>
+      <tr><td class="f"><span class="pill h">Hiryu — OMS</span></td><td>Orders from every channel and their state · listing map · split rule and each listing's sellable number · dark-store routing · last-mile choice · brands, stores, menus, bundles</td><td>Counting physical stock · anything on the floor</td></tr>
+      <tr><td class="f"><span class="pill w">WMS</span></td><td>Physical stock ledger by SKU × location × dark store × <b>owner</b> · inbound and putaway · allocation at intake · scan-verified pick and pack · counts and adjustments</td><td>Talking to any platform · deciding which channel sells what</td></tr>
+      <tr><td class="f"><span class="pill t">TMS</span></td><td>Carrying out the last mile Hiryu chose: book, hand over, track</td><td>Choosing the dark store · restocking</td></tr>
+      <tr><td class="f"><span class="pill o">Outside</span></td><td><b>Restocking</b> — a separate model; the WMS takes over at inbound. <b>Settlement and billing</b> — finance, recorded outside the system for now</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+  <h3>The stock owner travels with every unit</h3>
+  <p>All three dark-store models run through both systems, so the WMS ledger records who owns each unit, not only the brand. Brand and owner differ for Wardah.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Model</th><th>Example</th><th>Stock owner</th></tr></thead>
+    <tbody>
+      <tr><td class="f">1</td><td>Wardah</td><td>Grab</td></tr>
+      <tr><td class="f">2</td><td>Brand consignment</td><td>The brand</td></tr>
+      <tr><td class="f">3</td><td>Our frozen and chilled range</td><td>Ninja</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ 3. STOCK ============ -->
+<section id="stock">
+  <h2><span class="n">3</span>Stock: one counter, two numbers</h2>
+  <p class="lede">The WMS counts the shelf. Hiryu works out what each platform may sell from that count. Hiryu never keeps a count of its own.</p>
+  <figure>
+    <div class="svgscroll">
+    <svg viewBox="0 0 1040 250" role="img" aria-label="Before and after. Today Hiryu deducts on sale and the WMS deducts on pick, two counters for one shelf that drift apart. In the target design only the WMS counts; it sends one available number and Hiryu splits it across listings.">
+      <defs>
+        <marker id="m2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="m2w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah-wms" d="M0,0 L10,5 L0,10 z"/></marker>
+      </defs>
+      <!-- BEFORE -->
+      <text class="h" x="16" y="22">TODAY</text>
+      <rect class="bx-soft" x="16" y="40" width="120" height="50" rx="8"/><text class="t" x="76" y="70" text-anchor="middle">Grab order</text>
+      <rect class="bad" x="200" y="36" width="240" height="58" rx="8"/><text class="t" x="320" y="60" text-anchor="middle">Hiryu counter</text><text class="s" x="320" y="80" text-anchor="middle">−1 when the order completes</text>
+      <line class="ln" x1="138" y1="65" x2="198" y2="65" marker-end="url(#m2a)"/>
+      <rect class="bx-soft" x="16" y="132" width="120" height="50" rx="8"/><text class="t" x="76" y="162" text-anchor="middle">Picker</text>
+      <rect class="bad" x="200" y="128" width="240" height="58" rx="8"/><text class="t" x="320" y="152" text-anchor="middle">WMS counter</text><text class="s" x="320" y="172" text-anchor="middle">−1 on pick · −1 on damage</text>
+      <line class="ln" x1="138" y1="157" x2="198" y2="157" marker-end="url(#m2a)"/>
+      <text class="bad-t" x="320" y="118" text-anchor="middle">two counts of one shelf — nothing reconciles them</text>
+      <text class="s" x="228" y="220" text-anchor="middle">A damaged unit lowers the WMS count only.</text>
+      <text class="s" x="228" y="236" text-anchor="middle">Hiryu keeps selling it.</text>
+
+      <line x1="500" y1="20" x2="500" y2="236" stroke="currentColor" stroke-opacity=".2" stroke-width="1.5"/>
+
+      <!-- AFTER -->
+      <text class="h" x="536" y="22">TARGET</text>
+      <rect class="good" x="536" y="84" width="170" height="58" rx="8"/><text class="t" x="621" y="108" text-anchor="middle">WMS ledger</text><text class="s" x="621" y="128" text-anchor="middle">the only counter</text>
+      <line class="ln-wms" x1="708" y1="113" x2="776" y2="113" marker-end="url(#m2w)"/>
+      <text class="m m-wms" x="742" y="104" text-anchor="middle">③ available</text>
+      <rect class="bx" x="778" y="84" width="120" height="58" rx="8"/><text class="t" x="838" y="108" text-anchor="middle">Hiryu</text><text class="s" x="838" y="128" text-anchor="middle">splits, pushes</text>
+      <line class="ln" x1="900" y1="100" x2="930" y2="56" marker-end="url(#m2a)"/>
+      <line class="ln" x1="900" y1="113" x2="930" y2="113" marker-end="url(#m2a)"/>
+      <line class="ln" x1="900" y1="126" x2="930" y2="170" marker-end="url(#m2a)"/>
+      <rect class="bx" x="932" y="36" width="96" height="40" rx="8"/><text class="m" x="980" y="61" text-anchor="middle">Grab item</text>
+      <rect class="bx" x="932" y="93" width="96" height="40" rx="8"/><text class="m" x="980" y="118" text-anchor="middle">Grab bundle</text>
+      <rect class="bx" x="932" y="150" width="96" height="40" rx="8"/><text class="m" x="980" y="175" text-anchor="middle">WhatsApp</text>
+      <text class="good-t" x="782" y="220" text-anchor="middle">one count · every listing derived from it</text>
+    </svg>
+    </div>
+    <figcaption>The arrow that disappears is Hiryu's own deduction on sale. Damage, loss and count corrections all reach every listing as one lower number.</figcaption>
+  </figure>
+
+  <h3>How a sale moves the numbers — SKU A at dark store Z</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Time</th><th>What happens</th><th>WMS publishes</th><th>Hiryu holds itself</th><th>Pushed to Grab</th></tr></thead>
+    <tbody>
+      <tr><td class="f">10:00</td><td>Shelf holds 10, no open orders</td><td class="num">10</td><td class="num">0</td><td class="num">10</td></tr>
+      <tr><td class="f">10:02:00</td><td>Grab order for 2 reaches Hiryu, which passes it to the WMS</td><td class="num">10</td><td class="num hl">2 in transit</td><td class="num">8</td></tr>
+      <tr><td class="f">10:02:01</td><td>The WMS receives it and reserves the 2</td><td class="num hl">8</td><td class="num">0</td><td class="num">8</td></tr>
+      <tr><td class="f">10:05</td><td>Picker scans the 2 units</td><td class="num">8</td><td class="num">0</td><td class="num">8</td></tr>
+      <tr><td class="f">10:20</td><td>Count finds 7, not 8; supervisor signs</td><td class="num hl">7</td><td class="num">0</td><td class="num">7</td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin-top:12px">Hiryu never deducts a completed sale — the WMS number already includes it. The only thing Hiryu subtracts itself is orders in transit, normally for about a second. If the WMS is down, that hold grows and stops Hiryu selling from a stale number.</p>
+
+  <h3>How Hiryu fans one number out to many listings</h3>
+  <ol class="steps">
+    <li>Take the WMS's <b>available</b> for that SKU at that dark store.</li>
+    <li>Subtract orders in transit.</li>
+    <li>Apply the <b>split rule</b>. Our own channels read the full number live at checkout. Grab gets it pushed, minus a buffer when stock is low.</li>
+    <li>For <b>bundles</b>, divide by the quantity in "Sold as" and round down. A bundle of 4 shows ⌊available ÷ 4⌋.</li>
+    <li>Push only the listings whose number changed — absolute numbers, through a retrying queue.</li>
+  </ol>
+  <div class="tablewrap" style="margin-top:14px"><table>
+    <thead><tr><th>Event</th><th>Available</th><th>Grab single</th><th>Grab bundle of 4</th><th>WhatsApp</th></tr></thead>
+    <tbody>
+      <tr><td>Start</td><td class="num">10</td><td class="num">10</td><td class="num">2</td><td class="num">10</td></tr>
+      <tr><td>WhatsApp order for 3</td><td class="num">7</td><td class="num hl">7</td><td class="num hl">1</td><td class="num">7</td></tr>
+      <tr><td>Grab order for 1 bundle (4 units)</td><td class="num">3</td><td class="num hl">3</td><td class="num hl">0</td><td class="num">3</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><b>Why the buffer is on Grab only.</b> Every order passes through Hiryu, so two orders for the last unit are handled one at a time and the second fails at intake. On our own channels that means "sold out" at checkout. On Grab the customer has already paid, so it means a cancellation, which hurts the store's rating — and the Malaysia contract lets Grab deactivate a station on 7 days' notice. The buffer is set per SKU, defaults to zero, and turns on below a threshold.</div>
+</section>
+
+<!-- ============ 4. MESSAGES ============ -->
+<section id="messages">
+  <h2><span class="n">4</span>Hiryu ↔ WMS: the five messages</h2>
+  <p class="lede">Baskoro's contract, with one change: the stock message now carries available stock after every change.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>#</th><th>Message</th><th>Direction</th><th>Fires when</th><th>Change from the PRD</th></tr></thead>
+    <tbody>
+      <tr><td class="f">1</td><td>Order to pick</td><td><span class="pill h">Hiryu → WMS</span></td><td>An order from any channel is accepted</td><td>Sender is always Hiryu</td></tr>
+      <tr><td class="f">2</td><td>Order cancelled</td><td><span class="pill h">Hiryu → WMS</span></td><td>Customer or platform cancels</td><td>—</td></tr>
+      <tr><td class="f">3</td><td>Stock level</td><td><span class="pill w">WMS → Hiryu</span></td><td><b>Every</b> change: receipt, allocation, pick, return, signed count, short pick</td><td><b>Carries available = on-hand − allocated.</b> The PRD's "never sent for a sale" rule goes</td></tr>
+      <tr><td class="f">4</td><td>Order ready</td><td><span class="pill w">WMS → Hiryu</span></td><td>Pack scan</td><td>—</td></tr>
+      <tr><td class="f">5</td><td>Order short</td><td><span class="pill w">WMS → Hiryu</span></td><td>Picker declares a shortfall</td><td>Hiryu decides refund, partial or substitute</td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin-top:12px;color:var(--ink-2)">PRD rules that stand: absolute quantities, idempotent messages, a durable outbox, order events ahead of stock syncs, training sites send nothing.</p>
+</section>
+
+<!-- ============ 5. ONE ORDER ============ -->
+<section id="order">
+  <h2><span class="n">5</span>One order, end to end</h2>
+  <p class="lede">A WhatsApp order, because it touches every box. A Grab order skips routing and delivery booking — see the table below.</p>
+  <figure>
+    <div class="svgscroll">
+    <svg viewBox="0 0 1060 380" role="img" aria-label="Swimlane of a WhatsApp order across four lanes: customer and adapter, Hiryu, WMS, TMS. The customer pays; Hiryu routes and passes the order to the WMS; the WMS allocates and Hiryu lowers Grab's number; the WMS picks and packs; Hiryu chooses a Ninja rider; the TMS books and delivers; Hiryu tells the customer.">
+      <defs>
+        <marker id="m3a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+      </defs>
+      <!-- lanes -->
+      <rect class="lane" x="0" y="0" width="1060" height="88"/>
+      <rect class="lane2" x="0" y="88" width="1060" height="100"/>
+      <rect class="lane" x="0" y="188" width="1060" height="100"/>
+      <rect class="lane2" x="0" y="288" width="1060" height="92"/>
+      <text class="lanelbl" x="12" y="40">Customer</text><text class="lanelbl" x="12" y="58">+ adapter</text>
+      <text class="lanelbl" x="12" y="142" style="fill:var(--accent)">Hiryu</text>
+      <text class="lanelbl" x="12" y="242" style="fill:var(--wms)">WMS</text>
+      <text class="lanelbl" x="12" y="338">TMS</text>
+      <!-- step boxes -->
+      <rect class="bx" x="100" y="20" width="130" height="50" rx="8"/><text class="m" x="165" y="41" text-anchor="middle">Orders, pays</text><text class="s" x="165" y="58" text-anchor="middle">payment link</text>
+      <rect class="bx" x="200" y="112" width="150" height="54" rx="8"/><text class="m" x="275" y="134" text-anchor="middle">Check stock, route</text><text class="s" x="275" y="152" text-anchor="middle">nearest, whole order</text>
+      <rect class="bx" x="330" y="212" width="150" height="54" rx="8"/><text class="m" x="405" y="234" text-anchor="middle">① → allocate</text><text class="s" x="405" y="252" text-anchor="middle">③ available drops</text>
+      <rect class="bx" x="460" y="112" width="150" height="54" rx="8"/><text class="m" x="535" y="134" text-anchor="middle">Push lower number</text><text class="s" x="535" y="152" text-anchor="middle">to Grab, same second</text>
+      <rect class="bx" x="590" y="212" width="150" height="54" rx="8"/><text class="m" x="665" y="234" text-anchor="middle">Pick + pack scan</text><text class="s" x="665" y="252" text-anchor="middle">→ ④ ready</text>
+      <rect class="bx" x="720" y="112" width="150" height="54" rx="8"/><text class="m" x="795" y="134" text-anchor="middle">Choose last mile</text><text class="s" x="795" y="152" text-anchor="middle">Ninja rider, ≤ 7 km</text>
+      <rect class="bx" x="820" y="306" width="140" height="54" rx="8"/><text class="m" x="890" y="328" text-anchor="middle">Book, collect</text><text class="s" x="890" y="346" text-anchor="middle">deliver ≤ 1 hour</text>
+      <rect class="bx" x="900" y="20" width="140" height="50" rx="8"/><text class="m" x="970" y="41" text-anchor="middle">Told: on its way</text><text class="s" x="970" y="58" text-anchor="middle">via adapter</text>
+      <!-- arrows -->
+      <path class="ln" d="M 165 72 L 165 139 L 198 139" marker-end="url(#m3a)"/>
+      <path class="ln" d="M 350 139 L 405 139 L 405 210" marker-end="url(#m3a)"/>
+      <path class="ln" d="M 480 239 L 535 239 L 535 168" marker-end="url(#m3a)"/>
+      <path class="ln" d="M 610 139 L 665 139 L 665 210" marker-end="url(#m3a)"/>
+      <path class="ln" d="M 740 239 L 795 239 L 795 168" marker-end="url(#m3a)"/>
+      <path class="ln" d="M 870 139 L 890 139 L 890 304" marker-end="url(#m3a)"/>
+      <path class="ln" d="M 870 126 L 970 126 L 970 72" marker-end="url(#m3a)"/>
+      <!-- numbered dots -->
+      <circle class="dott" cx="100" cy="20" r="11"/><text class="dn" x="100" y="24" text-anchor="middle">1</text>
+      <circle class="dot" cx="200" cy="112" r="11"/><text class="dn" x="200" y="116" text-anchor="middle">2</text>
+      <circle class="dotw" cx="330" cy="212" r="11"/><text class="dn" x="330" y="216" text-anchor="middle">3</text>
+      <circle class="dot" cx="460" cy="112" r="11"/><text class="dn" x="460" y="116" text-anchor="middle">4</text>
+      <circle class="dotw" cx="590" cy="212" r="11"/><text class="dn" x="590" y="216" text-anchor="middle">5</text>
+      <circle class="dot" cx="720" cy="112" r="11"/><text class="dn" x="720" y="116" text-anchor="middle">6</text>
+      <circle class="dott" cx="820" cy="306" r="11"/><text class="dn" x="820" y="310" text-anchor="middle">7</text>
+      <circle class="dott" cx="900" cy="20" r="11"/><text class="dn" x="900" y="24" text-anchor="middle">8</text>
+    </svg>
+    </div>
+    <figcaption>Hiryu decides (red), the WMS acts on the floor (blue), the TMS carries it out. The order crosses into the WMS only at step 3 and comes back only at step 5. Step 4 is how a WhatsApp sale reaches Grab's shelf count.</figcaption>
+  </figure>
+
+  <h3>Grab order vs own-channel order</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th></th><th>Grab</th><th>Own channel — WhatsApp, website</th></tr></thead>
+    <tbody>
+      <tr><td class="f">Enters</td><td>Grab → Grab connector → Hiryu</td><td>Customer pays → adapter → Hiryu</td></tr>
+      <tr><td class="f">Dark store</td><td>Fixed by the listing</td><td>Hiryu routes</td></tr>
+      <tr><td class="f">Stock check</td><td>Grab showed the pushed number</td><td>Live at checkout</td></tr>
+      <tr><td class="f">To the WMS</td><td colspan="2">Message 1, identical for both</td></tr>
+      <tr><td class="f">Last mile</td><td>Grab rider — Grab assigns</td><td>Hiryu chooses, TMS books</td></tr>
+      <tr><td class="f">Promise</td><td>15 min from reaching Hiryu</td><td>1 hour from order placed</td></tr>
+      <tr><td class="f">Short pick</td><td>Hiryu applies Grab's rules</td><td>Hiryu asks the customer: send what we have, or refund</td></tr>
+      <tr><td class="f">Cancel</td><td colspan="2">Message 2 → the WMS releases the stock; picked units go to return-to-shelf</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ 6. ROUTING & LAST MILE ============ -->
+<section id="routing">
+  <h2><span class="n">6</span>Routing and the last mile</h2>
+  <div class="grid2">
+    <div class="card">
+      <h4>Which dark store — own channels only</h4>
+      <ul>
+        <li><b>Nearest dark store that can fill the whole order</b> within the promise.</li>
+        <li><b>No split orders.</b> Two riders on one small basket costs more than it earns.</li>
+        <li>If none can fill it whole, offer what's in stock, or next-day.</li>
+        <li>Grab orders arrive already routed — Grab shows customers the stores near them.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Which last mile — proposed defaults, to confirm</h4>
+      <ul>
+        <li>Grab channel → <b>Grab rider</b>. Grab decides, not us.</li>
+        <li>Inside ~7 km, riders free, promise reachable → <b>Ninja dedicated rider</b>.</li>
+        <li>Riders full, or outside their radius → <b>on-demand third party</b>.</li>
+        <li>Customer accepts slower, or no dark store reaches them → <b>next-day</b>.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="opt" style="margin-top:14px">
+    <div class="card"><div class="k">Option 1</div><div class="v">Grab rider</div><p>Grab orders only. Assigned by Grab before the order reaches us.</p></div>
+    <div class="card"><div class="k">Option 2</div><div class="v">Ninja dedicated rider</div><p>The fixed-wage same-day fleet, ~50% utilised today.</p></div>
+    <div class="card"><div class="k">Option 3</div><div class="v">On-demand third party</div><p>GrabExpress, Lalamove — overflow and out-of-radius.</p></div>
+    <div class="card"><div class="k">Option 4</div><div class="v">Next-day network</div><p>The regular network, when speed isn't needed or can't be met.</p></div>
+  </div>
+</section>
+
+<!-- ============ 7. WHAT CHANGES ============ -->
+<section id="changes">
+  <h2><span class="n">7</span>What changes</h2>
+  <div class="grid2">
+    <div class="card">
+      <h4>In Hiryu</h4>
+      <ul>
+        <li><b>Stops keeping its own stock count.</b> "Stock on hand" becomes a derived sellable number per listing.</li>
+        <li><b>Gains:</b> orders from non-Grab channels, dark-store routing, the split rule, the last-mile choice, one connector per platform.</li>
+        <li><b>Keeps:</b> brands, stores (brand × dark store listings), menus, bundles, the Grab integration.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>In Baskoro's WMS PRD — to agree with him</h4>
+      <ul>
+        <li><b>§13 / §13.2:</b> the adapter sends orders into Hiryu; routing moves to Hiryu, rider booking to the TMS. His direct route stays as a phase-1 shortcut with a date to fold it in.</li>
+        <li><b>§2.2 and §12.2.6:</b> the POS stops deducting sales; message 3 carries available after every change. <b>Closes his Q6.</b></li>
+        <li><b>Ledger:</b> add the stock owner on every unit.</li>
+      </ul>
+    </div>
+  </div>
+  <p style="margin-top:14px;color:var(--ink-2)">The Malaysia barcode PRD puts racking codes, barcodes and quantities inside the POS. Under this design those belong to the WMS: its feature ideas feed the merge, its placement doesn't.</p>
+</section>
+
+<!-- ============ 8. OPEN ============ -->
+<section id="open">
+  <h2><span class="n">8</span>Open, and next</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Item</th><th>Why it matters</th><th>Who</th></tr></thead>
+    <tbody>
+      <tr><td class="f">Feature and screen list</td><td>Merge Baskoro's PRD with the Malaysia PRD into one list of WMS features and screens — <b>next step</b></td><td>CW</td></tr>
+      <tr><td class="f">Grab stock behaviour</td><td>Does Grab lower its displayed stock as soon as an order is placed? Decides how much the buffer matters</td><td>Sean</td></tr>
+      <tr><td class="f">Rider dispatch tool</td><td>The same-day fleet runs on OPG's daily routing, which isn't instant dispatch for 1-hour orders</td><td>Dhinesh</td></tr>
+      <tr><td class="f">Grab buffer thresholds</td><td>Per SKU; the setting exists, the numbers don't</td><td>—</td></tr>
+      <tr><td class="f">Adapter fold-in date</td><td>When the WhatsApp route moves behind Hiryu</td><td>Baskoro · Sean</td></tr>
+      <tr><td class="f">Split orders</td><td>Ruled out for now. Revisit if sold-out shades lose too many sales across 118 near-identical SKUs</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer>Canonical: <code>docs/canonical/qc-oms-wms.md</code> · Sources: Baskoro's WMS PRD v2.0 (11 Sep), Malaysia barcode PRD, Hiryu screens, owner design interview 11 Sep 2026 · Ninja Van Indonesia — internal</footer>
+</main>
+</div>

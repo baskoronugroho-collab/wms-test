@@ -38,7 +38,7 @@
         ],
         "summary": "The browser's heartbeat",
         "description": "The browser's heartbeat.\n\nSame answer as /health, reachable through the ingress. Once a frontend/ is\nshipped the ingress routes everything except /api to nginx, so a browser\nasking for /health gets index.html back with a cheerful 200 — which would\nmake the connection indicator claim the app is up while the backend or the\ndatabase is down. The station app is online-only and blocks work loudly on a\ndropped connection, so that heartbeat has to reach the backend.\n\nHEAD is declared explicitly. Plain Starlette adds HEAD to any GET route, but\nFastAPI's APIRoute does not — and the frontend's heartbeat sends HEAD, so\nwithout this it collects a 405 every 20 s and reports the app as offline\nforever.",
-        "operationId": "api_health_api_health_get",
+        "operationId": "api_health_api_health_head",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -58,7 +58,7 @@
         ],
         "summary": "The browser's heartbeat",
         "description": "The browser's heartbeat.\n\nSame answer as /health, reachable through the ingress. Once a frontend/ is\nshipped the ingress routes everything except /api to nginx, so a browser\nasking for /health gets index.html back with a cheerful 200 — which would\nmake the connection indicator claim the app is up while the backend or the\ndatabase is down. The station app is online-only and blocks work loudly on a\ndropped connection, so that heartbeat has to reach the backend.\n\nHEAD is declared explicitly. Plain Starlette adds HEAD to any GET route, but\nFastAPI's APIRoute does not — and the frontend's heartbeat sends HEAD, so\nwithout this it collects a 405 every 20 s and reports the app as offline\nforever.",
-        "operationId": "api_health_api_health_get",
+        "operationId": "api_health_api_health_head",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1895,18 +1895,52 @@
         "tags": [
           "outbound"
         ],
-        "summary": "The POS creates an order here",
-        "description": "The POS creates an order here. The dummy generator uses the same endpoint,\nso switching to live Hiryu is configuration rather than a rewrite (§9.3).\n\nDeliberately unauthenticated at the user level — this is a machine-to-machine\ncall. Once §9.1 is settled it is gated by POS_SHARED_SECRET.",
-        "operationId": "receive_order_api_pos_orders_post",
+        "summary": "Message 1 over HTTP: Hiryu hands the WMS an order to pick",
+        "description": "Message 1 over HTTP: Hiryu hands the WMS an order to pick.",
+        "operationId": "receive_order_http_api_pos_orders_post",
+        "parameters": [
+          {
+            "name": "x-hiryu-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Hiryu-Key"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/OrderIn"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -6283,6 +6317,22 @@
               }
             ],
             "title": "External Ref"
+          },
+          "channel": {
+            "type": "string",
+            "title": "Channel",
+            "default": "grab"
+          },
+          "delivery_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Mode"
           }
         },
         "type": "object",
@@ -7442,6 +7492,42 @@
             "type": "boolean",
             "title": "Is Test",
             "default": false
+          },
+          "channel": {
+            "type": "string",
+            "title": "Channel",
+            "description": "grab | whatsapp | web | instagram",
+            "default": "grab"
+          },
+          "delivery_mode": {
+            "type": "string",
+            "title": "Delivery Mode",
+            "description": "grab_rider | ninja_rider | third_party | next_day",
+            "default": "grab_rider"
+          },
+          "placed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Placed At",
+            "description": "When the customer placed it (ISO 8601). Own channels only."
+          },
+          "promised_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Promised At",
+            "description": "Ready-by time. If absent: Grab = received + 15 min; own channels = placed + 60 min."
           }
         },
         "type": "object",
@@ -7449,7 +7535,8 @@
           "external_ref",
           "lines"
         ],
-        "title": "OrderIn"
+        "title": "OrderIn",
+        "description": "Message 1. Every order enters through Hiryu, from any channel\n(canonical design, docs/canonical/qc-oms-wms.html)."
       },
       "OrderLineIn": {
         "properties": {
@@ -7890,7 +7977,46 @@
           "age_seconds": {
             "type": "integer",
             "title": "Age Seconds",
-            "description": "Since the order arrived — the queue's key number"
+            "description": "Since the order arrived"
+          },
+          "channel": {
+            "type": "string",
+            "title": "Channel",
+            "default": "grab"
+          },
+          "delivery_mode": {
+            "type": "string",
+            "title": "Delivery Mode",
+            "default": "grab_rider"
+          },
+          "promised_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Promised At"
+          },
+          "remaining_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remaining Seconds",
+            "description": "Until promised_at; negative once late. The queue sorts on this."
+          },
+          "urgency": {
+            "type": "string",
+            "title": "Urgency",
+            "description": "normal | ageing | late, against the promise",
+            "default": "normal"
           },
           "held_seconds": {
             "anyOf": [

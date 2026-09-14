@@ -60,6 +60,8 @@ async def apply(
     if qty_delta == 0:
         raise ValueError("A movement with no quantity is not a movement")
 
+    owner = await stock_owner(cur, site_id=site_id, sku_id=sku_id)
+
     if location_id is not None:
         existing = await db.one(
             cur,
@@ -77,9 +79,9 @@ async def apply(
             await db.run(
                 cur,
                 "INSERT INTO inventory_balances "
-                "(site_id, sku_id, location_id, qty_on_hand, version, stocked_since) "
-                "VALUES (%s, %s, %s, %s, 1, NOW())",
-                (site_id, sku_id, location_id, qty_delta),
+                "(site_id, sku_id, location_id, qty_on_hand, version, stocked_since, "
+                " stock_owner) VALUES (%s, %s, %s, %s, 1, NOW(), %s)",
+                (site_id, sku_id, location_id, qty_delta, owner),
             )
         else:
             new_qty = existing["qty_on_hand"] + qty_delta
@@ -104,9 +106,9 @@ async def apply(
             await db.run(
                 cur,
                 "UPDATE inventory_balances "
-                "SET qty_on_hand = %s, version = version + 1, " + since_sql + " "
-                "WHERE id = %s",
-                (new_qty, existing["id"]),
+                "SET qty_on_hand = %s, version = version + 1, " + since_sql + ", "
+                "stock_owner = COALESCE(stock_owner, %s) WHERE id = %s",
+                (new_qty, owner, existing["id"]),
             )
 
     movement_id = await db.run(
@@ -114,8 +116,8 @@ async def apply(
         "INSERT INTO stock_movements "
         "(site_id, sku_id, location_id, plate_id, qty_delta, movement_type, "
         " ref_type, ref_id, reason_code, actor_email, scan_source, is_training, "
-        " day_color_key) "
-        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+        " day_color_key, stock_owner) "
+        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
         (
             site_id, sku_id, location_id, plate_id, qty_delta, movement_type,
             ref_type, ref_id, reason_code, actor_email, scan_source,
@@ -124,6 +126,7 @@ async def apply(
             # stock IN: it is how the pick screen later names the oldest colour
             # sitting in a basket without tracking individual units.
             daycolor.for_moment()["key"] if qty_delta > 0 else None,
+            owner,
         ),
     )
 
@@ -156,6 +159,10 @@ async def allocate(
             "version = version + 1 WHERE id = %s",
             (take, row["id"]),
         )
+        # Available just dropped. Hiryu holds this order "in transit" only until
+        # this message lands, so it must go at allocation, not at pick
+        # (canonical design §3, the 10:02:01 row).
+        await enqueue_pos_push(cur, site_id=site_id, sku_id=sku_id, is_training=False)
     return take
 
 
@@ -172,6 +179,27 @@ async def release(
         "WHERE site_id = %s AND sku_id = %s AND location_id = %s",
         (qty, site_id, sku_id, location_id),
     )
+    # A release makes stock sellable again; every listing must see it.
+    await enqueue_pos_push(cur, site_id=site_id, sku_id=sku_id, is_training=False)
+
+
+async def stock_owner(cur, *, site_id: int, sku_id: int) -> str:
+    """Who owns the stock of this SKU at this site: grab | brand | ninja.
+
+    The canonical design keeps the owner on every unit because brand and owner
+    differ -- Wardah's stock belongs to Grab. A brand x site override wins over
+    the brand default, so one brand can run consignment at one store and a
+    purchased model at another.
+    """
+    row = await db.one(
+        cur,
+        "SELECT COALESCE(bs.stock_owner, b.default_stock_owner, 'brand') AS owner "
+        "FROM skus s JOIN brands b ON b.id = s.brand_id "
+        "LEFT JOIN brand_sites bs ON bs.brand_id = b.id AND bs.site_id = %s "
+        "WHERE s.id = %s",
+        (site_id, sku_id),
+    )
+    return row["owner"] if row else "brand"
 
 
 async def available_to_sell(cur, *, site_id: int, sku_id: int) -> int:
@@ -202,9 +230,12 @@ async def enqueue_pos_push(cur, *, site_id: int, sku_id: int, is_training: bool)
     # selling units sitting in Bekasi, so the filter lives here beside the
     # training suppression rather than at each of the dozen call sites that move
     # stock (PRD §5.6).
-    site = await db.one(cur, "SELECT site_type FROM sites WHERE id = %s", (site_id,))
+    site = await db.one(
+        cur, "SELECT site_type, is_training FROM sites WHERE id = %s", (site_id,)
+    )
     if site and site["site_type"] != "darkstore":
         return
+    is_training = is_training or bool(site and site["is_training"])
 
     avail = await available_to_sell(cur, site_id=site_id, sku_id=sku_id)
     status = "suppressed" if is_training else "pending"
