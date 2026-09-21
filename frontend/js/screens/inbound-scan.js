@@ -66,13 +66,29 @@
     }
 
     /* ---- reference / AWB ---- */
-    // A transfer is planned inbound and carries its own reference; the AWB
-    // field is only for a brand delivery that happens to have one.
+    // A transfer carries its own reference, and a receipt opened by AWB is tied
+    // to HQ's confirmed Surat Jalan: neither has anything to type. Only a brand
+    // delivery received without an AWB keeps a free-text note of its paperwork.
     const strip = $('.refstrip');
     const refInput = $('#refInput');
-    if (rc.source_type === 'from_hub_transfer') {
+    if (rc.replenishment_id) {
+      show(strip, false);
+      const sj = document.createElement('div');
+      sj.className = 'notice notice--action';
+      sj.innerHTML = '<span class="code code--sm" aria-hidden="true">SJ</span><div class="col" style="gap:4px">' +
+        '<span class="notice__title">' + esc(rc.replenishment_reference || '') + ' · AWB ' + esc(rc.external_reference || '') +
+        (rc.surat_jalan_no ? ' · SJ ' + esc(rc.surat_jalan_no) : '') + ' · Batch ' + (rc.batch_no || 1) + '</span>' +
+        '<span class="notice__body" ' + biAttr('Jumlah pembanding = yang belum diterima dari konfirmasi Wardah. Satu bin inbound = satu SKU: kalau bin habis, selesaikan batch ini lalu lanjutkan sisanya di batch berikutnya dengan AWB yang sama.',
+          "Expected = what is still to come from Wardah's confirmation. One inbound bin = one SKU: when the bins run out, finish this batch and receive the rest in the next batch with the same AWB.") +
+        '></span><span class="notice__body" data-field="batch-bins"></span></div>';
+      if (strip && strip.parentNode) strip.parentNode.insertBefore(sj, strip);
+      applyLangTo(sj);
+    } else if (rc.source_type === 'from_hub_transfer') {
       show(strip, false);
     } else if (refInput) {
+      bi($('.refstrip__label'), 'Catatan nomor kiriman (tanpa AWB dari HQ)', 'Delivery paperwork note (no AWB from HQ)');
+      bi($('.refstrip__hint'), 'Kiriman ini tidak ada di daftar HQ. Tulis nomor AWB atau Surat Jalan yang tertera supaya HQ bisa menelusurinya.',
+         "This delivery is not on HQ's list. Write the AWB or Surat Jalan number on the paperwork so HQ can trace it.");
       refInput.value = rc.external_reference || '';
       refInput.addEventListener('change', async () => {
         const val = refInput.value.trim().slice(0, 64);
@@ -91,7 +107,9 @@
     const planned = sum.lines.some(l => l.qty_expected != null);
     const expected = sum.lines.reduce((n, l) => n + (l.qty_expected || 0), 0);
     const targetFoot = $('#sessionTargetFoot');
-    if (planned) bi(targetFoot, 'dari ' + NJW.fmt.n(expected) + ' barang dikirim',
+    if (rc.replenishment_id) bi(targetFoot, 'dari ' + NJW.fmt.n(expected) + ' unit di Surat Jalan',
+                               'of ' + NJW.fmt.n(expected) + ' units on the Surat Jalan');
+    else if (planned) bi(targetFoot, 'dari ' + NJW.fmt.n(expected) + ' barang dikirim',
                                'of ' + NJW.fmt.n(expected) + ' items sent');
     else bi(targetFoot, 'barang discan sesi ini', 'items scanned this session');
     let total = sum.total_units;
@@ -150,6 +168,74 @@
       if (NJW.paintPhotos) NJW.paintPhotos();
     }
 
+    /* ---- live comparison with the Surat Jalan ---- */
+    // A receipt opened by AWB carries Wardah's confirmed quantity per SKU. The
+    // staffer sees, while scanning, what is still missing and what is extra —
+    // so a short carton is caught with the driver still there.
+    const compare = document.createElement('div');
+    compare.className = 'panel';
+    compare.style.cssText = 'padding:16px 20px;display:flex;flex-direction:column;gap:10px';
+    compare.hidden = !rc.replenishment_id;
+    const mainEl = $('.main');
+    if (mainEl) mainEl.appendChild(compare);
+
+    function paintBins(s) {
+      const el = field('batch-bins');
+      if (!el) return;
+      const used = s.lines.filter(l => l.qty_received > 0).length;
+      if (rc.inbound_bins) bi(el, 'Bin inbound terpakai: ' + used + ' dari ' + rc.inbound_bins + ' SKU',
+                                'Inbound bins used: ' + used + ' of ' + rc.inbound_bins + ' SKUs');
+      else bi(el, used + ' SKU di batch ini', used + ' SKUs in this batch');
+    }
+    function paintCompare(s) {
+      if (!rc.replenishment_id) return;
+      paintBins(s);
+      const lines = s.lines.map(l => Object.assign({}, l, {
+        left: (l.qty_expected || 0) - l.qty_received,
+      })).sort((a, b) => (b.left > 0) - (a.left > 0) || (a.left < 0) - (b.left < 0) || a.sku_name.localeCompare(b.sku_name));
+      const done = lines.filter(l => l.left === 0).length;
+      const extra = lines.filter(l => l.left < 0).length;
+      const cell = 'padding:8px 10px;border-bottom:1px solid var(--rule);font-size:17px';
+      const num = cell + ';text-align:right;font-family:var(--font-code);white-space:nowrap';
+      compare.innerHTML =
+        '<div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline">' +
+        '<span class="eyebrow" ' + biAttr('Dibandingkan dengan Surat Jalan', 'Compared with the Surat Jalan') + '></span>' +
+        '<span class="note" ' + biAttr(done + ' dari ' + lines.length + ' SKU cocok' + (extra ? ' · ' + extra + ' SKU lebih' : ''),
+          done + ' of ' + lines.length + ' SKUs match' + (extra ? ' · ' + extra + ' SKUs over' : '')) + '></span></div>' +
+        '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">' +
+        '<thead><tr><th style="' + cell + ';text-align:left;font-size:14px" ' + biAttr('Produk', 'Product') + '></th>' +
+        '<th style="' + num + ';font-size:14px" ' + ((rc.batch_no || 1) > 1 ? biAttr('Sisa AWB', 'Left on AWB') : biAttr('Wardah', 'Wardah')) + '></th>' +
+        '<th style="' + num + ';font-size:14px" ' + biAttr('Dipindai', 'Scanned') + '></th>' +
+        '<th style="' + num + ';font-size:14px" ' + biAttr('Status', 'Status') + '></th></tr></thead><tbody>' +
+        lines.map(l => {
+          const st = l.left > 0 ? ['var(--caution)', 'kurang ' + l.left, l.left + ' short']
+            : l.left < 0 ? ['var(--stop)', 'lebih ' + (-l.left), (-l.left) + ' over']
+            : ['var(--accept)', 'cocok', 'matches'];
+          return '<tr><td style="' + cell + '">' + esc(l.sku_name) + '</td>' +
+            '<td style="' + num + '">' + NJW.fmt.n(l.qty_expected || 0) + '</td>' +
+            '<td style="' + num + '">' + NJW.fmt.n(l.qty_received) + '</td>' +
+            '<td style="' + num + ';color:' + st[0] + ';font-weight:700" ' + biAttr(st[1], st[2]) + '></td></tr>';
+        }).join('') + '</tbody></table></div>';
+      applyLangTo(compare);
+    }
+    async function refreshCompare() {
+      if (!rc.replenishment_id) return;
+      try { paintCompare(await api.raw.get('/receipts/' + receiptId + '/summary')); } catch (e) { /* next scan retries */ }
+    }
+    paintCompare(sum);
+
+    /* ---- HQ's answers for products from this delivery ---- */
+    if (NJW.skuAnswers && banner) {
+      NJW.skuAnswers.mount(banner, {
+        receiptId: rc.id,
+        onPutAway: q => {
+          total += q.qty_put_away || 0;
+          setF('session-qty', NJW.fmt.n(total));
+          refreshCompare();
+        },
+      });
+    }
+
     /* ---- the scan loop ---- */
     const zoneEl = $('.scanzone');
     const zone = zoneEl && zoneEl.__zone;
@@ -168,6 +254,7 @@
         if (r.accepted) {
           total = r.session_total;
           setF('session-qty', NJW.fmt.n(total));
+          refreshCompare();
           paintProduct(r);
           if (r.outcome === 'overflow') {
             zone.accept(t('Rak utama penuh', 'Main rack full'),
@@ -183,6 +270,12 @@
             zone.accept(t('Diterima', 'Accepted'), t('Simpan di ', 'Put away at ') + r.location_code);
             result('accept', 'Diterima', 'Accepted', r.sku.name_display);
           }
+          return;
+        }
+        if (r.outcome === 'batch_full') {
+          zone.reject(t('Bin inbound penuh', 'Inbound bins full'), r.message);
+          result('caution', 'Bin inbound penuh — SKU ini masuk batch berikutnya',
+                 'Inbound bins full — this SKU goes in the next batch', r.sku ? r.sku.name_display : code);
           return;
         }
         if (r.outcome === 'no_slot') {
@@ -238,6 +331,7 @@
         const r = await api.raw.post('/receipts/' + receiptId + '/scan/undo', { idempotency_key: key() });
         total = r.session_total;
         setF('session-qty', NJW.fmt.n(total));
+        refreshCompare();
         result('caution', 'Dibatalkan — keluarkan barangnya dari keranjang',
                'Undone — take the item back out of the basket', r.qty + ' × ' + r.sku_name);
         if (zone) zone.rest();
@@ -250,18 +344,49 @@
     if (undo) undo.onclick = () => { chain = chain.then(doUndo); };
 
     const finish = $('#finishDeliveryBtn');
+    let closing = false;
+    // Against an AWB there are two ways to stop: this batch is done and more
+    // of the AWB follows, or everything is in and the whole AWB is compared.
+    if (finish && rc.replenishment_id) {
+      bi(finish, 'Semua barang AWB sudah diterima', 'Everything on the AWB is in');
+      const next = document.createElement('button');
+      next.type = 'button';
+      next.className = 'btn btn--outline btn--lg btn--grow';
+      bi(next, 'Selesai batch ini — sisanya batch berikutnya', 'Finish this batch — the rest comes next');
+      finish.parentNode.insertBefore(next, finish);
+      next.onclick = async () => {
+        if (closing) return;
+        await chain;
+        if (!total) return say(t('Belum ada barang dipindai.', 'Nothing has been scanned yet.'));
+        if (!confirm(t('Tutup batch ini? Sisa AWB diterima di batch berikutnya: mulai lagi dari AWB yang sama.',
+                       'Close this batch? The rest of the AWB is received in the next batch: start again from the same AWB.'))) return;
+        closing = true;
+        try {
+          await api.raw.post('/receipts/' + receiptId + '/complete', { final: false });
+          go('15-penerimaan-selesai.html');
+        } catch (err) { closing = false; fail(err); }
+      };
+    }
     if (finish) {
       finish.removeAttribute('href');
       finish.setAttribute('role', 'button');
-      let closing = false;
       finish.onclick = async (e) => {
         e.preventDefault();
         if (closing) return;
         await chain;
         if (!total) return say(t('Belum ada barang dipindai.', 'Nothing has been scanned yet.'));
+        if (rc.replenishment_id) {
+          try {
+            const s = await api.raw.get('/receipts/' + receiptId + '/summary');
+            const off = s.lines.filter(l => l.variance);
+            if (off.length && !confirm(t(
+              off.length + ' SKU tidak cocok dengan Surat Jalan. Sudah dicek ulang semua kardus? Kalau selesai, selisihnya dikirim ke SPV untuk dicek lalu ditandatangani Ops HQ.',
+              off.length + ' SKUs do not match the Surat Jalan. Have you rechecked every carton? If you finish, the variance goes to the SPV to check and Ops HQ to sign off.'))) return;
+          } catch (e) { /* the server still records the variance */ }
+        }
         closing = true;
         try {
-          await api.raw.post('/receipts/' + receiptId + '/complete', {});
+          await api.raw.post('/receipts/' + receiptId + '/complete', { final: true });
           go('15-penerimaan-selesai.html');
         } catch (err) { closing = false; fail(err); }
       };

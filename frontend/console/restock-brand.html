@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Restock ke brand — Ninja Kilat WMS</title>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#1B3A5C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="../assets/app/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../css/tokens.css?v=78a372d">
+<link rel="stylesheet" href="../css/app.css?v=78a372d">
+<link rel="stylesheet" href="../css/console.css?v=78a372d">
+</head>
+<body>
+<div class="console" data-screen="restock-brand">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <span class="sidebar__mark">NINJA</span>
+        <span class="sidebar__product">Kilat WMS</span>
+      </div>
+      <nav class="sidebar__section">
+        <a class="sidebar__link" href="index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2"/><path d="M5.6 9v11.4h12.8V9"/></svg></span><span class="sidebar__label" data-id="Ringkasan" data-en="Overview">Ringkasan</span></a>
+        <a class="sidebar__link" href="pengingat.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span><span class="sidebar__label" data-id="Pengingat &amp; flag" data-en="Reminders &amp; flags">Pengingat &amp; flag</span><span class="navbadge" data-field="flag-badge" hidden></span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk & keluar</span>
+        <a class="sidebar__link" href="barang-masuk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10.5"/><path d="M8.2 10.2 12 14l3.8-3.8"/><path d="M4 17.5v3h16v-3"/></svg></span><span class="sidebar__label" data-id="Barang masuk" data-en="Inbound">Barang masuk</span></a>
+        <a class="sidebar__link" href="pesanan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V10.5"/><path d="M8.2 14.3 12 10.5l3.8 3.8"/><path d="M4 6.5v-3h16v3"/></svg></span><span class="sidebar__label" data-id="Pesanan" data-en="Orders">Pesanan</span></a>
+        <a class="sidebar__link" href="papan-antrean.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="5" height="15" rx="1.2"/><rect x="9.5" y="4.5" width="5" height="11" rx="1.2"/><rect x="15.5" y="4.5" width="5" height="7" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Papan antrean" data-en="Queue board">Papan antrean</span></a>
+        <a class="sidebar__link" href="transfer.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5h13"/><path d="M13.5 5 17 8.5 13.5 12"/><path d="M20 15.5H7"/><path d="M10.5 12 7 15.5 10.5 19"/></svg></span><span class="sidebar__label" data-id="Transfer gudang" data-en="Transfers">Transfer gudang</span></a>
+        <a class="sidebar__link is-current" href="restock-brand.html" aria-current="page" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5h11v9h-11z"/><path d="M14.5 10.5h3.5l2.5 3v3h-6"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg></span><span class="sidebar__label" data-id="Restock ke brand" data-en="Restock from brand">Restock ke brand</span></a>
+        <a class="sidebar__link" href="selisih-restock.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/><path d="M17 14l4 4m0-4-4 4"/></svg></span><span class="sidebar__label" data-id="Selisih restock" data-en="Restock variances">Selisih restock</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Stok" data-en="Stock">Stok</span>
+        <a class="sidebar__link" href="stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="3.5" y="12.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="12.5" width="8" height="8" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Stok" data-en="Inventory">Stok</span></a>
+        <a class="sidebar__link" href="stok-perhatian.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 21 19.5H3z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="16.8" r=".9" fill="currentColor"/></svg></span><span class="sidebar__label" data-id="Stok perlu perhatian" data-en="Stock needs attention">Stok perlu perhatian</span></a>
+        <a class="sidebar__link" href="hitung-stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2l2.6 2.6 4.6-5.2"/></svg></span><span class="sidebar__label" data-id="Hitung stok" data-en="Stock count">Hitung stok</span></a>
+        <a class="sidebar__link" href="registry.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17"/><path d="M9 9.5v10"/><path d="M13.5 13h4"/></svg></span><span class="sidebar__label" data-id="Penempatan & batas" data-en="Slotting & thresholds">Penempatan & batas</span></a>
+        <a class="sidebar__link" href="rak.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="1"/><path d="M4 9.2h16M4 14.8h16"/><path d="M9.3 3.5v17M14.7 3.5v17"/></svg></span><span class="sidebar__label" data-id="Rak &amp; bin" data-en="Racks &amp; bins">Rak &amp; bin</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Ops HQ" data-en="Ops HQ">Ops HQ</span>
+        <a class="sidebar__link" href="peta-hub.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5-5.5 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg></span><span class="sidebar__label" data-id="Peta hub &amp; stok" data-en="Hub map &amp; stock">Peta hub &amp; stok</span></a>
+        <a class="sidebar__link" href="permintaan-sku.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><path d="M12 8.5v4"/><circle cx="12" cy="15.6" r=".9" fill="currentColor"/></svg></span><span class="sidebar__label" data-id="Permintaan SKU" data-en="SKU requests">Permintaan SKU</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
+        <a class="sidebar__link" href="slip-putaway.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h7.5L18 8v12.5H6z"/><path d="M13.2 3.7V8H18"/><path d="M8.8 12h6.4"/><path d="M8.8 15.5h4.4"/></svg></span><span class="sidebar__label" data-id="Slip putaway" data-en="Putaway slips">Slip putaway</span></a>
+        <a class="sidebar__link" href="label-warna-hari.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="7" height="6" rx="1"/><rect x="13.5" y="4.5" width="7" height="6" rx="1"/><rect x="3.5" y="13.5" width="7" height="6" rx="1"/><rect x="13.5" y="13.5" width="7" height="6" rx="1"/></svg></span><span class="sidebar__label" data-id="Label & warna hari" data-en="Labels & day colour">Label & warna hari</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
+        <a class="sidebar__link" href="hub.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
+        <a class="sidebar__link" href="staf.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
+        <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
+        <a class="sidebar__link" href="simulator-grab.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><span class="sidebar__label" data-id="Simulator Grab" data-en="Grab simulator">Simulator Grab</span></a>
+        <a class="sidebar__link" href="mode-latihan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5v17"/><path d="M6.5 4.5h11l-2.2 4.2 2.2 4.2h-11"/></svg></span><span class="sidebar__label" data-id="Mode latihan" data-en="Training mode">Mode latihan</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <span class="sidebar__site">
+          <span class="sidebar__label" data-id="Lokasi aktif" data-en="Active site">Lokasi aktif</span>
+          <strong data-field="site-code">UT5</strong>
+        </span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="lang" role="group" aria-label="Bahasa">
+            <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+            <button class="lang__opt" data-lang="en" type="button">EN</button>
+          </span>
+          <button class="cbtn cbtn--icon cbtn--ghost" data-action="toggle-theme" type="button" aria-label="Ganti tema">◐</button>
+        </div>
+        <a class="sidebar__link" href="../index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg></span><span class="sidebar__label" data-id="Buka aplikasi station" data-en="Open station app">Buka aplikasi station</span></a>
+      </div>
+    </aside>
+  <main class="page">
+    <header class="page__head">
+      <div class="page__heading">
+        <span class="page__eyebrow" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk & keluar</span>
+        <h1 class="page__title" data-id="Restock ke brand (Surat Jalan)" data-en="Restock from brand (Surat Jalan)">Restock ke brand (Surat Jalan)</h1>
+        <p class="page__sub" data-id="Peringatan muncul saat stok SKU di satu hub turun ke titik restock. Ops HQ atau SPV hub membuat permintaan, mengirimnya ke Wardah secara manual, lalu mencatat AWB, nomor Surat Jalan dan jumlah yang dikonfirmasi Wardah. Staf menerima barang dengan AWB itu, dan selisihnya langsung terlihat." data-en="An alert appears when a SKU at a hub falls to its restock point. Ops HQ or the hub's SPV builds a request, sends it to Wardah by hand, then records Wardah's AWB, Surat Jalan number and confirmed quantities. Staff receive the delivery by that AWB, and any shortfall shows at once.">Peringatan muncul saat stok SKU di satu hub turun ke titik restock. Ops HQ atau SPV hub membuat permintaan, mengirimnya ke Wardah secara manual, lalu mencatat AWB, nomor Surat Jalan dan jumlah yang dikonfirmasi Wardah. Staf menerima barang dengan AWB itu, dan selisihnya langsung terlihat.</p>
+      </div>
+      <div class="page__actions">
+        <button class="cbtn" type="button" data-action="new-manual"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-id="Buat manual" data-en="Create by hand">Buat manual</span></button>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="tabs" role="tablist" data-region="tabs">
+        <button class="tab is-on" type="button" role="tab" data-tab="alerts"><span data-id="Perlu restock" data-en="Needs restock">Perlu restock</span><span class="tab__n" data-field="n-alerts">0</span></button>
+        <button class="tab" type="button" role="tab" data-tab="draft"><span data-id="Draf" data-en="Draft">Draf</span><span class="tab__n" data-field="n-draft">0</span></button>
+        <button class="tab" type="button" role="tab" data-tab="sent"><span data-id="Dikirim ke brand" data-en="Sent to brand">Dikirim ke brand</span><span class="tab__n" data-field="n-sent">0</span></button>
+        <button class="tab" type="button" role="tab" data-tab="confirmed"><span data-id="Dalam perjalanan" data-en="On the way">Dalam perjalanan</span><span class="tab__n" data-field="n-confirmed">0</span></button>
+        <button class="tab" type="button" role="tab" data-tab="variance"><span data-id="Selisih" data-en="Variance">Selisih</span><span class="tab__n" data-field="n-variance">0</span></button>
+        <button class="tab" type="button" role="tab" data-tab="received"><span data-id="Selesai" data-en="Closed">Selesai</span></button>
+      </div>
+      <span class="toolbar__spacer"></span>
+      <select class="select" data-field="site-filter" style="width:auto" aria-label="Hub"><option value="" data-id="Semua hub" data-en="All hubs">Semua hub</option></select>
+    </div>
+
+    <section class="section" data-region="panel-alerts">
+      <div class="table-scroll">
+        <table class="dtable" id="tbl-alerts">
+          <thead><tr>
+            <th class="td-check"><input class="checkbox" type="checkbox" aria-label="Pilih semua" data-field="alerts-all"></th>
+            <th data-id="Hub" data-en="Hub">Hub</th>
+            <th data-id="Produk" data-en="Product">Produk</th>
+            <th class="td-num" data-id="Stok sekarang" data-en="Held now">Stok sekarang</th>
+            <th class="td-num" data-id="Titik restock" data-en="Restock point">Titik restock</th>
+            <th class="td-num" data-id="Minta" data-en="Ask for">Minta</th>
+            <th data-id="Sudah diminta" data-en="Already asked">Sudah diminta</th>
+          </tr></thead>
+          <tbody data-region="alert-rows"><tr><td colspan="7" class="note" data-id="Memuat…" data-en="Loading…">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="toolbar">
+        <span class="inline-note"><span data-id="Satu permintaan dibuat per hub dan brand dari baris yang dipilih." data-en="One request is created per hub and brand from the selected rows.">Satu permintaan dibuat per hub dan brand dari baris yang dipilih.</span></span>
+        <span class="toolbar__spacer"></span>
+        <button class="cbtn cbtn--primary" type="button" data-action="create-from-alerts" data-id="Buat permintaan dari pilihan" data-en="Create requests from selection">Buat permintaan dari pilihan</button>
+      </div>
+    </section>
+
+    <section class="section" data-region="panel-list" hidden>
+      <div class="table-scroll">
+        <table class="dtable dtable--rows-tall">
+          <thead><tr>
+            <th data-id="Referensi" data-en="Reference">Referensi</th>
+            <th data-id="Hub" data-en="Hub">Hub</th>
+            <th data-id="Brand" data-en="Brand">Brand</th>
+            <th class="td-num" data-id="Unit" data-en="Units">Unit</th>
+            <th data-id="AWB · Surat Jalan" data-en="AWB · Surat Jalan">AWB · Surat Jalan</th>
+            <th data-id="Terakhir" data-en="Last step">Terakhir</th>
+            <th class="td-actions"></th>
+          </tr></thead>
+          <tbody data-region="list-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="scrim"></div>
+
+<aside class="drawer" id="drawer-rep" aria-label="Permintaan restock" style="width:min(640px,100vw)">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-field="r-title">—</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <div data-region="r-steps" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    <dl class="deflist">
+      <dt data-id="Hub" data-en="Hub">Hub</dt><dd data-field="r-site">—</dd>
+      <dt data-id="Brand" data-en="Brand">Brand</dt><dd data-field="r-brand">—</dd>
+      <dt data-id="Dibuat" data-en="Created">Dibuat</dt><dd data-field="r-created">—</dd>
+    </dl>
+
+    <div class="field" data-region="r-confirm-fields">
+      <span class="field__label" data-id="Jawaban Wardah" data-en="Wardah's answer">Jawaban Wardah</span>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-3)">
+        <label class="field"><span class="field__label" data-id="AWB *" data-en="AWB *">AWB *</span><input class="input" type="text" maxlength="64" data-field="r-awb" autocomplete="off"></label>
+        <label class="field"><span class="field__label" data-id="No. Surat Jalan" data-en="Surat Jalan no.">No. Surat Jalan</span><input class="input" type="text" maxlength="64" data-field="r-sj" autocomplete="off"></label>
+        <label class="field"><span class="field__label" data-id="Perkiraan tiba" data-en="Expected">Perkiraan tiba</span><input class="input" type="date" data-field="r-eta"></label>
+      </div>
+      <span class="field__hint" data-id="Staf mengetik atau memindai AWB ini saat barang datang; jumlah yang dikonfirmasi jadi patokan hitungannya." data-en="Staff type or scan this AWB when the delivery arrives; the confirmed quantities become what their count is checked against.">Staf mengetik atau memindai AWB ini saat barang datang; jumlah yang dikonfirmasi jadi patokan hitungannya.</span>
+    </div>
+
+    <div class="table-scroll">
+      <table class="dtable">
+        <thead><tr>
+          <th data-id="Produk" data-en="Product">Produk</th>
+          <th class="td-num" data-id="Diminta" data-en="Requested">Diminta</th>
+          <th class="td-num" data-id="Dikonfirmasi" data-en="Confirmed">Dikonfirmasi</th>
+          <th class="td-num" data-id="Diterima" data-en="Received">Diterima</th>
+          <th class="td-num" data-id="Selisih" data-en="Variance">Selisih</th>
+        </tr></thead>
+        <tbody data-region="r-lines"></tbody>
+      </table>
+    </div>
+
+    <div class="field" data-region="r-add">
+      <span class="field__label" data-id="Tambah produk" data-en="Add a product">Tambah produk</span>
+      <input class="input" type="search" data-field="r-q" placeholder="Cari nama atau kode SKU…" autocomplete="off">
+      <div style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow:auto" data-region="r-results"></div>
+    </div>
+    <label class="field" data-region="r-note-field"><span class="field__label" data-id="Catatan" data-en="Note">Catatan</span><input class="input" type="text" maxlength="400" data-field="r-note"></label>
+  </div>
+  <div class="drawer__foot" style="flex-wrap:wrap">
+    <button class="cbtn" type="button" data-action="copy-text" data-id="Salin teks untuk Wardah" data-en="Copy text for Wardah">Salin teks untuk Wardah</button>
+    <button class="cbtn" type="button" data-action="save-draft" data-id="Simpan draf" data-en="Save draft">Simpan draf</button>
+    <button class="cbtn cbtn--primary" type="button" data-action="mark-sent" data-id="Tandai sudah dikirim ke Wardah" data-en="Mark as sent to Wardah">Tandai sudah dikirim ke Wardah</button>
+    <button class="cbtn cbtn--primary" type="button" data-action="save-confirm" data-id="Simpan konfirmasi Wardah" data-en="Save Wardah's confirmation">Simpan konfirmasi Wardah</button>
+    <span class="toolbar__spacer"></span>
+    <button class="cbtn cbtn--ghost" type="button" data-action="cancel-rep" data-id="Batalkan permintaan" data-en="Cancel request">Batalkan permintaan</button>
+  </div>
+</aside>
+
+<aside class="drawer" id="drawer-new" aria-label="Buat permintaan manual">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-id="Buat permintaan manual" data-en="Create a request by hand">Buat permintaan manual</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <label class="field"><span class="field__label" data-id="Hub" data-en="Hub">Hub</span><select class="select" data-field="m-site"></select></label>
+    <label class="field"><span class="field__label" data-id="Brand" data-en="Brand">Brand</span><select class="select" data-field="m-brand"></select></label>
+    <span class="field__hint" data-id="Permintaan dibuat sebagai draf kosong; tambahkan produknya di langkah berikut." data-en="The request starts as an empty draft; add its products in the next step.">Permintaan dibuat sebagai draf kosong; tambahkan produknya di langkah berikut.</span>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-action="start-manual" data-id="Lanjut" data-en="Continue">Lanjut</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
+  </div>
+</aside>
+<script src="../js/api.js?v=78a372d"></script>
+<script src="../js/app.js?v=78a372d"></script>
+<script src="../js/console.js?v=78a372d"></script>
+<script src="../js/wire.js?v=78a372d"></script>
+<script src="../js/screens/restock-brand.js?v=78a372d"></script>
+</body>
+</html>

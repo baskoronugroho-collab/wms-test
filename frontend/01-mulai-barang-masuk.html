@@ -4,11 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mulai barang masuk — Ninja Kilat WMS</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B3A5C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=8807087">
-<link rel="stylesheet" href="css/app.css?v=8807087">
+<link rel="stylesheet" href="css/tokens.css?v=78a372d">
+<link rel="stylesheet" href="css/app.css?v=78a372d">
 </head>
 <body>
 <div class="app" data-screen="inbound-start">
@@ -41,33 +46,33 @@
         </span>
         <span class="daystrip__hint" data-id="Tempel stiker warna ini di setiap kardus, dan tulis tanggalnya. Warna berulang tiap 7 hari — tanggal yang membedakan batch lama dari yang baru." data-en="Put this colour sticker on every carton, and write the date. Colours repeat weekly — the date is what separates an old batch from a new one.">Tempel stiker warna ini di setiap kardus, dan tulis tanggalnya. Warna berulang tiap 7 hari — tanggal yang membedakan batch lama dari yang baru.</span>
       </div>
-      <div class="notice notice--caution">
-        <span class="code code--sm" aria-hidden="true">!</span>
-        <div class="col" style="gap:4px">
-          <span class="notice__title" data-id="Sebagian barcode Wardah belum terdaftar" data-en="Some Wardah barcodes are not registered yet">Sebagian barcode Wardah belum terdaftar</span>
-          <span class="notice__body" data-id="Kalau layar bilang barcode tidak dikenal, daftarkan dulu barangnya. Butuh 2 ketukan." data-en="If the screen says unknown barcode, register the item first. Two taps.">Kalau layar bilang barcode tidak dikenal, daftarkan dulu barangnya. Butuh 2 ketukan.</span>
-        </div>
-      </div>
       <h1 class="h1" data-id="Barang masuk dari mana?" data-en="Where is the stock coming from?">Barang masuk dari mana?</h1>
       <div class="choices">
         <div class="choice choice--primary">
           <div class="col">
             <span class="eyebrow eyebrow--action" data-id="Pilihan 1" data-en="Option 1">Pilihan 1</span>
-            <span class="choice__title" data-id="Kiriman dari brand" data-en="Delivery from the brand">Kiriman dari brand</span>
-            <span class="choice__body" data-id="Buka sesi penerimaan baru, lalu scan barang satu per satu." data-en="Open a new receiving session, then scan items one by one.">Buka sesi penerimaan baru, lalu scan barang satu per satu.</span>
+            <span class="choice__title" data-id="Kiriman dari brand (Surat Jalan)" data-en="Delivery from the brand (Surat Jalan)">Kiriman dari brand (Surat Jalan)</span>
+            <span class="choice__body" data-id="Taruh semua kardus di bin sementara inbound dulu. Pindai atau ketik AWB dari Surat Jalan — layar membuka jumlah yang dikonfirmasi Wardah, lalu pindai barang satu per satu." data-en="Put every carton in the temporary inbound bin first. Scan or type the AWB from the Surat Jalan — the screen opens the quantities Wardah confirmed, then scan items one by one.">Taruh semua kardus di bin sementara inbound dulu. Pindai atau ketik AWB dari Surat Jalan — layar membuka jumlah yang dikonfirmasi Wardah, lalu pindai barang satu per satu.</span>
           </div>
           <div class="refstrip">
-            <label class="refstrip__label" for="refInput" data-id="Nomor referensi / AWB (opsional)" data-en="Reference / AWB number (optional)">Nomor referensi / AWB (opsional)</label>
-            <input class="refstrip__input" id="refInput" type="text" maxlength="64" autocomplete="off" placeholder="mis. WRD-2609-02" aria-label="Nomor referensi atau AWB, opsional">
-            <span class="refstrip__hint" data-id="Isi kalau brand kasih nomor AWB/referensi. Kalau tidak ada, lewati saja." data-en="Fill in if the brand gives an AWB/reference number. Skip it if there isn't one.">Isi kalau brand kasih nomor AWB/referensi. Kalau tidak ada, lewati saja.</span>
+            <label class="refstrip__label" for="refInput" data-id="Langkah 1 · Nomor AWB atau referensi restock (RPL-…)" data-en="Step 1 · AWB or replenishment reference (RPL-…)">Langkah 1 · Nomor AWB atau referensi restock (RPL-…)</label>
+            <input class="refstrip__input" id="refInput" type="text" maxlength="64" autocomplete="off" placeholder="mis. JX1234567890" aria-label="Nomor AWB di Surat Jalan">
+            <span class="refstrip__hint" data-id="AWB ini dicatat HQ saat Wardah mengonfirmasi kiriman. Dengan AWB, sistem tahu berapa yang seharusnya datang, jadi kurang atau lebih langsung terlihat dan dilaporkan ke Wardah dalam 24 jam." data-en="HQ records this AWB when Wardah confirms the delivery. With it the system knows what should arrive, so any shortfall or surplus shows at once and is reported to Wardah within 24 hours.">AWB ini dicatat HQ saat Wardah mengonfirmasi kiriman. Dengan AWB, sistem tahu berapa yang seharusnya datang, jadi kurang atau lebih langsung terlihat dan dilaporkan ke Wardah dalam 24 jam.</span>
           </div>
-          <a class="btn btn--primary btn--lg btn--block" href="02-barang-masuk-scan.html" data-id="Pilih kiriman" data-en="Choose delivery">Pilih kiriman</a>
+          <div class="col" style="gap:8px" data-region="expected-deliveries"></div>
+          <a class="btn btn--primary btn--lg btn--block" href="02-barang-masuk-scan.html" data-id="Buka dengan AWB" data-en="Open with AWB">Buka dengan AWB</a>
+          <button class="btn btn--outline btn--lg btn--block" type="button" data-action="no-awb" hidden data-id="Latihan: terima tanpa AWB" data-en="Training: receive without an AWB">Latihan: terima tanpa AWB</button>
+          <span class="refstrip__hint" data-id="Kiriman tanpa AWB yang dikonfirmasi HQ tidak bisa diterima. Taruh di bin sementara dan hubungi Ops HQ supaya dicatat dulu." data-en="A delivery without an AWB confirmed by HQ cannot be received. Keep it in the temporary bin and call Ops HQ to record it first.">Kiriman tanpa AWB yang dikonfirmasi HQ tidak bisa diterima. Taruh di bin sementara dan hubungi Ops HQ supaya dicatat dulu.</span>
         </div>
+        <!-- Option 2 (transfer from another warehouse) is parked: the Wardah pilot has no
+             CWH hop. A <template> is inert, so its scan zone cannot take the gun's focus.
+             Move it back out of the template to bring the option back. -->
+        <template data-parked="transfer">
         <div class="choice">
           <div class="col">
             <span class="eyebrow" data-id="Pilihan 2" data-en="Option 2">Pilihan 2</span>
-            <span class="choice__title" data-id="Pindai label transfer" data-en="Scan a transfer label">Pindai label transfer</span>
-            <span class="choice__body" data-id="Barang datang dari gudang lain. Pindai label besar di kardus." data-en="Stock from another hub. Scan the big label on the box.">Barang datang dari gudang lain. Pindai label besar di kardus.</span>
+            <span class="choice__title" data-id="Transfer dari gudang lain" data-en="Transfer from another warehouse">Transfer dari gudang lain</span>
+            <span class="choice__body" data-id="Hanya untuk tote tersegel yang dikirim gudang pusat atau hub lain lewat menu “Kirim tote ke darkstore”. Labelnya membawa jumlah yang dikirim, jadi selisih dihitung otomatis. Kiriman Wardah langsung ke hub memakai Pilihan 1." data-en="Only for sealed totes sent by the central warehouse or another hub through “Dispatch a tote”. The label carries the dispatched quantities, so any variance is computed. A Wardah delivery straight to the hub uses Option 1.">Hanya untuk tote tersegel yang dikirim gudang pusat atau hub lain lewat menu “Kirim tote ke darkstore”. Labelnya membawa jumlah yang dikirim, jadi selisih dihitung otomatis. Kiriman Wardah langsung ke hub memakai Pilihan 1.</span>
           </div>
       <div class="scanzone" data-scan-label="Pindai label transfer" data-offline-msg="Tunggu koneksi kembali">
         <span class="scanzone__state" data-id="Menunggu pindaian" data-en="Waiting for scan">Menunggu pindaian</span>
@@ -75,14 +80,16 @@
         <input class="scanzone__input" aria-label="Pindai label transfer">
       </div>
         </div>
+        </template>
       </div>
     </main>
 </div>
-<script src="js/api.js?v=8807087"></script>
-<script src="js/scan.js?v=8807087"></script>
-<script src="js/app.js?v=8807087"></script>
-<script src="js/wire.js?v=8807087"></script>
-<script src="js/screens/inbound-start.js?v=8807087"></script>
+<script src="js/api.js?v=78a372d"></script>
+<script src="js/scan.js?v=78a372d"></script>
+<script src="js/app.js?v=78a372d"></script>
+<script src="js/wire.js?v=78a372d"></script>
+<script src="js/sku-answers.js?v=78a372d"></script>
+<script src="js/screens/inbound-start.js?v=78a372d"></script>
 
 </body>
 </html>

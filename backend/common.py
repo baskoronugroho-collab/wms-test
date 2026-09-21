@@ -9,7 +9,8 @@ import db
 SKU_COLS = (
     "s.id, s.brand_id, s.brand_sku_code, s.name_display, s.category, "
     "s.product_line, s.unit_size, s.price_idr, s.unit_cube_cm3, s.expiry_tier, "
-    "s.identity_mode, s.label_placement_note, s.photo_key, b.code AS brand_code"
+    "s.identity_mode, s.label_placement_note, s.photo_key, b.code AS brand_code, "
+    "s.default_restock_point, s.default_full_threshold, s.default_safety_stock"
 )
 
 
@@ -31,6 +32,9 @@ def sku_dict(row: dict | None) -> dict | None:
         "identity_mode": row.get("identity_mode") or "sku_barcode",
         "label_placement_note": row.get("label_placement_note"),
         "photo_key": row.get("photo_key"),
+        "default_restock_point": row.get("default_restock_point"),
+        "default_full_threshold": row.get("default_full_threshold"),
+        "default_safety_stock": row.get("default_safety_stock"),
     }
 
 

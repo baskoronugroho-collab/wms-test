@@ -70,4 +70,11 @@ async def evaluate(site_id: int, sku_id: int, actor: str | None = None) -> dict:
         else:
             out["restock"] = {"request_id": existing["id"], "qty": None}
 
+    # Draft the request to the brand now, not at the next timer tick.
+    if total <= slot["restock_point"]:
+        from routers import reminders
+        try:
+            await reminders.auto_replenish(site_ids=[site_id], sku_ids=[sku_id])
+        except Exception:  # a pick must never fail because a draft could not be made
+            pass
     return out

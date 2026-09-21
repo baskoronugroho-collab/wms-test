@@ -6,6 +6,7 @@ import common
 import db
 import ledger
 import models
+from routers import racks, reminders
 
 router = APIRouter(prefix="/api", tags=["locations"])
 
@@ -20,7 +21,7 @@ async def list_sites(
     params: list = []
     if not include_training:
         sql += " AND is_training = 0"
-    if not user.at_least("admin"):
+    if not user.at_least("hq"):
         sql += (" AND id IN (SELECT site_id FROM user_sites WHERE user_id = %s)")
         params.append(user.id)
     rows = await db.fetch_all(sql + " ORDER BY is_training, code", params)
@@ -51,7 +52,7 @@ async def dispatch_destinations(
 
 @router.post("/sites", response_model=models.Site, status_code=201)
 async def create_site(
-    body: models.SiteIn, user: auth.User = Depends(auth.require("admin"))
+    body: models.SiteIn, user: auth.User = Depends(auth.require("hq"))
 ):
     async with db.tx() as cur:
         try:
@@ -73,11 +74,13 @@ async def create_site(
 async def generate_racks(
     site_id: int,
     body: models.GenerateRacksIn,
-    user: auth.User = Depends(auth.require("admin")),
+    user: auth.User = Depends(auth.require("supervisor")),
 ):
     """Build the standard layout in one action, so opening station 8 takes a
     minute rather than an afternoon (M2.1.5)."""
     site = await auth.assert_site_access(user, site_id)
+    if body.bin_rows not in (1, 2):
+        raise HTTPException(422, "1 atau 2 bin per posisi.")
     existing = await db.fetch_one(
         "SELECT COUNT(*) AS n FROM racks WHERE site_id = %s", (site_id,)
     )
@@ -106,22 +109,17 @@ async def generate_racks(
                     (rack_id, ln, is_open),
                 )
                 positions = [0] if is_open else range(1, body.positions_per_level + 1)
+                rows = 1 if is_open else body.bin_rows
+                if rows == 2:
+                    await db.run(cur, "UPDATE levels SET bin_rows = 2 WHERE id = %s", (level_id,))
                 for p in positions:
-                    code = f"{site['code'].split('-')[-1]}-{rc}-{ln}-{p:02d}"
-                    loc_id = await db.run(
-                        cur,
-                        "INSERT INTO locations (level_id, site_id, position_no, code) "
-                        "VALUES (%s,%s,%s,%s)",
-                        (level_id, site_id, p, code),
-                    )
-                    made["locations"] += 1
-                    await db.run(
-                        cur,
-                        "INSERT INTO baskets (location_id, site_id, basket_size) "
-                        "VALUES (%s,%s,%s)",
-                        (loc_id, site_id, "OPEN" if is_open else body.basket_size),
-                    )
-                    made["baskets"] += 1
+                    for row in range(1, rows + 1):
+                        await racks.add_bin_row(
+                            cur, site_id=site_id, site_code=site["code"], rack_code=rc,
+                            level_id=level_id, level_no=ln, position=p, row=row,
+                            size="OPEN" if is_open else body.basket_size, rows=rows)
+                        made["locations"] += 1
+                        made["baskets"] += 1
         await ledger.audit(cur, actor_email=user.email, entity="site",
                            entity_id=site_id, action="generate_racks", after=made)
     return {"ok": True,
@@ -235,7 +233,15 @@ async def assign_slot(
     body: models.SlotIn, user: auth.User = Depends(auth.current_user)
 ):
     """Bind a SKU to a basket. One SKU per basket, one slot per SKU per site —
-    both enforced by unique constraint, not only by this check (M2.2.2)."""
+    both enforced by unique constraint, not only by this check (M2.2.2).
+
+    Racking a SKU is an SPV decision. Staff may do it only from the inbound flow,
+    for a known SKU that arrived at a hub where it has no rack yet — the audit
+    row marks it, so the SPV can move it later.
+    """
+    if not user.at_least("supervisor") and not body.created_during_inbound:
+        raise HTTPException(403, "Menempatkan SKU ke rak perlu role SPV. / Racking a SKU "
+                                 "needs the supervisor role.")
     await auth.assert_site_access(user, body.site_id)
     sku = await common.sku_by_id(body.sku_id)
     if not sku:
@@ -289,13 +295,21 @@ async def assign_slot(
                 "ever feeds a primary rack.",
             )
 
+    # A new pick face starts from the thresholds HQ set when registering the SKU;
+    # the hub can override its own copy in the registry.
+    full = sku.get("default_full_threshold") if role == "primary" else None
+    restock = sku.get("default_restock_point") if role == "primary" else None
+    if restock is None and full:
+        restock = await reminders.default_restock(full)
+    safety = sku.get("default_safety_stock") if role == "primary" else None
     async with db.tx() as cur:
         slot_id = await db.run(
             cur,
             "INSERT INTO slot_assignments (site_id, sku_id, basket_id, created_by, "
-            "created_during_inbound, slot_role) VALUES (%s,%s,%s,%s,%s,%s)",
+            "created_during_inbound, slot_role, full_threshold, restock_point, safety_stock) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (body.site_id, body.sku_id, basket_id, user.email,
-             1 if body.created_during_inbound else 0, role),
+             1 if body.created_during_inbound else 0, role, full, restock, safety),
         )
         await ledger.audit(cur, actor_email=user.email, entity="slot",
                            entity_id=slot_id, action="assign",
@@ -376,7 +390,7 @@ async def relocate_slot(
 async def add_rack(
     site_id: int,
     body: models.AddRackIn,
-    user: auth.User = Depends(auth.require("admin")),
+    user: auth.User = Depends(auth.require("supervisor")),
 ):
     """Add one rack to a site that already has some.
 
@@ -386,6 +400,8 @@ async def add_rack(
     rack without tearing down the layout it already has.
     """
     site = await auth.assert_site_access(user, site_id)
+    if body.bin_rows not in (1, 2):
+        raise HTTPException(422, "1 atau 2 bin per posisi.")
     code = body.code.strip().upper()
     if not code:
         raise HTTPException(422, "A rack needs a code.")
@@ -411,26 +427,18 @@ async def add_rack(
         for ln in range(1, body.level_count + 1):
             level_id = await db.run(
                 cur,
-                "INSERT INTO levels (rack_id, level_no, is_open_shelf) "
-                "VALUES (%s,%s,0)",
-                (rack_id, ln),
+                "INSERT INTO levels (rack_id, level_no, is_open_shelf, bin_rows) "
+                "VALUES (%s,%s,0,%s)",
+                (rack_id, ln, body.bin_rows),
             )
             for p in range(1, body.positions_per_level + 1):
-                loc_code = f"{site['code'].split('-')[-1]}-{code}-{ln}-{p:02d}"
-                loc_id = await db.run(
-                    cur,
-                    "INSERT INTO locations (level_id, site_id, position_no, code) "
-                    "VALUES (%s,%s,%s,%s)",
-                    (level_id, site_id, p, loc_code),
-                )
-                made["locations"] += 1
-                await db.run(
-                    cur,
-                    "INSERT INTO baskets (location_id, site_id, basket_size) "
-                    "VALUES (%s,%s,%s)",
-                    (loc_id, site_id, body.basket_size),
-                )
-                made["baskets"] += 1
+                for row in range(1, body.bin_rows + 1):
+                    await racks.add_bin_row(
+                        cur, site_id=site_id, site_code=site["code"], rack_code=code,
+                        level_id=level_id, level_no=ln, position=p, row=row,
+                        size=body.basket_size, rows=body.bin_rows)
+                    made["locations"] += 1
+                    made["baskets"] += 1
         await ledger.audit(cur, actor_email=user.email, entity="site",
                            entity_id=site_id, action="add_rack",
                            after={"code": code, **made})

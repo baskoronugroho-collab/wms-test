@@ -15,8 +15,8 @@
   const api = NJW.api;
 
   const PER = 25;
-  const ROLE_LABEL = { admin: 'Admin', supervisor: 'Supervisor', hub_operator: 'Operator hub', staff: 'Staf' };
-  const ROLE_TONE = { admin: 'accent', supervisor: 'info' };
+  const ROLE_LABEL = { superadmin: 'Superadmin', hq: 'Ops HQ', supervisor: 'SPV', hub_operator: 'Operator hub', staff: 'Staf' };
+  const ROLE_TONE = { superadmin: 'accent', hq: 'accent', supervisor: 'info' };
 
   function openDrawer(sel) {
     const d = $(sel), sc = $('.scrim');
@@ -103,7 +103,9 @@
     const roleFilter = field('role-filter');
     roleFilter.insertAdjacentHTML('beforeend', roles.map(r =>
       '<option value="' + esc(r) + '">' + esc(ROLE_LABEL[r] || r) + '</option>').join(''));
-    field('u-role').innerHTML = roles.map(r =>
+    // Only a superadmin can grant superadmin; the API refuses it for anyone else.
+    const grantable = me && me.real_role === 'superadmin' ? roles : roles.filter(r => r !== 'superadmin');
+    field('u-role').innerHTML = grantable.map(r =>
       '<option value="' + esc(r) + '">' + esc(ROLE_LABEL[r] || r) + '</option>').join('');
 
     function visible() {

@@ -19,8 +19,8 @@
 
   const PER = 25;
   const OWNER = {
-    grab: ['Grab (mis. Wardah)', 'Grab (e.g. Wardah)'],
-    brand: ['Brand (konsinyasi)', 'Brand (consignment)'],
+    grab: ['Grab', 'Grab'],
+    brand: ['Brand (konsinyasi, mis. Wardah)', 'Brand (consignment, e.g. Wardah)'],
     ninja: ['Ninja', 'Ninja'],
   };
   const EXPIRY = {
@@ -118,18 +118,23 @@
       '<td>' + identitySpill(s.identity_mode) + '</td>' +
       '<td><span class="spill spill--' + ex[0] + '"><span class="spill__dot"></span><span ' +
       biAttr(ex[1], ex[2]) + '>' + esc(ex[1]) + '</span></span></td>' +
-      '<td class="td-actions">' + (s.identity_mode === 'unit_label' ? ''
+      '<td class="td-actions" style="white-space:nowrap">' +
+      '<button class="cbtn cbtn--sm" type="button" data-detail="' + s.id + '" ' +
+      biAttr('Foto & rak', 'Photo & racks') + '>Foto & rak</button> ' +
+      (s.identity_mode === 'unit_label' ? ''
         : '<button class="cbtn cbtn--sm" type="button" data-bc="' + s.id + '" ' +
           biAttr('Barcode', 'Barcodes') + '>Barcode</button>') + '</td></tr>';
   }
 
   NJW.screens.produk = async () => {
     const me = W.me();
-    const admin = me && me.role === 'admin';
-    let brands = [], rows = [], page = 1, bcSku = null, pending = [];
+    // Ops HQ owns the product master (brands, SKUs, photos); admin can too.
+    const admin = W.atLeast('hq');
+    let brands = [], rows = [], page = 1, bcSku = null, pending = [], detailSku = null;
 
-    // Admin-only endpoints behind these; a supervisor would only meet a 403.
+    // HQ-only endpoints behind these; a supervisor would only meet a 403.
     if (!admin) {
+      show(region('det-upload'), false);
       $$('[data-action="import"], [data-action="new-sku"], [data-action="new-brand"], ' +
          'a[href*="product-master"]').forEach(el => show(el, false));
     }
@@ -198,7 +203,7 @@
         setF('kpi-unitlabel', all.skus.filter(s => s.identity_mode === 'unit_label').length);
         // Photos are served only once NJW.PHOTO_BASE points somewhere; until
         // then no SKU has one on screen, whatever its photo_key says.
-        setF('kpi-nophoto', NJW.PHOTO_BASE ? all.skus.filter(s => !s.photo_key).length : all.total);
+        setF('kpi-nophoto', all.skus.filter(s => !api.photoUrl(s.photo_key)).length);
         const np = field('kpi-nophoto');
         if (np) np.closest('.kpi-card').classList.toggle('kpi-card--stop', +np.textContent > 0);
       } catch (e) {
@@ -311,6 +316,30 @@
     /* ---- clicks ---- */
     document.addEventListener('click', async e => {
       if (e.target.closest('[data-action="new-sku"]')) return openDrawer('#drawer-sku');
+
+      const det = e.target.closest('[data-detail]');
+      if (det) {
+        detailSku = rows.find(s => s.id === +det.dataset.detail);
+        if (!detailSku) return;
+        paintDetail(detailSku);
+        openDrawer('#drawer-detail');
+        return;
+      }
+      if (e.target.closest('[data-action="upload-photo"]')) {
+        const file = field('det-file').files[0];
+        if (!detailSku || !file) return say('Pilih file foto dulu.');
+        try {
+          const fd = new FormData();
+          fd.append('file', file);
+          const s = await api.uploadSkuPhoto(detailSku.id, fd);
+          Object.assign(detailSku, s);
+          field('det-file').value = '';
+          paintDetail(detailSku);
+          say('Foto ' + s.name_display + ' tersimpan.');
+          load();
+        } catch (err) { fail(err); }
+        return;
+      }
       if (e.target.closest('[data-action="new-brand"]')) return openDrawer('#drawer-brand');
       if (e.target.closest('[data-action="import"]')) {
         show(region('import-result'), false);
@@ -360,14 +389,42 @@
           expiry_tier: field('sku-expiry').value,
           identity_mode: field('sku-mode').value || null,
           label_placement_note: field('sku-note').value.trim() || null,
+          default_restock_point: field('sku-restock').value === '' ? null : +field('sku-restock').value,
+          default_full_threshold: +field('sku-full').value || null,
+          default_safety_stock: field('sku-safety').value === '' ? null : +field('sku-safety').value,
         };
         if (!body.brand_id || !body.name_display || !body.brand_sku_code) {
           return say('Brand, nama produk, dan kode SKU wajib diisi.');
         }
+        // R left empty takes 25% of P, the same default the server applies.
+        if (body.default_restock_point == null && body.default_full_threshold >= 2) {
+          body.default_restock_point = Math.min(body.default_full_threshold - 1,
+                                                Math.max(1, Math.round(body.default_full_threshold * 0.25)));
+        }
+        if (body.default_restock_point == null) {
+          field('sku-full').focus();
+          return say('Isi batas penuh (P) — titik restock (R) otomatis 25% darinya.');
+        }
+        if (body.default_safety_stock != null && body.default_safety_stock > body.default_restock_point) {
+          return say('S (safety stock) tidak boleh di atas R.');
+        }
+        if (body.default_full_threshold != null && body.default_full_threshold <= body.default_restock_point) {
+          return say('P (penuh) harus lebih besar dari R (restock).');
+        }
         try {
           const s = await api.createSku(body);
-          say(s.name_display + ' ditambahkan.');
-          ['sku-name', 'sku-code', 'sku-size', 'sku-cube', 'sku-note'].forEach(f => { field(f).value = ''; });
+          const photo = field('sku-photo').files[0];
+          if (photo) {
+            const fd = new FormData();
+            fd.append('file', photo);
+            try { await api.uploadSkuPhoto(s.id, fd); } catch (err) {
+              say(s.name_display + ' ditambahkan, tapi fotonya gagal: ' + err.message);
+            }
+          }
+          say(s.name_display + ' ditambahkan. Setiap hub akan melihatnya di antrean “Butuh rak”.');
+          ['sku-name', 'sku-code', 'sku-size', 'sku-cube', 'sku-note', 'sku-restock', 'sku-full', 'sku-safety', 'sku-photo']
+            .forEach(f => { field(f).value = ''; });
+          field('sku-photo-preview').src = '../assets/products/placeholder.svg';
           closeDrawers();
           load();
         } catch (err) { fail(err); }
@@ -402,6 +459,40 @@
           s.category, s.unit_size, s.identity_mode, s.expiry_tier])));
       }
     });
+
+    field('sku-photo').addEventListener('change', e => {
+      const f = e.target.files[0];
+      if (f) field('sku-photo-preview').src = URL.createObjectURL(f);
+    });
+
+    async function paintDetail(s) {
+      bi(field('det-title'), s.name_display, s.name_display);
+      setF('det-code', [s.brand_code, s.brand_sku_code].filter(Boolean).join(' · '));
+      bi(field('det-thresholds'),
+        'S ' + (s.default_safety_stock ?? '—') + ' · R ' + (s.default_restock_point ?? '—') + ' · P ' + (s.default_full_threshold ?? '—') + ' (bawaan untuk hub baru)',
+        'S ' + (s.default_safety_stock ?? '—') + ' · R ' + (s.default_restock_point ?? '—') + ' · P ' + (s.default_full_threshold ?? '—') + ' (default for new hubs)');
+      const img = field('det-photo');
+      img.removeAttribute('data-photo-src');
+      img.src = '../assets/products/placeholder.svg';
+      img.dataset.photoKey = s.photo_key || '';
+      W.loadPhotos(img.parentNode);
+      const host = region('det-racks');
+      if (!admin) { host.innerHTML = ''; return; }
+      host.innerHTML = '<tr><td class="note" ' + biAttr('Memuat…', 'Loading…') + '></td></tr>';
+      applyLangTo(host);
+      try {
+        const r = await api.skuRacks(s.id);
+        host.innerHTML = r.sites.map(x =>
+          '<tr><td class="td-code">' + esc(x.site_code) + '</td><td>' + esc(x.site_name) + '</td><td>' +
+          (x.location_code
+            ? '<span class="td-code">' + esc(x.location_code) + '</span>'
+            : '<span class="spill spill--warn"><span ' + biAttr('Butuh rak', 'Needs a rack') + '>Butuh rak</span></span>') +
+          '</td><td class="td-code" style="color:var(--muted)">' +
+          (x.location_code ? 'R ' + (x.restock_point ?? '—') + ' · P ' + (x.full_threshold ?? '—') : '') +
+          '</td></tr>').join('') || '<tr><td class="note">—</td></tr>';
+        applyLangTo(host);
+      } catch (err) { host.innerHTML = ''; fail(err); }
+    }
 
     await load();
   };

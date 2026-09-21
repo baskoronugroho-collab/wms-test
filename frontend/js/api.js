@@ -9,11 +9,18 @@
 
   const BASE = '/api';
 
+  // A superadmin previewing another role sends it on every call; the server
+  // ignores it for anyone else and refuses writes while it is set.
+  function viewAs() { try { return localStorage.getItem('njw.viewAs') || ''; } catch (e) { return ''; } }
+
   async function req(path, opts) {
-    const r = await fetch(BASE + path, Object.assign({
+    const o = Object.assign({
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
-    }, opts || {}));
+    }, opts || {});
+    o.headers = Object.assign({}, o.headers);
+    if (viewAs()) o.headers['X-View-As'] = viewAs();
+    const r = await fetch(BASE + path, o);
     if (!r.ok) {
       let detail = r.statusText;
       try { detail = (await r.json()).detail || detail; } catch (e) {}
@@ -24,6 +31,8 @@
     return r.status === 204 ? null : r.json();
   }
   const get = (p) => req(p);
+  // A FormData body: the browser sets the multipart boundary, so no JSON header.
+  const form = (p, fd) => req(p, { method: 'POST', body: fd, headers: {} });
   const post = (p, body) => req(p, { method: 'POST', body: JSON.stringify(body) });
   const patch = (p, body) => req(p, { method: 'PATCH', body: JSON.stringify(body) });
   const put = (p, body) => req(p, { method: 'PUT', body: JSON.stringify(body) });
@@ -36,7 +45,9 @@
   };
 
   NJW.api = {
-    raw: { get, post, patch, put, del, qs },
+    raw: { get, post, patch, put, del, qs, form },
+    raiseSkuRequest: (fd) => form('/sku-requests', fd),               // multipart
+    uploadSkuPhoto: (skuId, fd) => form('/skus/' + skuId + '/photo', fd),
 
     me: () => get('/me'),
     health: () => get('/health'),
@@ -64,6 +75,52 @@
     // --- inventory / opname / picking ----------------------------------
     inventory: (p) => get('/inventory' + qs(p)),
     rackMap: (siteId) => get('/sites/' + siteId + '/rack-map'),
+
+    // --- rack layout: per rack, then per level & bin -----------------------
+    racks: (siteId) => get('/sites/' + siteId + '/racks'),          // {site, racks, needs_rack}
+    rack: (rackId) => get('/racks/' + rackId),                       // {rack, levels (top first)}
+    addRack: (siteId, b) => post('/sites/' + siteId + '/racks', b),  // AddRackIn
+    addLevel: (rackId, b) => post('/racks/' + rackId + '/levels', b),
+    addBins: (levelId, b) => post('/levels/' + levelId + '/bins', b),
+    removeBin: (locationId) => del('/locations/' + locationId),
+    removeLevel: (levelId) => del('/levels/' + levelId),
+    setBinRows: (levelId, rows) => put('/levels/' + levelId + '/bin-rows', { bin_rows: rows }),
+    setInboundBins: (siteId, n) => put('/sites/' + siteId + '/inbound-bins', { inbound_bins: n }),
+
+    // --- reminders and flags -------------------------------------------------
+    reminderRules: () => get('/reminders/rules'),
+    setReminderRule: (key, b) => put('/reminders/rules/' + key, b),   // {enabled, value}
+    flags: (p) => get('/reminders/flags' + qs(p)),                     // {site_id}
+    setBasketSize: (basketId, size) => patch('/baskets/' + basketId, { basket_size: size }),
+    needsRack: (siteId) => get('/sites/' + siteId + '/needs-rack'),
+    assignSlot: (b) => post('/slots', b),                            // SlotIn
+    skuRacks: (skuId) => get('/skus/' + skuId + '/racks'),
+
+    // --- unknown product -> Ops HQ -> station ------------------------------
+    skuRequests: (p) => get('/sku-requests' + qs(p)),                // {site_id,status,receipt_id}
+    resolveSkuRequest: (id, b) => post('/sku-requests/' + id + '/resolve', b),
+    rejectSkuRequest: (id, note) => post('/sku-requests/' + id + '/reject', { note }),
+    putAwaySkuRequest: (id, qty) => post('/sku-requests/' + id + '/put-away', { qty }),
+    photoUrl: (key) => key && key.indexOf('/') > 0 ? BASE + '/photos/' + key : null,
+
+    // --- replenishment to the brand (Surat Jalan) --------------------------
+    replenAlerts: (p) => get('/replenishment/alerts' + qs(p)),
+    replenishments: (p) => get('/replenishments' + qs(p)),           // {site_id,status}
+    replenishment: (id) => get('/replenishments/' + id),
+    createReplenishment: (b) => post('/replenishments', b),
+    editReplenishment: (id, b) => put('/replenishments/' + id + '/lines', b),
+    sendReplenishment: (id) => post('/replenishments/' + id + '/send', {}),
+    confirmReplenishment: (id, b) => post('/replenishments/' + id + '/confirm', b),
+    cancelReplenishment: (id) => post('/replenishments/' + id + '/cancel', {}),
+    // Variance: the SPV acknowledges each differing line, Ops HQ signs off.
+    acknowledgeVariance: (id, lines) => post('/replenishments/' + id + '/acknowledge', { lines }),
+    signOffVariance: (id, note) => post('/replenishments/' + id + '/sign-off', { note }),
+    sendBackVariance: (id, note) => post('/replenishments/' + id + '/send-back', { note }),
+
+    // --- Ops HQ monitoring -------------------------------------------------
+    hubOverview: () => get('/hq/hubs'),
+    layout: (siteId) => get('/sites/' + siteId + '/layout'),
+    setThresholds: (skuId, b) => put('/registry/' + skuId, b),   // {site_id, full_threshold, restock_point}
     pickTasks: (p) => get('/pick-tasks' + qs(p)),
     // Queue board: waiting / picking / done lanes, each card with channel,
     // delivery mode, promised_at, remaining_seconds and urgency.

@@ -67,8 +67,16 @@ async def _build_payload(receipt: dict) -> dict:
         where.setdefault(p["sku_id"], []).append(p)
 
     out = []
+    # A batch that did not finish its AWB lists only what it brought: the rest
+    # is still to come, not short. The last batch carries the comparison.
+    partial = bool(receipt.get("replenishment_id")) and receipt.get("final_batch") == 0
     for l in lines:
-        exp = l["qty_expected"]
+        if partial and not l["qty_received"]:
+            continue
+        exp = None if partial else l["qty_expected"]
+        # Against a Surat Jalan, a product that was never on it was expected zero times.
+        if exp is None and receipt.get("replenishment_id") and not partial:
+            exp = 0
         locs = where.get(l["sku_id"], [])
         first = locs[0] if locs else {}
         out.append({

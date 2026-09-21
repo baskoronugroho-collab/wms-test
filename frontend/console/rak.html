@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rak & bin — Ninja Kilat WMS</title>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#1B3A5C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="../assets/app/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../css/tokens.css?v=78a372d">
+<link rel="stylesheet" href="../css/app.css?v=78a372d">
+<link rel="stylesheet" href="../css/console.css?v=78a372d">
+</head>
+<body>
+<div class="console" data-screen="rak">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <span class="sidebar__mark">NINJA</span>
+        <span class="sidebar__product">Kilat WMS</span>
+      </div>
+      <nav class="sidebar__section">
+        <a class="sidebar__link" href="index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2"/><path d="M5.6 9v11.4h12.8V9"/></svg></span><span class="sidebar__label" data-id="Ringkasan" data-en="Overview">Ringkasan</span></a>
+        <a class="sidebar__link" href="pengingat.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span><span class="sidebar__label" data-id="Pengingat &amp; flag" data-en="Reminders &amp; flags">Pengingat &amp; flag</span><span class="navbadge" data-field="flag-badge" hidden></span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk & keluar</span>
+        <a class="sidebar__link" href="barang-masuk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10.5"/><path d="M8.2 10.2 12 14l3.8-3.8"/><path d="M4 17.5v3h16v-3"/></svg></span><span class="sidebar__label" data-id="Barang masuk" data-en="Inbound">Barang masuk</span></a>
+        <a class="sidebar__link" href="pesanan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V10.5"/><path d="M8.2 14.3 12 10.5l3.8 3.8"/><path d="M4 6.5v-3h16v3"/></svg></span><span class="sidebar__label" data-id="Pesanan" data-en="Orders">Pesanan</span></a>
+        <a class="sidebar__link" href="papan-antrean.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="5" height="15" rx="1.2"/><rect x="9.5" y="4.5" width="5" height="11" rx="1.2"/><rect x="15.5" y="4.5" width="5" height="7" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Papan antrean" data-en="Queue board">Papan antrean</span></a>
+        <a class="sidebar__link" href="transfer.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5h13"/><path d="M13.5 5 17 8.5 13.5 12"/><path d="M20 15.5H7"/><path d="M10.5 12 7 15.5 10.5 19"/></svg></span><span class="sidebar__label" data-id="Transfer gudang" data-en="Transfers">Transfer gudang</span></a>
+        <a class="sidebar__link" href="restock-brand.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5h11v9h-11z"/><path d="M14.5 10.5h3.5l2.5 3v3h-6"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg></span><span class="sidebar__label" data-id="Restock ke brand" data-en="Restock from brand">Restock ke brand</span></a>
+        <a class="sidebar__link" href="selisih-restock.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/><path d="M17 14l4 4m0-4-4 4"/></svg></span><span class="sidebar__label" data-id="Selisih restock" data-en="Restock variances">Selisih restock</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Stok" data-en="Stock">Stok</span>
+        <a class="sidebar__link" href="stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="3.5" y="12.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="12.5" width="8" height="8" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Stok" data-en="Inventory">Stok</span></a>
+        <a class="sidebar__link" href="stok-perhatian.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 21 19.5H3z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="16.8" r=".9" fill="currentColor"/></svg></span><span class="sidebar__label" data-id="Stok perlu perhatian" data-en="Stock needs attention">Stok perlu perhatian</span></a>
+        <a class="sidebar__link" href="hitung-stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2l2.6 2.6 4.6-5.2"/></svg></span><span class="sidebar__label" data-id="Hitung stok" data-en="Stock count">Hitung stok</span></a>
+        <a class="sidebar__link" href="registry.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17"/><path d="M9 9.5v10"/><path d="M13.5 13h4"/></svg></span><span class="sidebar__label" data-id="Penempatan & batas" data-en="Slotting & thresholds">Penempatan & batas</span></a>
+        <a class="sidebar__link is-current" href="rak.html" aria-current="page" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="1"/><path d="M4 9.2h16M4 14.8h16"/><path d="M9.3 3.5v17M14.7 3.5v17"/></svg></span><span class="sidebar__label" data-id="Rak &amp; bin" data-en="Racks &amp; bins">Rak &amp; bin</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Ops HQ" data-en="Ops HQ">Ops HQ</span>
+        <a class="sidebar__link" href="peta-hub.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5-5.5 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg></span><span class="sidebar__label" data-id="Peta hub &amp; stok" data-en="Hub map &amp; stock">Peta hub &amp; stok</span></a>
+        <a class="sidebar__link" href="permintaan-sku.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><path d="M12 8.5v4"/><circle cx="12" cy="15.6" r=".9" fill="currentColor"/></svg></span><span class="sidebar__label" data-id="Permintaan SKU" data-en="SKU requests">Permintaan SKU</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
+        <a class="sidebar__link" href="slip-putaway.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h7.5L18 8v12.5H6z"/><path d="M13.2 3.7V8H18"/><path d="M8.8 12h6.4"/><path d="M8.8 15.5h4.4"/></svg></span><span class="sidebar__label" data-id="Slip putaway" data-en="Putaway slips">Slip putaway</span></a>
+        <a class="sidebar__link" href="label-warna-hari.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="7" height="6" rx="1"/><rect x="13.5" y="4.5" width="7" height="6" rx="1"/><rect x="3.5" y="13.5" width="7" height="6" rx="1"/><rect x="13.5" y="13.5" width="7" height="6" rx="1"/></svg></span><span class="sidebar__label" data-id="Label & warna hari" data-en="Labels & day colour">Label & warna hari</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
+        <a class="sidebar__link" href="hub.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
+        <a class="sidebar__link" href="staf.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
+        <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
+        <a class="sidebar__link" href="simulator-grab.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><span class="sidebar__label" data-id="Simulator Grab" data-en="Grab simulator">Simulator Grab</span></a>
+        <a class="sidebar__link" href="mode-latihan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5v17"/><path d="M6.5 4.5h11l-2.2 4.2 2.2 4.2h-11"/></svg></span><span class="sidebar__label" data-id="Mode latihan" data-en="Training mode">Mode latihan</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <span class="sidebar__site">
+          <span class="sidebar__label" data-id="Lokasi aktif" data-en="Active site">Lokasi aktif</span>
+          <strong data-field="site-code">UT5</strong>
+        </span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="lang" role="group" aria-label="Bahasa">
+            <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+            <button class="lang__opt" data-lang="en" type="button">EN</button>
+          </span>
+          <button class="cbtn cbtn--icon cbtn--ghost" data-action="toggle-theme" type="button" aria-label="Ganti tema">◐</button>
+        </div>
+        <a class="sidebar__link" href="../index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg></span><span class="sidebar__label" data-id="Buka aplikasi station" data-en="Open station app">Buka aplikasi station</span></a>
+      </div>
+    </aside>
+  <main class="page">
+    <header class="page__head">
+      <div class="page__heading">
+        <span class="page__eyebrow" data-id="Stok" data-en="Stock">Stok</span>
+        <h1 class="page__title" data-id="Rak & bin" data-en="Racks & bins">Rak & bin</h1>
+        <p class="page__sub" data-id="Lihat hub per rak dulu. Klik satu rak untuk melihat tingkat dan bin-nya, menambah tingkat atau bin, dan menempatkan SKU." data-en="See the hub rack by rack first. Click a rack to see its levels and bins, add levels or bins, and place SKUs.">Lihat hub per rak dulu. Klik satu rak untuk melihat tingkat dan bin-nya, menambah tingkat atau bin, dan menempatkan SKU.</p>
+      </div>
+      <div class="page__actions">
+        <select class="select" data-field="site-select" style="width:auto" aria-label="Hub"></select>
+        <button class="cbtn cbtn--primary" type="button" data-action="new-rack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-id="Tambah rak" data-en="Add rack">Tambah rak</span></button>
+      </div>
+    </header>
+
+    <section class="kpis">
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Rak" data-en="Racks">Rak</span>
+        <span class="kpi-card__num" data-field="kpi-racks">—</span>
+        <span class="kpi-card__foot" data-field="kpi-racks-foot">—</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Bin terpakai" data-en="Bins in use">Bin terpakai</span>
+        <span class="kpi-card__num" data-field="kpi-used">—</span>
+        <span class="kpi-card__foot" data-field="kpi-used-foot">—</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Unit di rak" data-en="Units on racks">Unit di rak</span>
+        <span class="kpi-card__num" data-field="kpi-units">—</span>
+        <span class="kpi-card__foot" data-id="rak ambil dan cadangan" data-en="rack faces and overflow">rak ambil dan cadangan</span>
+      </div>
+      <div class="kpi-card" data-region="kpi-needs-card">
+        <span class="kpi-card__label" data-id="SKU butuh rak" data-en="SKUs needing a rack">SKU butuh rak</span>
+        <span class="kpi-card__num" data-field="kpi-needs">—</span>
+        <span class="kpi-card__foot"><button class="cbtn cbtn--sm" type="button" data-action="show-needs" data-id="Lihat antrean" data-en="See the queue">Lihat antrean</button></span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Bin inbound sementara" data-en="Temporary inbound bins">Bin inbound sementara</span>
+        <span class="kpi-card__num" data-field="kpi-inbound">—</span>
+        <span class="kpi-card__foot" data-region="inbound-edit"><span data-id="1 bin = 1 SKU per batch barang masuk" data-en="1 bin = 1 SKU per inbound batch">1 bin = 1 SKU per batch barang masuk</span></span>
+      </div>
+    </section>
+
+    <!-- level 1: every rack at the hub -->
+    <section class="section" data-region="view-racks">
+      <div class="rackgrid" data-region="rack-cards">
+        <p class="note" data-id="Memuat rak…" data-en="Loading racks…">Memuat rak…</p>
+      </div>
+    </section>
+
+    <!-- level 2: one rack, level by level -->
+    <section class="section" data-region="view-rack" hidden>
+      <div class="toolbar">
+        <span class="crumbs">
+          <button class="cbtn cbtn--ghost" type="button" data-action="back-racks" data-id="← Semua rak" data-en="← All racks">← Semua rak</button>
+          <strong class="td-code" style="font-size:var(--fs-c-h2)" data-field="rack-title">—</strong>
+          <span class="rackcard__meta" data-field="rack-meta">—</span>
+        </span>
+        <span class="toolbar__spacer"></span>
+        <button class="cbtn" type="button" data-action="add-level" data-id="Tambah tingkat di atas" data-en="Add a level on top">Tambah tingkat di atas</button>
+      </div>
+      <div class="elev" data-region="rack-levels"></div>
+      <span class="inline-note"><span data-id="Tingkat paling atas ditampilkan paling atas, seperti rak di depan Anda. Bin yang pernah berisi stok tidak bisa dihapus — riwayatnya harus tetap ada." data-en="The top level is shown on top, like the rack in front of you. A bin that ever held stock cannot be removed — its history has to stay.">Tingkat paling atas ditampilkan paling atas, seperti rak di depan Anda. Bin yang pernah berisi stok tidak bisa dihapus — riwayatnya harus tetap ada.</span></span>
+    </section>
+
+    <!-- the queue: SKUs this hub carries without a rack -->
+    <section class="section" data-region="view-needs" hidden>
+      <div class="toolbar">
+        <span class="crumbs">
+          <button class="cbtn cbtn--ghost" type="button" data-action="back-racks" data-id="← Semua rak" data-en="← All racks">← Semua rak</button>
+          <strong style="font-size:var(--fs-c-h2)" data-id="Butuh rak di hub ini" data-en="Needs a rack at this hub">Butuh rak di hub ini</strong>
+        </span>
+      </div>
+      <span class="inline-note"><span data-id="SKU didaftarkan HQ sekali untuk semua hub, tapi raknya dipilih per hub. Pilih bin kosong untuk setiap SKU di bawah; batas R dan P ikut disalin dari pendaftaran SKU." data-en="HQ registers a SKU once for every hub, but its rack is chosen per hub. Pick an empty bin for each SKU below; its R and P thresholds are copied from the SKU registration.">SKU didaftarkan HQ sekali untuk semua hub, tapi raknya dipilih per hub. Pilih bin kosong untuk setiap SKU di bawah; batas R dan P ikut disalin dari pendaftaran SKU.</span></span>
+      <div class="table-scroll">
+        <table class="dtable dtable--rows-tall">
+          <thead><tr>
+            <th class="td-thumb"></th>
+            <th data-id="Produk" data-en="Product">Produk</th>
+            <th data-id="Kode" data-en="Code">Kode</th>
+            <th data-id="Saran keranjang" data-en="Suggested basket">Saran keranjang</th>
+            <th data-id="Batas R · P" data-en="Thresholds R · P">Batas R · P</th>
+            <th class="td-actions"></th>
+          </tr></thead>
+          <tbody data-region="needs-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="scrim"></div>
+
+<aside class="drawer" id="drawer-rack" aria-label="Tambah rak">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-id="Tambah rak" data-en="Add rack">Tambah rak</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <label class="field"><span class="field__label" data-id="Kode rak" data-en="Rack code">Kode rak</span><input class="input" type="text" maxlength="8" data-field="nr-code" placeholder="H"></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)">
+      <label class="field"><span class="field__label" data-id="Tingkat" data-en="Levels">Tingkat</span><input class="input" type="number" min="1" max="9" value="5" data-field="nr-levels"></label>
+      <label class="field"><span class="field__label" data-id="Bin per tingkat" data-en="Bins per level">Bin per tingkat</span><input class="input" type="number" min="1" max="30" value="5" data-field="nr-bins"></label>
+    </div>
+    <label class="field"><span class="field__label" data-id="Ukuran keranjang" data-en="Basket size">Ukuran keranjang</span><select class="select" data-field="nr-size"><option>S</option><option selected>M</option><option>L</option></select></label>
+    <label class="field"><span class="field__label" data-id="Bin per posisi" data-en="Bins per position">Bin per posisi</span><select class="select" data-field="nr-rows"><option value="1">1</option><option value="2">2 (T + B)</option></select>
+      <span class="field__hint" data-id="Maksimal 2 bin bertumpuk di satu posisi: T = atas (UT5-A-3-02T), B = bawah (UT5-A-3-02B). Dengan 1 bin, kodenya tanpa huruf (UT5-A-3-02)." data-en="At most 2 stacked bins at one position: T = top (UT5-A-3-02T), B = bottom (UT5-A-3-02B). With 1 bin, the code has no letter (UT5-A-3-02).">Maksimal 2 bin bertumpuk di satu posisi: T = atas (UT5-A-3-02T), B = bawah (UT5-A-3-02B). Dengan 1 bin, kodenya tanpa huruf (UT5-A-3-02).</span></label>
+    <span class="field__hint" data-id="Tingkat dan bin bisa ditambah lagi nanti dari tampilan rak." data-en="Levels and bins can be added later from the rack view.">Tingkat dan bin bisa ditambah lagi nanti dari tampilan rak.</span>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-action="save-rack" data-id="Buat rak" data-en="Create rack">Buat rak</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
+  </div>
+</aside>
+
+<aside class="drawer" id="drawer-level" aria-label="Tambah tingkat">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-field="lv-title" data-id="Tambah tingkat" data-en="Add level">Tambah tingkat</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <label class="field"><span class="field__label" data-field="lv-count-label" data-id="Jumlah bin" data-en="Number of bins">Jumlah bin</span><input class="input" type="number" min="1" max="30" value="5" data-field="lv-count"></label>
+    <label class="field" data-region="lv-size-field"><span class="field__label" data-id="Ukuran keranjang" data-en="Basket size">Ukuran keranjang</span><select class="select" data-field="lv-size"><option>S</option><option selected>M</option><option>L</option></select></label>
+    <div class="field" data-region="lv-rows-field">
+      <div class="chipset"><label class="chipbox"><input type="checkbox" data-field="lv-rows"><span data-id="2 bin bertumpuk per posisi (T atas + B bawah)" data-en="2 stacked bins per position (T top + B bottom)">2 bin bertumpuk per posisi (T atas + B bawah)</span></label></div>
+    </div>
+    <div class="field" data-region="lv-open-field">
+      <div class="chipset"><label class="chipbox"><input type="checkbox" data-field="lv-open"><span data-id="Rak terbuka (tanpa keranjang)" data-en="Open shelf (no baskets)">Rak terbuka (tanpa keranjang)</span></label></div>
+    </div>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-action="save-level" data-id="Simpan" data-en="Save">Simpan</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
+  </div>
+</aside>
+
+<aside class="drawer" id="drawer-bin" aria-label="Bin">
+  <div class="drawer__head">
+    <h2 class="drawer__title td-code" data-field="bin-title">—</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <div data-region="bin-holds" class="field">
+      <span class="field__label" data-id="Isi bin" data-en="In this bin">Isi bin</span>
+      <div style="display:flex;gap:var(--sp-3);align-items:center">
+        <img class="thumb thumb--lg" src="../assets/products/placeholder.svg" alt="" data-field="bin-photo">
+        <span style="display:flex;flex-direction:column;gap:2px">
+          <strong data-field="bin-sku">—</strong>
+          <span class="td-code" style="color:var(--muted)" data-field="bin-sku-meta">—</span>
+        </span>
+      </div>
+    </div>
+    <div data-region="bin-assign" class="field">
+      <span class="field__label" data-id="Tempatkan SKU di bin ini" data-en="Place a SKU in this bin">Tempatkan SKU di bin ini</span>
+      <input class="input" type="search" data-field="bin-q" placeholder="Cari SKU yang butuh rak…" autocomplete="off">
+      <div class="col" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow:auto" data-region="bin-candidates"></div>
+      <span class="field__hint" data-id="Hanya SKU yang belum punya rak di hub ini. Untuk memindahkan SKU yang sudah punya rak, pakai Penempatan & batas." data-en="Only SKUs without a rack at this hub. To move a SKU that already has one, use Slotting & thresholds.">Hanya SKU yang belum punya rak di hub ini. Untuk memindahkan SKU yang sudah punya rak, pakai Penempatan & batas.</span>
+    </div>
+    <label class="field"><span class="field__label" data-id="Ukuran keranjang" data-en="Basket size">Ukuran keranjang</span>
+      <select class="select" data-field="bin-size"><option>S</option><option>M</option><option>L</option><option>OPEN</option></select></label>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn" type="button" data-action="remove-bin" data-id="Hapus bin" data-en="Remove bin">Hapus bin</button>
+    <span class="toolbar__spacer"></span>
+    <button class="cbtn" type="button" data-drawer-close data-id="Tutup" data-en="Close">Tutup</button>
+  </div>
+</aside>
+
+<aside class="drawer" id="drawer-place" aria-label="Pilih bin">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-field="pl-title" data-id="Pilih bin" data-en="Choose a bin">Pilih bin</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <div style="display:flex;gap:var(--sp-3);align-items:center">
+      <img class="thumb thumb--lg" src="../assets/products/placeholder.svg" alt="" data-field="pl-photo">
+      <span class="td-code" style="color:var(--muted)" data-field="pl-meta">—</span>
+    </div>
+    <label class="field"><span class="field__label" data-id="Bin kosong" data-en="Empty bin">Bin kosong</span>
+      <select class="select" data-field="pl-bin"></select>
+      <span class="field__hint" data-field="pl-hint" data-id="Saran: tingkat 2–3 untuk yang cepat laku, tingkat 5 untuk yang lambat." data-en="Suggested: levels 2–3 for fast movers, level 5 for slow ones.">Saran: tingkat 2–3 untuk yang cepat laku, tingkat 5 untuk yang lambat.</span>
+    </label>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-action="save-place" data-id="Tempatkan" data-en="Place">Tempatkan</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
+  </div>
+</aside>
+<script src="../js/api.js?v=78a372d"></script>
+<script src="../js/app.js?v=78a372d"></script>
+<script src="../js/console.js?v=78a372d"></script>
+<script src="../js/wire.js?v=78a372d"></script>
+<script src="../js/screens/rak.js?v=78a372d"></script>
+</body>
+</html>

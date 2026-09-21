@@ -35,7 +35,7 @@ TEMPLATE_CSV = (
 
 
 @router.get("/template")
-async def download_template(user: auth.User = Depends(auth.require("admin"))):
+async def download_template(user: auth.User = Depends(auth.require("hq"))):
     return Response(
         content=TEMPLATE_CSV, media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=product-master-template.csv"},
@@ -56,7 +56,7 @@ def _pick(row: dict, *names) -> str | None:
 @router.post("/import", response_model=models.ProductMasterImportResult)
 async def import_master(
     file: UploadFile = File(...),
-    user: auth.User = Depends(auth.require("admin")),
+    user: auth.User = Depends(auth.require("hq")),
 ):
     raw = (await file.read()).decode("utf-8-sig", errors="replace")
     reader = csv.DictReader(io.StringIO(raw))
@@ -126,7 +126,7 @@ async def list_master(
     q: str | None = None,
     limit: int = Query(default=200, le=1000),
     offset: int = 0,
-    user: auth.User = Depends(auth.require("admin")),
+    user: auth.User = Depends(auth.require("hq")),
 ):
     where, params = ["1=1"], []
     if q:
@@ -154,7 +154,7 @@ async def list_master(
 
 
 @router.get("/export")
-async def export_master(user: auth.User = Depends(auth.require("admin"))):
+async def export_master(user: auth.User = Depends(auth.require("hq"))):
     rows = await db.fetch_all(
         "SELECT b.name AS brand_name, s.name_display AS product_name "
         "FROM product_default_locations pdl "
@@ -175,7 +175,7 @@ async def export_master(user: auth.User = Depends(auth.require("admin"))):
 @router.post("/delete", response_model=models.Ok)
 async def delete_master(
     body: models.ProductMasterDeleteIn,
-    user: auth.User = Depends(auth.require("admin")),
+    user: auth.User = Depends(auth.require("hq")),
 ):
     if not body.ids:
         raise HTTPException(400, "Pilih minimal satu baris.")

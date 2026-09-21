@@ -4,8 +4,9 @@ This is the screen that retires the interim auto-provision rule in §5.4. Until
 now, granting someone a live site meant writing a migration and deploying; that
 does not survive a pilot across ten stations with staff turnover.
 
-Everything here is admin-only, with one deliberate exception noted on the read
-of sites, which supervisors also need.
+Everything here is Ops HQ (the former admin role), with one deliberate exception
+noted on the read of sites, which supervisors also need. Only a superadmin can
+grant or change the superadmin role.
 """
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -34,7 +35,7 @@ async def _user_payload(row: dict) -> dict:
 
 
 @router.get("/users", response_model=models.AdminUserList)
-async def list_users(user: auth.User = Depends(auth.require("admin"))):
+async def list_users(user: auth.User = Depends(auth.require("hq"))):
     rows = await db.fetch_all(
         "SELECT id, email, name, role, default_site_id, locale, active, created_at "
         "FROM users ORDER BY active DESC, role, email"
@@ -57,7 +58,7 @@ async def _set_sites(user_id: int, site_ids: list[int]) -> None:
 
 @router.post("/users", response_model=models.AdminUser, status_code=201)
 async def create_user(
-    body: models.AdminUserIn, user: auth.User = Depends(auth.require("admin"))
+    body: models.AdminUserIn, user: auth.User = Depends(auth.require("hq"))
 ):
     """Register a staff email against a role and the sites they may work at."""
     email = body.email.strip().lower()
@@ -65,6 +66,8 @@ async def create_user(
         raise HTTPException(422, "Masukkan alamat email yang benar.")
     if body.role not in auth.ROLES:
         raise HTTPException(422, f"Role must be one of {', '.join(auth.ROLES)}.")
+    if body.role == "superadmin" and user.real_role != "superadmin":
+        raise HTTPException(403, "Hanya superadmin yang bisa membuat superadmin.")
 
     existing = await db.fetch_one("SELECT id FROM users WHERE email = %s", (email,))
     if existing:
@@ -92,7 +95,7 @@ async def create_user(
 async def update_user(
     user_id: int,
     body: models.AdminUserPatch,
-    user: auth.User = Depends(auth.require("admin")),
+    user: auth.User = Depends(auth.require("hq")),
 ):
     """Change a role, the sites someone may work at, or switch them off."""
     row = await db.fetch_one("SELECT * FROM users WHERE id = %s", (user_id,))
@@ -109,6 +112,10 @@ async def update_user(
 
     if body.role is not None and body.role not in auth.ROLES:
         raise HTTPException(422, f"Role must be one of {', '.join(auth.ROLES)}.")
+    # Ops HQ runs accounts, but cannot mint or touch the account above it.
+    if user.real_role != "superadmin" and (
+            row["role"] == "superadmin" or body.role == "superadmin"):
+        raise HTTPException(403, "Hanya superadmin yang bisa mengubah akun superadmin.")
 
     sets, params = [], []
     for field in ("name", "role", "default_site_id", "locale"):
@@ -150,7 +157,7 @@ async def list_sites(user: auth.User = Depends(auth.require("supervisor"))):
     )
     visible = []
     for s in sites:
-        if not user.at_least("admin"):
+        if not user.at_least("hq"):
             allowed = await db.fetch_one(
                 "SELECT 1 AS ok FROM user_sites WHERE user_id = %s AND site_id = %s",
                 (user.id, s["id"]),
@@ -201,7 +208,7 @@ async def list_sites(user: auth.User = Depends(auth.require("supervisor"))):
 async def update_site(
     site_id: int,
     body: models.SitePatch,
-    user: auth.User = Depends(auth.require("admin")),
+    user: auth.User = Depends(auth.require("hq")),
 ):
     row = await db.fetch_one("SELECT * FROM sites WHERE id = %s", (site_id,))
     if not row:

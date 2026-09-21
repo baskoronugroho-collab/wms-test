@@ -136,6 +136,10 @@
 
     paintChrome();
     NJW.startHeartbeat('/api/health', 20000);
+    // Installable to a phone's home screen. The worker caches nothing (sw.js).
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register(isConsole() ? '../sw.js' : 'sw.js').catch(() => {});
+    }
     return true;
   }
 
@@ -205,6 +209,115 @@
     } catch { /* training-only nicety */ }
   }
 
+  /* ---------- roles: the same ladder as auth.py ---------- */
+  const RANK = { staff: 0, hub_operator: 1, supervisor: 2, hq: 3, superadmin: 4 };
+  const ROLE_NAME = { superadmin: ['Superadmin', 'Superadmin'], hq: ['Ops HQ', 'Ops HQ'],
+    supervisor: ['SPV', 'SPV'], hub_operator: ['Operator hub', 'Hub operator'], staff: ['Staf', 'Staff'] };
+
+  /* A superadmin can look at the app as any other role: the same menu, the
+     same screens, the same refusals. It is read-only — the server refuses any
+     write while a preview is on — and a bar across the top says so. */
+  function paintViewAs() {
+    if (!ME) return;
+    let stored = '';
+    try { stored = localStorage.getItem('njw.viewAs') || ''; } catch (e) { /* no storage */ }
+    if (ME.real_role !== 'superadmin') {
+      if (stored) { try { localStorage.removeItem('njw.viewAs'); } catch (e) {} }
+      return;
+    }
+    const setView = v => {
+      try { v ? localStorage.setItem('njw.viewAs', v) : localStorage.removeItem('njw.viewAs'); } catch (e) {}
+      // Each role lands on its own surface.
+      const station = ['staff', 'hub_operator'].includes(v);
+      const here = isConsole();
+      if (station && here) return go('../index.html?station');
+      if (!station && !here) return go('console/index.html');
+      location.reload();
+    };
+    const bar = document.createElement('div');
+    bar.className = 'wire-viewas';
+    bar.style.cssText = 'position:sticky;top:0;z-index:300;display:flex;flex-wrap:wrap;gap:8px 12px;' +
+      'align-items:center;padding:8px 16px;font-size:14px;background:' +
+      (ME.viewing_as ? 'var(--accent-bg);color:var(--ink);border-bottom:2px solid var(--accent)' :
+                       'var(--surface-2);color:var(--muted);border-bottom:1px solid var(--rule)');
+    const opts = ['', 'hq', 'supervisor', 'hub_operator', 'staff'].map(k =>
+      '<option value="' + k + '"' + ((ME.viewing_as || '') === k ? ' selected' : '') + '>' +
+      (k ? esc(ROLE_NAME[k][0]) : 'Superadmin (' + (localStorage.getItem('njw.lang') === 'en' ? 'yourself' : 'diri sendiri') + ')') +
+      '</option>').join('');
+    bar.innerHTML = '<strong ' + biAttr('Lihat konsol sebagai', 'View the app as') + '></strong>' +
+      '<select id="viewAsSel" aria-label="View as" style="min-height:32px;border:1px solid var(--rule-strong);' +
+      'border-radius:6px;background:var(--surface);color:var(--ink);padding:0 8px">' + opts + '</select>' +
+      (ME.viewing_as
+        ? '<span ' + biAttr('Mode pratinjau — hanya melihat. Semua perubahan ditolak sampai kembali ke superadmin.',
+            'Preview mode — read-only. Every change is refused until you switch back to superadmin.') + '></span>' +
+          '<button type="button" id="viewAsExit" style="margin-left:auto;min-height:32px;padding:0 12px;border-radius:6px;' +
+          'border:1px solid var(--accent);background:var(--surface);color:var(--ink);cursor:pointer" ' +
+          biAttr('Kembali ke superadmin', 'Back to superadmin') + '></button>'
+        : '');
+    document.body.insertBefore(bar, document.body.firstChild);
+    applyLangTo(bar);
+    $('#viewAsSel', bar).onchange = e => setView(e.target.value);
+    const exit = $('#viewAsExit', bar);
+    if (exit) exit.onclick = () => setView('');
+  }
+  const atLeast = role => !!ME && (RANK[ME.role] || 0) >= (RANK[role] || 0);
+
+  // A console link marked data-min-role is a screen whose every write the API
+  // would refuse for this person; showing it only invites the 403.
+  function gateSidebar() {
+    $$('[data-min-role]').forEach(el => { el.hidden = !atLeast(el.dataset.minRole); });
+    $$('.sidebar__section').forEach(sec => {
+      const links = $$('.sidebar__link', sec);
+      if (links.length && links.every(a => a.hidden)) sec.hidden = true;
+    });
+  }
+
+  /* ---------- the reminders badge in the console sidebar ---------- */
+  // Flags are computed live on the server, so the count is cached for five
+  // minutes per tab; the Reminders page itself always reads fresh.
+  async function paintFlagBadge() {
+    const badge = field('flag-badge');
+    if (!badge || !isConsole() || !atLeast('supervisor')) return;
+    let c = null;
+    try {
+      const hit = JSON.parse(sessionStorage.getItem('njw.flagCount') || 'null');
+      if (hit && Date.now() - hit.at < 5 * 60 * 1000) c = hit.counts;
+    } catch (e) { /* no cache */ }
+    if (!c) {
+      try {
+        c = (await api().flags()).counts;
+        sessionStorage.setItem('njw.flagCount', JSON.stringify({ at: Date.now(), counts: c }));
+      } catch (e) { return; }
+    }
+    const n = (c.critical || 0) + (c.warn || 0);
+    badge.hidden = !n;
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.classList.toggle('is-critical', (c.critical || 0) > 0);
+  }
+
+  /* ---------- photos: stored keys load through the API ---------- */
+  // A key with a folder (sku/…, request/…) lives in object storage behind
+  // sign-in; anything else is the design's placeholder convention and stays.
+  function loadPhotos(root) {
+    $$('img[data-photo-key]', root).forEach(img => {
+      const url = api().photoUrl(img.dataset.photoKey);
+      if (url && img.dataset.photoSrc !== url) {
+        img.dataset.photoSrc = url;
+        img.src = url;
+      }
+    });
+  }
+  function watchPhotos() {
+    loadPhotos(document);
+    let queued = false;
+    new MutationObserver(() => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => { queued = false; loadPhotos(document); });
+    }).observe(document.body, { subtree: true, childList: true, attributes: true,
+                               attributeFilter: ['data-photo-key'] });
+  }
+
   const screens = {};
 
   /* ======================= shared surface ======================= */
@@ -214,7 +327,7 @@
   NJW.screens = screens;
   NJW.wire = {
     CTX, $, $$, field, region, setF, esc, go, key, bi, biAttr, applyLangTo,
-    codeHtml, say, fail, isConsole, paintDayColour, testCodes,
+    codeHtml, say, fail, isConsole, paintDayColour, testCodes, atLeast, loadPhotos,
     me: () => ME,
     site: () => SITE,
   };
@@ -237,6 +350,11 @@
       // The stop screen is where a failed sign-in lands, so it must not sign in.
       if (name === 'blocked') return screens.blocked && await screens.blocked();
       if (!(await boot())) return;
+      paintViewAs();
+      gateSidebar();
+      watchPhotos();
+      if (name !== 'pengingat') paintFlagBadge();
+      else sessionStorage.removeItem('njw.flagCount');
       const fn = screens[name];
       if (fn) { try { await fn(); } catch (e) { fail(e); } }
     } finally { reveal(); }

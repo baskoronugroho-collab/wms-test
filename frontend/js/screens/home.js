@@ -23,7 +23,7 @@
     const params = new URLSearchParams(location.search);
     const fromConsole = document.referrer.includes('/console/');
     if (params.has('station') || fromConsole) CTX.set('preferStation', true);
-    if (me.role && ['admin', 'supervisor'].includes(me.role) && !CTX.get('preferStation')) {
+    if (W.atLeast('supervisor') && !CTX.get('preferStation')) {
       return go('console/index.html');
     }
     if (!site) return;

@@ -77,7 +77,9 @@
         '<span class="toolbar__spacer"></span><span class="occ__label">' + p + '%</span></span>' +
         '<span class="occ__track"><span class="occ__fill' + (p >= 95 ? ' is-full' : p > 85 ? ' is-tight' : '') +
         '" style="width:' + p + '%"></span></span></div>' +
-        '<div class="rack-chips">' + rackChips(s.racks) + '</div>';
+        '<div class="rack-chips">' + rackChips(s.racks) + '</div>' +
+        '<div><a class="cbtn" href="rak.html" data-site-link="' + s.id + '"><span ' +
+        biAttr('Kelola rak & bin →', 'Manage racks & bins →') + '></span></a></div>';
     } else {
       body = '<span class="inline-note inline-note--warn"><span ' +
         biAttr('Belum ada rak. Admin bisa membuat tata letak lewat Ubah.',
@@ -129,7 +131,7 @@
 
   NJW.screens.hub = async () => {
     const me = W.me();
-    const admin = me && me.role === 'admin';
+    const admin = W.atLeast('hq');
     let sites = [];
     let editing = null;          // the site in the drawer, or null when creating
 
@@ -182,6 +184,9 @@
     }
 
     document.addEventListener('click', async e => {
+      // The rack page works on the active site: switch to this card's site first.
+      const sl = e.target.closest('[data-site-link]');
+      if (sl) { W.CTX.set('site', +sl.dataset.siteLink); return; }
       const ed = e.target.closest('[data-edit]');
       if (ed) return openFor(sites.find(s => s.id === +ed.dataset.edit));
       if (e.target.closest('[data-action="new-site"]')) return openFor(null);

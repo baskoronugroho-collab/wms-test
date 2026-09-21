@@ -3,12 +3,12 @@
 | | |
 |---|---|
 | **Product** | Ninja Kilat WMS |
-| **Version** | v2.1 — aligned to the canonical systems design |
-| **Date** | 14 September 2026 |
+| **Version** | v2.6 — stacked bins T/B, restock point defaults to 25% of P, inbound in batches |
+| **Date** | 21 September 2026 |
 | **Owner** | Baskoro Nugroho |
 | **Status** | Decisions locked for build · open items in §17 |
 | **Governed by** | *QC Systems — Hiryu, WMS, TMS* (ChangWen, 11 Sep 2026), `docs/canonical/qc-oms-wms.html`. **Where this PRD and that design differ, the design wins.** |
-| **Supersedes** | v2.0 of 11 September; v0.1 of 3 September archived at `docs/archive/PRD-v1.md` |
+| **Supersedes** | v2.5 and v2.4 of 21 September; v2.3 and v2.2 of 17 September; v2.1 of 14 September; v2.0 of 11 September; v0.1 of 3 September archived at `docs/archive/PRD-v1.md` |
 | **Platform** | Substrait · FastAPI · OceanBase · static frontend |
 | **Live** | wms-test.ninjavan.apps.substrait.build |
 | **Pilot** | Wardah — 118 SKUs · second brand within 3 months |
@@ -56,17 +56,49 @@ These hold across every section below. A change request that breaks one of them 
 
 | Role | Where | Does |
 |---|---|---|
-| **Station staff** | Darkstore floor | Receive, put away, pick, pack, count |
-| **Hub operator** | Logos / CWH | Receive from suppliers, decant, register identity, dispatch, crossdock |
-| **Supervisor** | Station or hub | Exceptions only: discrepancies, stuck claims, count sign-off, rack assignment |
-| **Admin** | Ninja ops | Staff, sites, racks, SKUs, configuration |
+| **Station staff** | Darkstore floor | Receive by AWB, put away, pick, pack, count, ask HQ to register an unknown product (§7.6) |
+| **Hub operator** | Logos / CWH | Staff, plus decant, dispatch, crossdock |
+| **SPV** (supervisor) | Their own hubs | Racks and bins (including a whole layout), SKU → rack, **replenishment to Wardah for their hubs** (§5.3), acknowledging restock variances (§5.4), discrepancies, stuck claims, count sign-off |
+| **Ops HQ** | Every hub | Brands, SKUs and photos, **thresholds**, racks, the hub map (§8.5), SKU requests, replenishment and **variance sign-off**, staff accounts and sites. *Merged with the former admin role on 17 Sep.* |
+| **Superadmin** | Everything | Everything Ops HQ does, granting superadmin, and **viewing the app as any other role** (§3.3) |
 
-### 3.1 Two surfaces **[DECIDED]**
+### 3.1 What each role may change **[DECIDED 17 Sep, revised]**
 
-- **3.1.1** **Station** — large type (32 / 60 / 96 px), 64 px primary buttons, one decision per screen, a scan zone that always holds focus. Built for arm's length and a scanner gun.
-- **3.1.2** **Console** — a dense desk interface with sidebar, tables, filters and a queue board. Supervisors and admins **land on the console** when they open the app; staff land on the station.
-- **3.1.3** Devices are a **laptop or tablet with a USB/Bluetooth scanner gun**, sometimes an **Android phone**. Every scan screen therefore offers **camera scanning as a fallback**.
-- **3.1.4** Both surfaces share one token system, both light and dark themes are real, and there is **no build step** — static HTML/CSS/JS wired by one thin layer.
+| | Staff | SPV | Ops HQ | Superadmin |
+|---|---|---|---|---|
+| Add a brand, register a SKU, upload a product photo | — | — | ✓ | ✓ |
+| **Set thresholds S, R and P** (at registration, per hub, or for every hub) | — | — | ✓ | ✓ |
+| See reminders and flags | — | own hubs | every hub | ✓ |
+| Change reminder rules (switch on/off, hours and days) | — | — | ✓ | ✓ |
+| Monitor every hub: bin availability, stock level, the layout map | — | — | ✓ | ✓ |
+| Add a rack, add or remove levels and bins | — | own hubs | every hub | ✓ |
+| Put a SKU on a rack | during inbound only¹ | own hubs | every hub | ✓ |
+| Build a whole layout at once | — | own hubs | every hub | ✓ |
+| Receive a delivery by AWB; send HQ an unknown product | ✓ | ✓ | ✓ | ✓ |
+| See restock alerts; draft, send, confirm and cancel requests (Surat Jalan) | — | own hubs | every hub | ✓ |
+| Answer SKU requests from stations | — | — | ✓ | ✓ |
+| **Acknowledge a restock variance** (final count + reason) | — | own hubs | ✓ | ✓ |
+| **Sign off a restock variance** (sets the billed number) | — | — | ✓ | ✓ |
+| Staff accounts, roles and sites | — | — | ✓ | ✓ |
+| Grant the superadmin role; view the app as another role | — | — | — | ✓ |
+
+¹ A **known** SKU that reaches a hub where it has no rack yet can be given a basket from the inbound flow, so the delivery is not held up. The audit log marks it and the SPV can move it later.
+
+- **3.1.1** The server enforces every row of this table. The console hides the screens a role cannot use, so nobody meets a refusal after the fact.
+- **3.1.2** **Why Ops HQ and admin merged** *(17 Sep)*: in the pilot the same people run the operation and the accounts. The separation that still matters, who can grant the top role, stays with superadmin.
+
+### 3.2 Two surfaces **[DECIDED]**
+
+- **3.2.1** **Station** — large type (32 / 60 / 96 px), 64 px primary buttons, one decision per screen, a scan zone that always holds focus. Built for arm's length and a scanner gun.
+- **3.2.2** **Console** — a dense desk interface with sidebar, tables, filters and a queue board. Supervisors and admins **land on the console** when they open the app; staff land on the station.
+- **3.2.3** Devices are a **laptop or tablet with a USB/Bluetooth scanner gun**, or a **phone** *(21 Sep)*. The station app is a web app that works on a phone: it installs to the home screen and opens full screen (web manifest; no Play Store), every scan screen offers **Scan with camera** (the browser's barcode reader on Android Chrome, a fallback reader elsewhere) and **Type the code**, and the layout fits a 375 px screen. It stays online-only: nothing is cached. A native Android app is **future**, not planned now (§17 Q11).
+- **3.2.4** Both surfaces share one token system, both light and dark themes are real, and there is **no build step** — static HTML/CSS/JS wired by one thin layer.
+
+### 3.3 Viewing the app as another role **[DECIDED 17 Sep — built]**
+
+- **3.3.1** A superadmin picks **Ops HQ, SPV, hub operator or staff** from a bar across the top of every screen. The app then shows that role's menu, screens and refusals, and staff and hub-operator views open on the station app.
+- **3.3.2** The preview is **read-only**: the server refuses every change while it is on, so nothing is written under a borrowed role. One click returns to superadmin.
+- **3.3.3** Hub scope in a preview follows the superadmin's own hubs.
 
 ---
 
@@ -91,6 +123,9 @@ Even when a supplier sends no manifest, the second hop is always checkable, beca
 - **4.2.3** **One basket holds one SKU.** Never two.
 - **4.2.4** Baskets come in three widths — S 0.20 m, M 0.33 m, L 0.50 m. Anything larger than L goes on an open shelf level.
 - **4.2.5** Inside a basket, **coloured dividers** separate each arrival (§7.4). The WMS does not model dividers.
+- **4.2.6** **Racks are expandable** *(built 17 Sep)*. 175 slots is the starting layout, not a ceiling: Wardah's stated target is 200–300 SKUs per hub. An SPV or HQ can add a rack, put a new level on top of a rack, add bins to the end of any level, and change a basket's size. A bin or level can be removed only while it has **never held stock** — a location in the ledger is history.
+- **4.2.7** **Rack management reads rack first.** The *Racks & bins* page shows the hub as one card per rack (levels, bins, how full). Clicking a rack opens it level by level, top level on top, every bin with its SKU and units.
+- **4.2.8** **Up to two stacked bins per position** *(built 21 Sep; naming decided 21 Sep)*. Any level can hold **one bin per position, or two stacked, never more**. With one bin the code has no letter (`UT5-A-3-02`). With two, the letter says which: **T = top** (`UT5-A-3-02T`), **B = bottom** (`UT5-A-3-02B`). It is chosen when a rack, level or layout is built, and switched per level later: stacking a level turns its bins into B and adds a T above each; going back removes the T bins (only if none was ever used) and gives the B bins their plain code back. Bins are referenced by id, so a new code loses no history — but printed bin labels must be reprinted. Screens draw a pair T above B.
 
 ---
 
@@ -113,6 +148,38 @@ Even when a supplier sends no manifest, the second hop is always checkable, beca
 
 - **5.2.1** When everything a darkstore holds for a SKU — rack plus overflow — falls to its **restock point** (§8.3), the WMS raises a restock request to the CWH.
 - **5.2.2** A supervisor confirms or adjusts the quantity and sends it. This formalises what Malaysia does today with a spreadsheet and WhatsApp.
+
+### 5.3 Replenishment to the brand — the Wardah pilot **[DECIDED 17 Sep — built]**
+
+Wardah drops stock straight at each hub (restock type 3), and the stock is consignment. So for the pilot, replenishment is a request to **Wardah**, not to a CWH. **Ops HQ runs it for every hub; the hub's SPV can run it for their own hubs** *(21 Sep)*.
+
+| Step | Who | What happens |
+|---|---|---|
+| **Alert** | WMS | A SKU at a hub falls to its restock point (rack + overflow). It appears on HQ's *Needs restock* list with a suggested quantity. |
+| **Draft** | Ops HQ or SPV | Selects alerts (one request per hub and brand), adjusts quantities, adds SKUs by hand if needed. |
+| **Sent** | Ops HQ or SPV | Copies the request text and sends it to Wardah **outside the WMS** (WhatsApp or email), then marks it sent. Quantities are frozen. |
+| **Confirmed** | Ops HQ or SPV | Wardah answers. The **AWB**-holder records the **AWB**, the **Surat Jalan number**, the expected arrival and the **quantity Wardah will actually send** per SKU. It can be re-confirmed until received. |
+| **Received** | Station staff | Staff open the delivery **by its AWB** (§7.1). The confirmed quantities are the expectation; each SKU shows *matches / N short / N over* while scanning. If everything matches, the request closes and the received numbers are billed. |
+| **Variance: SPV** | SPV | Anything different from Wardah's confirmation waits for the hub's SPV (§5.4). |
+| **Variance: HQ** | Ops HQ | Ops HQ signs off; the signed numbers are billed. |
+
+- **5.3.1** The reference reads `RPL-<hub>-<yymm>-<n>`. One AWB belongs to one open request.
+- **5.3.2** The alert is computed live from the registry, so stock that arrived by upload or count raises it too.
+- **5.3.3** **Consignment is the agreed deal** *(21 Sep)*. Details still to settle with Wardah and Grab — safety stock, replenishment frequency, expiry and slow-moving returns, and a **restock fee separate from the 5% fulfilment fee** — will set the restock points and may add steps here.
+- **5.3.4** Status path: **draft → sent → confirmed → (variance: SPV → variance: HQ) → closed**, or cancelled.
+
+### 5.4 Variance acknowledgement and sign-off **[DECIDED 17 Sep — built]**
+
+A difference between what Wardah says it sent and what Ninja says it received must end as **one number both sides bill on**.
+
+| Step | Who | Screen | What happens |
+|---|---|---|---|
+| 1 | WMS | — | The receipt closes with at least one SKU different from the confirmed quantity. The request moves to *variance: SPV*. |
+| 2 | SPV | *Selisih restock* | For every differing SKU the SPV enters the **final count** (after rechecking cartons) and a **reason**. The count may differ from the scan. Sent to Ops HQ. |
+| 3 | Ops HQ | *Selisih restock* | Ops HQ **signs off**, or **sends it back** to the SPV with a note. Signing makes the final counts the **billed quantities**, and corrects stock on any line where the final count differs from the scan (movement `receipt_adjust`, reason = the SPV's note). |
+
+- **5.4.1** The SPV and Ops HQ steps are separate people, so one person cannot both declare and approve a billing number.
+- **5.4.2** Once signed off, a later put-away of units that were waiting for HQ (§7.6) is stock, not billing, and does not reopen the variance.
 
 ---
 
@@ -138,10 +205,16 @@ Even when a supplier sends no manifest, the second hop is always checkable, beca
 
 ### 6.3 SKU onboarding
 
-- **6.3.1** An admin registers each SKU with brand, name, size, unit cube and category.
-- **6.3.2** An admin uploads a **product photo** during onboarding. It is **optional for go-live**; a placeholder shows until it exists. Spec: 1:1, at least 800 × 800, product centred on white, filename the lowercase SKU code. For 118 near-identical shades the photo is the primary disambiguator on the pick and wrong-item screens.
-- **6.3.3** **A new SKU without a rack at a site appears on the supervisor's "needs a rack" list** until someone assigns one (§8.2). A SKU with no pick face can be received but never picked.
-- **6.3.4** *(Proposed, with §10.5.)* Each SKU can also carry its **retail box size (L × W × H mm), weight (g)** and three flags: **liquid in a bottle, large bottle, fragile**. They drive the packaging suggestion. They are optional at go-live; category defaults fill the gaps.
+- **6.3.1** **Ops HQ** registers each SKU **once, for every hub**: brand, SKU code, name, size, unit cube and category.
+- **6.3.2** Registration **asks for the thresholds at the same time** *(17 Sep)*: the **restock point is required**, the full threshold optional. A SKU without a restock point never raises a replenishment alert, and nobody goes back to fill 118 of them in. Each hub **copies** them onto its pick face when the SKU gets a rack there. **Only Ops HQ changes thresholds afterwards** *(17 Sep)* — for one hub, or for every hub that has racked the SKU at once — from the hub map (§8.5) or *Slotting & thresholds*. An SPV sees them but cannot change them.
+- **6.3.3** **Ops HQ uploads the product photo** *(built 17 Sep)* — in the add-SKU form or later from the product list. Optional for go-live; a placeholder shows until it exists. Spec: 1:1, at least 800 × 800, product centred on white, JPG/PNG/WEBP up to 8 MB. Photos live in the app's private object storage and are served behind sign-in. For 118 near-identical shades the photo is the primary disambiguator on the pick and wrong-item screens.
+- **6.3.4** **Rack per hub** *(built 17 Sep)*. A SKU's rack is chosen per hub, because each hub's layout differs:
+  1. HQ registers the SKU. It appears in the **"Needs a rack" queue of every hub that carries the brand**.
+  2. At each hub, the SPV (or HQ, for any hub) opens *Racks & bins → Needs a rack*, sees the suggested basket size, and picks an empty bin — the suggestion prefers pick height (§8.2.2). Or opens an empty bin and chooses from the queue.
+  3. The SKU leaves that hub's queue; its thresholds are copied onto the new pick face.
+  4. HQ can see, per SKU, which hubs have racked it and which are still waiting (*Products → Photo & racks*).
+  A SKU with no pick face at a hub can be received there (§3.1 note 1) but never picked.
+- **6.3.5** *(Proposed, with §10.5.)* Each SKU can also carry its **retail box size (L × W × H mm), weight (g)** and three flags: **liquid in a bottle, large bottle, fragile**. They drive the packaging suggestion. They are optional at go-live; category defaults fill the gaps.
 
 ### 6.4 Stock owner **[DECIDED — canonical]**
 
@@ -149,12 +222,12 @@ Three dark-store models run through the same system, so the ledger records the o
 
 | Model | Example | Stock owner |
 |---|---|---|
-| 1 | Wardah | **Grab** |
-| 2 | Brand consignment | The brand |
+| 1 | Grab-owned range (none in the pilot) | Grab |
+| 2 | Brand consignment — **Wardah** | **The brand** |
 | 3 | Ninja's frozen and chilled range | Ninja |
 
 - **6.4.1** Owner is set per brand (`grab` / `brand` / `ninja`), overridable per brand × site, and stamped on every movement and balance.
-- **6.4.2** Brand and owner differ for Wardah: the stock is Wardah's product and Grab's inventory.
+- **6.4.2** **Wardah is consignment** *(agreed 21 Sep)*: Wardah owns its stock until it is sold. Migration V19 moves Wardah's default owner and today's balances from `grab` to `brand`; earlier movements keep the owner they were written with.
 - **6.4.3** The Malaysia barcode PRD puts racking codes, barcodes and quantities in the POS. Under the canonical design they belong to the WMS: its feature ideas feed the merged feature list (§17), its placement does not.
 
 ---
@@ -167,12 +240,18 @@ Three dark-store models run through the same system, so the ledger records the o
 - **7.1.2** During inbound scanning the screen shows progress live — **"48 of 60 scanned"** — so a shortfall is visible while the driver is still on site, not after they have gone.
 - **7.1.3** **Planned inbound** runs against a reference. **Discovery inbound** — no reference exists — is still allowed: staff scan and the WMS assigns locations as it goes, but no variance can be computed.
 - **7.1.4** The existing **bulk CSV stock upload** and the optional **AWB field** converge into this: a CSV becomes one way to create an inbound reference, not a parallel route into the ledger.
+- **7.1.5** **For the Wardah pilot the inbound reference is the AWB on the Surat Jalan** *(built 17 Sep)*. HQ records it when Wardah confirms a replenishment (§5.3). The inbound start screen therefore offers:
+  - **Option 1 — Delivery from the brand (Surat Jalan).** **Inbound starts from the AWB or the RPL reference** *(17 Sep)*: staff scan or type it, or tap the delivery in the list HQ has confirmed for this hub. The receipt opens with Wardah's confirmed quantities, and the scan screen compares **per SKU, live**: *matches · N short · N over*. Finishing with differences asks the staffer to recheck the cartons first, then sends the variance to the SPV (§5.4). A second person scanning the same AWB joins the open receipt. **A delivery without a confirmed AWB cannot be received**: it waits in the temporary bin until Ops HQ (or the hub's SPV) records it. **No response time is set** *(21 Sep)*: HQ records it when available. Only the training site can receive without one.
+  - **Option 2 — Transfer from another warehouse.** Only for sealed totes dispatched from a CWH or another hub through *Dispatch a tote*; the tote label carries the dispatched quantities. The Wardah pilot has no such hop, so **option 2 is hidden** on the start screen *(17 Sep)* and returns when the CWH restocking model is agreed.
 
 ### 7.2 Receiving and putaway
 
 - **7.2.1** Each scan identifies the SKU and the screen names the destination location in large type.
 - **7.2.2** **New stock always goes to the SKU's assigned rack first.** Only when the rack is at its **full threshold** does it go to the overflow slot (§8.3).
 - **7.2.3** No basket yet for this SKU → the WMS suggests a free slot and the staffer confirms it.
+- **7.2.5** **Two ways a scan finds its product** *(17 Sep)*:
+  1. **Automatic** — the barcode is registered, the WMS identifies the SKU and names its rack.
+  2. **Manual** — the barcode is unknown. The staffer searches the product list (name or shade number, with photos) and picks the one in their hand; the barcode is bound to it for good and the unit is scanned in. **If the product is not on the list**, the staffer sends it to Ops HQ (§7.6).
 - **7.2.4** Stock is **sellable from the putaway scan**: the receipt changes available, so message 3 goes to Hiryu at once. Nothing waits for a signature.
 
 ### 7.3 Putaway list
@@ -195,6 +274,29 @@ Stock is held as a quantity, so the system cannot tell which identical lipstick 
 - **7.4.4** The day is computed in **Jakarta time (UTC+7)**. Without this, every delivery received after 5 pm local would be labelled with tomorrow's colour.
 - **7.4.5** **No expiry dates are recorded.** The inbound date on the label is the only FIFO signal, including for the eleven sunscreen and vitamin-C SKUs.
 
+### 7.5 Temporary inbound bin **[DECIDED 21 Sep — required at every hub]**
+
+- **7.5.1** Every hub keeps **temporary inbound bins** near the receiving bench. A delivery is unloaded into them first, counted against the Surat Jalan, and only then put away to its racks. Units of a product the WMS does not know stay there until HQ answers (§7.6).
+- **7.5.2** The WMS does not model these bins as locations: units in them are not yet in stock.
+- **7.5.3** **Ops action — Grab Kilat pilot:** the bins must be **procured for each pilot hub** alongside the racks, baskets and packaging already being sourced, and added to the hub readiness checklist. The number is flexible (§7.5.4). Owner: Jabo ops / procurement. See §17 Q12.
+- **7.5.4** **Inbound in batches** *(decided and built 21 Sep)*. **One temporary inbound bin holds one SKU.** How many bins a hub has is flexible, so one AWB can be received in several batches: batch 1 takes as many SKUs as there are bins; once those are put away, batch 2 starts from the same AWB, and so on.
+  - The SPV (or Ops HQ) records the number of inbound bins per hub on *Rak & bin*; empty = no limit.
+  - Each batch expects what is **still to come**: Wardah's confirmed quantity less what earlier batches received. The live comparison shows it.
+  - Scanning a SKU that would need one bin more than the hub has is refused with *Bin inbound penuh* — it goes in the next batch.
+  - Two ways to finish: **Selesai batch ini** (the rest follows; the request shows *Diterima sebagian*) or **Semua barang AWB sudah diterima** (the whole AWB — every batch together — is compared with the Surat Jalan; any variance goes to the SPV, then Ops HQ, §5.4).
+  - A batch that did not finish the AWB has no variance and its put-away slip lists only what it brought. One batch per AWB is open at a time; a second phone opening the same AWB joins it.
+
+### 7.6 Unknown product → Ops HQ → station **[DECIDED 17 Sep — built]**
+
+| Step | Who | Screen | What happens |
+|---|---|---|---|
+| 1 | Staff | Unknown barcode | Not on the product list. Staff photograph it, count every unit with that barcode, add a note, and **send it to Ops HQ**. The units go to the temporary inbound bin and are **not** in stock. |
+| 2 | Ops HQ | *SKU requests* | HQ sees the photo, barcode, count and hub. HQ either **matches an existing SKU** or **registers a new one** (thresholds required), and chooses the **bin at that hub** — or lets the WMS pick the best empty one. The barcode is bound to the SKU; the staff photo becomes the product photo if there is none. Or HQ **rejects** it with a reason (e.g. not our product — return it to the brand). |
+| 3 | Staff | Inbound start, scan and receipt-done screens | The answer appears: *take N units from the temporary bin to UT5-B-2-03*. Staff carry them over and tap **Put away**, confirming the quantity. The units enter stock then, against the original receipt; if that receipt was already closed against a Surat Jalan, the replenishment's received quantities are updated too. |
+
+- **7.6.1** Requests still waiting for HQ are listed on the same screens, so nothing is forgotten in the temporary bin.
+- **7.6.2** A barcode already sent to HQ from a hub cannot be sent again until HQ answers.
+
 ---
 
 ## 8. Storage and the slot registry
@@ -213,14 +315,17 @@ The registry is where rack logic lives. For each SKU at each site a supervisor s
 - **8.2.2** The suggestion prefers comfortable pick height (level 3, then 2, 4, 1, with 5 last — it sits at ~2.0 m and needs a step stool).
 - **8.2.3** Default thresholds come from the space model; supervisors accept them at go-live and tune over the first month. Bulk edit applies one set to many SKUs.
 
-### 8.3 Two thresholds **[DECIDED]**
+### 8.3 Thresholds **[DECIDED; safety stock added 21 Sep]**
 
 | Threshold | Measured on | Triggers |
 |---|---|---|
 | **Full** | The assigned rack | New stock spills to overflow |
-| **Restock point** | Rack + overflow together | A restock request to the CWH (§5.2) |
+| **Restock point (R)** | Rack + overflow together | An **automatic draft** request to the brand (§8.6) |
+| **Safety stock (S)**, optional | Rack + overflow together | A **critical** flag (§8.6). Must be ≤ R |
 
-- **8.3.1** The registry refuses configurations that cannot work — e.g. a restock point below zero or a full threshold of zero — at the point of entry, where a person can still fix them.
+- **8.3.1** The registry refuses configurations that cannot work — e.g. a restock point below zero or a full threshold of zero — at the point of entry, where a person can still fix them — including a safety stock above R.
+- **8.3.2** S, R and P are set by Ops HQ: as defaults when a SKU is registered, then per hub or for every hub at once. Their numbers are expected to change once safety stock and replenishment frequency are agreed with Wardah; nothing else needs to change when they do.
+- **8.3.3** **Until then, R defaults to 25% of P** *(decided 21 Sep)*. Registration asks for P; R is filled in as 25% of it (rounded, at least 1, always below P) unless someone types another number. The same default applies whenever P is set without R — on the hub map, in the registry, and when a SKU gets a rack. The 25% is itself a setting on *Aturan pengingat*, so Ops HQ can change it without a rebuild. Migration V21 fills R the same way wherever P was set and R was not.
 
 ### 8.4 Where the picker is sent **[DECIDED]**
 
@@ -232,6 +337,39 @@ When a SKU sits in both its rack and an overflow slot, **the picker goes to whic
 - **8.4.4** Stock of unknown arrival time (seeded, uploaded) is treated as oldest — picking it first is the safe FIFO error.
 - **8.4.5** **There is no replenishment task.** Nothing is ever moved from overflow to the rack; the picker simply follows the oldest stock.
 - **8.4.6** Within the chosen basket, FIFO is the coloured divider, chosen by eye. The screen says **"take from the oldest divider"** and never names a colour — the WMS doesn't know which dividers still hold stock, and a wrong instruction is worse than none.
+
+### 8.5 Hub map and stock monitoring — Ops HQ **[DECIDED 17 Sep — built]**
+
+*Peta hub & stok* is Ops HQ's view of every hub.
+
+- **8.5.1** **Every hub in one table:** bin availability (used / total, flagged above 85%), free bins, SKUs still needing a rack, SKUs racked, units held, SKUs **low** (held ≤ R), **out** (held 0), **without an R**, deliveries on the way, and open variances. Totals across live hubs sit above it.
+- **8.5.2** **Clicking a hub opens its layout map:** every rack side by side, top level on top, one small square per bin. Coloured by **stock** (fine / low / out / no R / empty bin) or by **availability** (in use / empty). The number in a square is that SKU's units across the hub; an amber dot marks an overflow bin. A search box highlights a SKU, name or bin code.
+- **8.5.3** **Clicking a bin** shows the SKU, units here and across the hub, and its R and P. Ops HQ changes them there, for this hub or every hub that has racked the SKU.
+- **8.5.4** Arranging racks stays on *Racks & bins* (§4.2.7); the map is for monitoring and thresholds.
+- **8.5.5** Bins are coloured **out / critical (≤ S) / low (≤ R) / fine / no R / empty**; two bins at one position are drawn as a pair.
+
+### 8.6 Reminders, flags and the automatic restock draft **[DECIDED 21 Sep — built]**
+
+The WMS points at what needs a person, by itself. *Pengingat & flag* lists it; a badge on the console menu counts it.
+
+- **8.6.1** **Automatic replenishment draft.** When everything a hub holds for a SKU falls to R and no request is open for it, the WMS **drafts the request to the brand on its own**: one draft per hub and brand, collecting every SKU that crosses R until someone sends it. It runs after every pick, every 10 minutes, and whenever the flags are read. It never sends anything to Wardah — a person checks the draft and sends it (§5.3).
+- **8.6.2** **Flags**, computed live:
+
+| Flag | Level | Default |
+|---|---|---|
+| Out of stock, or at or below safety stock | Critical | on |
+| At or below R with no request (only if the automatic draft is off) | Needs action | — |
+| Automatic draft waiting to be sent | Info | on |
+| Draft not sent to the brand after N hours | Needs action | 4 h |
+| Sent, brand has not confirmed after N hours | Needs action | 24 h |
+| Confirmed delivery N days past its ETA | Needs action | 1 day |
+| Variance waiting for the SPV or Ops HQ after N hours | Needs action | 24 h |
+| Station SKU request unanswered after N hours (Ops HQ) | Needs action | 24 h |
+| SKU registered N days ago, still without a rack at a hub | Needs action | 2 days |
+| SKU with stock not picked at all for N days (slow mover) | Info | off, 30 days |
+
+- **8.6.3** Every rule can be switched on or off and every number changed by Ops HQ on the *Aturan pengingat* tab — so the terms still open with Wardah (safety stock, replenishment frequency, returns of slow or expiring stock) become settings, not a rebuild. Expiry reminders need expiry dates, which are not recorded today (§7.4.5); they will be a rule once that is decided.
+- **8.6.4** SPVs see flags for their own hubs; Ops HQ for every hub. Reminders appear in the WMS only — no email or WhatsApp yet.
 
 ---
 
@@ -426,12 +564,13 @@ WhatsApp never talks to the WMS. The **WhatsApp adapter is a connector inside Hi
 ### 14.1 Access
 
 - **14.1.1** Sign-in is **Google SSO** through the Substrait proxy; the app stores no passwords.
-- **14.1.2** Roles: **admin, supervisor, hub operator, staff**. An admin cannot deactivate their own account or change their own role.
+- **14.1.2** Roles: **superadmin, Ops HQ, SPV (supervisor), hub operator, staff** — see §3.1. Superadmin and Ops HQ see every site; everyone else sees only the sites on their account. Nobody can deactivate their own account or change their own role, and only a superadmin can grant or change superadmin. Migration V18 makes the pilot owner superadmin and every other former admin Ops HQ.
 - **14.1.3** Any **@ninjavan.co** account is auto-provisioned as staff **on the training site only**. This stays on through the pilot; **at go-live, the staff admin screen takes over and auto-provision is switched off.**
 
 ### 14.2 Admin screens
 
-- **14.2.1** Staff and roles, sites (CWH / darkstore), racks (generate a layout or add one rack), SKUs and barcodes, photos, the slot registry.
+- **14.2.1** Staff and roles, sites (CWH / darkstore), racks and bins (rack view → level and bin view), SKUs, barcodes and photos, the slot registry, SKU requests from stations, replenishment to the brand.
+- **14.2.2** **The unit-labelling menu (Mode B) is hidden** *(17 Sep)*. Wardah is fully barcoded; the screens stay built and come back when a brand without barcodes onboards.
 
 ### 14.3 Training mode
 
@@ -474,7 +613,7 @@ The second brand arrives within three months and the network grows to 10–30 st
 
 ## 16. Build status
 
-As of 14 September 2026. "Verified" means driven end to end against the live database on the training site on that date.
+As of 17 September 2026. "Verified" means driven end to end against the live database on the training site on that date. **"Built 17 Sep" is written and statically checked but not yet driven against the live database.**
 
 | Area | Backend | Screens | Notes |
 |---|---|---|---|
@@ -494,10 +633,26 @@ As of 14 September 2026. "Verified" means driven end to end against the live dat
 | Transfers, hub dispatch | Built | Live | Frozen pending the restocking model |
 | Outbox | Queues every change | Live (integration) | **Nothing sends yet** (shadow mode) |
 | Inbound reference with expected quantities, crossdock | — | — | Decided, not built |
-| ABC schedule, camera scanning, scan buffer, photo upload | — | — | Decided, not built |
+| ABC schedule, scan buffer | — | — | Decided, not built |
 | KPIs, network view, push updates | — | — | Decided, not built |
 | WhatsApp adapter (inside Hiryu) | — | — | Simulator built |
 | Packaging suggestion (§10.5) | — | — | **Proposed**, spec for review |
+| Ops HQ role and role gating (§3.1) | Built 17 Sep | Built 17 Sep | Sidebar hides screens a role cannot use |
+| Racks & bins: rack view, level & bin view, expand and trim (§4.2.6) | Built 17 Sep | Built 17 Sep | |
+| SKU onboarding: required thresholds, photo upload, rack per hub (§6.3) | Built 17 Sep | Built 17 Sep | Replaces "photo upload — not built" |
+| Unknown product → Ops HQ → station (§7.6) | Built 17 Sep | Built 17 Sep | Photo from a phone or laptop camera |
+| Replenishment to the brand, receive by AWB (§5.3, §7.1.5) | Built 17 Sep | Built 17 Sep | Sending to Wardah stays manual; AWB required |
+| Variance acknowledgement and sign-off (§5.4) | Built 17 Sep | Built 17 Sep | Stock corrected at sign-off |
+| Hub map and stock monitoring (§8.5) | Built 17 Sep | Built 17 Sep | |
+| Superadmin and view-as preview (§3.3) | Built 17 Sep | Built 17 Sep | Read-only while previewing |
+| SPV: whole layout, restock for own hubs (§3.1, §5.3) | Built 21 Sep | Built 21 Sep | |
+| Wardah owner = brand (§6.4) | Migration V19 | — | |
+| Two stacked bins per position, T (top) / B (bottom) (§4.2.8) | Built 21 Sep | Built 21 Sep | Migrations V20, V21 |
+| R defaults to 25% of P (§8.3.3) | Built 21 Sep | Built 21 Sep | Setting `restock_default_pct`; V21 backfill |
+| Inbound in batches, 1 inbound bin = 1 SKU (§7.5.4) | Built 21 Sep | Built 21 Sep | Migration V21 |
+| Safety stock, automatic restock draft, reminders and flags (§8.3, §8.6) | Built 21 Sep | Built 21 Sep | Timer every 10 min (`AUTO_REPLENISH_MINUTES`) |
+| Station on a phone: install, camera scan, type the code (§3.2.3) | — | Built 21 Sep | Camera needs HTTPS |
+| Unit-labelling menu | — | Hidden | Screens kept for a brand without barcodes |
 
 **All 38 designed screens run on live data** (14 Sep). Each screen's logic lives in `frontend/js/screens/`, on one shared boot.
 
@@ -527,6 +682,9 @@ As of 14 September 2026. "Verified" means driven end to end against the live dat
 - ~~**Q6** — how the POS applies an absolute stock level without re-deducting picked orders.~~ **Closed by the canonical design:** Hiryu stops deducting sales and derives every listing from the WMS's available (§2.2, §12.2.6).
 - **Q7** — **Exceptions still undesigned:** damaged or written-off stock, customer returns, and units found after being written off by a short pick.
 - **Q8** — Who reviews the **Semgrep and Trivy findings** before go-live?
+- **Q10** — **Two bins per position (§4.2.8):** *closed 21 Sep* — stacked, named T (top) and B (bottom).
+- **Q11** — **Native Android app for pickers:** *future.* For now the station web app runs on phones (§3.2.3). An APK wrapper can come later if always-on scanning or background alerts are needed.
+- **Q12** — **Temporary inbound bins (§7.5):** *closed 21 Sep* — required at every hub; the number is flexible because an AWB can be received in batches (§7.5.4). Each hub's count is entered on *Rak & bin* once procured.
 - **Q9** — **Packaging (§10.5):**
   - Does Grab have a Kilat bag and carton spec we must match?
   - What load does our paper bag really take? Test with 2 shampoos and 12 lip.

@@ -4,11 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Beranda — Ninja Kilat WMS</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B3A5C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=8807087">
-<link rel="stylesheet" href="css/app.css?v=8807087">
+<link rel="stylesheet" href="css/tokens.css?v=78a372d">
+<link rel="stylesheet" href="css/app.css?v=78a372d">
 </head>
 <body>
 <div class="app" data-screen="home">
@@ -34,7 +39,8 @@
       </div>
       <nav class="home">
         <a class="home__card" href="01-mulai-barang-masuk.html"><span class="eyebrow" data-id="Alur A" data-en="Flow A">Alur A</span><span class="home__title" data-id="Barang masuk" data-en="Inbound">Barang masuk</span><span class="note" data-id="Terima kiriman dan simpan ke keranjang" data-en="Receive a delivery into baskets">Terima kiriman dan simpan ke keranjang</span></a>
-        <a class="home__card" href="05-label-unit.html"><span class="eyebrow" data-id="Alur B" data-en="Flow B">Alur B</span><span class="home__title" data-id="Label unit" data-en="Unit labelling">Label unit</span><span class="note" data-id="Tempel stiker Ninja satu per satu" data-en="Apply one Ninja label per unit">Tempel stiker Ninja satu per satu</span></a>
+        <!-- Unit labelling is hidden until a brand without barcodes onboards. -->
+        <a class="home__card" hidden href="05-label-unit.html"><span class="eyebrow" data-id="Alur B" data-en="Flow B">Alur B</span><span class="home__title" data-id="Label unit" data-en="Unit labelling">Label unit</span><span class="note" data-id="Tempel stiker Ninja satu per satu" data-en="Apply one Ninja label per unit">Tempel stiker Ninja satu per satu</span></a>
         <a class="home__card" href="07-ambil-pesanan.html"><span class="eyebrow" data-id="Alur C" data-en="Flow C">Alur C</span><span class="home__title" data-id="Ambil pesanan" data-en="Pick order">Ambil pesanan</span><span class="note" data-id="7 pesanan menunggu diambil" data-en="7 orders waiting to pick">7 pesanan menunggu diambil</span></a>
         <a class="home__card" href="10-hitung-pilih-keranjang.html"><span class="eyebrow" data-id="Alur D" data-en="Flow D">Alur D</span><span class="home__title" data-id="Hitung stok" data-en="Stock count">Hitung stok</span><span class="note" data-id="24 keranjang belum dihitung minggu ini" data-en="24 baskets left this week">24 keranjang belum dihitung minggu ini</span></a>
         <a class="home__card" href="18-kembalikan.html" style="box-shadow:var(--shadow-1),inset 4px 0 0 var(--caution)"><span class="eyebrow" data-id="Alur E" data-en="Flow E">Alur E</span><span class="home__title" data-id="Kembalikan ke rak" data-en="Return to shelf">Kembalikan ke rak</span><span class="note" data-id="Barang dari pesanan yang dibatalkan" data-en="Units from cancelled orders">Barang dari pesanan yang dibatalkan</span></a>
@@ -67,7 +73,7 @@
             <a href="04-buat-keranjang.html" style="font-size:17px" data-id="Buat keranjang baru" data-en="Create a basket">Buat keranjang baru</a>
             <a href="15-penerimaan-selesai.html" style="font-size:17px" data-id="Penerimaan selesai" data-en="Receipt complete">Penerimaan selesai</a>
           </div>
-          <div class="home__card" style="gap:8px">
+          <div class="home__card" hidden style="gap:8px">
             <span class="eyebrow" data-id="Label unit" data-en="Unit labelling">Label unit</span>
             <a href="05-label-unit.html" style="font-size:17px" data-id="Tempel label unit" data-en="Apply a unit label">Tempel label unit</a>
             <a href="06-label-sudah-terpakai.html" style="font-size:17px" data-id="Label sudah terpakai" data-en="Label already used">Label sudah terpakai</a>
@@ -100,11 +106,11 @@
       </details>
     </main>
 </div>
-<script src="js/api.js?v=8807087"></script>
-<script src="js/scan.js?v=8807087"></script>
-<script src="js/app.js?v=8807087"></script>
-<script src="js/wire.js?v=8807087"></script>
-<script src="js/screens/home.js?v=8807087"></script>
+<script src="js/api.js?v=78a372d"></script>
+<script src="js/scan.js?v=78a372d"></script>
+<script src="js/app.js?v=78a372d"></script>
+<script src="js/wire.js?v=78a372d"></script>
+<script src="js/screens/home.js?v=78a372d"></script>
 
 </body>
 </html>

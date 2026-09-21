@@ -64,8 +64,10 @@
     function renderResults(skus) {
       if (!skus.length) {
         results.innerHTML = '<span class="note" ' +
-          biAttr('Tidak ketemu. Coba kata lain, atau panggil supervisor.',
-                 'Nothing found. Try another word, or call your supervisor.') + '></span>';
+          biAttr('Tidak ketemu. Coba kata lain atau nomor shade. Kalau memang tidak ada, kirim ke Ops HQ.',
+                 'Nothing found. Try another word or the shade number. If it really is not there, send it to Ops HQ.') + '></span>' +
+          '<button class="btn btn--outline btn--lg" type="button" data-action="to-hq" ' +
+          biAttr('Tidak ada di daftar — kirim ke Ops HQ', 'Not on the list — send to Ops HQ') + '></button>';
         applyLangTo(results);
         return;
       }
@@ -138,13 +140,70 @@
       } catch (err) { regBtn.disabled = false; fail(err); }
     };
 
-    /* ---- option 2: flag for a supervisor ---- */
-    // There is no flag record in the backend yet, so this must not pretend it
-    // saved one: it tells the person the physical step and the escalation.
-    const flag = $('.choice button.btn--outline');
-    if (flag) flag.onclick = () => say(t(
-      'Belum tercatat di sistem. Taruh barang di rak transit dan beri tahu supervisor sekarang.',
-      'Not recorded by the system yet. Park the item on the transit shelf and tell your supervisor now.'));
+    /* ---- option 2: not on the list -> Ops HQ ---- */
+    // The units stay OUT of stock, in the temporary inbound bin, until HQ has
+    // registered the SKU and given it a rack here; the answer appears on the
+    // inbound screens with a "put away" button that brings them into stock.
+    const hq = document.createElement('div');
+    hq.className = 'panel';
+    hq.style.cssText = 'padding:20px;display:none';
+    hq.innerHTML =
+      '<div class="col">' +
+      '<span class="eyebrow eyebrow--action" ' + biAttr('Kirim ke Ops HQ', 'Send to Ops HQ') + '></span>' +
+      '<div class="refstrip">' +
+      '<label class="refstrip__label" for="hqPhoto" ' + biAttr('1 · Foto barangnya (depan kemasan, nama dan shade terbaca)', '1 · Photograph it (front of pack, name and shade readable)') + '></label>' +
+      '<input class="refstrip__input" id="hqPhoto" type="file" accept="image/*" capture="environment" style="font-family:inherit;font-size:18px;min-height:56px">' +
+      '<img alt="" data-region="hq-preview" style="display:none;max-width:220px;max-height:220px;border-radius:8px;margin-top:8px">' +
+      '</div>' +
+      '<div class="refstrip">' +
+      '<label class="refstrip__label" for="hqQty" ' + biAttr('2 · Berapa unit dengan barcode ini?', '2 · How many units carry this barcode?') + '></label>' +
+      '<input class="refstrip__input" id="hqQty" type="number" min="1" inputmode="numeric" value="1" style="font-size:28px;min-height:64px;max-width:200px">' +
+      '<span class="refstrip__hint" ' + biAttr('Hitung semua unit dari kiriman ini, lalu taruh di bin sementara inbound.', 'Count every unit from this delivery, then put them in the temporary inbound bin.') + '></span>' +
+      '</div>' +
+      '<div class="refstrip">' +
+      '<label class="refstrip__label" for="hqNote" ' + biAttr('3 · Catatan (opsional)', '3 · Note (optional)') + '></label>' +
+      '<input class="refstrip__input" id="hqNote" type="text" maxlength="400" autocomplete="off" style="font-family:inherit;font-size:18px;min-height:56px">' +
+      '</div>' +
+      '<div class="stats">' +
+      '<button class="btn btn--lg" type="button" data-action="hq-back" style="flex:0 0 220px" ' + biAttr('Kembali', 'Back') + '></button>' +
+      '<button class="btn btn--primary btn--lg btn--grow" type="button" data-action="hq-send" ' + biAttr('Kirim ke HQ', 'Send to HQ') + '></button>' +
+      '</div></div>';
+    choices.parentNode.insertBefore(hq, panel.nextSibling);
+    applyLangTo(hq);
+    const photo = $('#hqPhoto', hq);
+    photo.addEventListener('change', () => {
+      const f = photo.files[0], prev = $('[data-region="hq-preview"]', hq);
+      if (f) { prev.src = URL.createObjectURL(f); prev.style.display = ''; }
+    });
+    function openHq() {
+      show(choices, false);
+      show(panel, false);
+      show(hq, true);
+    }
+    document.addEventListener('click', e => {
+      if (e.target.closest('[data-action="to-hq"]')) openHq();
+    });
+    $('[data-action="hq-back"]', hq).onclick = () => { show(hq, false); show(choices, true); };
+    const send = $('[data-action="hq-send"]', hq);
+    send.onclick = async () => {
+      const qty = parseInt($('#hqQty', hq).value, 10);
+      if (!(qty >= 1)) return say(t('Isi jumlah unit.', 'Enter how many units.'));
+      if (!photo.files[0]) return say(t('Foto barangnya dulu — HQ butuh foto untuk mendaftarkan.', 'Take the photo first — HQ needs it to register the product.'));
+      const fd = new FormData();
+      fd.append('site_id', W.site().id);
+      fd.append('receipt_id', receiptId);
+      fd.append('barcode', code);
+      fd.append('qty_counted', qty);
+      const note = $('#hqNote', hq).value.trim();
+      if (note) fd.append('note', note);
+      fd.append('photo', photo.files[0]);
+      send.disabled = true;
+      try {
+        const r = await api.raiseSkuRequest(fd);
+        say(t('Terkirim ke HQ (#', 'Sent to HQ (#') + r.id + t('). Taruh ' + qty + ' unit di bin sementara inbound.', '). Put ' + qty + ' units in the temporary inbound bin.'));
+        setTimeout(back, 1800);
+      } catch (err) { send.disabled = false; fail(err); }
+    };
 
     /* ---- option 3: skip ---- */
     $$('.choice a.btn:not(.btn--primary)').forEach(a => {

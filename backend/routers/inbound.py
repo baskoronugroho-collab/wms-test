@@ -9,6 +9,7 @@ import daycolor
 import db
 import ledger
 import models
+from routers import replenishment
 
 router = APIRouter(prefix="/api", tags=["inbound"])
 
@@ -22,7 +23,7 @@ BANNER = {
 }
 
 
-def _receipt_out(row: dict) -> dict:
+def _receipt_out(row: dict, rep: dict | None = None) -> dict:
     return {
         "id": row["id"], "site_id": row["site_id"], "brand_id": row.get("brand_id"),
         "source_type": row["source_type"], "status": row["status"],
@@ -33,7 +34,33 @@ def _receipt_out(row: dict) -> dict:
         # The sticker colour follows the day the delivery arrived (the receipt
         # opened), computed here so no screen re-implements the Jakarta rule.
         "day_color": daycolor.for_moment(row["opened_at"]),
+        "replenishment_id": row.get("replenishment_id"),
+        "replenishment_reference": rep["reference"] if rep else None,
+        "surat_jalan_no": rep["surat_jalan_no"] if rep else None,
+        "batch_no": row.get("batch_no"),
+        "final_batch": (bool(row["final_batch"]) if row.get("final_batch") is not None
+                        else None),
     }
+
+
+async def _batch_skus(receipt_id: int) -> int:
+    n = await db.fetch_one(
+        "SELECT COUNT(*) AS n FROM receipt_lines WHERE receipt_id = %s AND qty_received > 0",
+        (receipt_id,))
+    return int(n["n"])
+
+
+async def _receipt_full(row: dict) -> dict:
+    rep = None
+    if row.get("replenishment_id"):
+        rep = await db.fetch_one(
+            "SELECT reference, surat_jalan_no FROM replenishments WHERE id = %s",
+            (row["replenishment_id"],))
+    site = await db.fetch_one("SELECT inbound_bins FROM sites WHERE id = %s", (row["site_id"],))
+    return dict(_receipt_out(row, rep),
+                inbound_bins=(site or {}).get("inbound_bins") if row["source_type"] == "from_brand"
+                else None,
+                batch_skus=await _batch_skus(row["id"]))
 
 
 @router.get("/receipts", response_model=models.ReceiptList)
@@ -78,8 +105,38 @@ async def list_receipts(
 async def open_receipt(
     body: models.ReceiptIn, user: auth.User = Depends(auth.current_user)
 ):
-    await auth.assert_site_access(user, body.site_id)
+    site = await auth.assert_site_access(user, body.site_id)
     transfer_id = None
+    rep = None
+    awb = (body.awb or "").strip().upper()
+
+    # A brand delivery starts from its AWB (or the RPL reference): that is what
+    # ties the cartons on the floor to what Wardah confirmed, so every receipt is
+    # compared line by line. Only the training site may receive without one, so
+    # staff can practise before HQ has confirmed anything there.
+    if body.source_type == "from_brand" and not awb and not site["is_training"]:
+        raise HTTPException(
+            422, "Mulai dari nomor AWB atau referensi restock (RPL-…). / Start from the AWB "
+                 "or the replenishment reference.")
+
+    if body.source_type == "from_brand" and awb:
+        rep = await replenishment.find_by_awb(body.site_id, awb)
+        if not rep:
+            raise HTTPException(
+                404, f"AWB {awb} belum ada di permintaan restock yang dikonfirmasi HQ untuk "
+                     "station ini. Cek nomornya atau hubungi Ops HQ. / "
+                     f"AWB {awb} is not on any replenishment HQ confirmed for this station.")
+        if rep["status"] not in ("confirmed", "receiving"):
+            raise HTTPException(
+                409, f"{rep['reference']} (AWB {awb}) sudah diterima"
+                     + (" dan selisihnya sedang ditinjau." if rep["status"].startswith("variance")
+                        else "."))
+        open_rc = await db.fetch_one(
+            "SELECT * FROM inbound_receipts WHERE replenishment_id = %s AND status = 'open' "
+            "ORDER BY id DESC LIMIT 1", (rep["id"],))
+        if open_rc:
+            # Someone already started a batch of this delivery: continue it, never fork it.
+            return await _receipt_full(open_rc)
 
     if body.source_type == "from_hub_transfer":
         if not body.transfer_reference:
@@ -95,12 +152,51 @@ async def open_receipt(
         transfer_id = tr["id"]
 
     async with db.tx() as cur:
+        batch_no = None
+        if rep:
+            # Serialise batches of one AWB: two phones opening "the next batch"
+            # at once must not get two.
+            await db.one(cur, "SELECT id FROM replenishments WHERE id = %s FOR UPDATE",
+                         (rep["id"],))
+            open_rc = await db.one(
+                cur, "SELECT id FROM inbound_receipts WHERE replenishment_id = %s "
+                     "AND status = 'open' LIMIT 1", (rep["id"],))
+            if open_rc:
+                row = await db.one(cur, "SELECT * FROM inbound_receipts WHERE id = %s",
+                                   (open_rc["id"],))
+                return await _receipt_full(row)
+            prev = await db.one(
+                cur, "SELECT COUNT(*) AS n FROM inbound_receipts WHERE replenishment_id = %s",
+                (rep["id"],))
+            batch_no = int(prev["n"]) + 1
         rid = await db.run(
             cur,
             "INSERT INTO inbound_receipts (site_id, brand_id, source_type, "
-            "transfer_id, opened_by) VALUES (%s,%s,%s,%s,%s)",
-            (body.site_id, body.brand_id, body.source_type, transfer_id, user.email),
+            "transfer_id, opened_by, replenishment_id, external_reference, batch_no) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+            (body.site_id, rep["brand_id"] if rep else body.brand_id, body.source_type,
+             transfer_id, user.email, rep["id"] if rep else None, awb or None, batch_no),
         )
+        if rep:
+            # Each batch expects what is still to come: Wardah's confirmed
+            # quantity less what earlier batches of the same AWB received.
+            lines = await db.many(
+                cur, "SELECT rl.sku_id, rl.qty_confirmed - COALESCE(("
+                     "  SELECT SUM(r.qty_received) FROM receipt_lines r "
+                     "  JOIN inbound_receipts ir ON ir.id = r.receipt_id "
+                     "  WHERE ir.replenishment_id = rl.replenishment_id AND ir.status <> 'open' "
+                     "    AND r.sku_id = rl.sku_id), 0) AS remaining "
+                     "FROM replenishment_lines rl "
+                     "WHERE rl.replenishment_id = %s AND rl.qty_confirmed > 0", (rep["id"],))
+            for ln in lines:
+                if int(ln["remaining"] or 0) <= 0:
+                    continue
+                await db.run(
+                    cur,
+                    "INSERT INTO receipt_lines (receipt_id, sku_id, qty_expected) "
+                    "VALUES (%s,%s,%s)", (rid, ln["sku_id"], int(ln["remaining"])))
+            await db.run(cur, "UPDATE replenishments SET receipt_id = %s WHERE id = %s",
+                         (rid, rep["id"]))
         # A transfer receipt arrives with an expectation, so variance is
         # computable the moment it is completed.
         if transfer_id:
@@ -116,7 +212,7 @@ async def open_receipt(
                     (rid, ln["sku_id"], ln["qty_dispatched"]),
                 )
     row = await db.fetch_one("SELECT * FROM inbound_receipts WHERE id = %s", (rid,))
-    return _receipt_out(row)
+    return await _receipt_full(row)
 
 
 @router.patch("/receipts/{receipt_id}", response_model=models.Receipt)
@@ -142,7 +238,7 @@ async def update_receipt(
         (body.external_reference, receipt_id),
     )
     row = await db.fetch_one("SELECT * FROM inbound_receipts WHERE id = %s", (receipt_id,))
-    return _receipt_out(row)
+    return await _receipt_full(row)
 
 
 @router.post("/receipts/{receipt_id}/scan", response_model=models.ReceiptScanResult)
@@ -186,6 +282,22 @@ async def scan_into_receipt(
             return {"accepted": False, "outcome": "unknown_barcode",
                     "session_total": 0,
                     "message": "Barcode tidak dikenal. Daftarkan, atau lapor supervisor."}
+
+    # One temporary inbound bin holds one SKU, so a batch takes as many
+    # different SKUs as the hub has bins. The rest of the AWB is the next batch.
+    if receipt["source_type"] == "from_brand" and site.get("inbound_bins"):
+        in_batch = await db.fetch_one(
+            "SELECT qty_received FROM receipt_lines WHERE receipt_id = %s AND sku_id = %s",
+            (receipt_id, sku["id"]))
+        if not (in_batch and in_batch["qty_received"] > 0):
+            used = await _batch_skus(receipt_id)
+            if used >= site["inbound_bins"]:
+                return {
+                    "accepted": False, "outcome": "batch_full",
+                    "sku": common.sku_dict(sku), "session_total": 0,
+                    "message": (f"Bin inbound penuh ({used} SKU). Selesaikan batch ini, lalu "
+                                f"pindai {sku['name_display']} di batch berikutnya."),
+                }
 
     slot = await common.slot_for(site_id, sku["id"])
     if not slot:
@@ -336,8 +448,12 @@ async def undo_receipt_scan(
 
 @router.post("/receipts/{receipt_id}/complete", response_model=models.ReceiptSummary)
 async def complete_receipt(
-    receipt_id: int, user: auth.User = Depends(auth.current_user)
+    receipt_id: int, body: models.ReceiptCompleteIn | None = None,
+    user: auth.User = Depends(auth.current_user),
 ):
+    """Close the receipt. Against an AWB, `final: false` closes only this batch:
+    the rest of the same AWB is received in the next batch, and only the last
+    batch compares everything with Wardah's confirmation."""
     receipt = await db.fetch_one(
         "SELECT * FROM inbound_receipts WHERE id = %s", (receipt_id,)
     )
@@ -345,12 +461,13 @@ async def complete_receipt(
         raise HTTPException(404, "Receipt not found")
     await auth.assert_site_access(user, receipt["site_id"])
 
+    final = True if not receipt.get("replenishment_id") else (body.final if body else True)
     if receipt["status"] == "open":
         async with db.tx() as cur:
             await db.run(
                 cur,
-                "UPDATE inbound_receipts SET status='completed', completed_at=NOW() "
-                "WHERE id = %s", (receipt_id,),
+                "UPDATE inbound_receipts SET status='completed', completed_at=NOW(), "
+                "final_batch = %s WHERE id = %s", (1 if final else 0, receipt_id),
             )
             if receipt["transfer_id"]:
                 await db.run(
@@ -366,6 +483,7 @@ async def complete_receipt(
                     "UPDATE transfers SET status='received', received_at=NOW() "
                     "WHERE id = %s", (receipt["transfer_id"],),
                 )
+            await replenishment.close_on_receipt(cur, receipt, final)
         receipt = await db.fetch_one(
             "SELECT * FROM inbound_receipts WHERE id = %s", (receipt_id,)
         )
@@ -390,20 +508,34 @@ async def receipt_summary(
         "WHERE rl.receipt_id = %s ORDER BY s.name_display",
         (receipt_id,),
     )
-    out = [{
-        "sku_id": l["sku_id"], "sku_name": l["name_display"],
-        "qty_expected": l["qty_expected"], "qty_received": l["qty_received"],
-        "variance": (l["qty_received"] - l["qty_expected"])
-                    if l["qty_expected"] is not None else None,
-    } for l in lines]
+    # Against a Surat Jalan, a product that was never on it was expected zero times.
+    planned = bool(receipt.get("replenishment_id"))
+    # A batch that did not finish the AWB has no variance: what it did not
+    # bring is simply still to come. The last batch compares the whole AWB.
+    partial = planned and receipt.get("final_batch") == 0
+    out = []
+    for l in lines:
+        expected = l["qty_expected"]
+        if expected is None and planned:
+            expected = 0
+        out.append({
+            "sku_id": l["sku_id"], "sku_name": l["name_display"],
+            "qty_expected": expected, "qty_received": l["qty_received"],
+            "variance": ((l["qty_received"] - expected)
+                         if expected is not None and not partial else None),
+        })
 
     deadline = None
     if receipt.get("completed_at"):
         deadline = str(receipt["completed_at"] + DISCREPANCY_WINDOW)
 
+    open_requests = await db.fetch_one(
+        "SELECT COUNT(*) AS n FROM sku_requests WHERE receipt_id = %s "
+        "AND status IN ('open','resolved')", (receipt_id,))
     return {
-        "receipt": _receipt_out(receipt),
+        "receipt": await _receipt_full(receipt),
         "lines": out,
+        "open_sku_requests": int(open_requests["n"]),
         "total_units": sum(l["qty_received"] for l in lines),
         "discrepancy_deadline": deadline,
     }

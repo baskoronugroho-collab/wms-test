@@ -10,6 +10,7 @@ import common
 import db
 import ledger
 import models
+from routers import reminders
 
 router = APIRouter(prefix="/api", tags=["master data"])
 
@@ -26,7 +27,7 @@ async def list_brands(user: auth.User = Depends(auth.current_user)):
 @router.patch("/brands/{brand_id}", response_model=models.Brand)
 async def update_brand(
     brand_id: int, body: models.BrandPatch,
-    user: auth.User = Depends(auth.require("admin")),
+    user: auth.User = Depends(auth.require("hq")),
 ):
     """Rename a brand or change who owns its stock.
 
@@ -62,7 +63,7 @@ async def update_brand(
 
 @router.post("/brands", response_model=models.Brand, status_code=201)
 async def create_brand(
-    body: models.BrandIn, user: auth.User = Depends(auth.require("admin"))
+    body: models.BrandIn, user: auth.User = Depends(auth.require("hq"))
 ):
     if body.identity_mode not in ("sku_barcode", "unit_label"):
         raise HTTPException(400, "identity_mode must be sku_barcode or unit_label")
@@ -120,8 +121,38 @@ async def list_skus(
 
 @router.post("/skus", response_model=models.Sku, status_code=201)
 async def create_sku(
-    body: models.SkuIn, user: auth.User = Depends(auth.require("admin"))
+    body: models.SkuIn, user: auth.User = Depends(auth.require("hq"))
 ):
+    """Register a SKU once for every hub.
+
+    The thresholds are asked for here, not later: a SKU without a restock point
+    never raises a replenishment alert, and nobody goes back to fill 118 of them
+    in. Each hub copies them onto its own pick face when the SKU gets a rack there.
+    Until Ops HQ sets real numbers, R defaults to 25% of the full level P.
+    """
+    if body.default_restock_point is None:
+        body.default_restock_point = await reminders.default_restock(body.default_full_threshold)
+    if body.default_restock_point is None or body.default_restock_point < 0:
+        raise HTTPException(422, "Isi batas penuh (P) -- titik restock otomatis 25% darinya -- "
+                                 "atau isi titik restock (R). / Enter the full level P (the "
+                                 "restock point defaults to 25% of it) or the restock point R.")
+    if (body.default_full_threshold is not None
+            and body.default_full_threshold <= body.default_restock_point):
+        raise HTTPException(
+            422, "Batas penuh harus lebih besar dari batas restock. / The full threshold must "
+                 "be above the restock point.")
+    if body.default_safety_stock is not None and not (
+            0 <= body.default_safety_stock <= body.default_restock_point):
+        raise HTTPException(
+            422, "Safety stock harus di antara 0 dan titik restock. / Safety stock must be "
+                 "between 0 and the restock point.")
+    code = (body.brand_sku_code or "").strip()
+    name = (body.name_display or "").strip()
+    if not code or not name:
+        raise HTTPException(422, "Kode SKU dan nama produk wajib diisi.")
+    if await db.fetch_one("SELECT id FROM skus WHERE brand_id = %s AND brand_sku_code = %s",
+                          (body.brand_id, code)):
+        raise HTTPException(409, f"Kode SKU {code} sudah ada untuk brand ini.")
     brand = await db.fetch_one(
         "SELECT id, identity_mode FROM brands WHERE id = %s", (body.brand_id,)
     )
@@ -133,11 +164,14 @@ async def create_sku(
             cur,
             "INSERT INTO skus (brand_id, brand_sku_code, name_display, category, "
             "product_line, unit_size, price_idr, unit_cube_cm3, expiry_tier, "
-            "identity_mode, label_placement_note) "
-            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-            (body.brand_id, body.brand_sku_code, body.name_display, body.category,
+            "identity_mode, label_placement_note, default_restock_point, "
+            "default_full_threshold, default_safety_stock) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            (body.brand_id, code, name, body.category,
              body.product_line, body.unit_size, body.price_idr, body.unit_cube_cm3,
-             body.expiry_tier, mode, body.label_placement_note),
+             body.expiry_tier, mode, body.label_placement_note,
+             body.default_restock_point, body.default_full_threshold,
+             body.default_safety_stock),
         )
         await ledger.audit(cur, actor_email=user.email, entity="sku",
                            entity_id=sku_id, action="create", after=body.model_dump())
@@ -149,7 +183,7 @@ async def import_skus(
     brand_id: int = Query(...),
     commit: bool = Query(default=False),
     file: UploadFile = File(...),
-    user: auth.User = Depends(auth.require("admin")),
+    user: auth.User = Depends(auth.require("hq")),
 ):
     """Bulk import from CSV. Preview by default; pass commit=true to apply.
 

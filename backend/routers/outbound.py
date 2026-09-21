@@ -91,7 +91,7 @@ async def hiryu_or_admin(
     if secret and x_hiryu_key and hmac.compare_digest(x_hiryu_key, secret):
         return "hiryu"
     user = await auth.current_user(x_forwarded_email)
-    if not user.at_least("admin"):
+    if not user.at_least("hq"):
         raise HTTPException(403, "Only Hiryu may send orders to the WMS.")
     return user.email
 

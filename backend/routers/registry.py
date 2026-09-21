@@ -11,11 +11,12 @@ import auth
 import common
 import db
 import models
+from routers import reminders
 
 router = APIRouter(prefix="/api/registry", tags=["registry"])
 
 
-def _validate_thresholds(full, low, restock) -> None:
+def _validate_thresholds(full, low, restock, safety=None) -> None:
     """Refuse a configuration that cannot behave sensibly.
 
     A low threshold at or above full means the pick face is 'low' the moment it
@@ -34,6 +35,13 @@ def _validate_thresholds(full, low, restock) -> None:
             f"Low threshold ({low}) must be below the full threshold ({full}), "
             "or a replenishment task is raised permanently.",
         )
+    if safety is not None and safety < 0:
+        raise HTTPException(422, "Safety stock cannot be negative.")
+    if safety is not None and restock is not None and safety > restock:
+        raise HTTPException(
+            422,
+            f"Safety stock ({safety}) must not be above the restock point ({restock}) — "
+            "the replenishment request has to go out before stock reaches the floor.")
     if restock is not None and low is not None and restock < low:
         raise HTTPException(
             422,
@@ -77,6 +85,7 @@ async def _row(site_id: int, sku_id: int) -> dict | None:
         "full_threshold": primary["full_threshold"],
         "low_threshold": primary["low_threshold"],
         "restock_point": primary["restock_point"],
+        "safety_stock": primary["safety_stock"],
         "qty_primary": qty_primary,
         "qty_overflow": qty_overflow,
         "qty_total": qty_primary + qty_overflow,
@@ -89,6 +98,10 @@ async def _row(site_id: int, sku_id: int) -> dict | None:
         "needs_restock": (
             primary["restock_point"] is not None
             and (qty_primary + qty_overflow) <= primary["restock_point"]
+        ),
+        "below_safety": (
+            primary["safety_stock"] is not None
+            and (qty_primary + qty_overflow) <= primary["safety_stock"]
         ),
         # Two numbers matter now (decision 13): full and restock. low is legacy.
         "configured": primary["full_threshold"] is not None
@@ -133,16 +146,20 @@ async def list_registry(
 async def set_thresholds(
     sku_id: int,
     body: models.RegistryIn,
-    user: auth.User = Depends(auth.require("supervisor")),
+    user: auth.User = Depends(auth.require("hq")),
 ):
     """Set the three thresholds for one SKU's pick face."""
     await auth.assert_site_access(user, body.site_id)
-    _validate_thresholds(body.full_threshold, body.low_threshold, body.restock_point)
+    if body.restock_point is None:
+        body.restock_point = await reminders.default_restock(body.full_threshold)
+    _validate_thresholds(body.full_threshold, body.low_threshold, body.restock_point,
+                         body.safety_stock)
 
     updated = await db.execute(
         "UPDATE slot_assignments SET full_threshold=%s, low_threshold=%s, "
-        "restock_point=%s WHERE site_id=%s AND sku_id=%s AND slot_role='primary'",
-        (body.full_threshold, body.low_threshold, body.restock_point,
+        "restock_point=%s, safety_stock=%s "
+        "WHERE site_id=%s AND sku_id=%s AND slot_role='primary'",
+        (body.full_threshold, body.low_threshold, body.restock_point, body.safety_stock,
          body.site_id, sku_id),
     )
     if not updated:
@@ -154,7 +171,7 @@ async def set_thresholds(
         "VALUES (%s,'registry.thresholds','slot_assignments',%s,%s)",
         (user.email, sku_id,
          f"full={body.full_threshold} low={body.low_threshold} "
-         f"restock={body.restock_point}"),
+         f"restock={body.restock_point} safety={body.safety_stock}"),
     )
     return row
 
@@ -162,7 +179,7 @@ async def set_thresholds(
 @router.post("/bulk", response_model=models.Ok)
 async def bulk_thresholds(
     body: models.RegistryBulkIn,
-    user: auth.User = Depends(auth.require("supervisor")),
+    user: auth.User = Depends(auth.require("hq")),
 ):
     """Apply one set of thresholds across many SKUs.
 
@@ -170,16 +187,21 @@ async def bulk_thresholds(
     a registry that silently never fires a replenishment.
     """
     await auth.assert_site_access(user, body.site_id)
-    _validate_thresholds(body.full_threshold, body.low_threshold, body.restock_point)
+    if body.restock_point is None:
+        body.restock_point = await reminders.default_restock(body.full_threshold)
+    _validate_thresholds(body.full_threshold, body.low_threshold, body.restock_point,
+                         body.safety_stock)
     if not body.sku_ids:
         raise HTTPException(422, "Select at least one product.")
 
     n = 0
     for sku_id in body.sku_ids:
         n += await db.execute(
+            # Bulk leaves each SKU's safety stock alone unless one is given.
             "UPDATE slot_assignments SET full_threshold=%s, low_threshold=%s, "
-            "restock_point=%s WHERE site_id=%s AND sku_id=%s AND slot_role='primary'",
-            (body.full_threshold, body.low_threshold, body.restock_point,
+            "restock_point=%s, safety_stock=COALESCE(%s, safety_stock) "
+            "WHERE site_id=%s AND sku_id=%s AND slot_role='primary'",
+            (body.full_threshold, body.low_threshold, body.restock_point, body.safety_stock,
              body.site_id, sku_id),
         )
     await db.execute(

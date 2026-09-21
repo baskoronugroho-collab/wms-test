@@ -13,14 +13,27 @@ SSO answers *who*. Roles and site access are this app's own logic.
 """
 import os
 
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, Header, HTTPException, Request
 
 import db
 
-ROLES = ("admin", "supervisor", "hub_operator", "staff")
+ROLES = ("superadmin", "hq", "supervisor", "hub_operator", "staff")
 
 # Rank for "at least this role" checks. Staff is the floor.
-_RANK = {"staff": 0, "hub_operator": 1, "supervisor": 2, "admin": 3}
+#
+#   staff         receives against an AWB, picks, counts, raises an unknown-SKU
+#                 request
+#   hub_operator  staff plus hub dispatch
+#   supervisor    SPV of their own hubs: racks and bins, SKU -> rack, counts,
+#                 acknowledging a replenishment variance
+#   hq            Ops HQ across every hub: brands, SKUs, photos, thresholds,
+#                 racks, station requests, replenishment and variance sign-off,
+#                 staff accounts and sites (the former admin role)
+#   superadmin    everything, and may view the app as any other role
+_RANK = {"staff": 0, "hub_operator": 1, "supervisor": 2, "hq": 3, "superadmin": 4}
+
+# Roles a superadmin may preview. Previewing is read-only (see current_user).
+VIEWABLE = ("hq", "supervisor", "hub_operator", "staff")
 
 
 class User:
@@ -29,6 +42,10 @@ class User:
         self.email = row["email"]
         self.name = row.get("name") or row["email"]
         self.role = row.get("role") or "staff"
+        # The account's own role. `role` differs from it only while a superadmin
+        # is viewing the app as another role.
+        self.real_role = self.role
+        self.viewing_as: str | None = None
         self.default_site_id = row.get("default_site_id")
         self.locale = row.get("locale") or "id"
 
@@ -98,7 +115,13 @@ async def _auto_provision(email: str) -> dict | None:
 
 async def current_user(
     x_forwarded_email: str | None = Header(default=None),
+    x_view_as: str | None = Header(default=None),
+    request: Request = None,
 ) -> User:
+    # Also called directly with only the email (outbound.hiryu_or_admin), when
+    # the undeclared parameters still hold their Header() markers.
+    view_as = x_view_as if isinstance(x_view_as, str) else None
+    method = request.method if isinstance(request, Request) else "GET"
     email = x_forwarded_email
     if not email:
         if not _anon_allowed():
@@ -134,7 +157,22 @@ async def current_user(
             status_code=403,
             detail=f"{email} is not registered in the WMS. Ask an admin to add you.",
         )
-    return User(row)
+    user = User(row)
+
+    # A superadmin can look at the app exactly as another role sees it: the
+    # same screens, the same refusals. It is a preview, so nothing is written
+    # under a borrowed role -- a write would be recorded against the superadmin
+    # while being allowed or refused by someone else's permissions.
+    if view_as and user.real_role == "superadmin" and view_as in VIEWABLE:
+        user.role = view_as
+        user.viewing_as = view_as
+        if method not in ("GET", "HEAD", "OPTIONS"):
+            raise HTTPException(
+                status_code=403,
+                detail=f"Mode lihat sebagai {view_as}: hanya melihat. Kembali ke superadmin "
+                       f"untuk mengubah data. / Viewing as {view_as} is read-only.",
+            )
+    return user
 
 
 def require(role: str):
@@ -154,13 +192,15 @@ def require(role: str):
 async def assert_site_access(user: User, site_id: int) -> dict:
     """Every query is site-scoped (PRD §10.2.5). Staff at UT5 cannot touch KJR."""
     site = await db.fetch_one(
-        "SELECT id, code, name, site_type, is_training, active FROM sites WHERE id = %s",
+        "SELECT id, code, name, site_type, is_training, active, inbound_bins FROM sites "
+        "WHERE id = %s",
         (site_id,),
     )
     if not site:
         raise HTTPException(status_code=404, detail="Site not found")
 
-    if user.at_least("admin"):
+    # Ops HQ works across every hub, so it is scoped like an admin here.
+    if user.at_least("hq"):
         return site
 
     allowed = await db.fetch_one(

@@ -69,7 +69,111 @@
       this.input.inputMode = 'none';        // a gun types; no soft keyboard wanted
 
       this._bind();
+      this._tools();
       this.focus();
+    }
+
+    /* A phone has no scanner gun: offer its camera, and typing as the last
+       resort. Both feed the same handlers as the gun, so no screen changes. */
+    _tools() {
+      if (this.root.dataset.noTools != null) return;
+      const bar = document.createElement('div');
+      bar.className = 'scantools';
+      const cam = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+      bar.innerHTML =
+        (cam ? '<button type="button" class="btn btn--outline scantools__btn" data-scan-camera>' +
+          '<span aria-hidden="true">\u{1F4F7}</span> <span data-id="Pindai dengan kamera" data-en="Scan with camera">Pindai dengan kamera</span></button>' : '') +
+        '<button type="button" class="btn btn--outline scantools__btn" data-scan-type>' +
+        '<span aria-hidden="true">\u2328</span> <span data-id="Ketik kode" data-en="Type the code">Ketik kode</span></button>' +
+        '<form class="scantools__type" hidden><input type="text" inputmode="text" autocomplete="off" ' +
+        'autocapitalize="characters" spellcheck="false" aria-label="Kode"><button type="submit" class="btn btn--primary">OK</button></form>';
+      this.root.parentNode.insertBefore(bar, this.root.nextSibling);
+      const en = localStorage.getItem('njw.lang') === 'en';
+      bar.querySelectorAll('[data-id]').forEach(el => { el.textContent = en ? el.dataset.en : el.dataset.id; });
+      this.toolsEl = bar;
+      const form = bar.querySelector('form'), input = form.querySelector('input');
+      bar.querySelector('[data-scan-type]').onclick = () => {
+        form.hidden = !form.hidden;
+        if (!form.hidden) input.focus(); else this.focus();
+      };
+      form.onsubmit = (e) => {
+        e.preventDefault();
+        const code = input.value.trim();
+        input.value = '';
+        if (code) this._emit(code);
+      };
+      const camBtn = bar.querySelector('[data-scan-camera]');
+      if (camBtn) camBtn.onclick = () => this.openCamera();
+    }
+
+    _emit(code) {
+      if (code.length < this.opts.minLength) return;
+      if (this.state === STATE.OFFLINE) { this.reject(this.root.dataset.offlineMsg || 'Tidak terhubung'); return; }
+      this.handlers.forEach(fn => fn(code, this));
+    }
+
+    /* Camera scanning: the browser's own BarcodeDetector where it exists
+       (Chrome on Android), otherwise ZXing loaded on first use. One code per
+       opening: the overlay closes on a read, like pulling a gun's trigger. */
+    async openCamera() {
+      const en = localStorage.getItem('njw.lang') === 'en';
+      const ov = document.createElement('div');
+      ov.className = 'camscan';
+      ov.innerHTML = '<video playsinline muted></video><div class="camscan__frame"></div>' +
+        '<div class="camscan__bar"><span class="camscan__hint">' +
+        (en ? 'Point the camera at the barcode' : 'Arahkan kamera ke barcode') + '</span>' +
+        '<button type="button" class="btn btn--primary">' + (en ? 'Close' : 'Tutup') + '</button></div>';
+      document.body.appendChild(ov);
+      const video = ov.querySelector('video'), hint = ov.querySelector('.camscan__hint');
+      let stream = null, stopped = false, zx = null;
+      const stop = () => {
+        stopped = true;
+        if (zx) { try { zx.reset(); } catch (e) { /* already stopped */ } }
+        if (stream) stream.getTracks().forEach(t => t.stop());
+        ov.remove();
+        this.focus();
+      };
+      ov.querySelector('button').onclick = stop;
+      const done = (code) => {
+        if (stopped || !code) return;
+        if (navigator.vibrate) navigator.vibrate(60);
+        stop();
+        this._emit(String(code).trim());
+      };
+      try {
+        if ('BarcodeDetector' in global) {
+          const want = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'qr_code'];
+          const have = await global.BarcodeDetector.getSupportedFormats();
+          const det = new global.BarcodeDetector({ formats: want.filter(f => have.includes(f)) });
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+          video.srcObject = stream;
+          await video.play();
+          const tick = async () => {
+            if (stopped) return;
+            try {
+              const found = await det.detect(video);
+              if (found.length) return done(found[0].rawValue);
+            } catch (e) { /* next frame */ }
+            requestAnimationFrame(tick);
+          };
+          tick();
+        } else {
+          if (!global.ZXing) {
+            await new Promise((ok, bad) => {
+              const sc = document.createElement('script');
+              sc.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+              sc.onload = ok; sc.onerror = bad;
+              document.head.appendChild(sc);
+            });
+          }
+          zx = new global.ZXing.BrowserMultiFormatReader();
+          await zx.decodeFromConstraints({ video: { facingMode: 'environment' } }, video,
+            (result) => { if (result) done(result.getText()); });
+        }
+      } catch (e) {
+        hint.textContent = en ? 'The camera is not available here. Use "Type the code".'
+                              : 'Kamera tidak bisa dipakai di sini. Pakai "Ketik kode".';
+      }
     }
 
     _bind() {
@@ -104,9 +208,7 @@
       clearTimeout(this._idle);
       const code = (this.input.value || '').trim();
       this.input.value = '';
-      if (code.length < this.opts.minLength) return;
-      if (this.state === STATE.OFFLINE) { this.reject(this.root.dataset.offlineMsg || 'Tidak terhubung'); return; }
-      this.handlers.forEach(fn => fn(code, this));
+      this._emit(code);
     }
 
     onScan(fn) { this.handlers.push(fn); return this; }

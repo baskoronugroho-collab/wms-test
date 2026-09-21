@@ -21,7 +21,9 @@ class SiteBrief(BaseModel):
 class Me(BaseModel):
     email: str
     name: str
-    role: str
+    role: str = Field(description="The effective role: what screens and permissions apply")
+    real_role: str | None = Field(default=None, description="The account's own role")
+    viewing_as: str | None = Field(default=None, description="Set while a superadmin previews another role")
     locale: str
     default_site_id: int | None
     sites: list[SiteBrief]
@@ -45,8 +47,8 @@ class Brand(BaseModel):
     name: str
     identity_mode: str
     active: bool
-    # Who owns the stock (canonical design): grab (Wardah), brand
-    # (consignment) or ninja (own range).
+    # Who owns the stock (canonical design): grab, brand (consignment --
+    # Wardah, agreed 21 Sep) or ninja (own range).
     default_stock_owner: str = "brand"
 
 
@@ -78,6 +80,9 @@ class Sku(BaseModel):
     identity_mode: str
     label_placement_note: str | None = None
     photo_key: str | None = None
+    default_restock_point: int | None = None
+    default_full_threshold: int | None = None
+    default_safety_stock: int | None = None
 
 
 class SkuList(BaseModel):
@@ -97,6 +102,15 @@ class SkuIn(BaseModel):
     expiry_tier: str = "stable"
     identity_mode: str | None = None
     label_placement_note: str | None = None
+    default_restock_point: int | None = Field(
+        default=None,
+        description="Required when registering one SKU: at or below this many units "
+                    "held at a hub, HQ is alerted to replenish.")
+    default_full_threshold: int | None = Field(
+        default=None,
+        description="Units at which the pick face is full and new stock goes to overflow.")
+    default_safety_stock: int | None = Field(
+        default=None, description="Optional floor below the restock point: flagged critical.")
 
 
 class BarcodeCheck(BaseModel):
@@ -195,6 +209,7 @@ class GenerateRacksIn(BaseModel):
     level_count: int = 5
     positions_per_level: int = 3
     basket_size: str = "M"
+    bin_rows: int = Field(default=1, description="1, or 2 stacked bins at every position (Bottom ...B, Top ...T)")
     open_shelf_levels: list[str] = []
 
 
@@ -235,6 +250,10 @@ class ReceiptIn(BaseModel):
     brand_id: int | None = None
     source_type: str = "from_brand"
     transfer_reference: str | None = None
+    awb: str | None = Field(
+        default=None,
+        description="The brand's AWB for a replenishment HQ confirmed. Opens the receipt "
+                    "with the confirmed quantities as its expectation.")
 
 
 class ReceiptPatch(BaseModel):
@@ -253,6 +272,24 @@ class Receipt(BaseModel):
     external_reference: str | None = None
     banner: str
     day_color: dict | None = None
+    replenishment_id: int | None = None
+    replenishment_reference: str | None = None
+    surat_jalan_no: str | None = None
+    batch_no: int | None = Field(
+        default=None, description="Batch 1, 2, 3 ... of one AWB, received as inbound bins allow")
+    final_batch: bool | None = Field(
+        default=None, description="Set on completion: true when this batch finished the AWB")
+    inbound_bins: int | None = Field(
+        default=None, description="Most different SKUs this batch can take (the hub's "
+                                  "temporary inbound bins); null = not limited")
+    batch_skus: int = Field(default=0, description="Different SKUs scanned in this batch so far")
+
+
+class ReceiptCompleteIn(BaseModel):
+    final: bool = Field(
+        default=True,
+        description="For a receipt against an AWB: false = this batch is done, more of the "
+                    "same AWB follows; true = everything on the AWB is in, compare and close.")
 
 
 class ReceiptRow(Receipt):
@@ -287,7 +324,7 @@ class ReceiptScanIn(BaseModel):
 class ReceiptScanResult(BaseModel):
     accepted: bool
     outcome: str = Field(
-        description="put_away | unknown_barcode | no_slot | over_capacity | error"
+        description="put_away | unknown_barcode | no_slot | over_capacity | batch_full | error"
     )
     sku: Sku | None = None
     location_code: str | None = None
@@ -310,6 +347,9 @@ class ReceiptSummary(BaseModel):
     lines: list[ReceiptSummaryLine]
     total_units: int
     discrepancy_deadline: str | None = None
+    open_sku_requests: int = Field(
+        default=0, description="Unknown products from this delivery still with HQ or "
+                               "waiting to be put away")
 
 
 # --- plates (Mode B) --------------------------------------------------------
@@ -1035,6 +1075,8 @@ class RegistryRow(BaseModel):
     full_threshold: int | None = None
     low_threshold: int | None = None
     restock_point: int | None = None
+    safety_stock: int | None = None
+    below_safety: bool = False
     qty_primary: int = 0
     qty_overflow: int = 0
     qty_total: int = 0
@@ -1054,6 +1096,9 @@ class RegistryIn(BaseModel):
     full_threshold: int | None = None
     low_threshold: int | None = None
     restock_point: int | None = None
+    safety_stock: int | None = Field(
+        default=None, description="The floor: at or below it the SKU is flagged critical. "
+                                  "Must not be above the restock point.")
 
 
 class RegistryBulkIn(BaseModel):
@@ -1062,6 +1107,7 @@ class RegistryBulkIn(BaseModel):
     full_threshold: int | None = None
     low_threshold: int | None = None
     restock_point: int | None = None
+    safety_stock: int | None = None
 
 
 class RegistrySuggestion(BaseModel):
@@ -1214,6 +1260,7 @@ class AddRackIn(BaseModel):
     level_count: int = 5
     positions_per_level: int = 5
     basket_size: str = "M"
+    bin_rows: int = Field(default=1, description="1, or 2 stacked bins at every position (Bottom ...B, Top ...T)")
 
 
 # --- return to shelf --------------------------------------------------------
@@ -1250,3 +1297,392 @@ class ReturnScanResult(BaseModel):
     task: ReturnTask
     done: bool
     message: str
+
+
+# --- rack layout ------------------------------------------------------------
+
+class RackSummary(BaseModel):
+    rack_id: int
+    code: str
+    levels: int
+    bins: int
+    occupied: int
+    units: int
+    bins_per_level: list[int] = Field(description="Bottom level first")
+
+
+class RackSummaryList(BaseModel):
+    site: SiteBrief
+    racks: list[RackSummary]
+    needs_rack: int = Field(description="SKUs this hub carries that have no rack here yet")
+    inbound_bins: int | None = Field(
+        default=None, description="Temporary inbound bins at the hub (1 bin = 1 SKU per "
+                                  "inbound batch); null = not limited")
+
+
+class InboundBinsIn(BaseModel):
+    inbound_bins: int | None = None
+
+
+class RackBin(BaseModel):
+    location_id: int
+    code: str
+    position_no: int
+    bin_row: int = Field(default=1, description="1 = the only or Bottom bin, 2 = the Top bin")
+    basket_id: int | None = None
+    basket_size: str | None = None
+    sku_id: int | None = None
+    sku_name: str | None = None
+    brand_sku_code: str | None = None
+    slot_role: str | None = None
+    qty_on_hand: int = 0
+    removable: bool = Field(description="Empty and never held stock")
+
+
+class RackLevel(BaseModel):
+    level_id: int
+    level_no: int
+    is_open_shelf: bool
+    bin_rows: int = 1
+    removable: bool
+    bins: list[RackBin]
+
+
+class RackHead(BaseModel):
+    rack_id: int
+    code: str
+    site_id: int
+    site_code: str
+    levels: int
+    bins: int
+    occupied: int
+
+
+class RackDetail(BaseModel):
+    rack: RackHead
+    levels: list[RackLevel] = Field(description="Top level first")
+
+
+class AddLevelIn(BaseModel):
+    bins: int = Field(default=5, description="Positions on the level")
+    basket_size: str = "M"
+    open_shelf: bool = False
+    bin_rows: int = Field(default=1, description="1, or 2 stacked bins at every position (Bottom ...B, Top ...T)")
+
+
+class BinRowsIn(BaseModel):
+    bin_rows: int = Field(description="1, or 2 stacked bins per position (Bottom ...B, Top ...T)")
+
+
+class AddBinsIn(BaseModel):
+    count: int = 1
+    basket_size: str = "M"
+
+
+class BasketPatch(BaseModel):
+    basket_size: str
+
+
+class NeedsRackSku(Sku):
+    recommended_size: str
+    created_at: str | None = None
+
+
+class NeedsRackList(BaseModel):
+    skus: list[NeedsRackSku]
+    total: int
+
+
+class SkuRackSite(BaseModel):
+    site_id: int
+    site_code: str
+    site_name: str
+    is_training: bool
+    location_code: str | None = None
+    restock_point: int | None = None
+    full_threshold: int | None = None
+
+
+class SkuRackList(BaseModel):
+    sites: list[SkuRackSite]
+
+
+# --- SKU requests from stations ------------------------------------------------
+
+class SkuRequest(BaseModel):
+    id: int
+    site_id: int
+    site_code: str
+    site_name: str
+    receipt_id: int | None = None
+    receipt_reference: str | None = None
+    brand_id: int | None = None
+    brand_name: str | None = None
+    barcode: str | None = None
+    qty_counted: int
+    photo_key: str | None = None
+    note: str | None = None
+    status: str = Field(description="open | resolved | rejected | put_away")
+    raised_by: str | None = None
+    raised_at: str | None = None
+    sku_id: int | None = None
+    sku_name: str | None = None
+    brand_sku_code: str | None = None
+    location_id: int | None = None
+    location_code: str | None = None
+    resolution_note: str | None = None
+    resolved_by: str | None = None
+    resolved_at: str | None = None
+    qty_put_away: int | None = None
+    put_away_by: str | None = None
+    put_away_at: str | None = None
+
+
+class SkuRequestList(BaseModel):
+    requests: list[SkuRequest]
+    counts: dict[str, int]
+
+
+class SkuRequestResolveIn(BaseModel):
+    sku_id: int | None = Field(default=None, description="Match an existing SKU")
+    new_sku: SkuIn | None = Field(default=None, description="Or register a new one")
+    basket_id: int | None = Field(
+        default=None, description="Bin at the requesting station; a free one is chosen "
+                                  "when omitted and the SKU has no rack there yet")
+    note: str | None = None
+
+
+class SkuRequestRejectIn(BaseModel):
+    note: str
+
+
+class SkuRequestPutAwayIn(BaseModel):
+    qty: int | None = Field(default=None, description="Defaults to the counted quantity")
+
+
+# --- replenishment to the brand (Surat Jalan) ------------------------------------
+
+class ReplenishmentAlert(BaseModel):
+    site_id: int
+    site_code: str
+    sku_id: int
+    brand_id: int
+    brand_name: str
+    sku_name: str
+    brand_sku_code: str | None = None
+    qty_total: int
+    restock_point: int
+    full_threshold: int | None = None
+    qty_suggested: int
+    safety_stock: int | None = None
+    below_safety: bool = False
+    open_reference: str | None = Field(
+        default=None, description="An open replenishment already asking for this SKU")
+
+
+class ReplenishmentAlertList(BaseModel):
+    alerts: list[ReplenishmentAlert]
+
+
+class ReplenishmentLineIn(BaseModel):
+    sku_id: int
+    qty_requested: int | None = None
+    qty_confirmed: int | None = None
+
+
+class ReplenishmentIn(BaseModel):
+    site_id: int
+    brand_id: int
+    lines: list[ReplenishmentLineIn]
+    note: str | None = None
+
+
+class ReplenishmentEditIn(BaseModel):
+    lines: list[ReplenishmentLineIn]
+    note: str | None = None
+
+
+class ReplenishmentConfirmIn(BaseModel):
+    awb: str
+    surat_jalan_no: str | None = None
+    eta_date: str | None = Field(default=None, description="YYYY-MM-DD")
+    lines: list[ReplenishmentLineIn]
+
+
+class ReplenishmentLine(BaseModel):
+    sku_id: int
+    sku_name: str
+    brand_sku_code: str | None = None
+    photo_key: str | None = None
+    qty_requested: int
+    qty_confirmed: int | None = None
+    qty_received: int | None = None
+    variance: int | None = Field(default=None, description="Received minus confirmed")
+    qty_final: int | None = Field(default=None, description="The count the SPV stands behind")
+    final_note: str | None = None
+    qty_billed: int | None = Field(default=None, description="Set once closed: what both sides bill on")
+
+
+class VarianceLineIn(BaseModel):
+    sku_id: int
+    qty_final: int | None = None
+    note: str | None = None
+
+
+class VarianceAcknowledgeIn(BaseModel):
+    lines: list[VarianceLineIn]
+
+
+class VarianceSignOffIn(BaseModel):
+    note: str | None = None
+
+
+class Replenishment(BaseModel):
+    id: int
+    reference: str
+    site_id: int
+    site_code: str
+    site_name: str
+    brand_id: int
+    brand_name: str
+    status: str = Field(description="draft | sent | confirmed | variance_review | "
+                                     "variance_signoff | received | cancelled")
+    awb: str | None = None
+    surat_jalan_no: str | None = None
+    eta_date: str | None = None
+    note: str | None = None
+    created_by: str | None = None
+    created_at: str | None = None
+    sent_by: str | None = None
+    sent_at: str | None = None
+    confirmed_by: str | None = None
+    confirmed_at: str | None = None
+    receipt_id: int | None = None
+    receipt_status: str | None = None
+    received_at: str | None = None
+    acknowledged_by: str | None = None
+    acknowledged_at: str | None = None
+    signed_off_by: str | None = None
+    signed_off_at: str | None = None
+    review_note: str | None = None
+    has_variance: bool = False
+    lines: list[ReplenishmentLine]
+    total_requested: int
+    total_confirmed: int
+    total_received: int
+    batches: int = Field(default=0, description="Inbound batches received against it so far")
+    auto_created: bool = False
+
+
+class BrandReplenishmentList(BaseModel):
+    replenishments: list[Replenishment]
+
+
+# --- reminders and flags -----------------------------------------------------------
+
+class ReminderRule(BaseModel):
+    key: str
+    label_id: str
+    label_en: str
+    unit_id: str | None = None
+    unit_en: str | None = None
+    enabled: bool
+    value: int | None = None
+    updated_by: str | None = None
+    updated_at: str | None = None
+
+
+class ReminderRuleList(BaseModel):
+    rules: list[ReminderRule]
+
+
+class ReminderRuleIn(BaseModel):
+    enabled: bool
+    value: int | None = None
+
+
+class Flag(BaseModel):
+    kind: str = Field(description="stock_critical | below_restock | draft_unsent | sent_unconfirmed | "
+                                  "delivery_overdue | variance_open | sku_request_open | needs_rack | "
+                                  "slow_mover")
+    severity: str = Field(description="critical | warn | info")
+    site_id: int
+    site_code: str
+    title_id: str
+    title_en: str
+    detail_id: str
+    detail_en: str
+    link: str = Field(description="Console page that resolves it")
+    ref: str | None = None
+    age_hours: int | None = None
+
+
+class FlagList(BaseModel):
+    flags: list[Flag]
+    counts: dict[str, int]
+
+
+# --- Ops HQ monitoring -------------------------------------------------------------
+
+class HubOverview(BaseModel):
+    site_id: int
+    site_code: str
+    site_name: str
+    is_training: bool
+    racks: int
+    bins: int
+    bins_used: int
+    bins_free: int
+    needs_rack: int = Field(description="Registered SKUs this hub carries with no rack yet")
+    skus_racked: int
+    units: int
+    skus_low: int = Field(description="Held at or below the restock point, above zero")
+    skus_critical: int = Field(default=0, description="Held at or below safety stock, above zero")
+    skus_out: int = Field(description="Racked with nothing held")
+    skus_unset: int = Field(description="Racked with no restock point")
+    deliveries_incoming: int
+    variances_open: int
+
+
+class HubOverviewList(BaseModel):
+    hubs: list[HubOverview]
+
+
+class LayoutBin(BaseModel):
+    location_id: int
+    code: str
+    position_no: int
+    bin_row: int = 1
+    basket_id: int | None = None
+    basket_size: str | None = None
+    sku_id: int | None = None
+    sku_name: str | None = None
+    brand_sku_code: str | None = None
+    photo_key: str | None = None
+    slot_role: str | None = None
+    qty_here: int = 0
+    qty_total: int = Field(default=0, description="This SKU across rack and overflow at the hub")
+    restock_point: int | None = None
+    full_threshold: int | None = None
+    safety_stock: int | None = None
+    status: str = Field(description="empty | ok | low | critical | out | unset")
+
+
+class LayoutLevel(BaseModel):
+    level_id: int
+    level_no: int
+    bin_rows: int = 1
+    bins: list[LayoutBin]
+
+
+class LayoutRack(BaseModel):
+    rack_id: int
+    code: str
+    levels: list[LayoutLevel] = Field(description="Top level first")
+
+
+class LayoutMap(BaseModel):
+    site: SiteBrief
+    racks: list[LayoutRack]
+    counts: dict[str, int]
+    needs_rack: int

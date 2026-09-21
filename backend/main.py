@@ -11,7 +11,9 @@ Layout:
   common.py   the three questions every flow asks
   routers/    one module per PRD module (M1-M8)
 """
+import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
@@ -31,7 +33,11 @@ from routers import (
     outbound,
     plates,
     product_master,
+    racks,
     registry,
+    reminders,
+    replenishment,
+    requests,
     returns,
     scan,
     slips,
@@ -42,11 +48,30 @@ from routers import (
 log = logging.getLogger("wms")
 
 
+async def _auto_replenish_loop():
+    """Draft replenishment requests on a timer as well as after each pick, so
+    stock that fell by a count or an upload is caught too. Safe with several
+    pods: each hub is locked while it is drafted."""
+    minutes = max(1, int(os.getenv("AUTO_REPLENISH_MINUTES", "10")))
+    while True:
+        await asyncio.sleep(minutes * 60)
+        try:
+            if db.ready():
+                await reminders.auto_replenish()
+        except Exception:
+            log.exception("auto replenishment sweep failed")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await db.connect()
-    yield
-    await db.disconnect()
+    task = asyncio.create_task(_auto_replenish_loop())
+    try:
+        yield
+    finally:
+        task.cancel()
+        await db.disconnect()
+
 
 
 app = FastAPI(
@@ -98,7 +123,7 @@ def api_health():
 @app.get("/api/me", response_model=models.Me, tags=["platform"])
 async def whoami(user: auth.User = Depends(auth.current_user)):
     """The frontend asks "who am I?" here — the browser never sees the SSO headers."""
-    if user.at_least("admin"):
+    if user.at_least("hq"):
         sites = await db.fetch_all(
             "SELECT id, code, name, site_type, is_training FROM sites "
             "WHERE active = 1 ORDER BY is_training, code"
@@ -114,6 +139,8 @@ async def whoami(user: auth.User = Depends(auth.current_user)):
         "email": user.email,
         "name": user.name,
         "role": user.role,
+        "real_role": user.real_role,
+        "viewing_as": user.viewing_as,
         "locale": user.locale,
         "default_site_id": user.default_site_id,
         "sites": [dict(s, is_training=bool(s["is_training"])) for s in sites],
@@ -137,6 +164,6 @@ async def unhandled(request: Request, exc: Exception):
 for module in (
     master, locations, scan, inbound, plates, outbound, opname, inventory,
     stock_upload, product_master, slips, admin, registry, flow, training,
-    returns,
+    returns, racks, requests, replenishment, reminders,
 ):
     app.include_router(module.router)

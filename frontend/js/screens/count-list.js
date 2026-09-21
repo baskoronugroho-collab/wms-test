@@ -87,7 +87,7 @@
     const list = $('.list');
     const count = $('.progress__count');
     const mode = $('.chrome__mode');
-    const isSup = ['supervisor', 'admin'].includes(me.role);
+    const isSup = W.atLeast('supervisor');
     let planId = null;
 
     async function load() {

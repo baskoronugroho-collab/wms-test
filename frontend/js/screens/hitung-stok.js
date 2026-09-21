@@ -25,7 +25,7 @@
 
   NJW.screens['hitung-stok'] = async () => {
     const site = W.site(), me = W.me();
-    const canSign = ['supervisor', 'admin'].includes(me.role);
+    const canSign = W.atLeast('supervisor');
     let pending = [];          // variance rows awaiting signature
     let toApprove = [];        // session ids staged in the confirm dialog
 

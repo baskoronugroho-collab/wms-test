@@ -118,6 +118,11 @@
     if (!site) return;
     let rows = [], filter = 'all', page = 1, editing = null, rackIndex = null;
     const table = $('#tbl-registry');
+    // Thresholds are set by Ops HQ. An SPV still sees them and assigns overflow.
+    const canThreshold = W.atLeast('hq');
+    if (!canThreshold) {
+      $$('[data-action="suggest"], [data-action="bulk-open"]').forEach(b => { b.hidden = true; });
+    }
 
     async function load() {
       try {
@@ -171,8 +176,9 @@
       return rackIndex.get(code.toUpperCase());
     }
 
-    const put = (skuId, full, restock) => api.updateRegistry(skuId, {
+    const put = (skuId, full, restock, safety) => api.updateRegistry(skuId, {
       site_id: site.id, full_threshold: full, low_threshold: null, restock_point: restock,
+      safety_stock: safety === undefined ? (rows.find(r => r.sku_id === skuId) || {}).safety_stock ?? null : safety,
     });
 
     async function openEdit(r) {
@@ -190,6 +196,9 @@
       show(field('reg-overflow-btn'), !r.overflow_location_code);
       field('reg-p').value = r.full_threshold != null ? r.full_threshold : '';
       field('reg-r').value = r.restock_point != null ? r.restock_point : '';
+      field('reg-s').value = r.safety_stock != null ? r.safety_stock : '';
+      field('reg-p').disabled = field('reg-r').disabled = field('reg-s').disabled = !canThreshold;
+      if (!canThreshold) bi(field('reg-reason'), 'Batas P dan R diatur oleh Ops HQ.', 'P and R are set by Ops HQ.');
       setF('reg-p-sug', '…');
       setF('reg-r-sug', '…');
       openDrawer('#drawer-reg');
@@ -214,10 +223,13 @@
       const pRaw = field('reg-p').value.trim(), rRaw = field('reg-r').value.trim();
       const full = pRaw === '' ? null : +pRaw;
       const restock = rRaw === '' ? null : +rRaw;
+      const sRaw = field('reg-s').value.trim();
+      const safety = sRaw === '' ? null : +sRaw;
+      if (safety != null && restock != null && safety > restock) return say('S tidak boleh di atas R.');
       if (full != null && !(full > 0)) return say('P harus lebih dari nol.');
       if (restock != null && !(restock >= 0)) return say('R tidak boleh negatif.');
       try {
-        await put(r.sku_id, full, restock);
+        if (canThreshold) await put(r.sku_id, full, restock, safety);
         const code = field('reg-overflow').value.trim();
         if (code && !r.overflow_location_code) {
           const pos = await basketFor(code);

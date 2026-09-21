@@ -1,0 +1,521 @@
+<title>Kilat WMS Process Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --ground:#F6F7F9; --sunk:#EDEFF3; --surface:#FFFFFF; --surface-2:#FAFBFC;
+  --ink:#14161A; --ink-2:#3A3F47; --muted:#5B6270; --rule:#E4E7EC; --rule-strong:#D3D8E0;
+  --action:#1B3A5C; --action-bg:#EAF0F6; --accent:#E08A00; --accent-bg:#FDF3E1; --accent-text:#8A5400;
+  --caution:#7A4A08; --caution-bg:#F5EDDF; --accept:#127A45; --accept-bg:#E5F2EB;
+  /* one hue per actor, used for lane labels, card edges and chips */
+  --r-staff:#0E6F68;  --r-staff-bg:#E3F2F0;
+  --r-spv:#2D5C8F;    --r-spv-bg:#E6EEF7;
+  --r-hq:#A35F00;     --r-hq-bg:#FBF0DC;
+  --r-admin:#5D4B8C;  --r-admin-bg:#EEEAF6;
+  --r-wms:#4F5663;    --r-wms-bg:#ECEEF1;
+  --r-wardah:#9B3468; --r-wardah-bg:#F7E6EE;
+  --r-grab:#1D7A3E;   --r-grab-bg:#E4F2E8;
+  --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-code:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --shadow:0 1px 2px rgba(20,22,26,.06),0 1px 1px rgba(20,22,26,.03);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#121418; --sunk:#0E1013; --surface:#1B1E24; --surface-2:#21252C;
+    --ink:#EDEFF2; --ink-2:#C3C8D0; --muted:#98A0AD; --rule:#2B3038; --rule-strong:#3A414B;
+    --action:#7FB1DF; --action-bg:#1A2530; --accent:#F0A63A; --accent-bg:#2B2213; --accent-text:#F0B866;
+    --caution:#D9A344; --caution-bg:#2A2113; --accept:#45C486; --accept-bg:#15281E;
+    --r-staff:#4FC3B8;  --r-staff-bg:#132825;
+    --r-spv:#7FB1DF;    --r-spv-bg:#17222E;
+    --r-hq:#F0A63A;     --r-hq-bg:#2B2213;
+    --r-admin:#B3A2E6;  --r-admin-bg:#221D33;
+    --r-wms:#AEB5C1;    --r-wms-bg:#23272E;
+    --r-wardah:#E88BB8; --r-wardah-bg:#2E1B25;
+    --r-grab:#5FCB85;   --r-grab-bg:#15291C;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#121418; --sunk:#0E1013; --surface:#1B1E24; --surface-2:#21252C;
+  --ink:#EDEFF2; --ink-2:#C3C8D0; --muted:#98A0AD; --rule:#2B3038; --rule-strong:#3A414B;
+  --action:#7FB1DF; --action-bg:#1A2530; --accent:#F0A63A; --accent-bg:#2B2213; --accent-text:#F0B866;
+  --caution:#D9A344; --caution-bg:#2A2113; --accept:#45C486; --accept-bg:#15281E;
+  --r-staff:#4FC3B8;  --r-staff-bg:#132825;
+  --r-spv:#7FB1DF;    --r-spv-bg:#17222E;
+  --r-hq:#F0A63A;     --r-hq-bg:#2B2213;
+  --r-admin:#B3A2E6;  --r-admin-bg:#221D33;
+  --r-wms:#AEB5C1;    --r-wms-bg:#23272E;
+  --r-wardah:#E88BB8; --r-wardah-bg:#2E1B25;
+  --r-grab:#5FCB85;   --r-grab-bg:#15291C;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:clamp(16px,3vw,40px);padding-block:28px 64px}
+h1,h2,h3{text-wrap:balance;margin:0}
+code,.mono{font-family:var(--font-code)}
+a{color:var(--action)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---- head ---- */
+.head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;padding-bottom:20px;border-bottom:1px solid var(--rule)}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.mark{font-weight:700;letter-spacing:.12em;color:#C01D22}
+.head h1{font-size:clamp(26px,3.4vw,36px);font-weight:700;letter-spacing:-.02em;margin-top:6px}
+.head p{margin:8px 0 0;max-width:68ch;color:var(--ink-2)}
+.meta{display:flex;flex-direction:column;gap:4px;align-items:flex-end;font-size:13px;color:var(--muted);text-align:right}
+.meta .pill{display:inline-flex;gap:6px;align-items:center;height:26px;padding:0 10px;border-radius:999px;background:var(--caution-bg);color:var(--caution);font-weight:600;font-size:12px}
+
+/* ---- controls ---- */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ground);display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;padding-block:14px;border-bottom:1px solid var(--rule)}
+.tabs{display:flex;gap:2px;padding:3px;border-radius:9px;background:var(--sunk)}
+.tab{border:0;background:transparent;height:34px;padding:0 14px;border-radius:7px;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
+.roles{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.roles .lbl{font-size:12px;color:var(--muted);margin-right:2px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;border:1px solid transparent;background:var(--rbg);color:var(--rc);font-size:13px;font-weight:600;cursor:pointer}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--rc)}
+.chip[aria-pressed="true"]{border-color:var(--rc);box-shadow:inset 0 0 0 1px var(--rc)}
+.chip.clear{background:transparent;color:var(--muted);border-color:var(--rule-strong)}
+.chip.clear::before{display:none}
+
+/* role colour plumbing */
+[data-role="staff"]{--rc:var(--r-staff);--rbg:var(--r-staff-bg)}
+[data-role="spv"]{--rc:var(--r-spv);--rbg:var(--r-spv-bg)}
+[data-role="hq"]{--rc:var(--r-hq);--rbg:var(--r-hq-bg)}
+[data-role="superadmin"]{--rc:var(--r-admin);--rbg:var(--r-admin-bg)}
+[data-role="wms"]{--rc:var(--r-wms);--rbg:var(--r-wms-bg)}
+[data-role="wardah"]{--rc:var(--r-wardah);--rbg:var(--r-wardah-bg)}
+[data-role="grab"]{--rc:var(--r-grab);--rbg:var(--r-grab-bg)}
+
+/* ---- sections ---- */
+main{display:flex;flex-direction:column;gap:28px;margin-top:24px}
+.view[hidden]{display:none}
+.roster{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.who{background:var(--surface);border-radius:10px;box-shadow:var(--shadow);padding:14px 16px;display:flex;flex-direction:column;gap:6px;border-top:3px solid var(--rc)}
+.who h3{font-size:15px;display:flex;gap:8px;align-items:baseline}
+.who h3 small{font-weight:500;color:var(--muted);font-size:12px}
+.who p{margin:0;font-size:13px;color:var(--ink-2)}
+
+.flow{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.flow__head{display:grid;grid-template-columns:auto 1fr auto;gap:4px 14px;align-items:baseline;padding:18px 20px 14px;border-bottom:1px solid var(--rule)}
+.flow__key{font-family:var(--font-code);font-weight:600;font-size:13px;color:var(--accent-text);background:var(--accent-bg);padding:2px 8px;border-radius:6px}
+.flow__head h2{font-size:19px;font-weight:650}
+.flow__head p{grid-column:2/-1;margin:0;color:var(--ink-2);font-size:14px;max-width:90ch}
+.status{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.status.built{background:var(--accept-bg);color:var(--accept)}
+.status.draft{background:var(--caution-bg);color:var(--caution)}
+
+.lanes{overflow-x:auto;padding:0 0 6px}
+.grid{display:grid;min-width:max-content}
+.cell{border-bottom:1px dashed var(--rule);padding:8px 6px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.colnum{position:sticky;top:0;padding:8px 10px 6px;font-family:var(--font-code);font-size:12px;color:var(--muted);border-bottom:1px solid var(--rule);background:var(--surface-2);display:flex;align-items:center;gap:6px}
+.colnum::after{content:"→";color:var(--rule-strong)}
+.colnum:last-child::after{content:""}
+.corner{position:sticky;left:0;z-index:2;background:var(--surface-2);border-bottom:1px solid var(--rule)}
+.lane{position:sticky;left:0;z-index:1;background:var(--surface);border-bottom:1px dashed var(--rule);border-right:1px solid var(--rule);padding:10px 12px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.lane b{font-size:13px;color:var(--rc)}
+.lane span{font-size:11px;color:var(--muted);line-height:1.3}
+.step{background:var(--rbg);border-left:3px solid var(--rc);border-radius:8px;padding:9px 10px 10px;display:flex;flex-direction:column;gap:5px;transition:opacity .15s}
+.step__top{display:flex;gap:6px;align-items:baseline}
+.step__n{font-family:var(--font-code);font-weight:600;font-size:12px;color:var(--rc);flex:0 0 auto}
+.step__t{font-weight:600;font-size:13.5px;line-height:1.3;color:var(--ink)}
+.step__d{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+.where{font-family:var(--font-code);font-size:11px;color:var(--muted);line-height:1.35}
+.where::before{content:"▸ "}
+.step.decision{border-left-style:double;border-left-width:5px}
+.branches{display:flex;flex-direction:column;gap:3px;margin-top:2px}
+.branch{font-size:12px;display:flex;gap:6px;align-items:baseline}
+.branch .go{font-family:var(--font-code);font-size:11px;font-weight:600;background:var(--surface);border:1px solid var(--rule-strong);border-radius:4px;padding:0 5px;white-space:nowrap}
+.step.end{background:var(--surface);border:1px dashed var(--rc);border-left:3px solid var(--rc)}
+.tag{align-self:flex-start;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:1px 6px;border-radius:4px;background:var(--surface);color:var(--muted)}
+.tag.new{color:var(--accept)}
+.tag.manual{color:var(--caution)}
+body.focusing .step:not(.hit){opacity:.22}
+body.focusing .lane:not(.hit){opacity:.4}
+.flow__foot{padding:12px 20px 16px;border-top:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:8px 24px;font-size:13px;color:var(--ink-2)}
+.flow__foot b{color:var(--ink)}
+
+/* ---- per-role ---- */
+.byrole{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px}
+.rolecard{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.rolecard header{padding:14px 18px;background:var(--rbg);display:flex;flex-direction:column;gap:2px}
+.rolecard header h2{font-size:17px;color:var(--rc)}
+.rolecard header p{margin:0;font-size:13px;color:var(--ink-2)}
+.rolecard ol{list-style:none;margin:0;padding:6px 0}
+.rolecard li{padding:9px 18px;border-top:1px solid var(--rule);display:grid;grid-template-columns:44px 1fr;gap:10px}
+.rolecard li:first-child{border-top:0}
+.rolecard .ref{font-family:var(--font-code);font-size:12px;color:var(--muted);padding-top:2px}
+.rolecard .act{font-size:13.5px;font-weight:600}
+.rolecard .act small{display:block;font-weight:400;color:var(--muted);font-family:var(--font-code);font-size:11px;margin-top:2px}
+
+/* ---- matrix ---- */
+.tablewrap{overflow-x:auto;background:var(--surface);border-radius:12px;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px}
+th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}
+thead th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--surface-2)}
+thead th[data-role]{color:var(--rc)}
+td.y,td.p,td.n{text-align:center;white-space:nowrap;font-weight:600;font-size:13px}
+td.y{color:var(--accept)}
+td.p{color:var(--accent-text)}
+td.n{color:var(--rule-strong)}
+tbody tr:hover td{background:var(--surface-2)}
+.grp td{background:var(--sunk);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);margin:10px 2px 0;max-width:90ch}
+
+/* ---- decisions / parked ---- */
+.twocol{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;align-items:start}
+.card{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card h3{font-size:15px}
+.card p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.card .rec{border-left:3px solid var(--accent);padding:6px 10px;background:var(--accent-bg);border-radius:0 6px 6px 0;font-size:13px;color:var(--ink)}
+.card .owner{font-size:12px;color:var(--muted)}
+.section-title{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.section-title h2{font-size:21px;font-weight:650}
+.section-title p{margin:0;color:var(--muted);font-size:14px}
+.parked li{margin-bottom:6px}
+ul.clean{margin:0;padding-left:18px;font-size:13.5px;color:var(--ink-2)}
+
+@media (max-width:720px){
+  .head{grid-template-columns:1fr}
+  .meta{align-items:flex-start;text-align:left}
+  .byrole{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){.step{transition:none}}
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <div>
+      <div class="eyebrow"><span class="mark">NINJA</span> · Kilat WMS · GrabMart Kilat × Wardah pilot</div>
+      <h1>Process flows, actions and roles</h1>
+      <p>Every flow built on 17 Sep, drawn as swimlanes: one lane per role, steps numbered in the order they happen. Each step names the screen where it's done. Click a role to see only its steps.</p>
+    </div>
+    <div class="meta">
+      <span class="pill">For review · not deployed</span>
+      <span>PRD v2.6 \u00b7 21 Sep 2026</span>
+      <span>Screens: ID labels as they appear in the app</span>
+    </div>
+  </header>
+
+  <div class="bar" role="toolbar">
+    <div class="tabs" role="tablist" aria-label="View">
+      <button class="tab" role="tab" id="tab-flows" data-view="flows" aria-selected="true">Process flows</button>
+      <button class="tab" role="tab" id="tab-roles" data-view="roles" aria-selected="false">Actions per role</button>
+      <button class="tab" role="tab" id="tab-matrix" data-view="matrix" aria-selected="false">Permission matrix</button>
+      <button class="tab" role="tab" id="tab-open" data-view="open" aria-selected="false">Open decisions</button>
+    </div>
+    <div class="roles" id="role-filter"><span class="lbl">Show role:</span></div>
+  </div>
+
+  <main>
+    <section class="view" data-view="flows" id="view-flows">
+      <div class="roster" id="roster"></div>
+      <div id="flows" style="display:flex;flex-direction:column;gap:24px"></div>
+    </section>
+
+    <section class="view" data-view="roles" id="view-roles" hidden>
+      <div class="section-title"><h2>What each role does</h2><p>Built from the same steps as the flows. The numbers point back to the flow and step.</p></div>
+      <div class="byrole" id="byrole"></div>
+    </section>
+
+    <section class="view" data-view="matrix" id="view-matrix" hidden>
+      <div class="section-title"><h2>Who may change what</h2><p>The server enforces every row, and the console hides screens a role can't use.</p></div>
+      <div class="tablewrap"><table id="matrix"></table></div>
+      <p class="note">Ops HQ and the former Admin role are merged (17 Sep). ¹ Only a <b>known</b> SKU that arrives at a hub where it has no rack yet, so the delivery isn't held up. The audit log marks it and the SPV can move it later. An <b>unknown</b> product always goes to Ops HQ (flow D).</p>
+    </section>
+
+    <section class="view" data-view="open" id="view-open" hidden>
+      <div class="section-title"><h2>Decisions to make</h2><p>Items the build is waiting on, each with a recommendation.</p></div>
+      <div class="twocol" id="decisions"></div>
+      <div class="section-title" style="margin-top:8px"><h2>Parked or hidden in this build</h2><p>Still built, just switched off for the Wardah pilot.</p></div>
+      <div class="card parked">
+        <ul class="clean">
+          <li><b>Inbound option 2 — transfer from another warehouse.</b> Hidden on <code>01 Barang masuk</code>. Wardah delivers straight to the hub, so there's no CWH leg to receive. Comes back when the restocking model through a CWH is agreed.</li>
+          <li><b>Unit labelling (Label unit, Mode B).</b> Menu hidden on the station home. Wardah is fully barcoded; it comes back when a brand without barcodes onboards.</li>
+          <li><b>Hub dispatch (Kirim tote ke darkstore) and transfers.</b> Still visible to a hub operator, but unused in the pilot for the same reason as option 2.</li>
+          <li><b>Hub operator role.</b> Kept for the CWH model; no pilot flow needs it.</li>
+          <li><b>Receiving without an AWB.</b> Removed for real hubs; kept on the training site so staff can practise.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var ROLES = {
+    staff:      {name:'Staff',        scope:'Hub floor',              does:'Receives every delivery by its AWB, scans, puts away, picks, counts. Sends HQ any product that isn’t on the list.'},
+    spv:        {name:'SPV',          scope:'Own hubs only',          does:'Builds and expands racks and bins, places SKUs on racks, runs restock with Wardah for their hubs, acknowledges restock variances.'},
+    hq:         {name:'Ops HQ',       scope:'Every hub',              does:'Product master, thresholds, hub map and stock monitoring, SKU requests, replenishment, variance sign-off, staff accounts and sites.'},
+    superadmin: {name:'Superadmin',   scope:'Everything',             does:'Everything Ops HQ does, grants superadmin, and can view the app as any other role (read-only).'},
+    wms:        {name:'WMS',          scope:'Automatic',              does:'Drafts restock requests by itself, raises reminders and flags, compares counts with the Surat Jalan, corrects stock on sign-off, keeps the ledger.'},
+    wardah:     {name:'Wardah',       scope:'Brand, outside the WMS', does:'Confirms and sends stock with an AWB and Surat Jalan. Never logs in.'},
+    grab:       {name:'Grab / Hiryu', scope:'Channel, outside the WMS', does:'Creates orders and sends riders; the WMS exchanges five messages with Hiryu.'}
+  };
+
+  var FLOWS = [
+    {key:'A', title:'SKU onboarding and rack per hub', status:'built',
+     sum:'A SKU is registered once for every hub, but its rack is chosen hub by hub, because every hub’s layout is different. Thresholds belong to Ops HQ.',
+     lanes:['hq','wms','spv'],
+     steps:[
+      {n:'1', c:1, r:'hq', t:'Register the SKU', d:'Brand, SKU code, name, size, category. Full level P is required; restock point R defaults to 25% of P until Ops HQ sets real numbers.', w:'Konsol · Produk (SKU) · Tambah SKU', tags:['new']},
+      {n:'2', c:2, r:'hq', t:'Upload the product photo', d:'In the same form or later. 1:1, white background. Pickers tell shades apart by it.', w:'Produk (SKU) · Foto & rak', tags:['new']},
+      {n:'3', c:3, r:'wms', t:'Add the SKU to every hub’s "Needs a rack" queue', d:'Every hub that carries the brand sees the SKU until it has a pick face there.'},
+      {n:'4', c:4, r:'spv', t:'Pick a bin at their hub', d:'Suggested basket size and bin: level 3 first, then 2, 4, 1, with 5 last. HQ can do this for any hub.', w:'Rak & bin · Lihat antrean · Pilih bin', tags:['new']},
+      {n:'5', c:5, r:'wms', t:'Copy R and P onto that hub’s pick face', d:'The SKU leaves this hub’s queue. Other hubs still show it until they place it.'},
+      {n:'6', c:6, r:'hq', t:'Adjust thresholds when needed', d:'For one hub, or for every hub that racked the SKU at once. The SPV sees R and P but can’t change them.', w:'Peta hub & stok · bin · Simpan batas', tags:['new']},
+      {n:'7', c:7, r:'hq', t:'Check which hubs still need a rack', d:'Per SKU on the product list, or per hub on the hub map.', w:'Produk · Foto & rak · Rak per hub'},
+      {n:'✓', c:7, r:'spv', kind:'end', t:'Ready at that hub', d:'The SKU can be received, picked and counted there.'}
+     ],
+     foot:['<b>Who places the SKU:</b> the SPV for their own hub, or HQ for any hub.','<b>Who sets R and P:</b> Ops HQ only.']},
+
+    {key:'B', title:'Rack and bin configuration', status:'built',
+     sum:'Racks are seen rack by rack first, then level by level and bin by bin. A hub can grow without rebuilding its layout.',
+     lanes:['spv','wms'],
+     steps:[
+      {n:'1', c:1, r:'spv', t:'Build the layout of a new hub', d:'One action: rack codes × levels × bins per level. The SPV for their own hub; HQ for any hub.', w:'Rak & bin · Buat tata letak', tags:['new']},
+      {n:'2', c:2, r:'spv', t:'Open the hub, one card per rack', d:'Levels, bins, how full, units. A switcher picks the hub (HQ sees all).', w:'Rak & bin', tags:['new']},
+      {n:'3', c:3, r:'spv', t:'Add a rack', d:'Code, levels, bins per level, basket size.', w:'Rak & bin · Tambah rak', tags:['new']},
+      {n:'4', c:4, r:'spv', t:'Click a rack: its levels and bins', d:'Top level shown on top, like the rack in front of you. Every bin shows its SKU and units.', w:'Rak & bin · Rak A', tags:['new']},
+      {n:'5', c:5, r:'spv', t:'Expand', d:'Add a level on top, "+ bin" at the end of any level, change a basket to S / M / L / open. Any level can hold 2 stacked bins per position: T on top, B at the bottom (UT5-A-3-02T / UT5-A-3-02B).', w:'Rak A · Tambah tingkat / + bin', tags:['new']},
+      {n:'6', c:6, r:'spv', t:'Place a SKU in an empty bin', d:'Click an empty bin and choose from this hub’s "Needs a rack" queue.', w:'Rak A · bin · Tempatkan SKU', tags:['new']},
+      {n:'7', c:7, r:'spv', kind:'decision', t:'Remove a bin or the top level?', d:'Only if the bin never held stock.', br:[['Never used','bin removed'],['Has history','refused (step 8)']]},
+      {n:'8', c:8, r:'wms', t:'Refuse removing a bin with history', d:'A location in the ledger stays, so every past movement stays explainable.'}
+     ],
+     foot:['<b>Max 2 stacked bins per position:</b> T = top, B = bottom. Stacking a level turns its bins into B and adds a T above each; going back removes unused T bins.','<b>Location code:</b> <code>UT5-A-3-02</code> = hub, rack, level, bin; with 2 stacked: <code>02T</code> / <code>02B</code>.']},
+
+    {key:'C', title:'Replenishment to Wardah (Surat Jalan)', status:'built',
+     sum:'Ops HQ, or the hub’s SPV for their own hubs, asks Wardah for stock and records Wardah’s answer. The hub receives strictly against the AWB, and any difference is acknowledged by the SPV and signed off by Ops HQ, so Ninja and Wardah bill on the same number.',
+     lanes:['wms','hq','wardah','staff','spv'],
+     steps:[
+      {n:'1', c:1, r:'wms', t:'Draft the request automatically', d:'Everything a hub holds for a SKU (rack + overflow) is at or below R: the WMS drafts the request by itself (one per hub and brand) and flags it. Below safety stock S it is flagged critical.', w:'Restock ke brand · Perlu restock', tags:['new']},
+      {n:'2', c:2, r:'hq', t:'Check the draft', d:'Ops HQ for any hub, or the SPV for their hubs. Adjust quantities, add SKUs by hand, or build one from the alerts. A reminder fires if it isn\u2019t sent within the set hours.', w:'Buat permintaan dari pilihan', tags:['new']},
+      {n:'3', c:3, r:'hq', t:'Send it to Wardah', d:'Copy the text, send by WhatsApp or email, then mark it sent. Quantities are frozen.', w:'Salin teks · Tandai sudah dikirim', tags:['manual']},
+      {n:'4', c:4, r:'wardah', t:'Confirm what will ship', d:'AWB, Surat Jalan number, arrival date, quantity per SKU.', tags:['manual']},
+      {n:'5', c:5, r:'hq', t:'Record Wardah’s confirmation', d:'Ops HQ or the hub’s SPV. AWB (required), SJ no., ETA, confirmed quantity per SKU. Status: on the way.', w:'Simpan konfirmasi Wardah', tags:['new']},
+      {n:'6', c:6, r:'wardah', t:'Deliver to the hub', d:'Cartons plus the Surat Jalan showing the AWB.'},
+      {n:'7', c:7, r:'staff', kind:'decision', t:'Start from the AWB', d:'Unload into the temporary bin, then scan or type the AWB or RPL reference, or tap it in the confirmed list.', w:'01 Barang masuk · Langkah 1', br:[['On the confirmed list','receipt opens with Wardah’s qty'],['Not on the list','keep in temp bin until HQ or the SPV records it · no time limit']], tags:['new']},
+      {n:'8', c:8, r:'staff', t:'Scan every unit, compared live', d:'Per SKU: matches · N short · N over. Finishing with differences asks for a carton recheck first.', w:'02 Pindai barang masuk · Dibandingkan dengan Surat Jalan', tags:['new']},
+      {n:'9', c:9, r:'wms', kind:'decision', t:'Does every SKU match?', w:'15 Penerimaan selesai', br:[['Yes','closed · received numbers billed'],['No','variance · step 10']]},
+      {n:'10', c:10, r:'spv', t:'Acknowledge each difference', d:'Final count after rechecking, and a reason, for every SKU that differs from Wardah’s number.', w:'Selisih restock · Kirim ke Ops HQ', tags:['new']},
+      {n:'11', c:11, r:'hq', kind:'decision', t:'Sign off the variance', w:'Selisih restock · Tanda tangan', br:[['Agree','step 12'],['Disagree','send back to SPV with a note · step 10']], tags:['new']},
+      {n:'12', c:12, r:'wms', t:'Billed numbers set, stock corrected', d:'The final counts become the billed quantities. Where a final count differs from the scan, stock is adjusted with the SPV’s reason.'},
+      {n:'13', c:13, r:'hq', t:'Share the signed numbers with Wardah', d:'The same number on both sides of the invoice.', tags:['manual']}
+     ],
+     foot:['<b>Status path:</b> Draf → Dikirim → Dalam perjalanan → (Selisih: SPV → Selisih: HQ) → Selesai.','<b>Consignment is agreed</b> (21 Sep): Wardah owns the stock until sold.','<b>Training site only:</b> can receive without an AWB for practice.']},
+
+    {key:'D', title:'Inbound scan and unknown product', status:'built',
+     sum:'Inside a receipt opened by AWB: a scan finds its product automatically, or the staffer picks it from the list. A product that isn\u2019t on the list goes to Ops HQ and waits in the temporary bin, outside stock. One AWB can be received in several batches, as many SKUs at a time as the hub has temporary inbound bins.',
+     lanes:['staff','wms','hq'],
+     steps:[
+      {n:'1', c:1, r:'staff', t:'Open a batch from the AWB, scan a unit', d:'Batch 1, 2, 3\u2026 of the same AWB. Each batch expects what is still to come. 1 inbound bin = 1 SKU: when the bins are full, the next SKU waits for the next batch.', w:'01 → 02 Pindai barang masuk', tags:['new']},
+      {n:'2', c:2, r:'wms', kind:'decision', t:'Is the barcode known?', br:[['Yes','3 · auto-detect'],['No','5 · manual']]},
+      {n:'3', c:3, r:'wms', t:'Show the rack; count against the Surat Jalan', d:'Pick face first; overflow once the face is at P. The comparison table updates.'},
+      {n:'4', c:4, r:'staff', t:'Put the unit in that bin', d:'Back to step 1 for the next unit.'},
+      {n:'5', c:3, r:'staff', kind:'decision', t:'Pick the product from the list', d:'Search by name or shade number and compare the photo.', w:'03 Barcode tidak dikenal · Langkah 1', br:[['Found','6'],['Not on the list','7']]},
+      {n:'6', c:4, r:'wms', t:'Bind the barcode to that SKU for good', d:'The unit is scanned in (back to step 3). Next time it’s auto-detected.'},
+      {n:'7', c:5, r:'staff', t:'Send it to Ops HQ', d:'Photo, count every unit with that barcode, optional note. Units go to the temporary bin and are NOT in stock.', w:'03 · Langkah 2 · Kirim ke Ops HQ', tags:['new']},
+      {n:'8', c:6, r:'hq', kind:'decision', t:'Answer the request', d:'See photo, barcode, count, hub.', w:'Permintaan SKU · Jawab', br:[['Existing SKU','match it'],['New product','register it (R required)'],['Not ours','reject with reason · 8b']], tags:['new']},
+      {n:'8b', c:7, r:'staff', t:'Return rejected units to the brand', d:'The reason from HQ shows on the inbound screens.', tags:['manual']},
+      {n:'9', c:7, r:'wms', t:'Bind the barcode and rack the SKU at that hub', d:'HQ’s chosen bin, or the best empty one. The staff photo becomes the product photo if there’s none.'},
+      {n:'10', c:8, r:'staff', t:'Carry the units to the rack', d:'"Take 12 units to UT5-B-2-03" appears on Barang masuk, then Sudah ditaruh di rak (confirm qty).', w:'01 / 02 / 15 · Jawaban HQ', tags:['new']},
+      {n:'11', c:9, r:'wms', t:'Units enter stock against the original receipt', d:'The Surat Jalan comparison updates. If the request was already in variance, the SPV sees the new number.'}
+     ],
+     foot:['<b>Requests still waiting for HQ</b> are listed on the same screens, so nothing is forgotten in the temporary bin.','<b>Finishing:</b> \u201cSelesai batch ini\u201d closes the batch, the rest follows in the next one; \u201cSemua barang AWB sudah diterima\u201d compares the whole AWB with the Surat Jalan (variance \u2192 SPV \u2192 Ops HQ). The SPV sets the number of inbound bins per hub on Rak & bin.']},
+
+    {key:'E', title:'Ops HQ monitoring: hub map and stock', status:'built',
+     sum:'One place for Ops HQ to see bin availability and stock level at every hub, drill into a hub’s layout, and correct thresholds on the spot.',
+     lanes:['wms','hq','spv'],
+     steps:[
+      {n:'1', c:1, r:'wms', t:'Measure every hub', d:'Bins used and free, SKUs needing a rack, units, SKUs low (≤ R), out (0), without R, incoming deliveries, open variances.'},
+      {n:'2', c:2, r:'hq', t:'Scan the hub table', d:'Totals across live hubs on top; a hub over 85% full is flagged.', w:'Peta hub & stok · Semua hub', tags:['new']},
+      {n:'3', c:3, r:'hq', t:'Open a hub’s layout map', d:'All racks side by side, one square per bin, top level on top. Colour by stock or by availability; search a SKU or bin.', w:'Peta hub & stok · Peta layout', tags:['new']},
+      {n:'4', c:4, r:'hq', kind:'decision', t:'What needs action?', br:[['Low / out','restock request · flow C'],['Wrong R or P','step 5'],['No free bins','step 6'],['Needs a rack','step 6']]},
+      {n:'5', c:5, r:'hq', t:'Change R and P from the bin', d:'This hub only, or every hub that racked the SKU.', w:'bin · Simpan batas', tags:['new']},
+      {n:'6', c:5, r:'spv', t:'Expand racks or place waiting SKUs', d:'Add a rack, a level or bins; place SKUs from the queue (flow B).', w:'Rak & bin'}
+     ],
+     foot:['<b>The map is for watching and thresholds.</b> Arranging racks stays on Rak & bin.']},
+
+    {key:'F', title:'Reminders, flags and safety stock', status:'built',
+     sum:'The WMS points at what needs a person, by itself. Every number is a rule Ops HQ can switch and change, so safety stock, restock frequency and slow-mover terms become settings once agreed with Wardah.',
+     lanes:['wms','hq','spv'],
+     steps:[
+      {n:'1', c:1, r:'hq', t:'Set S, R and P per SKU per hub', d:'S (safety stock, optional) \u2264 R (restock point) < P (full). Defaults at registration; change for one hub or every hub.', w:'Peta hub & stok \u00b7 bin', tags:['new']},
+      {n:'2', c:2, r:'hq', t:'Set the reminder rules', d:'Switch each on or off; set hours or days: draft unsent, brand not confirming, delivery late, variance waiting, SKU request unanswered, no rack yet, slow mover.', w:'Pengingat & flag \u00b7 Aturan pengingat', tags:['new']},
+      {n:'3', c:3, r:'wms', t:'Watch stock and every open step', d:'After every pick, every 10 minutes, and whenever the flags are read. Stock at R \u2192 automatic draft (flow C).'},
+      {n:'4', c:4, r:'wms', kind:'decision', t:'Raise a flag', br:[['Critical','out of stock or \u2264 S'],['Needs action','overdue or waiting'],['Info','automatic draft, slow mover']]},
+      {n:'5', c:5, r:'hq', t:'Work the list', d:'Every hub. Each flag links to the screen that resolves it. A badge on the console menu counts what is critical or needs action.', w:'Pengingat & flag', tags:['new']},
+      {n:'6', c:5, r:'spv', t:'Work the list for their hubs', d:'Same list, scoped to the SPV\u2019s own hubs.', w:'Pengingat & flag', tags:['new']}
+     ],
+     foot:['<b>In the WMS only</b> for now \u2014 no email or WhatsApp.','<b>Expiry reminders</b> need expiry dates, which are not recorded yet.']},
+
+    {key:'G', title:'Superadmin: view the app as another role', status:'built',
+     sum:'Check exactly what each account type sees before rolling a change out, without separate test accounts.',
+     lanes:['superadmin','wms'],
+     steps:[
+      {n:'1', c:1, r:'superadmin', t:'Pick a role in the top bar', d:'Ops HQ, SPV, hub operator or staff.', w:'Lihat konsol sebagai', tags:['new']},
+      {n:'2', c:2, r:'wms', t:'Serve that role’s app', d:'Same menu, screens and refusals. Staff and hub-operator views open on the station app.'},
+      {n:'3', c:3, r:'wms', t:'Refuse every change', d:'Preview is read-only, so nothing is saved under a borrowed role.'},
+      {n:'4', c:4, r:'superadmin', t:'Back to superadmin', d:'One click in the same bar.', w:'Kembali ke superadmin'}
+     ]},
+
+    {key:'H', title:'Outbound: pick, pack, hand over', status:'draft',
+     sum:'As built today. You’re reconfiguring outbound next, so this is the starting point for that review, not a decision.',
+     lanes:['grab','wms','staff','spv'],
+     steps:[
+      {n:'1', c:1, r:'grab', t:'Order arrives', d:'Message 1 via Hiryu. Promise = received + 15 min.'},
+      {n:'2', c:2, r:'wms', t:'Allocate and queue', d:'Oldest stock first, across rack and overflow. The queue is sorted by time left.', w:'Papan antrean'},
+      {n:'3', c:3, r:'staff', t:'Claim and pick', d:'One location at a time. Scan each unit; a wrong shade gives a full-screen stop, with no override.', w:'07 Ambil pesanan · 08 Salah barang'},
+      {n:'4', c:4, r:'staff', kind:'decision', t:'Everything there?', br:[['Yes','5'],['Short','17 Barang tidak ada · message 5 · Hiryu decides']]},
+      {n:'5', c:5, r:'staff', t:'Pack and hand to the Grab rider', d:'Message 4 once. The WMS owns pack → handover → timestamp.', w:'09 Pesanan selesai'},
+      {n:'6', c:5, r:'spv', t:'Release stuck claims', d:'A pick that stopped moving goes back to the queue.', w:'Papan antrean'},
+      {n:'7', c:6, r:'grab', t:'Rider collects and delivers', d:'Delivery is entirely Grab’s.'}
+     ],
+     foot:['<b>Pending your redesign:</b> pick/pack SLA (5–10 min, per Grab), operating hours, photo at seal, order-number check at handover.','<b>On a phone:</b> the station web app installs to the home screen and scans with the camera; a native Android app is future.']}
+  ];
+
+  var MATRIX = [
+    ['Product master and thresholds'],
+    ['Add a brand, register a SKU, upload a product photo', 'n','n','y','y'],
+    ['Set or change thresholds S, R and P (one hub or every hub)', 'n','n','y','y'],
+    ['Monitoring'],
+    ['Hub table and layout map: bin availability, stock level', 'n','n','y','y'],
+    ['See reminders and flags', 'n','p:own hubs','p:every hub','y'],
+    ['Change reminder rules', 'n','n','y','y'],
+    ['Racks and bins'],
+    ['Build a whole hub layout at once', 'n','p:own hubs','p:every hub','y'],
+    ['Add a rack, add or remove levels and bins, change basket size', 'n','p:own hubs','p:every hub','y'],
+    ['Place a SKU on a rack', 'p:inbound only¹','p:own hubs','p:every hub','y'],
+    ['Inbound'],
+    ['Receive a delivery by AWB (training site: also without)', 'y','y','y','y'],
+    ['Send an unknown product to HQ; put away HQ’s answer', 'y','y','y','y'],
+    ['Answer or reject SKU requests', 'n','n','y','y'],
+    ['Replenishment and billing'],
+    ['See restock alerts; draft, send, confirm and cancel requests', 'n','p:own hubs','p:every hub','y'],
+    ['Acknowledge a variance: final count and reason', 'n','p:own hubs','y','y'],
+    ['Sign off a variance, or send it back (sets the billed number)', 'n','n','y','y'],
+    ['System'],
+    ['See every hub', 'n','n','y','y'],
+    ['Staff accounts, roles and sites', 'n','n','y','y'],
+    ['Grant superadmin; view the app as another role', 'n','n','n','y']
+  ];
+
+  var DECISIONS = [
+    {t:'Decided 21 Sep', p:'Temporary inbound bins are required at every hub; how many is flexible \u2014 an AWB is received in batches, 1 bin = 1 SKU. No response-time target for a delivery without a confirmed AWB. Consignment is the agreed deal. Up to 2 stacked bins per position, named T (top) and B (bottom). Restock point defaults to 25% of P until Ops HQ sets numbers. The station runs as a web app on phones; a native Android app is future.', rec:'Nothing blocking the build. Bin count per hub is set on Rak & bin whenever it is known.', o:'Jabo ops / Ops HQ'},
+    {t:'The numbers behind the reminders', p:'Safety stock per SKU, restock frequency, and when slow or near-expiry stock goes back to Wardah are still to be agreed. The WMS has a rule for each; they only need numbers.', rec:'Once agreed, Ops HQ enters S per SKU on the hub map and sets the hours and days on Aturan pengingat \u2014 no rebuild needed.', o:'Vini \u00b7 Ops HQ'}
+  ];
+
+  var $ = function(s, r){ return (r || document).querySelector(s); };
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+  function store(k, v){ try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch(e) { return null; } }
+
+  /* ---- roster + filter chips ---- */
+  var order = ['staff','spv','hq','superadmin','wms','wardah','grab'];
+  $('#roster').innerHTML = order.map(function(k){
+    var r = ROLES[k];
+    return '<div class="who" data-role="'+k+'"><h3>'+esc(r.name)+' <small>'+esc(r.scope)+'</small></h3><p>'+esc(r.does)+'</p></div>';
+  }).join('');
+  var filter = $('#role-filter');
+  filter.insertAdjacentHTML('beforeend', order.map(function(k){
+    return '<button class="chip" type="button" data-role="'+k+'" aria-pressed="false">'+esc(ROLES[k].name)+'</button>';
+  }).join('') + '<button class="chip clear" type="button" data-clear aria-pressed="false">All</button>');
+
+  /* ---- swimlanes ---- */
+  function stepHtml(s){
+    var tags = (s.tags || []).map(function(t){
+      return '<span class="tag '+t+'">'+(t === 'new' ? 'New 17 Sep' : 'Outside the WMS')+'</span>';
+    }).join('');
+    var br = s.br ? '<div class="branches">' + s.br.map(function(b){
+      return '<div class="branch"><span class="go">'+esc(b[0])+'</span><span>'+esc(b[1])+'</span></div>';
+    }).join('') + '</div>' : '';
+    return '<div class="step '+(s.kind || '')+'" data-role="'+s.r+'">' +
+      '<div class="step__top"><span class="step__n">'+esc(s.n)+'</span><span class="step__t">'+esc(s.t)+'</span></div>' +
+      (s.d ? '<div class="step__d">'+esc(s.d)+'</div>' : '') + br +
+      (s.w ? '<div class="where">'+esc(s.w)+'</div>' : '') + tags + '</div>';
+  }
+  $('#flows').innerHTML = FLOWS.map(function(f){
+    var cols = f.steps.reduce(function(m, s){ return Math.max(m, s.c); }, 1);
+    var html = '<div class="grid" style="grid-template-columns:150px repeat('+cols+', 210px)">';
+    html += '<div class="corner"></div>';
+    for (var c = 1; c <= cols; c++) html += '<div class="colnum">'+c+'</div>';
+    f.lanes.forEach(function(l){
+      html += '<div class="lane" data-role="'+l+'"><b>'+esc(ROLES[l].name)+'</b><span>'+esc(ROLES[l].scope)+'</span></div>';
+      for (var c = 1; c <= cols; c++){
+        var here = f.steps.filter(function(s){ return s.r === l && s.c === c; });
+        html += '<div class="cell">' + here.map(stepHtml).join('') + '</div>';
+      }
+    });
+    html += '</div>';
+    return '<article class="flow" id="flow-'+f.key+'">' +
+      '<div class="flow__head"><span class="flow__key">'+f.key+'</span><h2>'+esc(f.title)+'</h2>' +
+      '<span class="status '+f.status+'">'+(f.status === 'built' ? 'Built 17 Sep · not deployed' : 'Current build · to be redesigned')+'</span>' +
+      '<p>'+esc(f.sum)+'</p></div>' +
+      '<div class="lanes">'+html+'</div>' +
+      (f.foot ? '<div class="flow__foot">'+f.foot.map(function(x){ return '<span>'+x+'</span>'; }).join('')+'</div>' : '') +
+      '</article>';
+  }).join('');
+
+  /* ---- per role ---- */
+  $('#byrole').innerHTML = order.map(function(k){
+    var items = [];
+    FLOWS.forEach(function(f){
+      f.steps.forEach(function(s){ if (s.r === k && s.kind !== 'end') items.push({ref:f.key + s.n, s:s}); });
+    });
+    if (k === 'hq') items.push({ref:'—', s:{t:'Create staff accounts, set roles and hubs', w:'Staf'}}, {ref:'—', s:{t:'Create or deactivate sites', w:'Hub · Tambah lokasi'}});
+    if (k === 'superadmin') items.push({ref:'—', s:{t:'Anything Ops HQ can do', w:'All Ops HQ screens'}}, {ref:'—', s:{t:'Grant or change the superadmin role', w:'Staf'}});
+    if (!items.length) return '';
+    return '<section class="rolecard" data-role="'+k+'"><header><h2>'+esc(ROLES[k].name)+'</h2><p>'+esc(ROLES[k].scope)+' · '+esc(ROLES[k].does)+'</p></header><ol>' +
+      items.map(function(i){
+        return '<li><span class="ref">'+esc(i.ref)+'</span><span class="act">'+esc(i.s.t)+(i.s.w ? '<small>'+esc(i.s.w)+'</small>' : '')+'</span></li>';
+      }).join('') + '</ol></section>';
+  }).join('');
+
+  /* ---- matrix ---- */
+  var cellFor = function(v){
+    if (v === 'y') return '<td class="y">✓</td>';
+    if (v === 'n') return '<td class="n">—</td>';
+    return '<td class="p">'+esc(v.slice(2))+'</td>';
+  };
+  $('#matrix').innerHTML = '<thead><tr><th>Action</th><th data-role="staff">Staff</th><th data-role="spv">SPV</th><th data-role="hq">Ops HQ</th><th data-role="superadmin">Superadmin</th></tr></thead><tbody>' +
+    MATRIX.map(function(r){
+      if (r.length === 1) return '<tr class="grp"><td colspan="5">'+esc(r[0])+'</td></tr>';
+      return '<tr><td>'+esc(r[0])+'</td>'+r.slice(1).map(cellFor).join('')+'</tr>';
+    }).join('') + '</tbody>';
+
+  /* ---- decisions ---- */
+  $('#decisions').innerHTML = DECISIONS.map(function(d){
+    return '<div class="card"><h3>'+esc(d.t)+'</h3><p>'+esc(d.p)+'</p><div class="rec"><b>Recommendation:</b> '+esc(d.rec)+'</div><span class="owner">Owner: '+esc(d.o)+'</span></div>';
+  }).join('');
+
+  /* ---- tabs ---- */
+  function show(view){
+    document.querySelectorAll('.tab').forEach(function(t){ t.setAttribute('aria-selected', String(t.dataset.view === view)); });
+    document.querySelectorAll('.view').forEach(function(v){ v.hidden = v.dataset.view !== view; });
+    store('kilat-flows-view', view);
+  }
+  document.querySelectorAll('.tab').forEach(function(t){ t.addEventListener('click', function(){ show(t.dataset.view); }); });
+  var saved = store('kilat-flows-view');
+  if (saved && document.querySelector('.view[data-view="'+saved+'"]')) show(saved);
+
+  /* ---- role focus ---- */
+  function focus(role){
+    document.body.classList.toggle('focusing', !!role);
+    filter.querySelectorAll('.chip[data-role]').forEach(function(c){ c.setAttribute('aria-pressed', String(c.dataset.role === role)); });
+    document.querySelectorAll('.step, .lane').forEach(function(el){ el.classList.toggle('hit', el.dataset.role === role); });
+    document.querySelectorAll('.rolecard, .who').forEach(function(el){ el.style.opacity = role && el.dataset.role !== role ? '.35' : ''; });
+  }
+  var current = null;
+  filter.addEventListener('click', function(e){
+    var b = e.target.closest('.chip');
+    if (!b) return;
+    current = b.hasAttribute('data-clear') || b.dataset.role === current ? null : b.dataset.role;
+    focus(current);
+  });
+})();
+</script>

@@ -53,6 +53,44 @@
     const bannerCode = $('.banner .code');
     if (bannerCode) bannerCode.textContent = label;
 
+    // Products from this delivery still with HQ, or answered and waiting to be
+    // carried from the temporary bin to their rack.
+    if (NJW.skuAnswers) NJW.skuAnswers.mount($('.banner') || $('.main').firstElementChild, { receiptId });
+
+    // Against a Surat Jalan, any difference now waits for the SPV and Ops HQ;
+    // say so, so nobody reports it to Wardah on their own.
+    if (sum.receipt.replenishment_id && sum.receipt.final_batch === false) {
+      const note = document.createElement('div');
+      note.className = 'notice notice--action';
+      note.innerHTML = '<span class="code code--sm" aria-hidden="true">' + (sum.receipt.batch_no || 1) + '</span><div class="col" style="gap:4px">' +
+        '<span class="notice__title" ' + biAttr('Batch ' + (sum.receipt.batch_no || 1) + ' dari ' + (sum.receipt.replenishment_reference || '') + ' selesai',
+          'Batch ' + (sum.receipt.batch_no || 1) + ' of ' + (sum.receipt.replenishment_reference || '') + ' done') + '></span>' +
+        '<span class="notice__body" ' + biAttr('Kosongkan bin inbound ke rak, lalu mulai batch berikutnya dari AWB ' + (sum.receipt.external_reference || '') + '. Selisih dengan Surat Jalan dihitung setelah batch terakhir.',
+          'Empty the inbound bins onto the racks, then start the next batch from AWB ' + (sum.receipt.external_reference || '') + '. The comparison with the Surat Jalan is made after the last batch.') +
+        '></span></div>';
+      const main = $('.main');
+      if (main) main.insertBefore(note, main.firstChild);
+      applyLangTo(note);
+    } else if (sum.receipt.replenishment_id) {
+      const off = sum.lines.filter(l => l.variance);
+      const note = document.createElement('div');
+      note.className = 'notice ' + (off.length ? 'notice--caution' : 'notice--action');
+      note.innerHTML = '<span class="code code--sm" aria-hidden="true">SJ</span><div class="col" style="gap:4px">' +
+        '<span class="notice__title" ' + (off.length
+          ? biAttr(off.length + ' SKU berbeda dari Surat Jalan ' + (sum.receipt.replenishment_reference || ''),
+                   off.length + ' SKUs differ from Surat Jalan ' + (sum.receipt.replenishment_reference || ''))
+          : biAttr('Semua cocok dengan Surat Jalan ' + (sum.receipt.replenishment_reference || ''),
+                   'Everything matches Surat Jalan ' + (sum.receipt.replenishment_reference || ''))) + '></span>' +
+        '<span class="notice__body" ' + (off.length
+          ? biAttr('Selisihnya sudah dikirim ke SPV hub untuk dicek, lalu ditandatangani Ops HQ. Angka yang ditandatangani dipakai untuk tagihan dengan Wardah.',
+                   'The variance has gone to the hub SPV to check, then to Ops HQ to sign off. The signed numbers are what is billed with Wardah.')
+          : biAttr('Tidak ada yang perlu dicek. Permintaan restock ini selesai.', 'Nothing to check. This replenishment is closed.')) +
+        '></span></div>';
+      const main = $('.main');
+      if (main) main.insertBefore(note, main.firstChild);
+      applyLangTo(note);
+    }
+
     /* ---- batch colour: colour + day + date + week ---- */
     const dc = slip.day_color;
     const block = field('day-block');
