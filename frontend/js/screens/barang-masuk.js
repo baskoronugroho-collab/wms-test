@@ -65,7 +65,7 @@
       '<td data-sort-value="' + esc(r.opened_at) + '">' +
       esc(NJW.fmt.date(r.opened_at) + ' ' + NJW.fmt.time(r.opened_at)) + '</td>' +
       '<td><span style="display:inline-flex;align-items:center;gap:8px">' +
-      '<span style="width:18px;height:18px;border-radius:4px;background:' + esc(dc.hex || 'transparent') +
+      '<span class="day-swatch" style="width:18px;height:18px;border-radius:4px;background:' + esc(dc.hex || 'transparent') +
       ';flex:0 0 auto" aria-hidden="true"></span>' +
       '<span ' + biAttr(dc.day_id || '—', dc.day_en || dc.day_id || '—') + '>' + esc(dc.day_id || '—') + '</span>' +
       (dc.date ? ' · ' + esc(NJW.fmt.date(dc.date)) + ' · ' + esc(dc.week_parity || '') : '') + '</span></td>' +

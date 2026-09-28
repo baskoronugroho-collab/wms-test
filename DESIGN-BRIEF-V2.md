@@ -210,7 +210,7 @@ coloured label keyed to the weekday the stock arrived.
 
 ```
 Senin   #F2C300   Selasa  #1E8E3E   Rabu    #1A73C8   Kamis   #E8710A
-Jumat   #7B3FA0   Sabtu   #D6336C   Minggu  #5E6064
+Jumat   #E53935   Sabtu   #D6336C   Minggu  #FFFFFF
 ```
 
 Design needed:

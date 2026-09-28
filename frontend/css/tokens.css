@@ -171,3 +171,15 @@
 @media (prefers-reduced-motion: reduce) {
   :root { --dur-1: 0ms; --dur-2: 0ms; }
 }
+
+/* Day-colour swatches (backend/daycolor.py). A thin edge on every swatch so the
+   white Sunday colour still shows on white and light surfaces. */
+[data-field="day-block"],
+[data-field="label-block"],
+[data-field="fifo-block"],
+[data-field="color-block"],
+.daycell__block,
+.wallday__block,
+.day-swatch {
+  box-shadow: inset 0 0 0 1px rgba(23, 24, 26, .28);
+}
