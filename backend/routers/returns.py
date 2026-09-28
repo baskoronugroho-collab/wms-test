@@ -70,7 +70,8 @@ async def create_for_cancel(cur, *, order: dict, lines: list[dict]) -> int:
             "INSERT INTO return_tasks (site_id, sku_id, order_id, external_ref, "
             "location_id, qty, reason, is_training) "
             "VALUES (%s,%s,%s,%s,%s,%s,'cancelled',%s)",
-            (order["site_id"], l["sku_id"], order["id"], order["external_ref"],
+            (order["site_id"], l["sku_id"], order["id"],
+             order.get("hiryu_short_no") or order["external_ref"],
              location_id, picked, 1 if order.get("is_training") else 0),
         )
         queued += picked

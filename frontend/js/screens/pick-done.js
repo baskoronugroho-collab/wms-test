@@ -1,9 +1,9 @@
 /* pick-done.js — 09: every line picked; hand the tote to packing.
  *
  * Replaces the wire.js `pick-done` handler. The order is completed HERE, on
- * the hand-off, not the moment the last unit is scanned: completing sends
- * message 4 (Order ready) to Hiryu, which tells the rider and the customer the
- * bag is ready — so it goes when the tote is actually on the packing bench.
+ * the hand-off, not the moment the last unit is scanned. Hiryu hears nothing
+ * from here (no API yet): staff press Mark ready in Hiryu, then record it with
+ * Sudah Mark ready di Hiryu (PRD v3.3 A8.4).
  *
  * "Pick the next order" stays locked until the hand-off is done. Otherwise an
  * order with everything picked would sit claimed and unfinished, invisible to
@@ -44,9 +44,9 @@
 
     const task = done.task;
     const mode = $('.chrome__mode');
-    if (mode) { mode.dataset.keep = '1'; bi(mode, 'Ambil pesanan · ' + task.external_ref, 'Pick order · ' + task.external_ref); }
+    if (mode) { mode.dataset.keep = '1'; bi(mode, 'Ambil pesanan · ' + (task.short_no || task.external_ref), 'Pick order · ' + (task.short_no || task.external_ref)); }
     const bannerRef = banner && $('.code', banner);
-    if (bannerRef) bannerRef.textContent = task.external_ref;
+    if (bannerRef) bannerRef.textContent = (task.short_no || task.external_ref);
 
     /* ---- what was picked ---- */
     const lines = task.lines;
@@ -89,11 +89,11 @@
       note.className = 'notice notice--caution wire-shortnote';
       note.innerHTML = '<span class="code code--sm" aria-hidden="true">!</span>' +
         '<div class="col" style="gap:4px"><span class="notice__title" ' +
-        biAttr(shortUnits + ' barang kurang — Hiryu sudah diberi tahu',
-               shortUnits + (shortUnits === 1 ? ' unit' : ' units') + ' short — Hiryu has been told') + '></span>' +
+        biAttr(shortUnits + ' barang kurang: jangan dikemas',
+               shortUnits + (shortUnits === 1 ? ' unit' : ' units') + ' short: do not pack') + '></span>' +
         '<span class="notice__body" ' +
-        biAttr('Hiryu yang memutuskan untuk pelanggan: refund, kirim sebagian, atau barang pengganti. Kemas yang ada saja.',
-               'Hiryu decides for the customer: refund, partial delivery or a substitute. Pack only what is here.') +
+        biAttr('Grab tidak mengizinkan pesanan diubah. Panggil SPV: batalkan di Hiryu (2001 Item out of stock), lalu Dibatalkan di Hiryu di WMS.',
+               'Grab does not allow an order to change. Call the SPV: cancel in Hiryu (2001 Item out of stock), then Dibatalkan di Hiryu in the WMS.') +
         '></span></div>';
       tbody.closest('table').parentNode.insertBefore(note, tbody.closest('table'));
       applyLangTo(note);
@@ -102,8 +102,8 @@
     /* ---- the ticket: the order reference is what packing calls out ---- */
     const ticket = $('.panel .code');
     if (ticket) {
-      ticket.textContent = task.external_ref;
-      ticket.style.fontSize = task.external_ref.length > 10 ? '30px' : '56px';
+      ticket.textContent = (task.short_no || task.external_ref);
+      ticket.style.fontSize = (task.short_no || task.external_ref).length > 10 ? '30px' : '56px';
       ticket.style.overflowWrap = 'anywhere';
     }
     const ticketLabel = $('.panel .eyebrow');
@@ -124,12 +124,35 @@
       if (handoff) {
         handoff.disabled = true;
         handoff.classList.add('is-locked');
-        bi(handoff, '✓ Sudah diserahkan — Hiryu diberi tahu', '✓ Handed off — Hiryu has been told');
+        bi(handoff, '✓ Sudah diserahkan ke meja packing', '✓ Handed to packing');
       }
       const note = $('.panel .note');
-      bi(note, 'Pesanan siap dikirim. Biarkan keranjang di meja packing.',
-               'The order is ready to go. Leave the tote on the packing bench.');
+      bi(note, 'Kemas, lalu tekan Mark ready di Hiryu. Sendirian? Tekan tombol di bawah setelah Mark ready.',
+               'Pack it, then press Mark ready in Hiryu. On your own? Tap the button below after Mark ready.');
       lockNext(false);
+      addMarkedReady();
+    }
+
+    /* One person on duty packs too (A1.2): after Mark ready in Hiryu, they
+       record it here instead of walking to the pack laptop's list. */
+    function addMarkedReady() {
+      if (!task.order_id || $('.wire-marked')) return;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn btn--outline btn--lg btn--block wire-marked';
+      bi(b, 'Sudah Mark ready di Hiryu', 'Marked ready in Hiryu');
+      handoff.parentNode.insertBefore(b, next);
+      b.onclick = async () => {
+        const no = (task.short_no || task.external_ref);
+        if (!confirm(en() ? 'Did you press Mark ready in Hiryu for ' + no + '?'
+                          : 'Sudah tekan Mark ready di Hiryu untuk ' + no + '?')) return;
+        b.disabled = true;
+        try {
+          await NJW.api.hiryu.markedReady(task.order_id);
+          bi(b, '✓ Siap, taruh di rak siap ambil', '✓ Ready, put it on the ready shelf');
+          b.classList.add('is-locked');
+        } catch (e) { b.disabled = false; say(oneLang(e.message)); }
+      };
     }
 
     if (next) next.addEventListener('click', (e) => {
@@ -155,7 +178,7 @@
         CTX.set('doneTask', done);
         paintHanded();
         say(localStorage.getItem('njw.lang') === 'en'
-          ? 'Order ready — Hiryu has been told.' : 'Pesanan siap — Hiryu sudah diberi tahu.');
+          ? 'Handed to packing.' : 'Sudah diserahkan ke meja packing.');
       } catch (e) {
         if (e.status !== 409) return fail(e);
         const msg = oneLang(e.message);

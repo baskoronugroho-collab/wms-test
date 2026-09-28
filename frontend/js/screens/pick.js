@@ -53,7 +53,7 @@
       if (!task) return showEmpty();
       const saved = CTX.get('task');
       CTX.set('task', {
-        id: task.id, external_ref: task.external_ref,
+        id: task.id, external_ref: (task.short_no || task.external_ref),
         // A duration for the done screen. Kept across reloads of the same
         // order; a re-claim must not reset the clock the picker is judged by.
         // Unknown (null) when resuming an order this device did not start.
@@ -130,7 +130,7 @@
     // off. This is also where a picker who never tapped "hand off" lands.
     if (!currentLine()) return finish();
 
-    setMode('Ambil pesanan · ' + task.external_ref, 'Pick order · ' + task.external_ref);
+    setMode('Ambil pesanan · ' + (task.short_no || task.external_ref), 'Pick order · ' + (task.short_no || task.external_ref));
 
     /* ---------- painting ---------- */
 
@@ -337,7 +337,7 @@
           if (zone) zone.reject('Ditolak', r.message);
           return;
         }
-        CTX.set('lastSave', { ref: task.external_ref, at: new Date().toISOString() });
+        CTX.set('lastSave', { ref: (task.short_no || task.external_ref), at: new Date().toISOString() });
         line.qty_picked = r.qty_picked;
         line.status = r.line_complete ? 'picked' : 'pending';
         if (line._onHand != null) line._onHand = Math.max(0, line._onHand - 1);
@@ -350,7 +350,7 @@
           // Online-only app: a lost connection mid-pick stops the picker, and
           // the stop screen says which order and when it was last saved.
           leaving = true;
-          CTX.set('blocked', { reason: 'net', ref: task.external_ref, at: new Date().toISOString() });
+          CTX.set('blocked', { reason: 'net', ref: (task.short_no || task.external_ref), at: new Date().toISOString() });
           return go('14-terkunci.html');
         }
         if (e.status === 401) { leaving = true; return fail(e); }
@@ -389,7 +389,7 @@
       const line = currentLine();
       if (!line) return;
       CTX.set('shortLine', {
-        task_id: task.id, external_ref: task.external_ref,
+        task_id: task.id, order_id: task.order_id, external_ref: (task.short_no || task.external_ref),
         others: pending().length - 1,
         line: {
           id: line.id, sku_id: line.sku_id, sku_name: line.sku_name, photo_key: line.photo_key,

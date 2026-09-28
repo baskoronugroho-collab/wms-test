@@ -227,3 +227,26 @@
     },
   };
 })();
+
+/* The interim Hiryu bridge (PRD v3.3 §13.2 to §13.6). */
+(function () {
+  const r = NJW.api.raw;
+  NJW.api.hiryu = {
+    paste: (b) => r.post('/hiryu/paste', b),
+    markedReady: (orderId) => r.post('/hiryu/orders/' + orderId + '/marked-ready', {}),
+    handedOver: (orderId) => r.post('/hiryu/orders/' + orderId + '/handed-over', {}),
+    cancelledInHiryu: (orderId) => r.post('/hiryu/orders/' + orderId + '/cancelled-in-hiryu', {}),
+    reopen: (orderId) => r.post('/hiryu/orders/' + orderId + '/reopen', {}),
+    activeOrders: (siteId) => r.get('/hiryu/active-orders' + r.qs({ site_id: siteId })),
+    elsewhere: (lineId) => r.get('/hiryu/pick-lines/' + lineId + '/elsewhere'),
+    moveLine: (lineId, locationId) => r.post('/hiryu/pick-lines/' + lineId + '/move', { location_id: locationId }),
+    menuImport: (brandId, fd) => r.form('/hiryu/menu-import' + r.qs({ brand_id: brandId }), fd),
+    items: (p) => r.get('/hiryu/items' + r.qs(p)),
+    mapItem: (id, b) => r.patch('/hiryu/items/' + id, b),
+    stores: () => r.get('/hiryu/stores'),
+    putStore: (no, b) => r.put('/hiryu/stores/' + no, b),
+    stockSheet: (siteId) => r.get('/hiryu/stock-sheet' + r.qs({ site_id: siteId })),
+    stockTyped: (b) => r.post('/hiryu/stock-sheet/typed', b),
+    claim: (taskId) => r.post('/pick-tasks/' + taskId + '/claim', {}),
+  };
+})();

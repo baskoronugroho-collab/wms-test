@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tempel pesanan Grab — Ninja Kilat WMS</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B3A5C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="css/tokens.css?v=339d128">
+<link rel="stylesheet" href="css/app.css?v=339d128">
+<style>
+  /* The paste box never shows what was pasted: the text is read and dropped
+     in the paste event, so a customer's note cannot sit on screen. */
+  .pastebox { width: 100%; min-height: 150px; resize: none; border: 0; border-radius: var(--radius-card);
+    background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--line, #c9d2dc); padding: 20px;
+    font: 600 20px/1.4 var(--font-body, Inter, sans-serif); color: var(--muted); text-align: center; cursor: pointer; }
+  .pastebox:focus { outline: none; box-shadow: inset 0 0 0 3px var(--action); background: var(--action-bg); }
+  .steps { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 8px; font-size: 17px; }
+  .preview { display: flex; flex-direction: column; gap: 12px; }
+  .preview__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 20px; }
+  .tick { color: var(--accept, #1a7f4b); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="app" data-screen="paste-order" data-screen-label="20">
+    <header class="chrome">
+      <span class="chrome__mark">NINJA</span>
+      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
+      <span class="chrome__sep"></span>
+      <span class="chrome__mode" data-keep="1" data-id="Tempel pesanan Grab" data-en="Paste a Grab order">Tempel pesanan Grab</span>
+      <span class="spacer"></span>
+      <span class="conn" role="status">
+        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
+      </span>
+      <span class="lang" role="group" aria-label="Bahasa">
+        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+        <button class="lang__opt" data-lang="en" type="button">EN</button>
+      </span>
+      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
+      <span class="chrome__user"></span>
+    </header>
+    <main class="main">
+      <div class="row-split">
+        <div class="col col--grow">
+          <div class="panel"><div class="panel__body">
+            <span class="eyebrow" data-id="Di Hiryu dulu" data-en="In Hiryu first">Di Hiryu dulu</span>
+            <ol class="steps">
+              <li data-id="Buka pesanannya. Kalau ada tombol Accept, tekan Accept dulu." data-en="Open the order. If it shows Accept, press Accept first.">Buka pesanannya. Kalau ada tombol Accept, tekan Accept dulu.</li>
+              <li data-id="Raw payload harus tertutup (tombolnya bertuliskan Show)." data-en="Raw payload must stay closed (its button reads Show).">Raw payload harus tertutup (tombolnya bertuliskan Show).</li>
+              <li data-id="Klik sekali judul &quot;Order GM-…&quot;, lalu Ctrl + A, lalu Ctrl + C." data-en="Click the title &quot;Order GM-…&quot; once, then Ctrl + A, then Ctrl + C.">Klik sekali judul "Order GM-…", lalu Ctrl + A, lalu Ctrl + C.</li>
+            </ol>
+          </div></div>
+
+          <textarea class="pastebox" data-region="box" rows="4" spellcheck="false" autocomplete="off"
+            aria-label="Tempel di sini" placeholder="Klik di sini, lalu Ctrl + V"
+            data-ph-id="Klik di sini, lalu Ctrl + V" data-ph-en="Click here, then Ctrl + V"></textarea>
+
+          <div class="notice notice--caution" data-region="error" hidden>
+            <span class="code code--sm" aria-hidden="true">!</span>
+            <div class="col" style="gap:4px">
+              <span class="notice__title" data-field="error-title"></span>
+              <span class="notice__body" data-field="error-body"></span>
+            </div>
+          </div>
+
+          <div class="panel" data-region="preview" hidden><div class="panel__body preview">
+            <div class="preview__head">
+              <span class="code" style="font-size:40px" data-field="short-no">GM-</span>
+              <span class="tick" data-field="tick"></span>
+              <span class="spacer"></span>
+              <span class="note" data-field="store"></span>
+            </div>
+            <span class="note" data-field="times"></span>
+            <table class="table"><tbody data-region="lines"></tbody></table>
+            <div class="stats" data-region="actions">
+              <button class="btn btn--primary btn--lg btn--grow" type="button" data-action="send" data-id="Mulai ambil" data-en="Start picking">Mulai ambil</button>
+              <button class="btn btn--lg" type="button" data-action="clear" data-id="Batal" data-en="Cancel">Batal</button>
+            </div>
+          </div></div>
+
+          <div class="notice notice--action" data-region="done" hidden>
+            <span class="code code--sm" aria-hidden="true">✓</span>
+            <div class="col" style="gap:8px">
+              <span class="notice__title" data-field="done-title"></span>
+              <span class="notice__body" data-field="done-body"></span>
+              <div class="stats" data-region="done-actions"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col" style="flex:0 0 320px">
+          <div class="notice notice--action">
+            <span class="code code--sm" aria-hidden="true">i</span>
+            <div class="col" style="gap:4px">
+              <span class="notice__title" data-id="Data pelanggan tetap di Hiryu" data-en="Customer data stays in Hiryu">Data pelanggan tetap di Hiryu</span>
+              <span class="notice__body" data-id="WMS hanya membaca nomor pesanan, toko, waktu dan barang. Nama, nomor telepon dan catatan pelanggan tidak pernah dikirim." data-en="The WMS reads only the order number, store, times and items. The customer's name, phone and notes are never sent.">WMS hanya membaca nomor pesanan, toko, waktu dan barang. Nama, nomor telepon dan catatan pelanggan tidak pernah dikirim.</span>
+            </div>
+          </div>
+          <a class="btn btn--outline btn--lg btn--block" href="21-pesanan-hub.html" data-id="Kemas &amp; serah ke driver" data-en="Pack &amp; hand over">Kemas &amp; serah ke driver</a>
+        </div>
+      </div>
+    </main>
+</div>
+<script src="js/api.js?v=339d128"></script>
+<script src="js/scan.js?v=339d128"></script>
+<script src="js/app.js?v=339d128"></script>
+<script src="js/wire.js?v=339d128"></script>
+<script src="js/hiryu-parse.js?v=339d128"></script>
+<script src="js/screens/paste-order.js?v=339d128"></script>
+
+</body>
+</html>

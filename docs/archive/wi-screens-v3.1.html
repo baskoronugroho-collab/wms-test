@@ -1,0 +1,444 @@
+<!--
+Screen drafts for the Working Instruction (PRD v3.1, Part A).
+build_prd_html.py replaces a line <!--screen:ID--> in PRD.md with the block below its
+"@screen ID" marker. Keep each block free of blank lines: a blank line ends an HTML
+block in markdown. WMS screens are drafts drawn with the app's own tokens. Hiryu screens
+(class "hy") are redrawn from Hiryu Malaysia as seen on 21 and 25 Sep 2026, with example
+data and no customer or staff details. The rack picture is wired by docs/wi-screens.js.
+-->
+
+<!-- @screen admin-setup -->
+<figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav is-on">Dark store &amp; pengguna</span><span class="c-nav">Rak &amp; bin</span><span class="c-nav">Produk</span><span class="c-nav">Menu Hiryu</span><span class="c-nav">Masalah</span></aside>
+<div class="c-main">
+<div class="c-grid2">
+<div class="c-form">
+<span class="c-title">Tambah dark store <b class="pin">1</b></span>
+<div class="row3"><label class="f"><span>Kode hub</span><span class="in mono">MA5</span></label><label class="f" style="grid-column:span 2"><span>Nama</span><span class="in">Cawang</span></label></div>
+<label class="f"><span>Alamat</span><span class="in">Jl. Raya Kalibata No. 4, Jakarta Timur</span></label>
+<label class="f"><span>Nama dark store di Hiryu</span><span class="in">Cawang</span></label>
+<span class="c-sub">Area barang masuk <b class="pin">2</b></span>
+<div class="row3"><label class="f"><span>Bin sementara</span><span class="in mono">10</span></label><label class="f"><span>Ukuran</span><span class="in in--sel">Besar JX-4</span></label><label class="f"><span>Label</span><span class="in mono">MA5-IN-01…10</span></label></div>
+<span class="tick"><i class="box on"></i>Buat baki karantina <span class="mono hl">MA5-KARANTINA</span></span>
+<span class="btn">Simpan dark store</span>
+</div>
+<div class="c-form">
+<span class="c-title">Tambah pengguna <b class="pin">3</b></span>
+<label class="f"><span>Email Google (@ninjavan.co)</span><span class="in">dewi.lestari@ninjavan.co</span></label>
+<label class="f"><span>Nama</span><span class="in">Dewi Lestari</span></label>
+<label class="f"><span>Peran</span><span class="in in--sel">SPV</span></label>
+<div class="rolechips"><span class="chip">Staf</span><span class="chip ok">SPV</span><span class="chip">Ops HQ</span><span class="chip muted">Superadmin <i>hanya superadmin</i></span></div>
+<label class="f"><span>Hub</span><span class="in in--sel">MA5 Cawang, KJ5 Kemanggisan</span></label>
+<span class="btn">Tambah pengguna</span>
+<div class="note">Masuk sebagai SPV? Anda hanya bisa menambah <b>Staf</b>, di hub Anda sendiri. <b class="pin">4</b></div>
+</div>
+</div>
+</div></div></div>
+<figcaption><span class="l-en">Superadmin or Ops HQ · <b>Dark store &amp; pengguna</b>. An SPV sees the same screen with only the <i>Tambah pengguna</i> form, limited to the Staff role at their own hubs.</span><span class="l-id">Superadmin atau Ops HQ · <b>Dark store &amp; pengguna</b>. SPV melihat layar yang sama, tetapi hanya formulir <i>Tambah pengguna</i>, dan hanya untuk peran Staf di hub-nya sendiri.</span></figcaption></figure>
+
+<!-- @screen rack-builder -->
+<figure class="shot"><div class="shotscroll"><div class="dev dev--console dev--rack" data-rack>
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav">Dark store &amp; pengguna</span><span class="c-nav is-on">Rak &amp; bin</span><span class="c-nav">Produk</span><span class="c-nav">Menu Hiryu</span><span class="c-nav">Masalah</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">Tambah rak A · MA5 Cawang</span><span class="chip">Coba gambarnya: klik tombol dan tingkat</span></div>
+<div class="rk-controls"><span class="rk-lab">Jenis rak <b class="pin">1</b></span><span class="in in--sel in--sm">Long-span 206 × 60 × 202 cm</span><span class="rk-lab">Bagian <b class="pin">2</b></span><span class="seg" data-set="bays"><button type="button" data-v="1">1</button><button type="button" data-v="2" class="on">2</button></span><span class="rk-lab">Tingkat</span><span class="seg" data-set="levels"><button type="button" data-v="3">3</button><button type="button" data-v="4" class="on">4</button><button type="button" data-v="5">5</button></span></div>
+<div class="rk-wrap"><div class="rk-pic" data-pic aria-label="Gambar rak, tampak depan"></div>
+<div class="rk-side"><span class="c-sub">Tingkat yang dipilih <b class="pin">3</b></span><span class="rk-sel" data-sel>Klik satu tingkat di gambar</span><span class="seg seg--col" data-set="size"><button type="button" data-v="S">Bin kecil JX-2</button><button type="button" data-v="L">Bin besar JX-4</button><button type="button" data-v="-">Kosong</button></span><span class="rk-calc" data-calc></span><span class="c-sub">Kode bin <b class="pin">4</b></span><span class="rk-code mono" data-code>Arahkan ke satu bin</span></div></div>
+<div class="c-foot"><span class="rk-sum" data-sum></span><span class="btn">Simpan rak <b class="pin">5</b></span></div>
+</div></div></div>
+<figcaption><span class="l-en">Ops HQ or SPV · <b>Rak &amp; bin → Tambah rak</b>. This picture works: change the bays and levels, click a level, pick a bin size, point at a bin to read its code. The drawing is to scale (front view).</span><span class="l-id">Ops HQ atau SPV · <b>Rak &amp; bin → Tambah rak</b>. Gambar ini bisa dicoba: ubah jumlah bagian dan tingkat, klik satu tingkat, pilih ukuran bin, arahkan ke bin untuk membaca kodenya. Gambarnya sesuai skala (tampak depan).</span></figcaption></figure>
+
+<!-- @screen sku-form -->
+<figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav">Rak &amp; bin</span><span class="c-nav is-on">Produk</span><span class="c-nav">Menu Hiryu</span><span class="c-nav">Masalah</span><span class="c-nav">Laporan akhir hari</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">Daftarkan SKU</span><span class="chip">Semua hub</span></div>
+<div class="c-grid2">
+<div class="c-form">
+<label class="f"><span>Merek</span><span class="in in--sel">Kahf</span></label>
+<label class="f"><span>Kode SKU merek <b class="pin">1</b></span><span class="in mono">KHF-FW-OAC-100</span></label>
+<label class="f"><span>Nama</span><span class="in">Kahf Oil and Acne Care Face Wash 100 ml</span></label>
+<label class="f"><span>Barcode <b class="pin">2</b></span><span class="in mono">8990000000017 <span class="muted">(contoh)</span></span></label>
+<div class="hylink"><span class="c-sub">Di Hiryu <b class="pin">3</b></span><label class="f"><span>Kode SKU di Hiryu</span><span class="in mono">KHF-FW-OAC-100</span></label><span class="small">Item menu Hiryu yang memakai SKU ini:</span><span class="mono small">IDITE…0411 · Face Wash 100 ml · <b>1 unit</b></span><span class="mono small">IDITE…0412 · Face Wash 100 ml isi 2 · <b>2 unit</b></span></div>
+<label class="f"><span>Ukuran kemasan, mm <span class="muted">opsional</span> <b class="pin">4</b></span><span class="in mono">170 × 50 × 40 · 125 g</span></label>
+</div>
+<div class="c-form">
+<label class="f"><span>Ukuran bin <b class="pin">5</b></span><span class="in in--sel">Kecil JX-2</span></label>
+<span class="hint ok">Disarankan: muat 15 unit dengan 1 sekat</span>
+<div class="thr"><b class="pin">6</b>
+<label class="f"><span>Isi maks. per bin</span><span class="in muted">Belum tahu</span><em>Berapa unit muat di satu bin. Boleh kosong: WMS belajar dari SPV.</em></label>
+<label class="f"><span>Pesan ulang saat sisa</span><span class="in mono">4</span><em>Stok di hub tinggal 4 → WMS siapkan permintaan restock ke merek.</em></label>
+<label class="f"><span>Isi sampai</span><span class="in mono">15</span><em>Restock mengisi stok hub sampai 15.</em></label>
+<label class="f"><span>Batas kritis</span><span class="in mono">1</span><em>Stok 1 atau kurang → tanda merah, hampir habis.</em></label>
+<label class="f"><span>Cadangan Grab</span><span class="in mono">0</span><em>Unit yang tidak ditawarkan ke Grab, untuk jaga-jaga.</em></label>
+</div>
+<span class="btn">Daftarkan</span>
+</div></div>
+</div></div></div>
+<figcaption><span class="l-en">Ops HQ · <b>Produk → Daftarkan SKU</b>. Every number has a plain name and a one-line example underneath.</span><span class="l-id">Ops HQ · <b>Produk → Daftarkan SKU</b>. Setiap angka punya nama yang jelas dan satu baris contoh di bawahnya.</span></figcaption></figure>
+
+<!-- @screen hiryu-map -->
+<figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav">Rak &amp; bin</span><span class="c-nav">Produk</span><span class="c-nav is-on">Menu Hiryu</span><span class="c-nav">Masalah</span><span class="c-nav">Laporan akhir hari</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">Menu Hiryu · Kahf</span><span class="btn btn--ghost">Unggah CSV menu <b class="pin">1</b></span></div>
+<div class="kpis"><span class="kpi"><b>104</b>item di menu</span><span class="kpi ok"><b>96</b>terhubung otomatis</span><span class="kpi warn"><b>8</b>perlu dihubungkan <b class="pin">2</b></span></div>
+<table class="t"><thead><tr><th>Item Hiryu</th><th>Nama di Grab</th><th>SKU WMS</th><th>Kode SKU di Hiryu</th><th>Unit per jual <b class="pin">3</b></th></tr></thead><tbody>
+<tr><td class="mono">IDITE…0412</td><td>Kahf Face Wash Oil and Acne Care 100 ml (isi 2)</td><td><span class="in in--sel in--sm mono">KHF-FW-OAC-100</span></td><td class="mono">KHF-FW-OAC-100</td><td><span class="step">− <b>2</b> +</span></td></tr>
+<tr><td class="mono">IDITE…0388</td><td>Kahf Umrah and Hajj Package</td><td><span class="in in--sel in--sm muted">Pilih SKU…</span></td><td class="muted">·</td><td><span class="step">− <b>1</b> +</span></td></tr>
+</tbody></table>
+<div class="c-sub">Toko Hiryu <b class="pin">4</b></div>
+<table class="t"><thead><tr><th>No. toko</th><th>Nama toko</th><th>Hub</th><th>Merek</th></tr></thead><tbody>
+<tr><td class="mono">#21</td><td>Kahf - Cawang</td><td>MA5</td><td>Kahf</td></tr>
+<tr><td class="mono">#22</td><td>Labore - Cawang</td><td>MA5</td><td>Labore</td></tr>
+<tr><td class="mono">#23</td><td>Kahf - Kemanggisan</td><td>KJ5</td><td>Kahf</td></tr>
+<tr><td class="mono">#24</td><td>Labore - Kemanggisan</td><td>KJ5</td><td>Labore</td></tr>
+</tbody></table>
+</div></div></div>
+<figcaption><span class="l-en">Ops HQ · <b>Menu Hiryu</b>. Item IDs and store numbers are examples; Indonesia's real ones come from Hiryu.</span><span class="l-id">Ops HQ · <b>Menu Hiryu</b>. ID item dan nomor toko hanya contoh; yang asli untuk Indonesia datang dari Hiryu.</span></figcaption></figure>
+
+<!-- @screen inbound-noawb -->
+<figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Barang masuk</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">AWB dari Surat Jalan</span>
+<span class="bigcode bigcode--md">JX0042178831</span>
+<div class="warnbox">AWB ini belum dicatat Ops HQ. <b class="pin">1</b></div>
+<div class="photo-drop">Foto Surat Jalan <b class="pin">2</b></div>
+<div class="row2"><label class="f"><span>Merek</span><span class="in in--sel">Labore</span></label><label class="f"><span>Jumlah karton</span><span class="in mono">3</span></label></div>
+<span class="btn btn--wide">Kirim ke Ops HQ, lalu hitung</span>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Hitung dulu</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="chip warn">Menunggu Ops HQ · 12 mnt</span>
+<span class="lede">Scan tiap unit. Taruh di bin sementara yang disebut. Belum masuk stok. <b class="pin">3</b></span>
+<div class="lines"><li><span class="mono hl">MA5-IN-01</span><span>Labore Mild Cleanser 100 ml</span><b>24</b></li><li><span class="mono hl">MA5-IN-02</span><span>Labore Barrier Revive Cream 100 ml</span><b>12</b></li></div>
+<span class="muted small">Setelah Ops HQ menghubungkan AWB ini, tombol <b>Taruh di rak</b> muncul. <b class="pin">4</b></span>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · a delivery arrives with an AWB Ops HQ has not recorded. The staffer sends it to HQ and counts while the driver is still there; nothing is sellable until HQ links it.</span><span class="l-id">Staf · barang datang dengan AWB yang belum dicatat Ops HQ. Staf mengirimkannya ke HQ dan menghitung selagi driver masih ada; belum ada yang bisa dijual sampai HQ menghubungkannya.</span></figcaption></figure>
+
+<!-- @screen putaway-full -->
+<figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Barang masuk · batch 1</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Ambil dari MA5-IN-01, taruh di</span>
+<span class="bigcode">MA5-<em>A1</em>-<em>3</em>-05T</span>
+<span class="lede">Rak A bagian 1, tingkat 3, posisi 5, bin atas</span>
+<div class="prod"><i class="ph">L</i><span><b>Labore GentleBiome Mild Cleanser</b><br>100 ml</span></div>
+<div class="count"><b>12</b> / 20 <span class="muted">sudah di-scan</span></div>
+<span class="btn btn--wide">Scan berikutnya</span>
+<span class="btn btn--ghost btn--wide">Bin penuh <b class="pin">1</b></span>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Bin penuh</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Sisa 8 unit, taruh di bin kosong ini</span>
+<span class="bigcode">MA5-<em>A1</em>-<em>3</em>-06T</span>
+<span class="lede">Sebelahnya, ukuran sama (Kecil JX-2) <b class="pin">2</b></span>
+<div class="note">Bin pertama berisi 12 unit. Supervisor akan diminta memastikan apakah bin itu memang penuh. <b class="pin">3</b></div>
+<span class="btn btn--wide">Pakai bin ini</span>
+<span class="btn btn--ghost btn--wide">Pilih bin lain</span>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · putting away. <b>Bin penuh</b> is the only way a second bin gets added during a delivery.</span><span class="l-id">Staf · menaruh barang ke rak. <b>Bin penuh</b> adalah satu-satunya cara bin kedua ditambahkan saat barang masuk.</span></figcaption></figure>
+
+<!-- @screen hiryu-login -->
+<figure class="shot"><div class="hy hy--login">
+<div class="hy-card">
+<div class="hy-brand"><i class="hy-logo"></i><span><b>Hiryu</b><br><small>GrabMart operations</small></span></div>
+<span class="hy-lab">Country <b class="pin">1</b></span>
+<div class="hy-seg"><span>Malaysia</span><span class="on">Indonesia</span></div>
+<span class="hy-lab">Email <b class="pin">2</b></span><span class="hy-in">you@yourshop.com</span>
+<span class="hy-lab">Password</span><span class="hy-in"></span>
+<span class="hy-btn">Sign in</span>
+<span class="hy-or">OR</span>
+<span class="hy-note">NinjaVan staff — sign in with Google. <b class="pin">3</b></span>
+<span class="hy-google">Sign in with Google</span>
+</div>
+</div>
+<figcaption><span class="l-en">Hiryu, redrawn from the real login page (25 Sep). Choose <b>Indonesia</b> first. Hub staff use the email and password the SPV gives them; Ninja office staff use Google.</span><span class="l-id">Hiryu, digambar ulang dari halaman login aslinya (25 Sep). Pilih <b>Indonesia</b> dulu. Staf hub memakai email dan password dari SPV; staf kantor Ninja memakai Google.</span></figcaption></figure>
+
+<!-- @screen hiryu-copy -->
+<figure class="shot"><div class="shotscroll"><div class="hy hy--app">
+<aside class="hy-side"><div class="hy-brand"><i class="hy-logo"></i><b>Hiryu</b></div><span class="hy-nav on">Orders</span><span class="hy-nav">Live Orders</span><span class="hy-nav">Dashboard</span><span class="hy-grp">CATALOGUE</span><span class="hy-nav">Stores</span><span class="hy-nav">Menus</span><span class="hy-nav">SKUs</span><span class="hy-grp">NETWORK</span><span class="hy-nav">Dark stores</span><span class="hy-foot">Live · Setup guide · Receipt printer</span></aside>
+<div class="hy-main">
+<small class="hy-link hy-crumb">← Orders</small>
+<div class="hy-title">Order GM-358 <b class="pin">2</b> <span class="hy-badge blue">RECEIVED</span></div>
+<div class="hy-cols">
+<div class="hy-box"><b>Details</b><dl><dt>Grab order ID</dt><dd class="mono">0012…-C8E3PBB2NJU2NT</dd><dt>Store</dt><dd class="hy-link">View store #21</dd><dt>Order type</dt><dd>DeliveredByGrab</dd><dt>Acceptance</dt><dd>AUTO</dd><dt>Items</dt><dd>2</dd><dt>Order time</dt><dd>Sep 25, 2026, 02:27 PM</dd></dl></div>
+<div class="hy-box"><b>History</b><div class="hy-hist"><span><i class="hy-badge blue">RECEIVED</i> System</span><small>Sep 25, 2026, 02:27 PM</small></div></div>
+</div>
+<div class="hy-box"><div class="hy-row"><b>Items</b><small>2 lines · 12 units</small></div>
+<div class="hy-item"><span>10×</span><span>Kahf Face Wash Oil and Acne Care 100 ml<br><small class="mono">IDITE…0411</small><br><small class="hy-oos">If out of stock: Replace with 1 × IDITE…0402</small></span><span>IDR …</span></div>
+<div class="hy-item"><span>2×</span><span>Kahf Body Wash 250 ml<br><small class="mono">IDITE…0433</small></span><span>IDR …</span></div></div>
+<div class="hy-box hy-row"><b>Raw payload</b><span class="hy-show">Show <b class="pin">1</b></span></div>
+<div class="keys"><kbd>Ctrl</kbd>+<kbd>A</kbd> <span class="l-en">then</span><span class="l-id">lalu</span> <kbd>Ctrl</kbd>+<kbd>C</kbd> <b class="pin">3</b></div>
+</div></div></div>
+<figcaption><span class="l-en">Hiryu order page, redrawn from Hiryu Malaysia (order detail, 21 and 25 Sep) with an example Kahf order. The layout, card names and the closed <i>Raw payload</i> card are as in Hiryu. Customer details are not shown on this page; they sit inside Raw payload, which stays closed.</span><span class="l-id">Halaman pesanan Hiryu, digambar ulang dari Hiryu Malaysia (detail pesanan, 21 dan 25 Sep) dengan contoh pesanan Kahf. Tata letak, nama kartu dan kartu <i>Raw payload</i> yang tertutup sama seperti di Hiryu. Data pelanggan tidak tampil di halaman ini; datanya ada di dalam Raw payload, yang tetap tertutup.</span></figcaption></figure>
+
+<!-- @screen paste -->
+<figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Tempel pesanan Grab</span><span class="dot"></span></div>
+<div class="p-body">
+<div class="pastebox">Klik di sini lalu tekan <kbd>Ctrl</kbd>+<kbd>V</kbd> <b class="pin">1</b></div>
+<span class="muted small">Yang ditempel dibaca di layar ini saja. Nama, nomor telepon dan alamat pelanggan tidak dikirim ke WMS.</span>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Pesanan baru</span><span class="dot"></span></div>
+<div class="p-body">
+<div class="ordhead"><span class="bigcode bigcode--md">GM-358</span><span class="chip ok">2 baris · 12 unit ✓ <b class="pin">2</b></span></div>
+<span class="muted small">Kahf - Cawang · masuk 14:27 · siap sebelum 14:42</span>
+<ul class="lines"><li><span class="mono hl">MA5-A1-3-05</span><span>Kahf Face Wash Oil and Acne Care 100 ml</span><b>×10</b></li><li><span class="mono hl">MA5-A1-4-02B</span><span>Kahf Body Wash 250 ml</span><b>×2</b></li></ul>
+<span class="chip">Kemasan: Kardus</span>
+<span class="btn btn--wide btn--ok">Mulai ambil <b class="pin">3</b></span>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · <b>Tempel pesanan Grab</b>. The check mark means the lines and units match Hiryu's own count.</span><span class="l-id">Staf · <b>Tempel pesanan Grab</b>. Tanda centang berarti jumlah baris dan unit sama dengan hitungan Hiryu.</span></figcaption></figure>
+
+<!-- @screen pick -->
+<figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Ambil · GM-358</span><span class="dot"></span></div>
+<div class="prog"><b>3 / 12</b><i style="width:25%"></i><span>sisa 9 mnt</span></div>
+<div class="p-body">
+<span class="eyebrow">Pergi ke <b class="pin">1</b></span>
+<span class="bigcode">MA5-<em>A1</em>-<em>3</em>-05</span>
+<div class="prod"><i class="ph">K</i><span><b>Kahf Face Wash Oil and Acne Care</b><br>100 ml</span></div>
+<div class="take">Ambil <b>7</b> lagi <b class="pin">2</b></div>
+<span class="fifo"><i></i>Ambil dari sekat paling lama dulu</span>
+<div class="scanzone">Scan tiap unit <b class="pin">3</b></div>
+<span class="btn btn--ghost btn--wide">Barang tidak ada <b class="pin">4</b></span>
+</div></div>
+<div class="dev dev--phone dev--stop">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Salah barang</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="stophead">STOP · bukan barang ini</span>
+<div class="vs"><div><i class="ph">K</i><b>Di-scan</b><span>Face Wash Brightening 100 ml</span></div><div><i class="ph">K</i><b>Seharusnya</b><span>Face Wash Oil and Acne Care 100 ml</span></div></div>
+<span class="btn btn--wide">Kembalikan, ambil yang benar</span>
+<span class="btn btn--ghost btn--wide">Barang ini salah tempat</span>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · picking. A wrong product stops the pick with both products side by side. Nobody can skip the stop.</span><span class="l-id">Staf · mengambil barang. Produk yang salah menghentikan pengambilan dengan kedua produk berdampingan. Tidak ada yang bisa melewati stop ini.</span></figcaption></figure>
+
+<!-- @screen short -->
+<figure class="shot"><div class="flagbar">Menunggu konfirmasi Grab: batalkan semua, atau kirim yang ada? Sampai ada jawaban, SPV yang memutuskan per pesanan.</div><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Barang tidak ada</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Di MA5-A1-3-05 · perlu 7</span>
+<span class="lede">Berapa yang kamu temukan? <b class="pin">1</b></span>
+<span class="btn btn--ghost btn--wide">Tidak ada sama sekali</span>
+<div class="stepper"><span>−</span><b>3</b><span>+</span></div>
+<span class="btn btn--wide">Simpan: ketemu 3</span>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Tunggu SPV</span><span class="dot"></span></div>
+<div class="p-body">
+<div class="warnbox">Pesanan GM-358 kurang 4. Panggil SPV. <b class="pin">2</b></div>
+<div class="wish"><b>Permintaan pelanggan di Grab</b><span>Ganti dengan Kahf Face Wash 50 ml</span><span class="muted small">Info untuk SPV</span></div>
+<span class="eyebrow">Hanya SPV <b class="pin">3</b></span>
+<span class="btn btn--wide">Kirim yang ada (8 dari 12)</span>
+<span class="btn btn--ghost btn--wide">Batalkan pesanan</span>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · an item is missing. <b>This flow is flagged</b>: it waits for Grab to say whether we cancel the whole order or send what we have.</span><span class="l-id">Staf · barang tidak ada. <b>Alur ini ditandai</b>: menunggu Grab menjawab apakah kita membatalkan seluruh pesanan atau mengirim yang ada.</span></figcaption></figure>
+
+<!-- @screen pack -->
+<figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Kemas · GM-358</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Semua 12 unit sudah di-scan ✓</span>
+<span class="eyebrow">Pakai <b class="pin">1</b></span>
+<div class="packpick"><span class="pk">Kardus</span><span class="muted">25 × 20 × 10 cm · karena 2 botol besar</span></div>
+<span class="link">Ganti kemasan…</span>
+<span class="lede">Masukkan slip Hiryu ke dalam kemasan, nomor GM terlihat.</span>
+<span class="btn btn--wide btn--ok">Selesai dikemas <b class="pin">2</b></span>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Sudah dikemas</span><span class="dot"></span></div>
+<div class="p-body">
+<div class="banner">Sekarang tekan <b>Mark ready</b> di Hiryu untuk <span class="mono">GM-358</span> <b class="pin">3</b></div>
+<span class="btn btn--wide btn--ok">Sudah tekan Mark ready</span>
+<span class="muted small">Taruh di rak siap diambil. Driver Grab datang ke meja serah terima.</span>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · packing. The Hiryu slip is Grab's design and has no code to scan, so the pick scans are the check and packing ends with one tap.</span><span class="l-id">Staf · mengemas. Slip Hiryu adalah desain Grab dan tidak punya kode untuk di-scan, jadi scan saat mengambil barang menjadi pengecekannya dan pengemasan selesai dengan satu ketukan.</span></figcaption></figure>
+
+<!-- @screen handover -->
+<figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Serah ke driver</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Siap diambil · 3 <b class="pin">1</b></span>
+<div class="hcard"><span class="mono"><b>GM-358</b></span><span>Kardus · 12 unit</span><span class="age">6 mnt</span></div>
+<div class="hcard"><span class="mono"><b>GM-360</b></span><span>Kantong · 11 unit</span><span class="age">9 mnt</span></div>
+<div class="hcard warn"><span class="mono"><b>GM-352</b></span><span>Kantong · 14 unit</span><span class="age">24 mnt</span></div>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Serah ke driver</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="lede">Tanya driver nomor pesanannya. Sama dengan nomor GM di slip Hiryu? <b class="pin">2</b></span>
+<span class="bigcode bigcode--md">GM-358</span>
+<span class="btn btn--wide btn--ok">Ya, sudah diambil driver</span>
+<span class="btn btn--ghost btn--wide">Batal</span>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · handing over. Amber means the bag has waited more than 20 minutes; the SPV sees it too.</span><span class="l-id">Staf · serah terima. Kuning berarti kemasan sudah menunggu lebih dari 20 menit; SPV juga melihatnya.</span></figcaption></figure>
+
+<!-- @screen cancel -->
+<figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Pesanan · GM-361</span><span class="dot"></span></div>
+<div class="p-body">
+<div class="ordhead"><span class="bigcode bigcode--md">GM-361</span><span class="chip">Sedang diambil 5/9</span></div>
+<span class="muted small">Labore - Cawang · masuk 15:02</span>
+<span class="btn btn--wide">Lanjut ambil</span>
+<span class="btn btn--ghost btn--wide btn--stopline">Dibatalkan di Hiryu <b class="pin">1</b></span>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Batalkan pesanan</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="lede">Hiryu menunjukkan <b>CANCELLED</b> untuk pesanan ini? <b class="pin">2</b></span>
+<span class="bigcode bigcode--md">GM-361</span>
+<span class="muted small">Labore - Cawang · 9 unit</span>
+<span class="btn btn--wide btn--stop">Ya, batalkan di WMS</span>
+<div class="note">5 unit yang sudah diambil masuk ke <b>Kembalikan ke rak</b>. <b class="pin">3</b></div>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · a cancelled order. One button on the order, one confirmation. No copy and paste needed.</span><span class="l-id">Staf · pesanan dibatalkan. Satu tombol di pesanan, satu konfirmasi. Tidak perlu salin dan tempel.</span></figcaption></figure>
+
+<!-- @screen report -->
+<figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Laporkan masalah</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Apa masalahnya? <b class="pin">1</b></span>
+<div class="tiles"><span>Rusak atau bocor</span><span>Kedaluwarsa</span><span>Salah tempat</span><span>Barang ditemukan</span><span>Kembalian dari driver</span><span>Lainnya</span></div>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Rusak atau bocor</span><span class="dot"></span></div>
+<div class="p-body">
+<div class="prod"><i class="ph">L</i><span><b>Labore Hydrating Face &amp; Body Cleanser</b><br>250 ml · dari MA5-A1-4-03B</span></div>
+<div class="stepper"><span>−</span><b>1</b><span>+</span></div>
+<div class="photo-drop">Tambah foto <b class="pin">2</b></div>
+<span class="btn btn--wide">Taruh di MA5-KARANTINA <b class="pin">3</b></span>
+</div></div>
+</div>
+<figcaption><span class="l-en">Anyone · <b>Laporkan masalah</b>. The unit leaves sellable stock at once and waits in the quarantine tray for the SPV.</span><span class="l-id">Siapa saja · <b>Laporkan masalah</b>. Unit langsung keluar dari stok yang bisa dijual dan menunggu keputusan SPV di baki karantina.</span></figcaption></figure>
+
+<!-- @screen exceptions -->
+<figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav">Rak &amp; bin</span><span class="c-nav">Produk</span><span class="c-nav">Pengingat</span><span class="c-nav is-on">Masalah <i class="badge">4</i></span><span class="c-nav">Laporan akhir hari</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">Masalah · MA5</span><span class="muted">Di baki karantina: 6 unit</span></div>
+<table class="t"><thead><tr><th>Masalah</th><th>Barang</th><th>Jml</th><th>Oleh · umur</th><th>Tanggungan <b class="pin">1</b></th><th>Status</th><th>Keputusan SPV <b class="pin">2</b></th></tr></thead><tbody>
+<tr><td><span class="chip stop">Rusak di hub</span></td><td>Labore Face &amp; Body Cleanser 250 ml</td><td class="mono">1</td><td>Dewi · 2 j</td><td>Ninja</td><td>Menunggu SPV</td><td><span class="btn btn--sm">Hapus stok</span> <span class="btn btn--sm btn--ghost">Kembali ke rak</span></td></tr>
+<tr><td><span class="chip warn">Kedaluwarsa</span></td><td>Kahf Hair Tonic 100 ml</td><td class="mono">2</td><td>Rizky · 5 j</td><td>Merek</td><td>Menunggu SPV</td><td><span class="btn btn--sm">Retur ke merek</span></td></tr>
+<tr><td><span class="chip">Rusak di hub</span></td><td>Kahf Face Wash 50 ml</td><td class="mono">1</td><td>Agus · 1 h</td><td>Ninja</td><td><span class="chip ok">Kembali ke rak: tugas staf <b class="pin">3</b></span></td><td class="muted">SPV Dewi, 10:05</td></tr>
+<tr><td><span class="chip">Kedaluwarsa</span></td><td>Labore Mild Cleanser 15 ml</td><td class="mono">2</td><td>Agus · 3 h</td><td>Merek</td><td><span class="chip warn">Menunggu retur</span></td><td class="muted">Ikut pengiriman merek berikutnya</td></tr>
+</tbody></table>
+<span class="muted small">Hapus stok lebih dari 3 unit atau Rp300.000 dalam satu laporan menunggu tanda tangan Ops HQ. <b class="pin">4</b></span>
+</div></div></div>
+<figcaption><span class="l-en">SPV · <b>Masalah</b>. The SPV decides; the WMS then gives the physical move to staff. Stock only changes when that move is scanned.</span><span class="l-id">SPV · <b>Masalah</b>. SPV yang memutuskan; WMS lalu memberi tugas pemindahan fisik ke staf. Stok baru berubah saat pemindahan itu di-scan.</span></figcaption></figure>
+
+<!-- @screen karantina-task -->
+<figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Tugas</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Tugas untuk hub ini <b class="pin">1</b></span>
+<div class="hcard"><span><b>Kembalikan dari karantina</b></span><span>Kahf Face Wash 50 ml · 1</span><span class="age">baru</span></div>
+<div class="hcard"><span><b>Kembalikan ke rak</b></span><span>GM-361 · 5 unit</span><span class="age">12 mnt</span></div>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Dari karantina</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Ambil dari MA5-KARANTINA, scan unitnya <b class="pin">2</b></span>
+<div class="prod"><i class="ph">K</i><span><b>Kahf Face Wash Oil and Acne Care</b><br>50 ml · 1 unit</span></div>
+<span class="eyebrow">Taruh di</span>
+<span class="bigcode">MA5-<em>A1</em>-<em>2</em>-08</span>
+<div class="scanzone">Scan bin untuk selesai <b class="pin">3</b></div>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · moving a unit back from quarantine after the SPV decided "back to the rack". The unit is sellable again only after this scan.</span><span class="l-id">Staf · mengembalikan unit dari karantina setelah SPV memutuskan "kembali ke rak". Unit bisa dijual lagi hanya setelah scan ini.</span></figcaption></figure>
+
+<!-- @screen second-bin -->
+<figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav is-on">Rak &amp; bin</span><span class="c-nav">Produk</span><span class="c-nav">Pengingat <i class="badge">3</i></span><span class="c-nav">Masalah</span><span class="c-nav">Laporan akhir hari</span></aside>
+<div class="c-main c-main--dim">
+<div class="modal">
+<span class="c-title">Bin kedua untuk Labore GentleBiome Mild Cleanser 100 ml</span>
+<span class="muted">MA5-A1-3-06T ditambahkan oleh Agus S. saat barang masuk, 10:42</span>
+<span class="c-sub">Kenapa perlu bin kedua? <b class="pin">1</b></span>
+<span class="radio on"><i></i><span><b>Bin pertama penuh</b><br>Isi MA5-A1-3-05T sekarang: <b class="mono">12 unit</b></span></span>
+<div class="setfull">Jadikan <b>isi maks. per bin = 12</b> untuk bin Kecil JX-2, semua hub <b class="pin">2</b><span class="muted">Hub ini dan hub lain yang belum punya angka. Ops HQ bisa mengubahnya.</span></div>
+<span class="radio"><i></i><span>Stok datang jauh lebih banyak dari biasa (promo)</span></span>
+<span class="radio"><i></i><span>Pindah bin (bin rusak atau lokasi lebih baik)</span></span>
+<span class="radio"><i></i><span>Batal, pindahkan kembali ke satu bin</span></span>
+<div class="c-foot"><span></span><span class="btn">Simpan</span></div>
+</div>
+</div></div></div>
+<figcaption><span class="l-en">SPV · the second-bin question. Answering "full" is how the WMS learns how many units fill one bin.</span><span class="l-id">SPV · pertanyaan bin kedua. Menjawab "penuh" adalah cara WMS belajar berapa unit mengisi satu bin.</span></figcaption></figure>
+
+<!-- @screen hiryu-live -->
+<figure class="shot"><div class="shotscroll"><div class="hy hy--app">
+<aside class="hy-side"><div class="hy-brand"><i class="hy-logo"></i><b>Hiryu</b></div><span class="hy-nav">Orders</span><span class="hy-nav on">Live Orders</span><span class="hy-nav">Dashboard</span><span class="hy-grp">CATALOGUE</span><span class="hy-nav">Stores</span><span class="hy-nav">Menus</span><span class="hy-nav">SKUs</span><span class="hy-grp">NETWORK</span><span class="hy-nav">Dark stores</span><span class="hy-foot">Live · Setup guide · Receipt printer</span></aside>
+<div class="hy-main">
+<div class="hy-row"><span><span class="hy-title">Live Orders</span><small class="hy-live">● Connected</small></span><span class="hy-ctrls"><span class="hy-in hy-sel">Cawang</span><span class="hy-in hy-sel">All stores in this shop</span><span class="hy-btn2">Sound on</span><span class="hy-btn2">Full screen</span></span></div>
+<div class="hy-kpis"><div><small>Pending accept</small><b>0</b><em>Grab waiting on you</em></div><div><small>Pending packing</small><b>0</b><em>Accepted, on the floor</em></div><div><small>Packed, awaiting pickup</small><b>0</b><em>Ready at the counter</em></div><div><small>Late</small><b>0</b><em>Past 10 min prep target</em></div><div><small>Avg prep today</small><b>6.2</b><em>minutes, last 12 orders</em></div></div>
+<div class="hy-lanes"><div><span class="hy-row"><b>New</b><small>0</small></span><small>Grab is waiting on you</small><span class="hy-empty">Nothing here</span></div><div><span class="hy-row"><b>Packing</b><small>0</small></span><small>Pick and pack the list</small><span class="hy-empty">Nothing here</span></div><div><span class="hy-row"><b>Awaiting pickup</b><small>0</small></span><small>Hand to the driver</small><span class="hy-empty">Nothing here</span></div></div>
+<div class="hy-note"><span class="l-en">The first three counters all at <b>0</b>: safe to type stock into Hiryu.</span><span class="l-id">Tiga penghitung pertama semuanya <b>0</b>: aman mengetik stok ke Hiryu.</span> <b class="pin">1</b></div>
+</div></div></div>
+<figcaption><span class="l-en">Hiryu Live Orders, redrawn from Hiryu Malaysia (25 Sep). The counters, lanes and captions are Hiryu's own; the hub picker sits top right.</span><span class="l-id">Hiryu Live Orders, digambar ulang dari Hiryu Malaysia (25 Sep). Penghitung, lajur dan keterangannya asli dari Hiryu; pilihan hub ada di kanan atas.</span></figcaption></figure>
+
+<!-- @screen hiryu-orders -->
+<figure class="shot"><div class="shotscroll"><div class="hy hy--app">
+<aside class="hy-side"><div class="hy-brand"><i class="hy-logo"></i><b>Hiryu</b></div><span class="hy-nav on">Orders</span><span class="hy-nav">Live Orders</span><span class="hy-nav">Dashboard</span><span class="hy-grp">CATALOGUE</span><span class="hy-nav">Stores</span><span class="hy-nav">Menus</span><span class="hy-nav">SKUs</span><span class="hy-grp">NETWORK</span><span class="hy-nav">Dark stores</span><span class="hy-foot">Live · Setup guide · Receipt printer</span></aside>
+<div class="hy-main">
+<div class="hy-row"><span class="hy-title">Orders <b class="pin">3</b></span><small>7 orders</small></div>
+<div class="hy-filters"><label><small>Dark store <b class="pin">1</b></small><span class="hy-in hy-sel">Cawang</span></label><label><small>Store</small><span class="hy-in hy-sel">All stores</span></label><label><small>Status</small><span class="hy-in hy-sel">All statuses</span></label><label><small>From <b class="pin">2</b></small><span class="hy-in">09/25/2026</span></label><label><small>To</small><span class="hy-in">09/25/2026</span></label></div>
+<table class="hy-table"><thead><tr><th>Order</th><th>Store</th><th>Dark store</th><th>Type</th><th>Items</th><th>Total</th><th>Order time</th><th>Status</th></tr></thead><tbody>
+<tr><td><b>GM-361</b><br><small class="mono">0012…-C8E4…</small></td><td>Labore - Cawang</td><td>Cawang</td><td>DeliveredByGrab</td><td>3</td><td>IDR …</td><td>Sep 25, 03:02 PM</td><td><span class="hy-badge red">CANCELLED</span></td></tr>
+<tr><td><b>GM-358</b><br><small class="mono">0012…-C8E3…</small></td><td>Kahf - Cawang</td><td>Cawang</td><td>DeliveredByGrab</td><td>2</td><td>IDR …</td><td>Sep 25, 02:27 PM</td><td><span class="hy-badge">DELIVERED</span></td></tr>
+</tbody></table>
+</div></div></div>
+<figcaption><span class="l-en">Hiryu Orders, redrawn from Hiryu Malaysia (21 Sep). Filters and columns are Hiryu's own; the list holds no customer details.</span><span class="l-id">Hiryu Orders, digambar ulang dari Hiryu Malaysia (21 Sep). Filter dan kolomnya asli dari Hiryu; daftar ini tidak berisi data pelanggan.</span></figcaption></figure>
+
+<!-- @screen hiryu-stock -->
+<figure class="shot"><div class="shotscroll"><div class="hy hy--app">
+<aside class="hy-side"><div class="hy-brand"><i class="hy-logo"></i><b>Hiryu</b></div><span class="hy-nav">Orders</span><span class="hy-nav">Live Orders</span><span class="hy-nav">Dashboard</span><span class="hy-grp">CATALOGUE</span><span class="hy-nav on">Stores</span><span class="hy-nav">Menus</span><span class="hy-nav">SKUs</span><span class="hy-grp">NETWORK</span><span class="hy-nav">Dark stores</span><span class="hy-foot">Live · Setup guide · Receipt printer</span></aside>
+<div class="hy-main">
+<small class="hy-link">← Back to stores</small>
+<div class="hy-title">Kahf - Cawang <span class="hy-badge">ACTIVE</span></div>
+<div class="hy-tabs"><span>Overview</span><span>Menu</span><span class="on">Stock <b class="pin">1</b></span><span>Hours</span></div>
+<div class="hy-savebar"><span>2 counts not saved. Grab is not told until you save.</span><span><span class="hy-btn2">Discard</span> <span class="hy-btn">Save stock <b class="pin">3</b></span></span></div>
+<table class="hy-table"><thead><tr><th>SKU</th><th>Units on hand</th><th>Arrived</th><th>Sells as</th></tr></thead><tbody>
+<tr><td>Kahf Face Wash Oil and Acne Care 100 ml<br><small class="mono">KHF-FW-OAC-100</small></td><td><span class="hy-in hy-num on">8</span> <b class="pin">2</b></td><td><span class="hy-in hy-num off">·</span></td><td><small>Face Wash 100 ml ×1 · 8 sellable<br>Face Wash 100 ml isi 2 ×2 · 4 sellable</small></td></tr>
+<tr><td>Kahf Body Wash 250 ml<br><small class="mono">KHF-BW-250</small></td><td><span class="hy-in hy-num on">3</span></td><td><span class="hy-in hy-num off">·</span></td><td><small>Body Wash 250 ml ×1 · 3 sellable</small></td></tr>
+</tbody></table>
+<div class="hy-note hy-note--stop"><span class="l-en">Never use <b>Arrived</b>: it adds to the count, and the WMS number already includes the delivery.</span><span class="l-id">Jangan pakai <b>Arrived</b>: kolom itu menambah hitungan, padahal angka WMS sudah termasuk barang yang datang.</span></div>
+</div></div></div>
+<figcaption><span class="l-en">Hiryu store Stock tab, redrawn from Hiryu Malaysia's page and its editor controls (21 Sep). A viewer login sees the same table without the input boxes.</span><span class="l-id">Tab Stock toko di Hiryu, digambar ulang dari halaman Hiryu Malaysia dan kontrol editornya (21 Sep). Login viewer melihat tabel yang sama tanpa kotak isian.</span></figcaption></figure>
+
+<!-- @screen eod -->
+<figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav">Rak &amp; bin</span><span class="c-nav">Produk</span><span class="c-nav">Pengingat</span><span class="c-nav">Masalah</span><span class="c-nav is-on">Laporan akhir hari</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">Laporan akhir hari · MA5 · 25 Sep</span><span class="btn btn--ghost">Unduh CSV</span></div>
+<div class="kpis"><span class="kpi ok"><b>7 / 7</b>pesanan cocok dengan Hiryu <b class="pin">1</b></span><span class="kpi warn"><b>2</b>masalah belum diputuskan</span><span class="kpi"><b>83</b>unit terjual hari ini</span><span class="kpi"><b>14</b>SKU perlu diketik ke Hiryu</span></div>
+<div class="tabs"><span class="is-on">Stok untuk Hiryu <b class="pin">2</b></span><span>Cek pesanan</span><span>Masalah hari ini</span><span>Penjualan</span></div>
+<div class="c-sub">Toko #21 Kahf - Cawang <span class="muted">· di Hiryu: Stores → Kahf - Cawang → Stock</span></div>
+<table class="t"><thead><tr><th>Kode SKU di Hiryu</th><th>Nama</th><th>Tersedia WMS</th><th>Cadangan Grab</th><th>Ketik di Hiryu <b class="pin">3</b></th><th>Terakhir diketik</th></tr></thead><tbody>
+<tr class="chg"><td class="mono">KHF-FW-OAC-100</td><td>Face Wash Oil and Acne Care 100 ml</td><td class="mono">9</td><td class="mono">1</td><td class="mono big">8</td><td class="mono muted">18</td></tr>
+<tr class="chg"><td class="mono">KHF-BW-250</td><td>Body Wash 250 ml</td><td class="mono">3</td><td class="mono">0</td><td class="mono big">3</td><td class="mono muted">5</td></tr>
+<tr><td class="mono">KHF-HT-100</td><td>Hair Tonic 100 ml</td><td class="mono">6</td><td class="mono">0</td><td class="mono big">6</td><td class="mono muted">6</td></tr>
+</tbody></table>
+<div class="c-foot"><span class="muted">Ketik hanya saat Hiryu Live Orders menunjukkan 0 pesanan berjalan.</span><span class="btn btn--ok">Sudah disimpan di Hiryu <b class="pin">4</b></span></div>
+</div></div></div>
+<figcaption><span class="l-en">SPV · <b>Laporan akhir hari</b>. Rows are listed by the Hiryu SKU code, in the same order as Hiryu's Stock tab. Changed rows are tinted.</span><span class="l-id">SPV · <b>Laporan akhir hari</b>. Baris diurutkan menurut kode SKU di Hiryu, sama urutannya dengan tab Stock di Hiryu. Baris yang berubah diberi warna.</span></figcaption></figure>

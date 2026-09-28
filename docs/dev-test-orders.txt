@@ -1,0 +1,215 @@
+DEV TEST ORDERS: fake Hiryu order pages for wms-test--dev. Copy one block (between the lines)
+and paste it into Tempel pesanan Grab. Store numbers 901 to 904 are test stores from the dev seed.
+Set the station to MAC-MA5 first. The order time is fixed, so orders show as late: that is expected.
+
+1. A normal Kahf order at MA5 (with a customer note that must NOT reach the WMS)
+------------------------------------------------------------
+Order GM-T001
+RECEIVED
+Accept
+Reject
+Details
+Grab order ID
+TEST-A1B2C3D4E5
+Store
+View store #903
+Acceptance
+AUTO
+Order time
+Sep 28, 2026, 02:27 PM
+Scheduled time
+—
+Items
+2 lines · 3 units
+2×
+Kahf Oil and Acne Care Face Wash 100 ml
+IDITE202609200001001
+Tolong dibungkus rapi ya kak
+If out of stock: Remove item
+IDR 43900
+1×
+Kahf Oil and Acne Care Face Wash 50 ml
+IDITE202609200001002
+If out of stock: Remove item
+IDR 29000
+Raw payload
+Show
+------------------------------------------------------------
+
+2. A Labore order at MA5 whose second item has only 1 unit in its bin (test Barang tidak ada)
+------------------------------------------------------------
+Order GM-T002
+RECEIVED
+Accept
+Reject
+Details
+Grab order ID
+TEST-F6G7H8J9K0
+Store
+View store #904
+Acceptance
+AUTO
+Order time
+Sep 28, 2026, 02:27 PM
+Scheduled time
+—
+Items
+2 lines · 4 units
+1×
+LABORÉ Sensitive Skin Care GentleBiome Mild Cleanser 100 ml 100 ml
+IDITE202609200001069
+If out of stock: Remove item
+IDR 96000
+3×
+LABORÉ Sensitive Skin Care AcnePro Biome Sebum & Acne Cleansing Mousse 25 ml [MINI/TRAVEL] 25 ml
+IDITE202609200001074
+If out of stock: Remove item
+IDR 69000
+Raw payload
+Show
+------------------------------------------------------------
+
+3. A bundle: 1 x 'Paket isi 2' = 2 units of one SKU
+------------------------------------------------------------
+Order GM-T003
+RECEIVED
+Accept
+Reject
+Details
+Grab order ID
+TEST-L1M2N3P4Q5
+Store
+View store #903
+Acceptance
+AUTO
+Order time
+Sep 28, 2026, 02:27 PM
+Scheduled time
+—
+Items
+1 line · 1 unit
+1×
+Paket isi 2: Kahf Oil and Acne Care Face Wash 100 ml
+IDITE20260929000000001
+If out of stock: Remove item
+IDR 43900
+Raw payload
+Show
+------------------------------------------------------------
+
+4. Manual acceptance, not accepted yet (expect: Tekan Accept di Hiryu dulu)
+------------------------------------------------------------
+Order GM-T004
+RECEIVED
+Accept
+Reject
+Details
+Grab order ID
+TEST-R6S7T8U9V0
+Store
+View store #903
+Acceptance
+MANUAL
+Order time
+Sep 28, 2026, 02:27 PM
+Scheduled time
+—
+Items
+1 line · 1 unit
+1×
+Kahf Skin Energizing and Brightening Face Wash 100 ml
+IDITE202609200001003
+If out of stock: Remove item
+IDR 42500
+Raw payload
+Show
+------------------------------------------------------------
+
+5. An item not connected yet (expect: Barang belum dihubungkan, sent to Ops HQ)
+------------------------------------------------------------
+Order GM-T005
+RECEIVED
+Accept
+Reject
+Details
+Grab order ID
+TEST-W1X2Y3Z4A5
+Store
+View store #903
+Acceptance
+AUTO
+Order time
+Sep 28, 2026, 02:27 PM
+Scheduled time
+—
+Items
+1 line · 1 unit
+1×
+Kahf gift set (TEST, not connected)
+IDITE20260929000000002
+If out of stock: Remove item
+IDR 0
+Raw payload
+Show
+------------------------------------------------------------
+
+6. The same order as 1, now cancelled in Hiryu (paste after 1)
+------------------------------------------------------------
+Order GM-T001
+CANCELLED
+Accept
+Reject
+Details
+Grab order ID
+TEST-A1B2C3D4E5
+Store
+View store #903
+Acceptance
+AUTO
+Order time
+Sep 28, 2026, 02:27 PM
+Scheduled time
+—
+Items
+2 lines · 3 units
+2×
+Kahf Oil and Acne Care Face Wash 100 ml
+IDITE202609200001001
+If out of stock: Remove item
+IDR 43900
+1×
+Kahf Oil and Acne Care Face Wash 50 ml
+IDITE202609200001002
+If out of stock: Remove item
+IDR 29000
+Raw payload
+Show
+------------------------------------------------------------
+
+7. A Kahf order at KJR (KJ5) pasted while the station is set to MA5 (expect: Toko ini milik hub lain)
+------------------------------------------------------------
+Order GM-T007
+RECEIVED
+Accept
+Reject
+Details
+Grab order ID
+TEST-B6C7D8E9F0
+Store
+View store #901
+Acceptance
+AUTO
+Order time
+Sep 28, 2026, 02:27 PM
+Scheduled time
+—
+Items
+1 line · 1 unit
+1×
+Kahf Skin Energizing and Brightening Face Wash (Bright Foam) 50 ml
+IDITE202609200001004
+If out of stock: Remove item
+IDR 29000
+Raw payload
+Show
+------------------------------------------------------------

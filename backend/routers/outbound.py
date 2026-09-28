@@ -30,7 +30,7 @@ async def _resolve_line_sku(line: models.OrderLineIn) -> dict | None:
     return None
 
 
-SLA_MINUTES = {"grab": 15}
+SLA_MINUTES = {"grab": 10}  # PRD v3.3 §9.2: Hiryu counts an order late after 10 minutes
 DEFAULT_OWN_CHANNEL_SLA = 60
 
 
@@ -228,7 +228,7 @@ async def receive_order(body: models.OrderIn):
 
 async def _task_payload(task_id: int) -> dict:
     task = await db.fetch_one(
-        "SELECT pt.*, o.external_ref, o.is_test, o.channel, o.delivery_mode, "
+        "SELECT pt.*, o.external_ref, o.hiryu_short_no, o.is_test, o.channel, o.delivery_mode, "
         "       o.promised_at FROM pick_tasks pt "
         "JOIN orders o ON o.id = pt.order_id WHERE pt.id = %s", (task_id,)
     )
@@ -259,7 +259,8 @@ async def _task_payload(task_id: int) -> dict:
                    - created.replace(tzinfo=timezone.utc)).total_seconds())
     return {
         "id": task["id"], "order_id": task["order_id"],
-        "external_ref": task["external_ref"], "site_id": task["site_id"],
+        "external_ref": task["external_ref"], "short_no": task.get("hiryu_short_no"),
+        "site_id": task["site_id"],
         "status": task["status"], "claimed_by": task["claimed_by"],
         "is_test": bool(task["is_test"]),
         "created_at": str(created) if created else None,
@@ -653,7 +654,7 @@ async def queue_board(
 
     rows = await db.fetch_all(
         "SELECT pt.id, pt.order_id, pt.status, pt.claimed_by, pt.claimed_at, "
-        "       pt.completed_at, pt.created_at, o.external_ref, o.is_test, "
+        "       pt.completed_at, pt.created_at, o.external_ref, o.hiryu_short_no, o.is_test, "
         "       o.channel, o.delivery_mode, o.promised_at, "
         "       TIMESTAMPDIFF(SECOND, NOW(), o.promised_at) AS remaining_seconds, "
         "       TIMESTAMPDIFF(SECOND, pt.created_at, o.promised_at) AS window_seconds, "
@@ -679,7 +680,7 @@ async def queue_board(
         # every completed task would make the board grow without bound.
         "       OR (pt.status = 'completed' AND pt.completed_at >= %s)) "
         "GROUP BY pt.id, pt.order_id, pt.status, pt.claimed_by, pt.claimed_at, "
-        "         pt.completed_at, pt.created_at, o.external_ref, o.is_test, "
+        "         pt.completed_at, pt.created_at, o.external_ref, o.hiryu_short_no, o.is_test, "
         "         o.channel, o.delivery_mode, o.promised_at, u.name "
         "ORDER BY pt.created_at",
         (site_id, day_start),
@@ -689,7 +690,8 @@ async def queue_board(
         racks = sorted({c for c in (r["racks"] or "").split(",") if c})
         return {
             "id": r["id"], "order_id": r["order_id"],
-            "external_ref": r["external_ref"], "status": r["status"],
+            "external_ref": r["external_ref"], "short_no": r.get("hiryu_short_no"),
+            "status": r["status"],
             "is_test": bool(r["is_test"]),
             "created_at": str(r["created_at"]),
             "claimed_at": str(r["claimed_at"]) if r["claimed_at"] else None,
@@ -886,8 +888,11 @@ async def declare_short(
 
         await db.run(
             cur,
-            "UPDATE pick_lines SET qty_picked = %s, status = 'short' WHERE id = %s",
-            (line["qty_picked"] + found, line_id),
+            # Its reservation was released above; zero what is left of it so a
+            # later cancel (PRD v3.3 §10.2) does not release it a second time.
+            "UPDATE pick_lines SET qty_picked = %s, qty_allocated = LEAST(qty_allocated, %s), "
+            "status = 'short' WHERE id = %s",
+            (line["qty_picked"] + found, line["qty_picked"] + found, line_id),
         )
         await db.run(
             cur,

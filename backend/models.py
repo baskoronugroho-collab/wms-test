@@ -499,6 +499,7 @@ class PickTask(BaseModel):
     id: int
     order_id: int
     external_ref: str
+    short_no: str | None = Field(default=None, description="Hiryu GM number, for people")
     site_id: int
     status: str
     claimed_by: str | None
@@ -1012,6 +1013,7 @@ class PickQueueCard(BaseModel):
     id: int
     order_id: int
     external_ref: str
+    short_no: str | None = None
     status: str = Field(description="ready | claimed | completed | blocked")
     is_test: bool
     created_at: str
@@ -1686,3 +1688,169 @@ class LayoutMap(BaseModel):
     racks: list[LayoutRack]
     counts: dict[str, int]
     needs_rack: int
+
+
+# --- the interim Hiryu bridge (PRD v3.3 §13.2 to §13.6) ----------------------
+# The paste models refuse any field they do not name (extra="forbid") and every
+# text field has a strict pattern, so nothing about the customer can ride along
+# with an order (PRD §2.11).
+
+from pydantic import ConfigDict  # noqa: E402
+
+_ID = r"^[A-Za-z0-9._#:-]{1,96}$"
+
+
+class HiryuPasteLine(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    item_id: str = Field(pattern=_ID, max_length=64)
+    qty: int = Field(ge=1, le=999)
+    item_name: str | None = Field(default=None, max_length=160,
+                                  description="Only used to name an unconnected item for Ops HQ")
+
+
+class HiryuPasteIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    site_id: int
+    grab_order_id: str = Field(pattern=_ID, description="Grab order ID: the key")
+    short_no: str = Field(pattern=r"^GM-[A-Za-z0-9]{1,16}$", description="Hiryu GM number, for people")
+    status: str = Field(pattern=r"^[A-Z_]{3,32}$")
+    store_no: int = Field(ge=1)
+    order_time: str | None = Field(default=None, max_length=40, description="ISO 8601, UTC")
+    scheduled_time: str | None = Field(default=None, max_length=40, description="ISO 8601, UTC")
+    acceptance: str | None = Field(default=None, pattern=r"^(AUTO|MANUAL)$")
+    declared_lines: int | None = Field(default=None, ge=0)
+    declared_units: int | None = Field(default=None, ge=0)
+    lines: list[HiryuPasteLine] = Field(min_length=1, max_length=100)
+    source: str = Field(default="paste", pattern=r"^(paste|button)$")
+
+
+class HiryuPasteResult(BaseModel):
+    action: str = Field(description="created | open | confirm_cancel | none")
+    order_id: int | None
+    pick_task_id: int | None
+    short_no: str
+    message: str
+
+
+class HandoverOrder(BaseModel):
+    order_id: int
+    grab_order_id: str
+    short_no: str
+    store_name: str | None
+    status: str
+    task_status: str | None
+    units: int
+    units_ordered: int = 0
+    promised_at: str | None
+    marked_ready_at: str | None
+    handed_over_at: str | None
+    waiting_seconds: int | None
+
+
+class HandoverList(BaseModel):
+    orders: list[HandoverOrder]
+    wait_limit_seconds: int
+
+
+class ElsewherePlace(BaseModel):
+    location_id: int
+    location_code: str
+    free: int
+
+
+class ElsewhereList(BaseModel):
+    places: list[ElsewherePlace]
+
+
+class MoveLineIn(BaseModel):
+    location_id: int
+
+
+class MenuImportResult(BaseModel):
+    items: int
+    auto_connected: int
+    priced: int
+    needs_connecting: int
+
+
+class HiryuItem(BaseModel):
+    id: int
+    hiryu_item_id: str
+    brand_id: int | None
+    item_name: str | None
+    barcode: str | None
+    available_status: str | None
+    sku_id: int | None
+    units_per_sale: int
+    seen_in_order: bool
+    sku_code: str | None
+    sku_name: str | None
+    hiryu_sku_code: str | None
+    mapped_by: str | None
+
+
+class HiryuItemList(BaseModel):
+    items: list[HiryuItem]
+
+
+class HiryuItemMapIn(BaseModel):
+    sku_id: int | None
+    units_per_sale: int = 1
+
+
+class HiryuStore(BaseModel):
+    hiryu_store_no: int
+    store_name: str
+    partner_store_id: str | None
+    site_id: int
+    site_code: str
+    brand_id: int
+    brand_name: str
+    active: bool
+
+
+class HiryuStoreList(BaseModel):
+    stores: list[HiryuStore]
+
+
+class HiryuStoreIn(BaseModel):
+    store_name: str = Field(min_length=1, max_length=160)
+    partner_store_id: str | None = Field(default=None, max_length=64)
+    site_id: int
+    brand_id: int
+    active: bool = True
+
+
+class StockSheetLine(BaseModel):
+    sku_id: int
+    hiryu_sku_code: str
+    name: str
+    on_shelf: int
+    picked_not_ready: int
+    buffer: int
+    to_type: int = Field(description="Ketik di Hiryu")
+    last_typed: int | None
+    last_typed_at: str | None
+    changed: bool
+
+
+class StockSheetStore(BaseModel):
+    hiryu_store_no: int
+    store_name: str
+    brand_name: str
+    lines: list[StockSheetLine]
+
+
+class StockSheet(BaseModel):
+    site_id: int
+    stores: list[StockSheetStore]
+
+
+class StockTypedRow(BaseModel):
+    sku_id: int
+    qty: int = Field(ge=0)
+
+
+class StockTypedIn(BaseModel):
+    site_id: int
+    rows: list[StockTypedRow]

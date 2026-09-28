@@ -38,7 +38,7 @@
         ],
         "summary": "The browser's heartbeat",
         "description": "The browser's heartbeat.\n\nSame answer as /health, reachable through the ingress. Once a frontend/ is\nshipped the ingress routes everything except /api to nginx, so a browser\nasking for /health gets index.html back with a cheerful 200 — which would\nmake the connection indicator claim the app is up while the backend or the\ndatabase is down. The station app is online-only and blocks work loudly on a\ndropped connection, so that heartbeat has to reach the backend.\n\nHEAD is declared explicitly. Plain Starlette adds HEAD to any GET route, but\nFastAPI's APIRoute does not — and the frontend's heartbeat sends HEAD, so\nwithout this it collects a 405 every 20 s and reports the app as offline\nforever.",
-        "operationId": "api_health_api_health_get",
+        "operationId": "api_health_api_health_head",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -58,7 +58,7 @@
         ],
         "summary": "The browser's heartbeat",
         "description": "The browser's heartbeat.\n\nSame answer as /health, reachable through the ingress. Once a frontend/ is\nshipped the ingress routes everything except /api to nginx, so a browser\nasking for /health gets index.html back with a cheerful 200 — which would\nmake the connection indicator claim the app is up while the backend or the\ndatabase is down. The station app is online-only and blocks work loudly on a\ndropped connection, so that heartbeat has to reach the backend.\n\nHEAD is declared explicitly. Plain Starlette adds HEAD to any GET route, but\nFastAPI's APIRoute does not — and the frontend's heartbeat sends HEAD, so\nwithout this it collects a 405 every 20 s and reports the app as offline\nforever.",
-        "operationId": "api_health_api_health_get",
+        "operationId": "api_health_api_health_head",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -10807,6 +10807,1177 @@
           }
         }
       }
+    },
+    "/api/hiryu/paste": {
+      "post": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "A staffer pasted a Hiryu order page",
+        "description": "A staffer pasted a Hiryu order page. The browser already dropped everything\nbut these fields; the model refuses any other field.",
+        "operationId": "paste_order_api_hiryu_paste_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HiryuPasteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HiryuPasteResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu/orders/{order_id}/marked-ready": {
+      "post": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "Staff pressed Mark ready in Hiryu first",
+        "description": "Staff pressed Mark ready in Hiryu first; this records it and closes the pick.",
+        "operationId": "marked_ready_api_hiryu_orders__order_id__marked_ready_post",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Order Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HandoverOrder"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu/orders/{order_id}/handed-over": {
+      "post": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "The Grab driver took the bag: staff matched the GM number with the slip",
+        "description": "The Grab driver took the bag: staff matched the GM number with the slip.",
+        "operationId": "handed_over_api_hiryu_orders__order_id__handed_over_post",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Order Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HandoverOrder"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu/orders/{order_id}/cancelled-in-hiryu": {
+      "post": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "Hiryu shows CANCELLED (or the SPV cancelled it there for a missing item)",
+        "description": "Hiryu shows CANCELLED (or the SPV cancelled it there for a missing item).\nRelease the hold; picked units go to return-to-shelf.",
+        "operationId": "cancelled_in_hiryu_api_hiryu_orders__order_id__cancelled_in_hiryu_post",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Order Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu/orders/{order_id}/reopen": {
+      "post": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "A cancel pressed by mistake",
+        "description": "A cancel pressed by mistake. The cancelled order keeps its history but frees\nits Grab order ID, so the order can be pasted from Hiryu again.",
+        "operationId": "reopen_api_hiryu_orders__order_id__reopen_post",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Order Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu/active-orders": {
+      "get": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "Everything at this hub that is not finished: being picked, packed and",
+        "description": "Everything at this hub that is not finished: being picked, packed and\nwaiting for a driver. Cancelled and handed-over orders drop off.",
+        "operationId": "active_orders_api_hiryu_active_orders_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HandoverList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu/pick-lines/{line_id}/elsewhere": {
+      "get": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "Other places at this hub where the SKU is recorded, free to take",
+        "description": "Other places at this hub where the SKU is recorded, free to take.",
+        "operationId": "elsewhere_api_hiryu_pick_lines__line_id__elsewhere_get",
+        "parameters": [
+          {
+            "name": "line_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Line Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ElsewhereList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu/pick-lines/{line_id}/move": {
+      "post": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "Ketemu, lanjut ambil: send the rest of this line to where the stock is",
+        "description": "Ketemu, lanjut ambil: send the rest of this line to where the stock is.",
+        "operationId": "move_line_api_hiryu_pick_lines__line_id__move_post",
+        "parameters": [
+          {
+            "name": "line_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Line Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveLineIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu/menu-import": {
+      "post": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "Hiryu's menu CSV (Menus -> the menu -> Export CSV)",
+        "description": "Hiryu's menu CSV (Menus -> the menu -> Export CSV). Upload it again every\ntime the menu changes in Hiryu.",
+        "operationId": "menu_import_api_hiryu_menu_import_post",
+        "parameters": [
+          {
+            "name": "brand_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Brand Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_menu_import_api_hiryu_menu_import_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MenuImportResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu/items": {
+      "get": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "List Items",
+        "operationId": "list_items_api_hiryu_items_get",
+        "parameters": [
+          {
+            "name": "brand_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Brand Id"
+            }
+          },
+          {
+            "name": "unmapped",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Unmapped"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HiryuItemList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu/items/{item_pk}": {
+      "patch": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "Map Item",
+        "operationId": "map_item_api_hiryu_items__item_pk__patch",
+        "parameters": [
+          {
+            "name": "item_pk",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Pk"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HiryuItemMapIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu/stores": {
+      "get": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "List Stores",
+        "operationId": "list_stores_api_hiryu_stores_get",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HiryuStoreList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu/stores/{store_no}": {
+      "put": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "Put Store",
+        "operationId": "put_store_api_hiryu_stores__store_no__put",
+        "parameters": [
+          {
+            "name": "store_no",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Store No"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HiryuStoreIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu/stock-sheet": {
+      "get": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "Ketik di Hiryu = units on the shelf + units already picked for orders not",
+        "description": "Ketik di Hiryu = units on the shelf + units already picked for orders not\nyet marked ready - Grab buffer, never below 0 (§13.4.2).",
+        "operationId": "stock_sheet_api_hiryu_stock_sheet_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockSheet"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu/stock-sheet/typed": {
+      "post": {
+        "tags": [
+          "hiryu"
+        ],
+        "summary": "Sudah disimpan di Hiryu: the SPV saved these numbers in Hiryu first",
+        "description": "Sudah disimpan di Hiryu: the SPV saved these numbers in Hiryu first.",
+        "operationId": "stock_typed_api_hiryu_stock_sheet_typed_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StockTypedIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -11392,6 +12563,20 @@
         ],
         "title": "Body_import_skus_api_skus_import_post"
       },
+      "Body_menu_import_api_hiryu_menu_import_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_menu_import_api_hiryu_menu_import_post"
+      },
       "Body_raise_request_api_sku_requests_post": {
         "properties": {
           "site_id": {
@@ -11754,6 +12939,45 @@
         ],
         "title": "DayColorLegend"
       },
+      "ElsewhereList": {
+        "properties": {
+          "places": {
+            "items": {
+              "$ref": "#/components/schemas/ElsewherePlace"
+            },
+            "type": "array",
+            "title": "Places"
+          }
+        },
+        "type": "object",
+        "required": [
+          "places"
+        ],
+        "title": "ElsewhereList"
+      },
+      "ElsewherePlace": {
+        "properties": {
+          "location_id": {
+            "type": "integer",
+            "title": "Location Id"
+          },
+          "location_code": {
+            "type": "string",
+            "title": "Location Code"
+          },
+          "free": {
+            "type": "integer",
+            "title": "Free"
+          }
+        },
+        "type": "object",
+        "required": [
+          "location_id",
+          "location_code",
+          "free"
+        ],
+        "title": "ElsewherePlace"
+      },
       "Flag": {
         "properties": {
           "kind": {
@@ -11964,6 +13188,137 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "HandoverList": {
+        "properties": {
+          "orders": {
+            "items": {
+              "$ref": "#/components/schemas/HandoverOrder"
+            },
+            "type": "array",
+            "title": "Orders"
+          },
+          "wait_limit_seconds": {
+            "type": "integer",
+            "title": "Wait Limit Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "orders",
+          "wait_limit_seconds"
+        ],
+        "title": "HandoverList"
+      },
+      "HandoverOrder": {
+        "properties": {
+          "order_id": {
+            "type": "integer",
+            "title": "Order Id"
+          },
+          "grab_order_id": {
+            "type": "string",
+            "title": "Grab Order Id"
+          },
+          "short_no": {
+            "type": "string",
+            "title": "Short No"
+          },
+          "store_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Store Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "task_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Status"
+          },
+          "units": {
+            "type": "integer",
+            "title": "Units"
+          },
+          "units_ordered": {
+            "type": "integer",
+            "title": "Units Ordered",
+            "default": 0
+          },
+          "promised_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Promised At"
+          },
+          "marked_ready_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marked Ready At"
+          },
+          "handed_over_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handed Over At"
+          },
+          "waiting_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waiting Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id",
+          "grab_order_id",
+          "short_no",
+          "store_name",
+          "status",
+          "task_status",
+          "units",
+          "promised_at",
+          "marked_ready_at",
+          "handed_over_at",
+          "waiting_seconds"
+        ],
+        "title": "HandoverOrder"
+      },
       "Health": {
         "properties": {
           "status": {
@@ -11981,6 +13336,498 @@
           "database"
         ],
         "title": "Health"
+      },
+      "HiryuItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "hiryu_item_id": {
+            "type": "string",
+            "title": "Hiryu Item Id"
+          },
+          "brand_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Id"
+          },
+          "item_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Name"
+          },
+          "barcode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Barcode"
+          },
+          "available_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Status"
+          },
+          "sku_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Id"
+          },
+          "units_per_sale": {
+            "type": "integer",
+            "title": "Units Per Sale"
+          },
+          "seen_in_order": {
+            "type": "boolean",
+            "title": "Seen In Order"
+          },
+          "sku_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Code"
+          },
+          "sku_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Name"
+          },
+          "hiryu_sku_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hiryu Sku Code"
+          },
+          "mapped_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mapped By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "hiryu_item_id",
+          "brand_id",
+          "item_name",
+          "barcode",
+          "available_status",
+          "sku_id",
+          "units_per_sale",
+          "seen_in_order",
+          "sku_code",
+          "sku_name",
+          "hiryu_sku_code",
+          "mapped_by"
+        ],
+        "title": "HiryuItem"
+      },
+      "HiryuItemList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HiryuItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "HiryuItemList"
+      },
+      "HiryuItemMapIn": {
+        "properties": {
+          "sku_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku Id"
+          },
+          "units_per_sale": {
+            "type": "integer",
+            "title": "Units Per Sale",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id"
+        ],
+        "title": "HiryuItemMapIn"
+      },
+      "HiryuPasteIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "grab_order_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._#:-]{1,96}$",
+            "title": "Grab Order Id",
+            "description": "Grab order ID: the key"
+          },
+          "short_no": {
+            "type": "string",
+            "pattern": "^GM-[A-Za-z0-9]{1,16}$",
+            "title": "Short No",
+            "description": "Hiryu GM number, for people"
+          },
+          "status": {
+            "type": "string",
+            "pattern": "^[A-Z_]{3,32}$",
+            "title": "Status"
+          },
+          "store_no": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Store No"
+          },
+          "order_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Time",
+            "description": "ISO 8601, UTC"
+          },
+          "scheduled_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled Time",
+            "description": "ISO 8601, UTC"
+          },
+          "acceptance": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(AUTO|MANUAL)$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acceptance"
+          },
+          "declared_lines": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Declared Lines"
+          },
+          "declared_units": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Declared Units"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/HiryuPasteLine"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Lines"
+          },
+          "source": {
+            "type": "string",
+            "pattern": "^(paste|button)$",
+            "title": "Source",
+            "default": "paste"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "site_id",
+          "grab_order_id",
+          "short_no",
+          "status",
+          "store_no",
+          "lines"
+        ],
+        "title": "HiryuPasteIn"
+      },
+      "HiryuPasteLine": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9._#:-]{1,96}$",
+            "title": "Item Id"
+          },
+          "qty": {
+            "type": "integer",
+            "maximum": 999.0,
+            "minimum": 1.0,
+            "title": "Qty"
+          },
+          "item_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Name",
+            "description": "Only used to name an unconnected item for Ops HQ"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item_id",
+          "qty"
+        ],
+        "title": "HiryuPasteLine"
+      },
+      "HiryuPasteResult": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "description": "created | open | confirm_cancel | none"
+          },
+          "order_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Id"
+          },
+          "pick_task_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pick Task Id"
+          },
+          "short_no": {
+            "type": "string",
+            "title": "Short No"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "order_id",
+          "pick_task_id",
+          "short_no",
+          "message"
+        ],
+        "title": "HiryuPasteResult"
+      },
+      "HiryuStore": {
+        "properties": {
+          "hiryu_store_no": {
+            "type": "integer",
+            "title": "Hiryu Store No"
+          },
+          "store_name": {
+            "type": "string",
+            "title": "Store Name"
+          },
+          "partner_store_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Store Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "site_code": {
+            "type": "string",
+            "title": "Site Code"
+          },
+          "brand_id": {
+            "type": "integer",
+            "title": "Brand Id"
+          },
+          "brand_name": {
+            "type": "string",
+            "title": "Brand Name"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hiryu_store_no",
+          "store_name",
+          "partner_store_id",
+          "site_id",
+          "site_code",
+          "brand_id",
+          "brand_name",
+          "active"
+        ],
+        "title": "HiryuStore"
+      },
+      "HiryuStoreIn": {
+        "properties": {
+          "store_name": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Store Name"
+          },
+          "partner_store_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Store Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "brand_id": {
+            "type": "integer",
+            "title": "Brand Id"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "store_name",
+          "site_id",
+          "brand_id"
+        ],
+        "title": "HiryuStoreIn"
+      },
+      "HiryuStoreList": {
+        "properties": {
+          "stores": {
+            "items": {
+              "$ref": "#/components/schemas/HiryuStore"
+            },
+            "type": "array",
+            "title": "Stores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stores"
+        ],
+        "title": "HiryuStoreList"
       },
       "HubOverview": {
         "properties": {
@@ -12671,6 +14518,47 @@
           "sites"
         ],
         "title": "Me"
+      },
+      "MenuImportResult": {
+        "properties": {
+          "items": {
+            "type": "integer",
+            "title": "Items"
+          },
+          "auto_connected": {
+            "type": "integer",
+            "title": "Auto Connected"
+          },
+          "priced": {
+            "type": "integer",
+            "title": "Priced"
+          },
+          "needs_connecting": {
+            "type": "integer",
+            "title": "Needs Connecting"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "auto_connected",
+          "priced",
+          "needs_connecting"
+        ],
+        "title": "MenuImportResult"
+      },
+      "MoveLineIn": {
+        "properties": {
+          "location_id": {
+            "type": "integer",
+            "title": "Location Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "location_id"
+        ],
+        "title": "MoveLineIn"
       },
       "MovementList": {
         "properties": {
@@ -14263,6 +16151,17 @@
             "type": "string",
             "title": "External Ref"
           },
+          "short_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short No"
+          },
           "status": {
             "type": "string",
             "title": "Status",
@@ -14456,6 +16355,18 @@
           "external_ref": {
             "type": "string",
             "title": "External Ref"
+          },
+          "short_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short No",
+            "description": "Hiryu GM number, for people"
           },
           "site_id": {
             "type": "integer",
@@ -19346,6 +21257,171 @@
           "location_code"
         ],
         "title": "SlotSuggestion"
+      },
+      "StockSheet": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "stores": {
+            "items": {
+              "$ref": "#/components/schemas/StockSheetStore"
+            },
+            "type": "array",
+            "title": "Stores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "stores"
+        ],
+        "title": "StockSheet"
+      },
+      "StockSheetLine": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "hiryu_sku_code": {
+            "type": "string",
+            "title": "Hiryu Sku Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "on_shelf": {
+            "type": "integer",
+            "title": "On Shelf"
+          },
+          "picked_not_ready": {
+            "type": "integer",
+            "title": "Picked Not Ready"
+          },
+          "buffer": {
+            "type": "integer",
+            "title": "Buffer"
+          },
+          "to_type": {
+            "type": "integer",
+            "title": "To Type",
+            "description": "Ketik di Hiryu"
+          },
+          "last_typed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Typed"
+          },
+          "last_typed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Typed At"
+          },
+          "changed": {
+            "type": "boolean",
+            "title": "Changed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id",
+          "hiryu_sku_code",
+          "name",
+          "on_shelf",
+          "picked_not_ready",
+          "buffer",
+          "to_type",
+          "last_typed",
+          "last_typed_at",
+          "changed"
+        ],
+        "title": "StockSheetLine"
+      },
+      "StockSheetStore": {
+        "properties": {
+          "hiryu_store_no": {
+            "type": "integer",
+            "title": "Hiryu Store No"
+          },
+          "store_name": {
+            "type": "string",
+            "title": "Store Name"
+          },
+          "brand_name": {
+            "type": "string",
+            "title": "Brand Name"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/StockSheetLine"
+            },
+            "type": "array",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hiryu_store_no",
+          "store_name",
+          "brand_name",
+          "lines"
+        ],
+        "title": "StockSheetStore"
+      },
+      "StockTypedIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/StockTypedRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "rows"
+        ],
+        "title": "StockTypedIn"
+      },
+      "StockTypedRow": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "qty": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Qty"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id",
+          "qty"
+        ],
+        "title": "StockTypedRow"
       },
       "StockUploadBatch": {
         "properties": {

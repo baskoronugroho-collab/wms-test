@@ -122,7 +122,7 @@
     function head(c) {
       return '<span class="pcard__rule" aria-hidden="true"></span>' +
         '<span class="pcard__top"><span class="pcard__ref" data-field="ref">' +
-        esc(c.external_ref) + '</span>' + testBadge(c) + '</span>' + channelTag(c);
+        esc(c.short_no || c.external_ref) + '</span>' + testBadge(c) + '</span>' + channelTag(c);
     }
 
     function waitingCard(c) {
@@ -163,7 +163,7 @@
                  biAttr('Sedang diambil', 'Being picked') + '>Sedang diambil</span></span>') +
         '<span class="toolbar__spacer"></span>' +
         '<button class="cbtn ' + (stuck ? 'cbtn--primary' : 'cbtn--sm') + '" type="button" data-release="' + c.id +
-        '" data-holder="' + esc(who) + '" data-ref="' + esc(c.external_ref) +
+        '" data-holder="' + esc(who) + '" data-ref="' + esc(c.short_no || c.external_ref) +
         '" data-held="' + mins(held) + '">' + (stuck ? RELEASE_ICON : '') + '<span ' +
         biAttr(stuck ? 'Lepaskan ke antrean' : 'Lepaskan', stuck ? 'Release to the queue' : 'Release') + '>' +
         (stuck ? 'Lepaskan ke antrean' : 'Lepaskan') + '</span></button>' +
@@ -197,7 +197,7 @@
       const dHost = region('done');
       if (dHost) dHost.innerHTML = done.cards.length ? done.cards.slice(0, 8).map(c => {
         const late = c.promised_at && c.completed_at && NJW.toDate(c.completed_at) > NJW.toDate(c.promised_at);
-        return '<span class="donerow"><span class="donerow__ref">' + esc(c.external_ref) +
+        return '<span class="donerow"><span class="donerow__ref">' + esc(c.short_no || c.external_ref) +
           ' <span class="note" style="font-family:var(--font-ui)">' + esc(CHANNEL[c.channel] || '') +
           (late ? ' · <span ' + biAttr('terlambat', 'late') + '>terlambat</span>' : '') + '</span></span>' +
           '<span class="donerow__time">' + NJW.fmt.time(c.completed_at) + '</span></span>';

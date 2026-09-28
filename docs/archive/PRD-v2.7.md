@@ -1,0 +1,978 @@
+# Ninja Kilat WMS — Product Requirements Document
+
+| | |
+|---|---|
+| **Product** | Ninja Kilat WMS |
+| **Version** | v2.7: interim Hiryu bridge by copy and paste (§12.4), customer data stays in Hiryu (§2.11), hub steps (Appendix B) |
+| **Date** | 21 September 2026 |
+| **Owner** | Baskoro Nugroho |
+| **Status** | Decisions locked for build · open items in §17 |
+| **Governed by** | *QC Systems — Hiryu, WMS, TMS* (ChangWen, 11 Sep 2026), `docs/canonical/qc-oms-wms.html`. **Where this PRD and that design differ, the design wins.** |
+| **Supersedes** | v2.6, v2.5 and v2.4 of 21 September; v2.3 and v2.2 of 17 September; v2.1 of 14 September; v2.0 of 11 September; v0.1 of 3 September archived at `docs/archive/PRD-v1.md` |
+| **Platform** | Substrait · FastAPI · OceanBase · static frontend |
+| **Live** | wms-test.ninjavan.apps.substrait.build |
+| **Pilot** | Kahf and Labore at KJ5 and MA5 (Grab, 18 Sep); Wardah stays with Grab for now. Sections written for Wardah (118 SKUs) still hold as the pattern · second brand within 3 months |
+| **Scale** | 10–30 stations within 6 months |
+
+---
+
+## 1. Summary
+
+Ninja Van fulfils quick-commerce orders for brands. For the **GrabMart Kilat** channel, Grab owns demand, order creation and delivery; Ninja owns the warehouse. Ninja is also starting to offer **quick-commerce-as-a-service**, taking orders directly from a brand's own channels — **WhatsApp first** — and delivering them with Ninja's own dedicated riders.
+
+Ninja already runs **Hiryu**, connected to the Grab merchant app. Under the canonical design it becomes the **OMS — the single front door**: every channel (Grab, WhatsApp, brand site, Instagram) connects to Hiryu through its own connector, and Hiryu owns orders and their state, the listing map and split rule, dark-store routing and the last-mile choice. It **stops keeping a stock count of its own**.
+
+This **WMS** is the physical layer underneath, and **the only stock counter**. It answers four questions Hiryu cannot:
+
+1. **Where does this unit go?** — inbound, putaway, rack and basket
+2. **Where do I find it?** — the location a picker is sent to
+3. **Is it actually there?** — scan-verified picking and weekly counts
+4. **What arrived versus what was promised?** — every hop checked against the one before
+
+> **Every order enters through Hiryu. Only Hiryu talks to the WMS. Only the WMS counts the shelf.**
+
+The WMS never talks to Grab or any other platform. It exchanges exactly **five messages** with Hiryu, and nothing else crosses that line. A **TMS** carries out the last mile Hiryu chooses. Restocking (supplier → CWH → dark store) is a separate model; the WMS takes over at inbound.
+
+---
+
+## 2. Principles and non-negotiables
+
+These hold across every section below. A change request that breaks one of them needs to argue against it explicitly.
+
+- **2.1** **The WMS never talks to a platform.** Channels connect to Hiryu; only Hiryu talks to the WMS, in five messages (§12).
+- **2.2** **One counter.** The WMS ledger is the only count of the shelf. Hiryu no longer deducts a sale: it takes the WMS's **available** (on hand − allocated) and subtracts only orders in transit, normally for about a second. Damage, loss and count corrections reach every listing as one lower number. *(Replaces v2.0's "one writer per event", where the POS deducted sales.)*
+- **2.3** **Every stock movement is scanned.** Picking has a scan gate with no staff-level override — an override that exists gets used, and then the gate is worthless.
+- **2.4** **The ledger is append-only.** Balances are a projection of movements; negative stock is refused by construction; every scan is idempotent so a retry never double-counts.
+- **2.5** **Red means failure and nothing else.** Every state carries colour *and* an icon *and* words. Staff are often high-school graduates on shared devices; the UI must be safe on day one.
+- **2.6** **No free text on the warehouse floor.** Quantities come from steppers and keypads; the only input is the scan target.
+- **2.7** **Bilingual.** Indonesian by default, English one tap away, on every string.
+- **2.8** **Online-only, loudly.** A dropped connection blocks work visibly. A short buffer may hold scans across a blip (§15), but the system never silently degrades.
+- **2.9** **Training can never touch real stock.** The training site is isolated and never reaches Hiryu or a channel.
+- **2.10** **The stock owner travels with every unit.** The ledger records who owns each unit, not only the brand (§6.4).
+- **2.11** **Customer data stays in Hiryu** *(21 Sep)*. The WMS never receives, stores, logs or shows a customer's name, phone, address, note or payment, and no table has a field for them. Whatever route an order takes into the WMS, only order and product data cross (§12.4.1).
+
+---
+
+## 3. Users, roles and surfaces
+
+| Role | Where | Does |
+|---|---|---|
+| **Station staff** | Darkstore floor | Receive by AWB, put away, pick, pack, count, ask HQ to register an unknown product (§7.6) |
+| **Hub operator** | Logos / CWH | Staff, plus decant, dispatch, crossdock |
+| **SPV** (supervisor) | Their own hubs | Racks and bins (including a whole layout), SKU → rack, **replenishment to Wardah for their hubs** (§5.3), acknowledging restock variances (§5.4), discrepancies, stuck claims, count sign-off |
+| **Ops HQ** | Every hub | Brands, SKUs and photos, **thresholds**, racks, the hub map (§8.5), SKU requests, replenishment and **variance sign-off**, staff accounts and sites. *Merged with the former admin role on 17 Sep.* |
+| **Superadmin** | Everything | Everything Ops HQ does, granting superadmin, and **viewing the app as any other role** (§3.3) |
+
+### 3.1 What each role may change **[DECIDED 17 Sep, revised]**
+
+| | Staff | SPV | Ops HQ | Superadmin |
+|---|---|---|---|---|
+| Add a brand, register a SKU, upload a product photo | — | — | ✓ | ✓ |
+| **Set thresholds S, R and P** (at registration, per hub, or for every hub) | — | — | ✓ | ✓ |
+| See reminders and flags | — | own hubs | every hub | ✓ |
+| Change reminder rules (switch on/off, hours and days) | — | — | ✓ | ✓ |
+| Monitor every hub: bin availability, stock level, the layout map | — | — | ✓ | ✓ |
+| Add a rack, add or remove levels and bins | — | own hubs | every hub | ✓ |
+| Put a SKU on a rack | during inbound only¹ | own hubs | every hub | ✓ |
+| Build a whole layout at once | — | own hubs | every hub | ✓ |
+| Receive a delivery by AWB; send HQ an unknown product | ✓ | ✓ | ✓ | ✓ |
+| See restock alerts; draft, send, confirm and cancel requests (Surat Jalan) | — | own hubs | every hub | ✓ |
+| Answer SKU requests from stations | — | — | ✓ | ✓ |
+| **Acknowledge a restock variance** (final count + reason) | — | own hubs | ✓ | ✓ |
+| **Sign off a restock variance** (sets the billed number) | — | — | ✓ | ✓ |
+| Staff accounts, roles and sites | — | — | ✓ | ✓ |
+| Grant the superadmin role; view the app as another role | — | — | — | ✓ |
+
+¹ A **known** SKU that reaches a hub where it has no rack yet can be given a basket from the inbound flow, so the delivery is not held up. The audit log marks it and the SPV can move it later.
+
+- **3.1.1** The server enforces every row of this table. The console hides the screens a role cannot use, so nobody meets a refusal after the fact.
+- **3.1.2** **Why Ops HQ and admin merged** *(17 Sep)*: in the pilot the same people run the operation and the accounts. The separation that still matters, who can grant the top role, stays with superadmin.
+
+### 3.2 Two surfaces **[DECIDED]**
+
+- **3.2.1** **Station** — large type (32 / 60 / 96 px), 64 px primary buttons, one decision per screen, a scan zone that always holds focus. Built for arm's length and a scanner gun.
+- **3.2.2** **Console** — a dense desk interface with sidebar, tables, filters and a queue board. Supervisors and admins **land on the console** when they open the app; staff land on the station.
+- **3.2.3** Devices are a **laptop or tablet with a USB/Bluetooth scanner gun**, or a **phone** *(21 Sep)*. The station app is a web app that works on a phone: it installs to the home screen and opens full screen (web manifest; no Play Store), every scan screen offers **Scan with camera** (the browser's barcode reader on Android Chrome, a fallback reader elsewhere) and **Type the code**, and the layout fits a 375 px screen. It stays online-only: nothing is cached. A native Android app is **future**, not planned now (§17 Q11).
+- **3.2.4** Both surfaces share one token system, both light and dark themes are real, and there is **no build step** — static HTML/CSS/JS wired by one thin layer.
+
+### 3.3 Viewing the app as another role **[DECIDED 17 Sep — built]**
+
+- **3.3.1** A superadmin picks **Ops HQ, SPV, hub operator or staff** from a bar across the top of every screen. The app then shows that role's menu, screens and refusals, and staff and hub-operator views open on the station app.
+- **3.3.2** The preview is **read-only**: the server refuses every change while it is on, so nothing is written under a borrowed role. One click returns to superadmin.
+- **3.3.3** Hub scope in a preview follows the superadmin's own hubs.
+
+---
+
+## 4. Sites and the chain of custody
+
+### 4.1 Two site types, one system **[DECIDED]**
+
+The central warehouse (**CWH**, currently Logos Metrolink) runs the **same WMS** as the darkstores. That gives every hop exactly one authority for the expected quantity:
+
+**Supplier → CWH** (expected = the supplier's reference, *if one exists*) → **CWH → darkstore** (expected = the CWH's dispatch, always) → shelf.
+
+Even when a supplier sends no manifest, the second hop is always checkable, because the WMS produced the number itself. The chain is blind only at the very first hop.
+
+- **4.1.1** **A CWH never publishes stock.** It is a warehouse, not a store. Only darkstores send stock levels (message 3). Enforced at the outbox edge on `site_type`.
+- **4.1.2** A CWH does not pick customer orders, run a pick queue or publish stock. It receives, decants, registers identity, stores, crossdocks and dispatches.
+- **4.1.3** **Each hop raises its own discrepancy.** The CWH raises shortfalls against the supplier; the darkstore raises them against the CWH. Both have **24 hours** from receipt, after which the station bears the loss.
+
+### 4.2 Physical layout
+
+- **4.2.1** A standard darkstore holds **7 racks × 5 levels × 5 positions = 175 slots** (rack 1.0 W × 0.4 D × 2.0 H m).
+- **4.2.2** Locations read `SITE-RACK-LEVEL-POSITION`, e.g. `UT5-A-3-02`. Rack and level are what a person navigates by and are always visually accented.
+- **4.2.3** **One basket holds one SKU.** Never two.
+- **4.2.4** Baskets come in three widths — S 0.20 m, M 0.33 m, L 0.50 m. Anything larger than L goes on an open shelf level.
+- **4.2.5** Inside a basket, **coloured dividers** separate each arrival (§7.4). The WMS does not model dividers.
+- **4.2.6** **Racks are expandable** *(built 17 Sep)*. 175 slots is the starting layout, not a ceiling: Wardah's stated target is 200–300 SKUs per hub. An SPV or HQ can add a rack, put a new level on top of a rack, add bins to the end of any level, and change a basket's size. A bin or level can be removed only while it has **never held stock** — a location in the ledger is history.
+- **4.2.7** **Rack management reads rack first.** The *Racks & bins* page shows the hub as one card per rack (levels, bins, how full). Clicking a rack opens it level by level, top level on top, every bin with its SKU and units.
+- **4.2.8** **Up to two stacked bins per position** *(built 21 Sep; naming decided 21 Sep)*. Any level can hold **one bin per position, or two stacked, never more**. With one bin the code has no letter (`UT5-A-3-02`). With two, the letter says which: **T = top** (`UT5-A-3-02T`), **B = bottom** (`UT5-A-3-02B`). It is chosen when a rack, level or layout is built, and switched per level later: stacking a level turns its bins into B and adds a T above each; going back removes the T bins (only if none was ever used) and gives the B bins their plain code back. Bins are referenced by id, so a new code loses no history — but printed bin labels must be reprinted. Screens draw a pair T above B.
+
+---
+
+## 5. Restock types
+
+> **Outside the canonical scope.** Restocking — supplier → central warehouse → dark store — is a separate model with its own design; the WMS takes over at inbound. What follows records Ninja's four restock types as input to that model. Restock requests and CWH transfers are built and stay working, but are frozen until that model is agreed.
+
+### 5.1 Four types, two axes **[DECIDED]**
+
+| | **Store at CWH** | **Crossdock at CWH** | **Direct to darkstore** |
+|---|---|---|---|
+| **From supplier** | 1 · CWH stores, distributes later | 2 · passes through the CWH | 3 · supplier delivers to the darkstore |
+| **From CWH** | — | — | 4 · the distribution leg of type 1 |
+
+- **5.1.1** Every restock carries an **inbound reference** with expected quantities per SKU (§7.1), whichever the source.
+- **5.1.2** **Crossdock** stock is received at the CWH but never put away. It sits in a **staging location** and must leave within a maximum dwell — **7 days, placeholder** — after which it is flagged. Without that rule crossdock silently becomes storage.
+- **5.1.3** Type 4 is the same transfer mechanism in every case: the CWH dispatches with a quantity; the darkstore receives against it.
+
+### 5.2 Restock requests
+
+- **5.2.1** When everything a darkstore holds for a SKU — rack plus overflow — falls to its **restock point** (§8.3), the WMS raises a restock request to the CWH.
+- **5.2.2** A supervisor confirms or adjusts the quantity and sends it. This formalises what Malaysia does today with a spreadsheet and WhatsApp.
+
+### 5.3 Replenishment to the brand — the Wardah pilot **[DECIDED 17 Sep — built]**
+
+Wardah drops stock straight at each hub (restock type 3), and the stock is consignment. So for the pilot, replenishment is a request to **Wardah**, not to a CWH. **Ops HQ runs it for every hub; the hub's SPV can run it for their own hubs** *(21 Sep)*.
+
+| Step | Who | What happens |
+|---|---|---|
+| **Alert** | WMS | A SKU at a hub falls to its restock point (rack + overflow). It appears on HQ's *Needs restock* list with a suggested quantity. |
+| **Draft** | Ops HQ or SPV | Selects alerts (one request per hub and brand), adjusts quantities, adds SKUs by hand if needed. |
+| **Sent** | Ops HQ or SPV | Copies the request text and sends it to Wardah **outside the WMS** (WhatsApp or email), then marks it sent. Quantities are frozen. |
+| **Confirmed** | Ops HQ or SPV | Wardah answers. The **AWB**-holder records the **AWB**, the **Surat Jalan number**, the expected arrival and the **quantity Wardah will actually send** per SKU. It can be re-confirmed until received. |
+| **Received** | Station staff | Staff open the delivery **by its AWB** (§7.1). The confirmed quantities are the expectation; each SKU shows *matches / N short / N over* while scanning. If everything matches, the request closes and the received numbers are billed. |
+| **Variance: SPV** | SPV | Anything different from Wardah's confirmation waits for the hub's SPV (§5.4). |
+| **Variance: HQ** | Ops HQ | Ops HQ signs off; the signed numbers are billed. |
+
+- **5.3.1** The reference reads `RPL-<hub>-<yymm>-<n>`. One AWB belongs to one open request.
+- **5.3.2** The alert is computed live from the registry, so stock that arrived by upload or count raises it too.
+- **5.3.3** **Consignment is the agreed deal** *(21 Sep)*. Details still to settle with Wardah and Grab — safety stock, replenishment frequency, expiry and slow-moving returns, and a **restock fee separate from the 5% fulfilment fee** — will set the restock points and may add steps here.
+- **5.3.4** Status path: **draft → sent → confirmed → (variance: SPV → variance: HQ) → closed**, or cancelled.
+
+### 5.4 Variance acknowledgement and sign-off **[DECIDED 17 Sep — built]**
+
+A difference between what Wardah says it sent and what Ninja says it received must end as **one number both sides bill on**.
+
+| Step | Who | Screen | What happens |
+|---|---|---|---|
+| 1 | WMS | — | The receipt closes with at least one SKU different from the confirmed quantity. The request moves to *variance: SPV*. |
+| 2 | SPV | *Selisih restock* | For every differing SKU the SPV enters the **final count** (after rechecking cartons) and a **reason**. The count may differ from the scan. Sent to Ops HQ. |
+| 3 | Ops HQ | *Selisih restock* | Ops HQ **signs off**, or **sends it back** to the SPV with a note. Signing makes the final counts the **billed quantities**, and corrects stock on any line where the final count differs from the scan (movement `receipt_adjust`, reason = the SPV's note). |
+
+- **5.4.1** The SPV and Ops HQ steps are separate people, so one person cannot both declare and approve a billing number.
+- **5.4.2** Once signed off, a later put-away of units that were waiting for HQ (§7.6) is stock, not billing, and does not reopen the variance.
+
+---
+
+## 6. Product identity
+
+### 6.1 Two identity modes **[DECIDED]**
+
+| | **Mode A — brand barcode** | **Mode B — Ninja license plate** |
+|---|---|---|
+| When | The brand prints a scannable barcode | The brand prints none, or it is unreadable |
+| A scan means | "This is Glasting Lip 07" — the SKU | "This is unit NJ0000041827" — one physical unit |
+| Stock is held as | A quantity per SKU per location | Individually tracked units |
+| Pilot | **Wardah, all 118 SKUs** | None yet |
+
+- **6.1.1** One barcode maps to exactly one SKU, ever. A SKU may carry several barcodes.
+- **6.1.2** Mode B labels are pre-printed anonymous rolls; a plate is **bound** to a SKU by scanning it while that SKU is selected on screen. This needs brand sign-off on placement before use.
+
+### 6.2 Registering barcodes
+
+- **6.2.1** The staffer **selects the SKU first**, then scans units in bulk; each unrecognised barcode is bound to that SKU.
+- **6.2.2** Registration happens where the stock first arrives: at the **CWH** for types 1 and 2, at the **darkstore** for type 3. Downstream sites only scan.
+- **6.2.3** An unknown barcode during inbound opens a two-tap register fork, never a dead end.
+
+### 6.3 SKU onboarding
+
+- **6.3.1** **Ops HQ** registers each SKU **once, for every hub**: brand, SKU code, name, size, unit cube and category.
+- **6.3.2** Registration **asks for the thresholds at the same time** *(17 Sep)*: the **restock point is required**, the full threshold optional. A SKU without a restock point never raises a replenishment alert, and nobody goes back to fill 118 of them in. Each hub **copies** them onto its pick face when the SKU gets a rack there. **Only Ops HQ changes thresholds afterwards** *(17 Sep)* — for one hub, or for every hub that has racked the SKU at once — from the hub map (§8.5) or *Slotting & thresholds*. An SPV sees them but cannot change them.
+- **6.3.3** **Ops HQ uploads the product photo** *(built 17 Sep)* — in the add-SKU form or later from the product list. Optional for go-live; a placeholder shows until it exists. Spec: 1:1, at least 800 × 800, product centred on white, JPG/PNG/WEBP up to 8 MB. Photos live in the app's private object storage and are served behind sign-in. For 118 near-identical shades the photo is the primary disambiguator on the pick and wrong-item screens.
+- **6.3.4** **Rack per hub** *(built 17 Sep)*. A SKU's rack is chosen per hub, because each hub's layout differs:
+  1. HQ registers the SKU. It appears in the **"Needs a rack" queue of every hub that carries the brand**.
+  2. At each hub, the SPV (or HQ, for any hub) opens *Racks & bins → Needs a rack*, sees the suggested basket size, and picks an empty bin — the suggestion prefers pick height (§8.2.2). Or opens an empty bin and chooses from the queue.
+  3. The SKU leaves that hub's queue; its thresholds are copied onto the new pick face.
+  4. HQ can see, per SKU, which hubs have racked it and which are still waiting (*Products → Photo & racks*).
+  A SKU with no pick face at a hub can be received there (§3.1 note 1) but never picked.
+- **6.3.5** *(Proposed, with §10.5.)* Each SKU can also carry its **retail box size (L × W × H mm), weight (g)** and three flags: **liquid in a bottle, large bottle, fragile**. They drive the packaging suggestion. They are optional at go-live; category defaults fill the gaps.
+
+### 6.4 Stock owner **[DECIDED — canonical]**
+
+Three dark-store models run through the same system, so the ledger records the owner of every unit:
+
+| Model | Example | Stock owner |
+|---|---|---|
+| 1 | Grab-owned range (none in the pilot) | Grab |
+| 2 | Brand consignment — **Wardah** | **The brand** |
+| 3 | Ninja's frozen and chilled range | Ninja |
+
+- **6.4.1** Owner is set per brand (`grab` / `brand` / `ninja`), overridable per brand × site, and stamped on every movement and balance.
+- **6.4.2** **Wardah is consignment** *(agreed 21 Sep)*: Wardah owns its stock until it is sold. Migration V19 moves Wardah's default owner and today's balances from `grab` to `brand`; earlier movements keep the owner they were written with.
+- **6.4.3** The Malaysia barcode PRD puts racking codes, barcodes and quantities in the POS. Under the canonical design they belong to the WMS: its feature ideas feed the merged feature list (§17), its placement does not.
+
+---
+
+## 7. Inbound
+
+### 7.1 Inbound reference **[DECIDED]**
+
+- **7.1.1** Before stock arrives, an **inbound reference** is registered: a reference number, the source (supplier, CWH dispatch or crossdock) and the expected quantity per SKU.
+- **7.1.2** During inbound scanning the screen shows progress live — **"48 of 60 scanned"** — so a shortfall is visible while the driver is still on site, not after they have gone.
+- **7.1.3** **Planned inbound** runs against a reference. **Discovery inbound** — no reference exists — is still allowed: staff scan and the WMS assigns locations as it goes, but no variance can be computed.
+- **7.1.4** The existing **bulk CSV stock upload** and the optional **AWB field** converge into this: a CSV becomes one way to create an inbound reference, not a parallel route into the ledger.
+- **7.1.5** **For the Wardah pilot the inbound reference is the AWB on the Surat Jalan** *(built 17 Sep)*. HQ records it when Wardah confirms a replenishment (§5.3). The inbound start screen therefore offers:
+  - **Option 1 — Delivery from the brand (Surat Jalan).** **Inbound starts from the AWB or the RPL reference** *(17 Sep)*: staff scan or type it, or tap the delivery in the list HQ has confirmed for this hub. The receipt opens with Wardah's confirmed quantities, and the scan screen compares **per SKU, live**: *matches · N short · N over*. Finishing with differences asks the staffer to recheck the cartons first, then sends the variance to the SPV (§5.4). A second person scanning the same AWB joins the open receipt. **A delivery without a confirmed AWB cannot be received**: it waits in the temporary bin until Ops HQ (or the hub's SPV) records it. **No response time is set** *(21 Sep)*: HQ records it when available. Only the training site can receive without one.
+  - **Option 2 — Transfer from another warehouse.** Only for sealed totes dispatched from a CWH or another hub through *Dispatch a tote*; the tote label carries the dispatched quantities. The Wardah pilot has no such hop, so **option 2 is hidden** on the start screen *(17 Sep)* and returns when the CWH restocking model is agreed.
+
+### 7.2 Receiving and putaway
+
+- **7.2.1** Each scan identifies the SKU and the screen names the destination location in large type.
+- **7.2.2** **New stock always goes to the SKU's assigned rack first.** Only when the rack is at its **full threshold** does it go to the overflow slot (§8.3).
+- **7.2.3** No basket yet for this SKU → the WMS suggests a free slot and the staffer confirms it.
+- **7.2.5** **Two ways a scan finds its product** *(17 Sep)*:
+  1. **Automatic** — the barcode is registered, the WMS identifies the SKU and names its rack.
+  2. **Manual** — the barcode is unknown. The staffer searches the product list (name or shade number, with photos) and picks the one in their hand; the barcode is bound to it for good and the unit is scanned in. **If the product is not on the list**, the staffer sends it to Ops HQ (§7.6).
+- **7.2.4** Stock is **sellable from the putaway scan**: the receipt changes available, so message 3 goes to Hiryu at once. Nothing waits for a signature.
+
+### 7.3 Putaway list
+
+- **7.3.1** When a receipt is completed, the WMS issues a **putaway list**: what arrived, where each SKU went, the day colour, and the discrepancy deadline.
+- **7.3.2** It is a **frozen snapshot** — if a SKU is renamed or a basket moved later, the list still says what staff were told at the time. It is evidence under the 24-hour rule.
+- **7.3.3** A supervisor **signs it for compliance**. The signature records; it does not gate the sale.
+
+### 7.4 Day colours and FIFO **[DECIDED]**
+
+Stock is held as a quantity, so the system cannot tell which identical lipstick arrived first. A sticker keyed to the weekday of arrival does.
+
+| Mon | Tue | Wed | Thu | Fri | Sat | Sun |
+|---|---|---|---|---|---|---|
+| Senin `#F2C300` | Selasa `#1E8E3E` | Rabu `#1A73C8` | Kamis `#E8710A` | Jumat `#7B3FA0` | Sabtu `#D6336C` | Minggu `#5E6064` |
+
+- **7.4.1** Each arrival goes behind its **own coloured divider** in the basket. Divider placement is a human action; the WMS does not track dividers or their count.
+- **7.4.2** **The colour never travels alone.** Every label carries the day name, the date and the week letter (A/B): the cycle repeats weekly while stock is held up to ~14 days, so a fortnight-old batch wears today's colour.
+- **7.4.3** No red in the palette — red means failure everywhere else in this product.
+- **7.4.4** The day is computed in **Jakarta time (UTC+7)**. Without this, every delivery received after 5 pm local would be labelled with tomorrow's colour.
+- **7.4.5** **No expiry dates are recorded.** The inbound date on the label is the only FIFO signal, including for the eleven sunscreen and vitamin-C SKUs.
+
+### 7.5 Temporary inbound bin **[DECIDED 21 Sep — required at every hub]**
+
+- **7.5.1** Every hub keeps **temporary inbound bins** near the receiving bench. A delivery is unloaded into them first, counted against the Surat Jalan, and only then put away to its racks. Units of a product the WMS does not know stay there until HQ answers (§7.6).
+- **7.5.2** The WMS does not model these bins as locations: units in them are not yet in stock.
+- **7.5.3** **Ops action — Grab Kilat pilot:** the bins must be **procured for each pilot hub** alongside the racks, baskets and packaging already being sourced, and added to the hub readiness checklist. The number is flexible (§7.5.4). Owner: Jabo ops / procurement. See §17 Q12.
+- **7.5.4** **Inbound in batches** *(decided and built 21 Sep)*. **One temporary inbound bin holds one SKU.** How many bins a hub has is flexible, so one AWB can be received in several batches: batch 1 takes as many SKUs as there are bins; once those are put away, batch 2 starts from the same AWB, and so on.
+  - The SPV (or Ops HQ) records the number of inbound bins per hub on *Rak & bin*; empty = no limit.
+  - Each batch expects what is **still to come**: Wardah's confirmed quantity less what earlier batches received. The live comparison shows it.
+  - Scanning a SKU that would need one bin more than the hub has is refused with *Bin inbound penuh* — it goes in the next batch.
+  - Two ways to finish: **Selesai batch ini** (the rest follows; the request shows *Diterima sebagian*) or **Semua barang AWB sudah diterima** (the whole AWB — every batch together — is compared with the Surat Jalan; any variance goes to the SPV, then Ops HQ, §5.4).
+  - A batch that did not finish the AWB has no variance and its put-away slip lists only what it brought. One batch per AWB is open at a time; a second phone opening the same AWB joins it.
+
+### 7.6 Unknown product → Ops HQ → station **[DECIDED 17 Sep — built]**
+
+| Step | Who | Screen | What happens |
+|---|---|---|---|
+| 1 | Staff | Unknown barcode | Not on the product list. Staff photograph it, count every unit with that barcode, add a note, and **send it to Ops HQ**. The units go to the temporary inbound bin and are **not** in stock. |
+| 2 | Ops HQ | *SKU requests* | HQ sees the photo, barcode, count and hub. HQ either **matches an existing SKU** or **registers a new one** (thresholds required), and chooses the **bin at that hub** — or lets the WMS pick the best empty one. The barcode is bound to the SKU; the staff photo becomes the product photo if there is none. Or HQ **rejects** it with a reason (e.g. not our product — return it to the brand). |
+| 3 | Staff | Inbound start, scan and receipt-done screens | The answer appears: *take N units from the temporary bin to UT5-B-2-03*. Staff carry them over and tap **Put away**, confirming the quantity. The units enter stock then, against the original receipt; if that receipt was already closed against a Surat Jalan, the replenishment's received quantities are updated too. |
+
+- **7.6.1** Requests still waiting for HQ are listed on the same screens, so nothing is forgotten in the temporary bin.
+- **7.6.2** A barcode already sent to HQ from a hub cannot be sent again until HQ answers.
+
+---
+
+## 8. Storage and the slot registry
+
+### 8.1 What a supervisor sets
+
+The registry is where rack logic lives. For each SKU at each site a supervisor sets:
+
+- **8.1.1** The **assigned rack location** — the SKU's pick face.
+- **8.1.2** An optional **overflow location** for surplus.
+- **8.1.3** Two thresholds (§8.3).
+
+### 8.2 Slotting **[DECIDED]**
+
+- **8.2.1** **Supervisors assign racks manually, grouped by brand and category**, which is easier for new staff to learn. The WMS's suggestion follows the same grouping; there is no automatic velocity slotting.
+- **8.2.2** The suggestion prefers comfortable pick height (level 3, then 2, 4, 1, with 5 last — it sits at ~2.0 m and needs a step stool).
+- **8.2.3** Default thresholds come from the space model; supervisors accept them at go-live and tune over the first month. Bulk edit applies one set to many SKUs.
+
+### 8.3 Thresholds **[DECIDED; safety stock added 21 Sep]**
+
+| Threshold | Measured on | Triggers |
+|---|---|---|
+| **Full** | The assigned rack | New stock spills to overflow |
+| **Restock point (R)** | Rack + overflow together | An **automatic draft** request to the brand (§8.6) |
+| **Safety stock (S)**, optional | Rack + overflow together | A **critical** flag (§8.6). Must be ≤ R |
+
+- **8.3.1** The registry refuses configurations that cannot work — e.g. a restock point below zero or a full threshold of zero — at the point of entry, where a person can still fix them — including a safety stock above R.
+- **8.3.2** S, R and P are set by Ops HQ: as defaults when a SKU is registered, then per hub or for every hub at once. Their numbers are expected to change once safety stock and replenishment frequency are agreed with Wardah; nothing else needs to change when they do.
+- **8.3.3** **Until then, R defaults to 25% of P** *(decided 21 Sep)*. Registration asks for P; R is filled in as 25% of it (rounded, at least 1, always below P) unless someone types another number. The same default applies whenever P is set without R — on the hub map, in the registry, and when a SKU gets a rack. The 25% is itself a setting on *Aturan pengingat*, so Ops HQ can change it without a rebuild. Migration V21 fills R the same way wherever P was set and R was not.
+
+### 8.4 Where the picker is sent **[DECIDED]**
+
+When a SKU sits in both its rack and an overflow slot, **the picker goes to whichever holds the older stock.**
+
+- **8.4.1** The WMS knows one thing per location: **when its current stock arrived** — set when the location goes from empty to stocked, cleared when it empties.
+- **8.4.2** Typical case: the rack holds Monday stock and a Wednesday delivery overflows → the rack is picked first.
+- **8.4.3** The other case: the rack is emptied and refilled on Friday while overflow still holds Wednesday → overflow is picked first. The older batch wins wherever it is.
+- **8.4.4** Stock of unknown arrival time (seeded, uploaded) is treated as oldest — picking it first is the safe FIFO error.
+- **8.4.5** **There is no replenishment task.** Nothing is ever moved from overflow to the rack; the picker simply follows the oldest stock.
+- **8.4.6** Within the chosen basket, FIFO is the coloured divider, chosen by eye. The screen says **"take from the oldest divider"** and never names a colour — the WMS doesn't know which dividers still hold stock, and a wrong instruction is worse than none.
+
+### 8.5 Hub map and stock monitoring — Ops HQ **[DECIDED 17 Sep — built]**
+
+*Peta hub & stok* is Ops HQ's view of every hub.
+
+- **8.5.1** **Every hub in one table:** bin availability (used / total, flagged above 85%), free bins, SKUs still needing a rack, SKUs racked, units held, SKUs **low** (held ≤ R), **out** (held 0), **without an R**, deliveries on the way, and open variances. Totals across live hubs sit above it.
+- **8.5.2** **Clicking a hub opens its layout map:** every rack side by side, top level on top, one small square per bin. Coloured by **stock** (fine / low / out / no R / empty bin) or by **availability** (in use / empty). The number in a square is that SKU's units across the hub; an amber dot marks an overflow bin. A search box highlights a SKU, name or bin code.
+- **8.5.3** **Clicking a bin** shows the SKU, units here and across the hub, and its R and P. Ops HQ changes them there, for this hub or every hub that has racked the SKU.
+- **8.5.4** Arranging racks stays on *Racks & bins* (§4.2.7); the map is for monitoring and thresholds.
+- **8.5.5** Bins are coloured **out / critical (≤ S) / low (≤ R) / fine / no R / empty**; two bins at one position are drawn as a pair.
+
+### 8.6 Reminders, flags and the automatic restock draft **[DECIDED 21 Sep — built]**
+
+The WMS points at what needs a person, by itself. *Pengingat & flag* lists it; a badge on the console menu counts it.
+
+- **8.6.1** **Automatic replenishment draft.** When everything a hub holds for a SKU falls to R and no request is open for it, the WMS **drafts the request to the brand on its own**: one draft per hub and brand, collecting every SKU that crosses R until someone sends it. It runs after every pick, every 10 minutes, and whenever the flags are read. It never sends anything to Wardah — a person checks the draft and sends it (§5.3).
+- **8.6.2** **Flags**, computed live:
+
+| Flag | Level | Default |
+|---|---|---|
+| Out of stock, or at or below safety stock | Critical | on |
+| At or below R with no request (only if the automatic draft is off) | Needs action | — |
+| Automatic draft waiting to be sent | Info | on |
+| Draft not sent to the brand after N hours | Needs action | 4 h |
+| Sent, brand has not confirmed after N hours | Needs action | 24 h |
+| Confirmed delivery N days past its ETA | Needs action | 1 day |
+| Variance waiting for the SPV or Ops HQ after N hours | Needs action | 24 h |
+| Station SKU request unanswered after N hours (Ops HQ) | Needs action | 24 h |
+| SKU registered N days ago, still without a rack at a hub | Needs action | 2 days |
+| SKU with stock not picked at all for N days (slow mover) | Info | off, 30 days |
+
+- **8.6.3** Every rule can be switched on or off and every number changed by Ops HQ on the *Aturan pengingat* tab — so the terms still open with Wardah (safety stock, replenishment frequency, returns of slow or expiring stock) become settings, not a rebuild. Expiry reminders need expiry dates, which are not recorded today (§7.4.5); they will be a rule once that is decided.
+- **8.6.4** SPVs see flags for their own hubs; Ops HQ for every hub. Reminders appear in the WMS only — no email or WhatsApp yet.
+
+---
+
+## 9. Orders and channels
+
+### 9.1 Where orders come from **[DECIDED]**
+
+| Channel | Order reaches the WMS via | Last mile | Promise |
+|---|---|---|---|
+| **GrabMart Kilat** | Customer → Grab → Grab connector → **Hiryu** → WMS | Grab rider — Grab assigns it before the order reaches us | **15 min from when the order reaches Hiryu** |
+| **WhatsApp** (first QC-as-a-service channel) | Customer pays → WhatsApp adapter → **Hiryu** → WMS | Hiryu chooses, the TMS books | **1 hour from when the customer places the order** |
+| Brand website, Instagram | Later, same pattern: a connector inside Hiryu | Hiryu chooses, the TMS books | 1 hour |
+
+- **9.1.1** Every order carries **`channel`**, **`delivery_mode`** and **`promised_at`**. Delivery modes are Hiryu's four last-mile options: `grab_rider`, `ninja_rider` (dedicated same-day fleet, ≤ ~7 km), `third_party` (on-demand: GrabExpress, Lalamove) and `next_day` (the regular network).
+- **9.1.2** For Grab, `promised_at` = received + 15 min. The rider is already assigned when the order arrives, so the clock is genuinely running.
+- **9.1.3** For own channels, `promised_at` = the customer's order time + 60 min, so Hiryu sends the time the order was placed. Hiryu may also send `promised_at` itself; the WMS then uses it as given.
+- **9.1.4** Stock is **allocated at intake**, so two orders can never be promised the last unit. Allocation lowers available, so message 3 tells Hiryu in the same second.
+- **9.1.5** **Routing is Hiryu's.** For own channels Hiryu picks the nearest dark store that can fill the whole order within the promise. **No split orders.** Grab orders arrive already routed.
+- **9.1.6** **Phase-1 shortcut.** Until the WhatsApp adapter moves behind Hiryu, it may send message 1 straight to the WMS. The shortcut has a fold-in date (§17); it is not a second front door.
+
+### 9.2 The pick queue
+
+- **9.2.1** A board in three lanes — waiting, being picked, done today — with each order as a card showing age, lines, units, the racks it touches, and the picker.
+- **9.2.2** **Sorted and coloured by time remaining against `promised_at`, not by age.** With two promises in one room, a Ninja order 20 minutes old is comfortable and a Grab order 20 minutes old is a crisis; age would rank them level.
+- **9.2.3** A claim held too long is flagged, and a supervisor can **release it back to the queue** through a confirmation that names the holder. Picked lines keep their progress.
+- **9.2.4** Test orders are marked unmistakably.
+- **9.2.5** The board never reflows under the cursor; changes wait behind a "load changes" pill.
+
+---
+
+## 10. Picking and packing
+
+### 10.1 Guided pick
+
+- **10.1.1** The picker is sent to **one location at a time**, in aisle order, with the location code, the product photo and the quantity.
+- **10.1.2** Each unit taken is **scanned**. A wrong shade triggers a **full-screen stop** showing both products side by side. There is no override.
+- **10.1.3** Pick batching is **deferred**. Revisit when a station sustains more than ~15 orders an hour per picker; below that the sorting risk outweighs the walk saved.
+
+### 10.2 Short pick **[DECIDED]**
+
+When stock the system expects is not there:
+
+- **10.2.1** **Two taps, no typing** — *item is not here* → *none at all*, or a stepper for how many were found.
+- **10.2.2** The picker carries on with the rest of the order.
+- **10.2.3** In one transaction the WMS releases the allocation, corrects on-hand to what was found, sends **message 5**, and raises a supervisor exception naming the staffer.
+- **10.2.4** **The correction is deliberately unsigned** — every other adjustment needs a supervisor, but waiting here keeps selling stock that doesn't exist. The cost is that a staffer can zero a SKU in two taps, so declarations per person are visible to supervisors.
+- **10.2.5** **No substitution.** The WMS reports; **Hiryu decides** whether to refund, send a partial order or substitute. For Grab it applies Grab's rules; for own channels it asks the customer.
+
+### 10.3 Pack and hand over **[DECIDED]**
+
+- **10.3.1** The **pack scan** marks the order ready and sends **message 4**. There is no separate double scan.
+- **10.3.2** For Grab, Hiryu tells Grab and the Grab rider collects from the counter. For own channels, Hiryu has chosen the last mile and the **TMS** books, hands over and tracks it; the customer hears through the adapter.
+- **10.3.3** The WMS owns **pack → handover → timestamp** only. It does not assign drivers, plan routes or track deliveries.
+
+### 10.4 Cancellation
+
+- **10.4.1** **Message 2**, from Hiryu only, releases allocations so the stock is sellable again (and message 3 says so).
+- **10.4.2** Units already picked go to a **return-to-shelf queue**. **Any staff member** can take a return task; they scan each unit back at the location it was picked from — scan-verified, no override — and each scan re-publishes the stock.
+
+### 10.5 Packaging suggestion **[PROPOSED — spec for review, not built]**
+
+A Grab order for Wardah is **10–15 units**. Packing copies what GrabMart Kilat (powered by Astro) customers already get: **two pack types, a paper bag and a carton**, plus small inserts. The WMS knows every line the moment message 1 arrives, so it can tell the packer which pack to take before the first unit is picked. The packer should never have to judge it.
+
+- **10.5.1** **When.** Computed at order intake, after allocation (§9.1.4). Recomputed after a short pick (§10.2) or a cancelled line. Stored on the order.
+- **10.5.2** **Where it shows.** A chip on the pick-queue card (*Kantong* / *Kardus*), the guided-pick header, and the pack screen: *"Ambil: Kardus 25 × 20 × 10 + 1 plastik klip + 2 bubble"*. Bilingual like every string (§2.7).
+- **10.5.3** **The rule, in order.**
+  1. Order totals: volume **V** = Σ qty × box L × W × H; weight **G** = Σ qty × weight; longest item **Lmax**; count of large bottles **Nbig**.
+  2. Try pack types in priority order, smallest first. A pack fits when **V ≤ usable volume**, **G ≤ maximum load**, **Lmax fits its longest inner side**, and, for a bag, **Nbig < 2**. Two or more large bottles tear a bag and crush the rest.
+  3. The first pack that fits is the suggestion. If none fits, suggest two of the largest carton and flag the order as *split pack*.
+  4. Inserts: **plastik klip** (ziplock) = ⌈bottled-liquid volume ÷ ziplock volume⌉, zero if none; **bubble sheet** = one per fragile unit; **seal sticker** for a bag; **tape** for a carton.
+- **10.5.4** **Missing data never blocks a pick.** If a line has no box size or weight, the category default fills in and the suggestion shows an *estimated* badge (grey, with the word, per §2.5).
+- **10.5.5** **Override in two taps.** The packer picks another pack type, then a reason from a fixed list: *tidak muat / kemasan rusak / stok kemasan habis / permintaan pelanggan*. No free text (§2.6). The pack scan records the pack actually used.
+- **10.5.6** **Tuning.** A weekly supervisor view shows overrides by pack type and by SKU. Frequent *tidak muat* on one SKU means its box data is wrong. Frequent overrides on one pack type mean its limits are wrong.
+- **10.5.7** **No change to the five messages (§12).** Packaging is internal to the WMS.
+- **10.5.8** **Later:** deduct packaging stock per site at the pack scan, so bags and cartons get a restock point like any SKU.
+
+**New data.**
+
+| Where | Field | Notes |
+|---|---|---|
+| `skus` | `box_l_mm`, `box_w_mm`, `box_h_mm`, `weight_g` | Retail box. Unit cube derives from them when present. From the Wardah product master. |
+| `skus` | `is_liquid_bottle`, `is_large_bottle`, `is_fragile` | Liquid in a bottle, leak risk (micellar, mist, shampoo, oil, remover). Large bottle is 150 ml or more. Fragile is mirror, pressed powder or glass. |
+| `packaging_types` (new, admin) | code, name ID/EN, kind (`bag` / `carton` / `insert`), inner L × W × H mm, usable fill, max load g, priority, active per site | Seeded with the table below |
+| `orders` | `pack_suggested`, `pack_count`, `inserts_json`, `pack_estimated`, `pack_used`, `pack_override_reason` | |
+
+**Seed values.** From the space model order simulation: 20,000 orders of 10–15 units from the Wardah range.
+
+| Pack | Inner size | Usable | Max load | Share of orders |
+|---|---|---|---|---|
+| Paper bag, kraft with handles | 200 × 100 × 300 mm | 3.8 L (top folded 60 mm, 80% fill) | 3,000 g **TBC by test** | ~87% |
+| Carton, single wall | 250 × 200 × 100 mm | 4.0 L (80% fill) | 5,000 g **TBC** | ~13% (2+ large bottles, or too big for the bag) |
+| Plastik klip (ziplock) | 200 × 300 mm | ~1.3 L | — | 0.83 per order |
+| Bubble sheet | 300 × 400 mm | — | — | one per cushion / powder |
+
+**Acceptance examples.**
+
+1. 12 lip + 1 micellar 100 ml → paper bag + 1 plastik klip + seal sticker.
+2. 10 lip + 2 shampoo 170 ml → carton + 1 plastik klip + tape.
+3. 13 units including 2 cushions → paper bag + 2 bubble sheets.
+4. A new SKU with no box size → suggestion shown with the *estimated* badge; pick proceeds.
+5. The packer overrides bag → carton with *tidak muat* → logged against the order and each SKU in it.
+
+---
+
+## 11. Stock count
+
+### 11.1 Cadence **[DECIDED]**
+
+- **11.1.1** **ABC tiers from day one.** A = the top 20% of SKUs by units picked over the last four weeks, counted **weekly**. B and C are counted **monthly**. New SKUs start as A until they have history.
+- **11.1.2** At 118 SKUs this is roughly 2,600 unit scans a week per station (≈1.5 hours), about half of counting everything weekly.
+
+### 11.2 How a basket is counted **[DECIDED]**
+
+- **11.2.1** The staffer selects a basket; it is **locked** to them so two people never count the same basket.
+- **11.2.2** They **scan every unit**. A keypad remains only as a fallback for an unreadable barcode.
+- **11.2.3** The system quantity is **hidden** throughout.
+- **11.2.4** **Zero tolerance** — any difference flags.
+- **11.2.5** On a mismatch the staffer **recounts once before the system number is revealed**. Only then is the variance shown.
+
+### 11.3 Sign-off
+
+- **11.3.1** **Counting never moves stock by itself.** A supervisor reviews the variance, picks a reason, and approves; only then does the ledger change and the new level publish.
+- **11.3.2** A count is accurate only if quantity *and* location match with no transaction open against the basket.
+
+---
+
+## 12. Integration: the five messages with Hiryu
+
+### 12.1 The contract **[DECIDED]**
+
+| # | Message | Direction | Fires when | Shape |
+|---|---|---|---|---|
+| 1 | **Order to pick** | Hiryu → WMS | An order from any channel is accepted | Order ref, site, lines, channel, delivery mode, placed / promised time |
+| 2 | **Order cancelled** | Hiryu → WMS | Customer or platform cancels | Order ref |
+| 3 | **Stock level** | WMS → Hiryu | **Every change**: receipt, allocation, pick, return, signed count, short pick | **Available** = on hand − allocated, absolute, per SKU per darkstore |
+| 4 | **Order ready** | WMS → Hiryu | Pack scan | Order ref, timestamp |
+| 5 | **Order short** | WMS → Hiryu | Picker declares a shortfall | Order ref, line, found *n* of *m* — Hiryu decides refund, partial or substitute |
+
+**Hiryu is the only sender and the only receiver.** A new channel is a new connector inside Hiryu; the WMS does not change.
+
+### 12.2 Rules
+
+- **12.2.1** **Absolute quantities, never deltas.** A lost delta is wrong forever; a lost snapshot is corrected by the next.
+- **12.2.2** **Every message is idempotent.** Stock keyed on site + SKU; order events on reference + event.
+- **12.2.3** **Durable outbox, never a direct call.** If the receiver is down, a putaway still completes and the message waits.
+- **12.2.4** **Two lanes.** Order events (4, 5) jump ahead of stock syncs.
+- **12.2.5** **Darkstores only** send message 3, and **training sites send nothing**, both enforced at the single outbound edge.
+- **12.2.6** **Message 3 follows every change, sales included.** Hiryu no longer deducts sales, so the WMS number is the one every listing is derived from (§2.2). *(Replaces v2.0's "never sent for a sale"; closes v2.0's Q6.)*
+- **12.2.7** **The WMS publishes the exact available.** Any buffer is Hiryu's split rule: **Grab only, per SKU, default 0**, turning on below a threshold — a Grab customer has already paid, so overselling there means a cancellation. Bundles (⌊available ÷ qty⌋) and per-listing numbers are Hiryu's too.
+- **12.2.8** **Messages 1 and 2 are authenticated**: Hiryu presents a shared secret (`X-Hiryu-Key`); an admin may send them by hand for testing. On the training site the simulator stands in for Hiryu.
+
+### 12.3 Hiryu sync is deferred **[DECIDED]**
+
+- **12.3.1** The contract stands, but the Hiryu team is **not being approached yet**. The WMS runs in **shadow mode**: it computes and queues every message and sends nothing to Hiryu.
+- **12.3.2** The integration is proven first on the **WhatsApp channel**, which Ninja builds and controls end to end.
+- **12.3.3** Until the link exists, Grab orders reach the WMS by copy and paste from Hiryu, and stock goes back by a sheet the supervisor types into Hiryu (§12.4).
+
+### 12.4 Interim bridge: copy from Hiryu, paste into the WMS **[DECIDED 21 Sep, to build: paste first]**
+
+Hiryu and the WMS have no link yet (§12.3), and Hiryu offers no API or webhook we can use. The floor still needs Hiryu's orders: the pilot starts with a few hundred SKUs, and a picker only finds them quickly if the WMS already holds the order and sends them bin by bin. Until the five messages exist, **a person carries them**, and the WMS makes that fast, exact and safe.
+
+There are two ways in, one parser and one endpoint:
+
+| | Option 1: paste the order page | Option 2: one-click button |
+|---|---|---|
+| What staff do | Copy the whole Hiryu order page and paste it into the WMS | Click **Kirim ke WMS** in the bookmarks bar while the Hiryu order page is open |
+| What reads Hiryu | The staffer's own copy and paste | A small bookmarklet reading the same visible page text |
+| Build | **First.** WMS only | After option 1 is live, and only after a heads-up to Shaun, because it runs inside Hiryu's page under the staff login |
+| Calls Hiryu's API? | No | No. It reads what is on screen, as a copy does |
+
+Both hand the same text to the same parser in the WMS page. Option 2 is option 1 without the keyboard shortcuts.
+
+#### 12.4.1 Customer data stays in Hiryu
+
+- **12.4.1.1** The WMS never receives, stores, logs or shows anything about the customer: no name, phone, PIN, address, note or payment. It takes no money either: no prices, totals or fees.
+- **12.4.1.2** **Parsing happens in the browser.** The pasted text never leaves the staffer's screen. The page pulls out the fields in §12.4.3, sends only those, and clears the paste box at once, whether the paste worked or not.
+- **12.4.1.3** **The server accepts the listed fields and nothing else.** The request model refuses unknown fields (`extra = forbid`) and every text field has a strict pattern, so nothing else can ride along.
+- **12.4.1.4** **Raw payload is refused.** If the paste contains Hiryu's raw JSON (it holds a `receiver` block with the customer's name and contact), the page throws the whole paste away and says *Tutup "Raw payload" dulu, lalu salin ulang* (close Raw payload first, then copy again). Nothing is sent.
+- **12.4.1.5** Staff names and emails in Hiryu's History card are ignored as well.
+- **12.4.1.6** To see the customer's note in full, staff look at the order in Hiryu. The WMS keeps only the item-level out-of-stock instruction (§12.4.3), which is product data.
+
+#### 12.4.2 What Hiryu shows, and what staff copy
+
+The Hiryu order page (`hiryu.ninjavan.co/orders/<n>`) has an action bar and three cards, **Details**, **History** and **Items**, then a **Raw payload** card that stays closed. *(Read off the Malaysia instance on 21 Sep 2026.)*
+
+**Staff copy the whole page, not a part of it.** Selecting a block with the mouse goes wrong on a small screen; `Ctrl + A` then `Ctrl + C` cannot. The parser finds what it needs anywhere in the text.
+
+```
+Order GM-358                         <- short number (display only, NOT unique)
+DELIVERED                            <- Hiryu status
+Grab order ID
+001473446415-C8E3PBB2NJU2NT          <- the order's real key
+Store
+View store #12                       <- Hiryu store number -> hub + brand
+Order time
+Sep 21, 2026, 12:27 PM               <- start of the 15 min promise
+...
+Items
+1 line · 1 unit                      <- checksum
+1×                                   <- quantity
+5x Pack Kambing Perap [400g] Bundle  <- Grab item name (shown, not trusted)
+MYITE20260819102823055224            <- Hiryu item ID -> SKU × units
+If out of stock: Replace with 1 × MYITE20260819102823044918
+MYR 125.50                           <- ignored
+Raw payload
+Show                                 <- leave closed
+```
+
+#### 12.4.3 The parser
+
+- **12.4.3.1** **Fields kept:** Grab order ID; short number (`GM-…`); Hiryu status; Hiryu store number (`#12`); order time; the declared *N line(s) · M unit(s)*; and per line the quantity (`N×`), the Hiryu item ID, and the out-of-stock instruction as a type (`replace` / `remove` / `cancel_order` / `contact`) with the replacement item ID and quantity when there is one.
+- **12.4.3.2** **The key is the Grab order ID, never the GM number.** Short numbers repeat: the Malaysia list already holds two different orders numbered GM-482. `orders.external_ref` is the Grab order ID; the GM number is kept for display.
+- **12.4.3.3** **An item line** is a quantity line `N×`, then a name line, then an ID line that matches a Hiryu item ID in the item map (§12.4.4). A line starting *If out of stock* belongs to the line above it and never becomes a line of its own.
+- **12.4.3.4** **Checksum.** The lines found and the units summed must equal Hiryu's *N line · M unit*. If they don't, nothing is sent: *Salinan tidak lengkap, salin ulang seluruh halaman* (incomplete copy, copy the whole page again).
+- **12.4.3.5** The parser is built against real pastes. Before the build, collect 10 pastes from Malaysia (order pages in several statuses, bundles, both out-of-stock types, a cancelled order) as test fixtures, with any customer data removed by hand. Clipboard text can differ from what a screen reader sees, so the fixtures decide the rules.
+- **12.4.3.6** Hiryu's page belongs to Hiryu's team and can change. When the parser meets a layout it doesn't know, it refuses with a clear message and never guesses. The fixtures show what moved.
+
+#### 12.4.4 Two maps, kept by Ops HQ
+
+| Map | Holds | How it is filled |
+|---|---|---|
+| **Hiryu items** (`hiryu_items`) | Hiryu item ID → brand, Grab item name, **SKU**, **units per sale**, barcode, active | Ops HQ exports the menu from Hiryu (*Menus → the menu → Export CSV*) and uploads it on *Impor menu Hiryu*. The columns used are `item_id`, `item_name`, `barcode` and `available_status`. An item whose barcode matches a WMS barcode is mapped at 1 unit per sale automatically. Bundles and unmatched items wait on a *Perlu dipetakan* (needs mapping) list for HQ to choose the SKU and units. Items missing from a new CSV turn inactive. Re-upload whenever the menu changes. |
+| **Hiryu stores** (`hiryu_stores`) | Hiryu store number → WMS site + brand, with the store name and partner store ID | Ops HQ types it once per store from Hiryu *Stores*: 4 rows for the pilot (Kahf and Labore at KJ5 and MA5). |
+
+- **12.4.4.1** A SKU uses the same code in Hiryu and in the WMS. Ops HQ sets them equal when building the Hiryu SKUs.
+- **12.4.4.2** A paste with an unmapped item is not sent. The staffer sees the Grab item name and *Barang belum dipetakan, sudah dikirim ke HQ* (item not mapped yet, sent to HQ). The item goes to the top of HQ's *Perlu dipetakan* list with the hub and time. The order waits; nothing is guessed.
+
+#### 12.4.5 What the WMS does with a paste
+
+| Hiryu status in the paste | WMS action |
+|---|---|
+| RECEIVED, ACCEPTED | **New order.** Created through the same path as message 1 (`channel = grab`, `delivery_mode = grab_rider`, `promised_at` = order time + 15 min), then allocated, queued and opened as a guided pick. Units per SKU = Σ quantity × units per sale. |
+| Same Grab order ID again, still open | Opens the existing pick. Idempotent, like message 1. |
+| CANCELLED, REJECTED, FAILED | **Cancel.** Same path as message 2: the allocation is released and picked units go to return to shelf. If the WMS never had the order, nothing happens and the screen says so. |
+| DRIVER_ALLOCATED or later, never pasted before | Refused: *Pesanan ini sudah lewat tahap ambil barang. Laporkan ke supervisor.* (This order is past picking. Tell the supervisor.) The daily check (§12.4.8) picks it up. |
+| Store belongs to another hub | Refused, naming the hub it belongs to. |
+
+- **12.4.5.1** New endpoint `POST /api/hiryu/paste`, open to **staff and above at that site**. Message 1 itself stays Hiryu-or-HQ only. The body is the fields in §12.4.3.1 plus `source` = `paste` or `button`. The server re-checks the checksum and both maps before creating anything, and records who pasted, when, and from which source.
+- **12.4.5.2** **Out-of-stock instruction on the pick.** When a picker declares a short (§10.2), the screen shows the customer's instruction: *Ganti dengan: <item> (rak UT5-A-3-02)*, *Hapus dari pesanan*, *Batalkan pesanan* or *Hubungi pelanggan*. For *replace*, the picker can pick the replacement in the same pick; it is allocated and scanned like any other line. What to press in Hiryu afterwards is Hiryu's call (Q13).
+- **12.4.5.3** **Pack.** After the pack scan the screen shows the GM number and *Sekarang tekan Mark ready di Hiryu* (now press Mark ready in Hiryu), because the WMS cannot tell Grab itself (§12.3).
+
+#### 12.4.6 Stock from the WMS to Hiryu: the Hiryu stock sheet
+
+Hiryu keeps taking sales off its own count while the WMS counts the shelf. Hiryu's number is corrected by overwriting it with the WMS number.
+
+- **12.4.6.1** Screen *Stok untuk Hiryu*, one per Hiryu store, with SKU code, name, **WMS available**, the value last typed into Hiryu, and a *berubah* (changed) flag. Rows are sorted by SKU code like Hiryu's Stock tab, so the two screens line up side by side. A filter shows changed rows only.
+- **12.4.6.2** The supervisor opens Hiryu *Stores → the store → Stock*, types each changed row into **Units on hand**, presses **Save stock**, then taps **Sudah disimpan di Hiryu** (saved in Hiryu) in the WMS, which records the values as sent.
+- **12.4.6.3** **Never use Hiryu's *Arrived → Add to stock*.** It adds to Hiryu's count, and the WMS number already includes the delivery, so it would be counted twice.
+- **12.4.6.4** **When:** at opening, after each delivery is put away, after each count is signed off, and straight after a short pick that took the last units (the WMS flags this).
+- **12.4.6.5** **Only when nothing is in flight.** Until Shaun confirms when Hiryu takes a sale off (Q13), mirror only when Hiryu Live Orders shows 0 *Pending accept*, 0 *Pending packing* and 0 *Packed, awaiting pickup* for that hub. The screen repeats this rule above the table.
+
+#### 12.4.7 The Hiryu menu stays in Hiryu
+
+Prices, item names, photos and availability belong to Hiryu, and they overwrite Grab Merchant once a store is linked. The WMS only reads the menu export to build the item map. A SKU the WMS counts at 0 goes sold out in Hiryu through the stock sheet, not through the menu.
+
+#### 12.4.8 Daily check: paste the Hiryu order list
+
+- **12.4.8.1** At closing the supervisor opens Hiryu *Orders*, sets **Dark store** to the hub and **From / To** to today, presses `Ctrl + A` then `Ctrl + C`, and pastes into the WMS screen *Cek harian Hiryu*. The list holds no customer data, and the WMS keeps only Grab order IDs, GM numbers, stores and statuses from it.
+- **12.4.8.2** The WMS shows three lists: **in Hiryu, not in the WMS** (a missed paste, so stock was sold without a scan); **cancelled in Hiryu, still open or picked in the WMS** (a missed cancel); and **in the WMS, not in Hiryu** (wrong hub, or a test). Each row links to its fix.
+- **12.4.8.3** Hiryu shows 50 orders a page. At about 7 orders a day per hub one page is enough; above 50, paste each page.
+
+#### 12.4.9 Option 2, the one-click button (after option 1)
+
+- **12.4.9.1** A bookmarklet named **Kirim ke WMS**, saved in the bookmarks bar of the packing PC's normal Chrome profile, not the kiosk-printing one.
+- **12.4.9.2** On click it reads the visible text of the Hiryu order page (the same text a copy gives), runs the **same parser**, refuses the same things, and opens the WMS paste screen with the fields filled in, ready to confirm. It calls nothing on Hiryu and reads no stored login.
+- **12.4.9.3** Nothing is sent in the background. The staffer still sees the confirm card and presses **Mulai ambil**.
+- **12.4.9.4** Before it reaches any hub: a heads-up to Shaun and NV security, because it runs inside Hiryu's page.
+
+#### 12.4.10 What happens when the real link arrives
+
+Messages 1 and 2 replace the paste screen, which stays as a fallback. Message 3 replaces the stock sheet, and Hiryu stops taking sales off its own count (§2.2). The daily check stays as a safety net for a month, then goes. The item and store maps stay, because the real link needs them too.
+
+#### 12.4.11 New data
+
+| Where | What |
+|---|---|
+| `hiryu_items` (new) | `hiryu_item_id` (key), `brand_id`, `item_name`, `sku_id` (empty until mapped), `units_per_sale` (default 1), `barcode`, `active`, `menu_name`, `imported_at`, `mapped_by`, `mapped_at` |
+| `hiryu_stores` (new) | `hiryu_store_no` (key), `partner_store_id`, `store_name`, `site_id`, `brand_id`, `active` |
+| `hiryu_stock_sent` (new) | `site_id`, `sku_id`, `qty`, `sent_by`, `sent_at`, one row per confirmed sheet line |
+| `orders` | `hiryu_short_no`, `hiryu_store_no`, `source` (`api` / `paste` / `button` / `simulator`), `pasted_by`, `pasted_at` |
+| `order_lines` | `hiryu_item_id`, `oos_type`, `oos_replacement_item_id`, `oos_replacement_qty` |
+
+No customer field exists in any table, so none can be filled by mistake.
+
+---
+
+## 13. WhatsApp channel (QC-as-a-service)
+
+### 13.1 How a WhatsApp sale reaches the WMS **[DECIDED — canonical]**
+
+WhatsApp never talks to the WMS. The **WhatsApp adapter is a connector inside Hiryu**, and the order reaches the WMS as message 1 from Hiryu, like any other.
+
+1. The customer browses the brand's **WhatsApp catalog** and sends a structured order message.
+2. The adapter holds the conversation and cart and sends a **payment link**. Nothing reaches the WMS until payment is confirmed.
+3. Hiryu checks stock live, **routes** to the nearest dark store that can fill the whole order, and sends **message 1**. The WMS allocates, queues and guides the pick.
+4. Message 3 drops available at once, and Hiryu pushes the lower number to Grab in the same second — this is how a WhatsApp sale reaches Grab's shelf count.
+5. On **message 4**, Hiryu chooses the last mile (Ninja rider within ~7 km, else on-demand third party, else next-day) and the **TMS** books it; the customer is told through the adapter.
+6. On **message 5**, Hiryu asks the customer — send what we have, or refund? — which is better than Grab's automatic refund.
+
+**Phase-1 shortcut:** until the fold-in date (§17), the adapter may send message 1 to the WMS directly. Everything else above still holds.
+
+### 13.2 Ownership
+
+| Hiryu (with the adapter) owns | WMS owns | TMS owns |
+|---|---|---|
+| Conversation, cart, payment link, catalog mapping | Allocation, pick, pack, handover | Booking, collection, tracking |
+| Listing map, split rule, buffers, bundles | Stock, location and owner | |
+| Dark-store routing, last-mile choice | Return to shelf | |
+| Customer messages, hiding sold-out items | Nothing about the customer | |
+
+### 13.3 Build order
+
+- **13.3.1** **A Hiryu simulator first**, on the training site — compose an order for any channel (Grab, WhatsApp, web, Instagram), watch it become a pick task with the right promise, cancel it, and see messages 1–5 queue. It proves the contract and the 1-hour promise before Meta business verification, which takes weeks. *(Built.)*
+- **13.3.2** Then the real adapter, inside Hiryu: Meta webhook, catalog, payment callback, with routing in Hiryu and rider booking in the TMS.
+
+---
+
+## 14. Admin, access and training
+
+### 14.1 Access
+
+- **14.1.1** Sign-in is **Google SSO** through the Substrait proxy; the app stores no passwords.
+- **14.1.2** Roles: **superadmin, Ops HQ, SPV (supervisor), hub operator, staff** — see §3.1. Superadmin and Ops HQ see every site; everyone else sees only the sites on their account. Nobody can deactivate their own account or change their own role, and only a superadmin can grant or change superadmin. Migration V18 makes the pilot owner superadmin and every other former admin Ops HQ.
+- **14.1.3** Any **@ninjavan.co** account is auto-provisioned as staff **on the training site only**. This stays on through the pilot; **at go-live, the staff admin screen takes over and auto-provision is switched off.**
+
+### 14.2 Admin screens
+
+- **14.2.1** Staff and roles, sites (CWH / darkstore), racks and bins (rack view → level and bin view), SKUs, barcodes and photos, the slot registry, SKU requests from stations, replenishment to the brand.
+- **14.2.2** **The unit-labelling menu (Mode B) is hidden** *(17 Sep)*. Wardah is fully barcoded; the screens stay built and come back when a brand without barcodes onboards.
+
+### 14.3 Training mode
+
+- **14.3.1** An isolated training site with a permanent banner, one-tap reset, scripted scenarios, test barcodes that work without a scanner or stock, and a Hiryu simulator for Grab and own-channel orders.
+- **14.3.2** Training never reaches Hiryu or a channel, enforced where messages leave the system.
+
+---
+
+## 15. Service targets and scale
+
+### 15.1 Service targets **[DECIDED]**
+
+| Measure | Definition | Target |
+|---|---|---|
+| On-time dispatch | Orders ready before `promised_at` | **95%** |
+| Pick and pack time | Order received → ready (Grab) | **< 5 min** |
+| Out-of-stock rate | Order lines short | **< 3%** |
+| Count accuracy | Baskets counted with zero variance | **98%** |
+| Pick accuracy | Lines picked without a wrong-item stop | 99.5%+ (tracked) |
+
+Industry reference: manual picking runs 1–3% errors; scan-verified picking 0.1–0.3%.
+
+### 15.2 Scale requirements
+
+The second brand arrives within three months and the network grows to 10–30 stations within six. Everything below must be in place before the second brand onboards.
+
+- **15.2.1** Every list is **paginated** and served by a single query — no per-row lookups.
+- **15.2.2** A **network view** across stations: which is behind, which has a stuck claim, which is under-counted.
+- **15.2.3** Screens that watch live state **update by push**, not by polling every few seconds per tab.
+- **15.2.4** The console sidebar is **trimmed by role and site type** — a CWH has no pick queue to show.
+- **15.2.5** A short **client-side scan buffer** holds scans across a Wi-Fi blip and replays them on reconnect; idempotency keys make that safe. Beyond a few seconds the screen still blocks loudly.
+
+### 15.3 Platform
+
+- **15.3.1** Substrait, deployed from the GitHub `main` branch. OceanBase with Flyway migrations; every migration written to be safely re-runnable from a partial state.
+- **15.3.2** Asset URLs carry a version so a deploy is never served stale CSS; unknown paths return 404.
+- **15.3.3** Security scan findings (Semgrep, Trivy) are reviewed before go-live.
+
+---
+
+## 16. Build status
+
+As of 17 September 2026. "Verified" means driven end to end against the live database on the training site on that date. **"Built 17 Sep" is written and statically checked but not yet driven against the live database.**
+
+| Area | Backend | Screens | Notes |
+|---|---|---|---|
+| Ledger, idempotency, audit, stock owner | Verified | — | No automated tests yet; one UTC clock across app and database |
+| Inbound receive, putaway, undo last scan, AWB/reference | Verified | Live (01–04, 15) | Receipts list for supervisors |
+| Putaway list, day colours | Verified | Live | Slip built from the ledger, so a split across rack and overflow shows both |
+| Barcode registration, license plates | Built | Live (03, 05, 06) | Mode B untested at volume |
+| Slot registry, overflow, oldest-location picking | Verified | Live | Low/replenishment threshold removed from the UI |
+| Order intake (message 1, Hiryu key), allocation across rack + overflow | Verified | — | No false "short" while overflow holds stock |
+| Guided pick, wrong-item stop, pack (message 4 once) | Verified | Live (07–09) | Right/wrong test barcodes on the training site |
+| Pick queue by time remaining, stuck-claim release | Verified | Live | Channel, delivery mode, urgency |
+| Short pick (message 5) | Built | Live (17) | |
+| Cancel (message 2, Hiryu only) and return to shelf | Verified | Live (18) | Picked units scanned back one by one |
+| Stock count: blind, recount before reveal, approve once | Verified | Live (10–12, console) | Keypad fallback; ABC schedule not built |
+| Stock views, low stock, restock requests | Built | Live | Restock waits on the restocking model (§5) |
+| Admin, training, Hiryu simulator (any channel) | Verified | Live | |
+| Transfers, hub dispatch | Built | Live | Frozen pending the restocking model |
+| Outbox | Queues every change | Live (integration) | **Nothing sends yet** (shadow mode) |
+| Inbound reference with expected quantities, crossdock | — | — | Decided, not built |
+| ABC schedule, scan buffer | — | — | Decided, not built |
+| KPIs, network view, push updates | — | — | Decided, not built |
+| WhatsApp adapter (inside Hiryu) | — | — | Simulator built |
+| Packaging suggestion (§10.5) | — | — | **Proposed**, spec for review |
+| Ops HQ role and role gating (§3.1) | Built 17 Sep | Built 17 Sep | Sidebar hides screens a role cannot use |
+| Racks & bins: rack view, level & bin view, expand and trim (§4.2.6) | Built 17 Sep | Built 17 Sep | |
+| SKU onboarding: required thresholds, photo upload, rack per hub (§6.3) | Built 17 Sep | Built 17 Sep | Replaces "photo upload — not built" |
+| Unknown product → Ops HQ → station (§7.6) | Built 17 Sep | Built 17 Sep | Photo from a phone or laptop camera |
+| Replenishment to the brand, receive by AWB (§5.3, §7.1.5) | Built 17 Sep | Built 17 Sep | Sending to Wardah stays manual; AWB required |
+| Variance acknowledgement and sign-off (§5.4) | Built 17 Sep | Built 17 Sep | Stock corrected at sign-off |
+| Hub map and stock monitoring (§8.5) | Built 17 Sep | Built 17 Sep | |
+| Superadmin and view-as preview (§3.3) | Built 17 Sep | Built 17 Sep | Read-only while previewing |
+| SPV: whole layout, restock for own hubs (§3.1, §5.3) | Built 21 Sep | Built 21 Sep | |
+| Wardah owner = brand (§6.4) | Migration V19 | — | |
+| Two stacked bins per position, T (top) / B (bottom) (§4.2.8) | Built 21 Sep | Built 21 Sep | Migrations V20, V21 |
+| R defaults to 25% of P (§8.3.3) | Built 21 Sep | Built 21 Sep | Setting `restock_default_pct`; V21 backfill |
+| Inbound in batches, 1 inbound bin = 1 SKU (§7.5.4) | Built 21 Sep | Built 21 Sep | Migration V21 |
+| Safety stock, automatic restock draft, reminders and flags (§8.3, §8.6) | Built 21 Sep | Built 21 Sep | Timer every 10 min (`AUTO_REPLENISH_MINUTES`) |
+| Station on a phone: install, camera scan, type the code (§3.2.3) | — | Built 21 Sep | Camera needs HTTPS |
+| Unit-labelling menu | — | Hidden | Screens kept for a brand without barcodes |
+| Hiryu bridge: item and store maps, menu CSV import (§12.4.4) | — | — | **Specified 21 Sep**, build step 1 |
+| Hiryu bridge: paste an order page, parser, `POST /api/hiryu/paste` (§12.4.2–12.4.5) | — | — | **Specified 21 Sep**, build step 2; fixtures from Malaysia first |
+| Hiryu bridge: cancel by paste, OOS instruction on short pick (§12.4.5) | — | — | **Specified 21 Sep**, build step 3 |
+| Hiryu bridge: stock sheet, daily check by paste (§12.4.6, §12.4.8) | — | — | **Specified 21 Sep**, build step 4 |
+| Hiryu bridge: one-click button (§12.4.9) | — | — | **Specified 21 Sep**, after step 4 and Shaun's OK |
+
+**All 38 designed screens run on live data** (14 Sep). Each screen's logic lives in `frontend/js/screens/`, on one shared boot.
+
+---
+
+## 17. Open questions
+
+**From the canonical design (§8 of that document):**
+
+| Item | Why it matters | Who |
+|---|---|---|
+| **Feature and screen list** | Merge this PRD with the Malaysia PRD into one list of WMS features and screens — next step | CW |
+| **Grab stock behaviour** | Does Grab lower its displayed stock as soon as an order is placed? Decides how much the buffer matters | Sean |
+| **Rider dispatch tool** | The same-day fleet runs on OPG's daily routing, which isn't instant dispatch for 1-hour orders | Dhinesh |
+| **Grab buffer thresholds** | Per SKU; the setting exists in Hiryu, the numbers don't | — |
+| **Adapter fold-in date** | When the WhatsApp route moves behind Hiryu (§9.1.6) | Baskoro · Sean |
+| **Split orders** | Ruled out for now. Revisit if sold-out shades lose too many sales across 118 near-identical SKUs | — |
+| **Restocking model** | Supplier → CWH → dark store is designed separately; §5 and the transfer screens wait on it | — |
+
+**From this PRD:**
+
+- **Q1** — Does Ninja already have a **WhatsApp Business account** and verified number, or does that start from zero?
+- **Q2** — Which **payment provider** for WhatsApp orders — Midtrans, Xendit, bank transfer?
+- **Q3** — For the WhatsApp test, is it **one darkstore serving one area**, so address routing can wait?
+- **Q4** — **Crossdock dwell**: 7 days is a placeholder. Confirm the real limit.
+- **Q5** — How full does a basket get before it should spill? Sets the **default full threshold** for 118 SKUs.
+- ~~**Q6** — how the POS applies an absolute stock level without re-deducting picked orders.~~ **Closed by the canonical design:** Hiryu stops deducting sales and derives every listing from the WMS's available (§2.2, §12.2.6).
+- **Q7** — **Exceptions still undesigned:** damaged or written-off stock, customer returns, and units found after being written off by a short pick.
+- **Q8** — Who reviews the **Semgrep and Trivy findings** before go-live?
+- **Q10** — **Two bins per position (§4.2.8):** *closed 21 Sep* — stacked, named T (top) and B (bottom).
+- **Q11** — **Native Android app for pickers:** *future.* For now the station web app runs on phones (§3.2.3). An APK wrapper can come later if always-on scanning or background alerts are needed.
+- **Q12** — **Temporary inbound bins (§7.5):** *closed 21 Sep* — required at every hub; the number is flexible because an AWB can be received in batches (§7.5.4). Each hub's count is entered on *Rak & bin* once procured.
+- **Q13** — **Hiryu behaviour the bridge depends on** *(ask Shaun)*: when does Hiryu take a sale off its count (received, ready or completed), and does a cancel put it back? What must the hub press in Hiryu for each out-of-stock instruction? Can a shop staff login see the order page and copy it? What prefix do Indonesia item IDs use?
+- **Q14** — **One-click button (§12.4.9):** is a bookmarklet on the hub packing PC acceptable to Shaun and NV security?
+- **Q9** — **Packaging (§10.5):**
+  - Does Grab have a Kilat bag and carton spec we must match?
+  - What load does our paper bag really take? Test with 2 shampoos and 12 lip.
+  - Will Wardah supply box sizes and weights per SKU?
+
+---
+
+## 18. Not doing, and why
+
+| Not doing | Why |
+|---|---|
+| Any WMS link to Grab or another platform | Only Hiryu talks to the WMS; a second link means two systems disagreeing about one order |
+| A stock count in Hiryu | The WMS is the only counter; Hiryu derives each listing's number from it |
+| Routing, last-mile choice, rider booking | Hiryu routes and chooses; the TMS books and tracks |
+| Split orders | Two riders on one small basket costs more than it earns |
+| Settlement and billing | Finance, recorded outside the system for now |
+| Modelling dividers in the WMS | FIFO inside a basket is a human action guided by colour |
+| Expiry dates and FEFO | Decided against; inbound date on the label is enough for 24–36 month shelf life |
+| Automatic velocity slotting | Supervisors assign by brand and category, which new staff learn faster |
+| Substitution in the WMS | Hiryu owns the customer and decides |
+| Replenishment tasks | The picker follows the oldest stock instead (§8.4) |
+| An oversell buffer in the WMS | The WMS publishes exact available; a Grab-only buffer is Hiryu's split rule |
+| Double scan at pack | The pack scan is the ready signal |
+| Pick batching, for now | Pays off only above ~15 orders an hour per picker |
+| Delivery management | The WMS owns handover; the TMS owns the last mile |
+| Hiryu sync, for now | Deferred; WhatsApp proves the contract first. Copy and paste carries Grab orders meanwhile (§12.4) |
+| Customer data in the WMS | Not needed to pick or pack, and a liability if held. It stays in Hiryu (§2.11) |
+| Calling Hiryu's internal API from the WMS or a script | Not ours to depend on; the bridge reads only what staff can see on screen (§12.4.9) |
+
+---
+
+## 19. Roadmap
+
+The second brand arrives within three months, so phases 0–5 fit inside that window.
+
+**Phase 0 — make it clickable.** *Done 14 Sep:* every screen wired; supervisors and admins land on the console; the sidebar keeps its scroll; the AWB field is in the v3 design; replenishment is gone from screens.
+
+**Phase 1 — make it trustworthy.** Automated tests on the ledger's rules. Build the outbox sender, pointed at the simulator first. Lock a receipt against concurrent scanning. *(Done in v2.1: messages 1 and 2 authenticated; message 3 after every change, carrying available; recount before reveal; counts approved once.)*
+
+**Phase 1b: Hiryu bridge for the pilot** *(21 Sep)*. Item and store maps with menu CSV import, then paste an order page, then cancel by paste and the OOS instruction, then the stock sheet and the daily check. The one-click button follows once Shaun agrees (§12.4).
+
+**Phase 2 — the decided model.** Scan counting with the ABC schedule. The "needs a rack" list. Photo upload. Camera scanning. The scan buffer. KPIs.
+
+**Phase 3 — inbound.** Inbound references with live progress, the CSV upload converged into them, crossdock staging with its dwell rule.
+
+**Phase 4 — WhatsApp.** The real adapter, inside Hiryu (the phase-1 shortcut until its fold-in date). *(The simulator is built.)*
+
+**Phase 5 — before the second brand.** Pagination, single-query lists, the network view, push updates, role-trimmed navigation.
+
+**Later.** Hiryu sync; pick batching when volume justifies it.
+
+---
+
+## Appendix A. Glossary
+
+| Term | Meaning |
+|---|---|
+| **Hiryu** | The OMS — the single front door. Owns orders, listings, the split rule, routing and the last-mile choice; the only system that talks to the WMS |
+| **Connector** | One per platform, inside Hiryu (Grab connector, WhatsApp adapter, web connector) |
+| **TMS** | Carries out the last mile Hiryu chose: book, hand over, track |
+| **Available** | On hand − allocated, per SKU per darkstore; what message 3 carries |
+| **Stock owner** | Who owns a unit — Grab (Wardah), the brand (consignment) or Ninja (own range) |
+| **Return to shelf** | Picked units of a cancelled order, scanned back onto the rack one by one |
+| **CWH** | Central warehouse — currently Logos Metrolink. Stores, crossdocks and distributes to darkstores |
+| **Darkstore** | A station that holds stock and fulfils customer orders |
+| **Rack / pick face** | The location a SKU is assigned to; where pickers normally go |
+| **Overflow** | A second location that takes surplus when the rack is full |
+| **Divider** | A physical separator in a basket, one per arrival, coloured by day |
+| **Day colour** | The sticker colour for the weekday stock arrived, always with day name and date |
+| **Inbound reference** | A registered expected delivery: reference, source, quantity per SKU |
+| **Crossdock** | Stock received at the CWH and passed straight through without being put away |
+| **Putaway list** | The frozen record of what a receipt put where, signed for compliance |
+| **Allocation** | Reserving stock for an order at intake so it can't be promised twice |
+| **Short pick** | The picker finds fewer units than the order needs |
+| **`promised_at`** | The time an order must be ready by; drives the queue |
+| **Mode A / Mode B** | Brand-barcode identity versus Ninja license-plate identity |
+| **Shadow mode** | The WMS computes every outbound message and sends none |
+| **Training site** | An isolated site for learning and testing that never reaches real systems |
+| **Grab order ID** | Grab's own order reference, e.g. `001473446415-C8E3PBB2NJU2NT`; the key for a pasted order |
+| **GM number** | Hiryu's short order number, e.g. `GM-358`; shown to people, not unique |
+| **Hiryu item ID** | Hiryu's ID for a menu item, e.g. `MYITE20260819102823055224`; maps to a SKU and units per sale |
+| **Stock sheet** | The WMS list of available per SKU that the supervisor types into Hiryu's Stock tab (§12.4.6) |
+
+Governing document: **QC Systems — Hiryu, WMS, TMS** (`docs/canonical/qc-oms-wms.html`). Companion documents: the **Kilat Fulfilment Flow** (process and swimlane diagrams) and the **Kilat WMS Audit** (research and gap analysis).
+
+---
+
+## Appendix B. Hub steps with Hiryu and the WMS, until they are linked
+
+For the Grab Kilat pilot hubs (KJ5, MA5). Hiryu words are in English because Hiryu's screens are in English. WMS words are as they appear in the WMS.
+
+### B.1 Once, before the first order (Ops HQ and IT)
+
+1. **Packing PC.** One Chrome window on Hiryu **Live Orders**, signed in with the hub's shop login. A second tab on the WMS station app.
+2. **Receipt printer** set up on Hiryu *Receipt printer*, with *Print a packing slip automatically* switched on in that profile only (§12.4.9 keeps the button in the other profile).
+3. **Maps filled** (§12.4.4): the menu CSV for Kahf and Labore uploaded, *Perlu dipetakan* empty, and the 4 Hiryu stores entered.
+4. **Opening stock:** WMS stock counted, then the stock sheet typed into Hiryu (B.5).
+
+### B.2 Every new order (packer at the packing PC, about 20 seconds)
+
+| # | Where | Do | You see |
+|---|---|---|---|
+| 1 | Hiryu Live Orders | The new-order sound plays and the packing slip prints. | The order under *Pending packing* |
+| 2 | Hiryu | Open the order (click it on Live Orders, or *Orders* → the top row). | A page titled **Order GM-…** with *Details*, *History* and *Items* |
+| 3 | Hiryu | Leave **Raw payload** closed (its button says *Show*). Click once on the title **Order GM-…** (plain text, safe to click; never click near the buttons), then press **Ctrl + A**, then **Ctrl + C**. | The whole page turns blue for a moment |
+| 4 | WMS | Open **Tempel pesanan Grab** and press **Ctrl + V** in the grey box. | A card: GM number, store, *N baris · M unit ✓*, each item with photo and bin |
+| 5 | WMS | Check that the GM number matches the slip. Press **Mulai ambil**. | The pick starts at the first bin |
+| 6 | Floor | Pick as the WMS says: go to the bin, scan each unit. | Green for each correct unit; a full stop for a wrong shade |
+| 7 | Pack bench | Pack, scan the pack in the WMS. | *Sekarang tekan Mark ready di Hiryu* and the GM number |
+| 8 | Hiryu | Photo of the packed bag (MY practice), then **Mark ready** on the order. | The order moves to *Packed, awaiting pickup* |
+| 9 | Counter | Hand the bag to the Grab rider and check the GM number with them. | The order goes COLLECTED in Hiryu by itself |
+
+If the WMS says:
+- *Salinan tidak lengkap*: go back to Hiryu, click the title **Order GM-…**, Ctrl + A, Ctrl + C again.
+- *Tutup "Raw payload" dulu*: in Hiryu press *Hide* on Raw payload, then copy again.
+- *Barang belum dipetakan*: tell the supervisor. HQ maps the item, then paste again. Watch the 10 minute prep clock on Live Orders; if HQ cannot answer in time, the supervisor decides whether to pick from the slip by hand.
+- *Pesanan sudah ada*: the order was pasted already; the WMS opens its pick.
+
+### B.3 A unit is missing (picker)
+
+1. In the WMS press **Barang tidak ada** and enter how many you found (§10.2).
+2. The WMS shows the customer's wish from Hiryu:
+   - *Ganti dengan …*: pick the replacement from the bin shown.
+   - *Hapus dari pesanan*: carry on without it.
+   - *Batalkan pesanan*: stop and call the supervisor.
+   - *Hubungi pelanggan*: call the supervisor.
+3. The supervisor does what Hiryu needs for that case (Q13), and opens the stock sheet (B.5) if the SKU is now at 0.
+
+### B.4 An order is cancelled
+
+1. Hiryu shows it as CANCELLED (on Live Orders and on the order page).
+2. Open the order page in Hiryu, click the title **Order GM-…**, then **Ctrl + A**, **Ctrl + C**, and **Ctrl + V** into *Tempel pesanan Grab*.
+3. The WMS shows *Pesanan dibatalkan*. Anything already picked goes to **Kembalikan ke rak** (return to shelf): scan each unit back into its bin.
+
+### B.5 Stock sheet into Hiryu (supervisor, 5 to 10 minutes)
+
+When: at opening, after each delivery is put away, after each count sign-off, and after a short pick that emptied a SKU.
+
+1. Hiryu **Live Orders** must show 0 under *Pending accept*, *Pending packing* and *Packed, awaiting pickup*. If not, wait.
+2. WMS **Stok untuk Hiryu** → choose the store (e.g. *Kahf - Cawang*) → filter *berubah saja*.
+3. Hiryu **Stores** → the same store → **Stock**.
+4. For each WMS row, type the **WMS available** number into Hiryu's **Units on hand** for the same SKU code.
+5. Hiryu **Save stock**. Wait for the save to finish.
+6. WMS **Sudah disimpan di Hiryu**.
+7. Repeat for the hub's other store (Labore).
+
+Never use **Arrived / Add to stock** in Hiryu.
+
+### B.6 Closing check (supervisor, 10 minutes)
+
+1. Hiryu **Orders** → *Dark store* = this hub, *From* and *To* = today.
+2. Click the page title **Orders**, then **Ctrl + A**, **Ctrl + C**.
+3. WMS **Cek harian Hiryu** → **Ctrl + V**.
+4. Fix every row the WMS lists: paste a missed order or cancel, or report it to Ops HQ.
+5. Run the stock sheet (B.5) one last time.
