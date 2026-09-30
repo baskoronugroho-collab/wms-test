@@ -4513,7 +4513,25 @@ Jika merek tidak memberi apa pun, WMS memakai perkiraan di lembar itu dan menand
     }
 
     if (window.WMS_initRacks) window.WMS_initRacks();
+    widenShots();
   }
+
+  /* Screen drafts are wider than the text column. Let each one use the free
+     space to the right of the column, up to its real width, so tables are
+     not cut off; only a window too narrow for the frame still scrolls. */
+  function widenShots() {
+    mount.querySelectorAll('figure.shot').forEach(function (f) {
+      f.style.width = ''; f.style.maxWidth = '';
+      var natural = 0;
+      Array.prototype.forEach.call(f.children, function (c) { natural = Math.max(natural, c.scrollWidth); });
+      var room = document.documentElement.clientWidth - f.getBoundingClientRect().left - 20;
+      var w = Math.min(natural + 2, room);
+      if (w > f.clientWidth) { f.style.width = w + 'px'; f.style.maxWidth = 'none'; }
+    });
+  }
+  var widenTimer = null;
+  window.addEventListener('resize', function () { clearTimeout(widenTimer); widenTimer = setTimeout(widenShots, 150); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(widenShots);
 
   function currentSection() {
     var heads = Array.prototype.slice.call(mount.querySelectorAll('h2'));

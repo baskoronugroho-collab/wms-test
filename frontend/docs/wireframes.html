@@ -1,0 +1,2139 @@
+<meta charset="utf-8">
+<title>Kilat WMS Wireframes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --paper:#F6F5F2; --surface:#FFFFFF; --surface-2:#EEECE6;
+  --ink:#191A1C; --ink-2:#4B4C50; --ink-3:#7D7B77;
+  --rule:#DDD9D2; --rule-strong:#C3BEB5;
+  --signal:#C0202D; --signal-soft:#F8E9EA;
+  --accept:#1C7346; --accept-soft:#E4F1E9;
+  --warn:#8E5F07; --warn-soft:#F6ECD6;
+  --hiryu:#16A34A;
+  --shadow:0 1px 2px rgba(25,26,28,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#131315; --surface:#1A1B1E; --surface-2:#232429;
+    --ink:#EFEDE7; --ink-2:#B7B4AE; --ink-3:#89867F;
+    --rule:#2E2F34; --rule-strong:#43444A;
+    --signal:#EE5C66; --signal-soft:#2B1719;
+    --accept:#4FBE86; --accept-soft:#16271E;
+    --warn:#D6A244; --warn-soft:#2A2215;
+    --hiryu:#4ADE80;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#131315; --surface:#1A1B1E; --surface-2:#232429;
+  --ink:#EFEDE7; --ink-2:#B7B4AE; --ink-3:#89867F;
+  --rule:#2E2F34; --rule-strong:#43444A;
+  --signal:#EE5C66; --signal-soft:#2B1719;
+  --accept:#4FBE86; --accept-soft:#16271E;
+  --warn:#D6A244; --warn-soft:#2A2215;
+  --hiryu:#4ADE80;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+/* Screen drafts in Part A. Drawn with the WMS app's own tokens (frontend/css/tokens.css):
+   navy action, green accept, red stop, amber accent, Inter + IBM Plex Mono. */
+:root{
+  --s-ground:#F6F7F9; --s-sunk:#EFF1F5; --s-surface:#FFFFFF; --s-surface-2:#FAFBFC;
+  --s-ink:#14161A; --s-ink-2:#3A3F47; --s-muted:#5B6270; --s-rule:#E4E7EC; --s-rule-strong:#D3D8E0;
+  --s-action:#1B3A5C; --s-action-ink:#FFFFFF; --s-action-bg:#EAF0F6;
+  --s-accept:#127A45; --s-accept-bg:#E5F2EB;
+  --s-stop:#C01D22; --s-stop-bg:#FBE9E9;
+  --s-caution:#7A4A08; --s-caution-bg:#F5EDDF;
+  --s-accent:#E08A00; --s-accent-ink:#14161A; --s-accent-bg:#FDF3E1;
+  --s-hl:#1B3A5C; --s-dim:rgba(20,22,26,.35);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --s-ground:#101216; --s-sunk:#0C0E11; --s-surface:#171A1F; --s-surface-2:#1C2026;
+    --s-ink:#ECEEF1; --s-ink-2:#C7CBD2; --s-muted:#99A0AC; --s-rule:#2A2F37; --s-rule-strong:#39404A;
+    --s-action:#8FB4DB; --s-action-ink:#0C1520; --s-action-bg:#1B2837;
+    --s-accept:#4FC286; --s-accept-bg:#132A1F;
+    --s-stop:#F0666B; --s-stop-bg:#2E1517;
+    --s-caution:#E0B465; --s-caution-bg:#2B2213;
+    --s-accent:#F0A534; --s-accent-ink:#14161A; --s-accent-bg:#2C2210;
+    --s-hl:#8FB4DB; --s-dim:rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --s-ground:#101216; --s-sunk:#0C0E11; --s-surface:#171A1F; --s-surface-2:#1C2026;
+  --s-ink:#ECEEF1; --s-ink-2:#C7CBD2; --s-muted:#99A0AC; --s-rule:#2A2F37; --s-rule-strong:#39404A;
+  --s-action:#8FB4DB; --s-action-ink:#0C1520; --s-action-bg:#1B2837;
+  --s-accept:#4FC286; --s-accept-bg:#132A1F;
+  --s-stop:#F0666B; --s-stop-bg:#2E1517;
+  --s-caution:#E0B465; --s-caution-bg:#2B2213;
+  --s-accent:#F0A534; --s-accent-ink:#14161A; --s-accent-bg:#2C2210;
+  --s-hl:#8FB4DB; --s-dim:rgba(0,0,0,.5);
+}
+
+/* part dividers and contents groups */
+main h1.part{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:600;font-size:.78rem;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--signal);
+  margin:4.2rem 0 0;padding:.9rem 0 0;border-top:2px solid var(--ink);
+}
+main h1.part:first-child{margin-top:0}
+main h1.part + p{margin-top:.9rem}
+nav.toc li.part{font-family:"IBM Plex Mono",monospace;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--signal);padding:1rem 0 .3rem .9rem}
+nav.toc li.part:first-child{padding-top:0}
+
+/* figure */
+figure.shot{margin:1.4rem 0 1.6rem;display:flex;flex-direction:column;gap:.7rem;max-width:100%;min-width:0}
+figure.shot>*{min-width:0;max-width:100%}
+figure.shot figcaption{font-family:Archivo,sans-serif;font-size:.8rem;line-height:1.45;color:var(--ink-3);max-width:68ch}
+figure.shot figcaption b{color:var(--ink-2);font-weight:600}
+.shotscroll{overflow-x:auto;width:100%;max-width:100%;padding-bottom:.2rem}
+.pair{display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-start}
+
+/* device frames */
+.dev{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--s-ink);background:var(--s-ground);
+  border:1px solid var(--s-rule-strong);border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(20,22,26,.06),0 8px 24px -12px rgba(20,22,26,.18);
+  font-size:13px;line-height:1.4}
+.dev *{box-sizing:border-box}
+.dev--phone{width:300px;max-width:100%;border-radius:22px;border-width:6px;border-color:var(--s-rule-strong)}
+.dev--console{display:grid;grid-template-columns:150px 1fr;width:860px;min-height:300px}
+.dev--sketch{max-width:560px;border-style:dashed;background:var(--s-surface)}
+.dev--stop{border-color:var(--s-stop)}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.muted{color:var(--s-muted)}
+.small{font-size:11.5px;line-height:1.45}
+.hl{color:var(--s-hl);font-weight:600}
+
+/* numbered markers that match the steps */
+b.pin,.dev b.pin{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 4px;border-radius:9px;
+  background:var(--s-accent);color:var(--s-accent-ink);font:700 10.5px/1 Inter,system-ui,sans-serif;vertical-align:1px;margin-left:4px;
+  box-shadow:0 0 0 2px var(--s-surface)}
+
+/* console */
+.c-side{background:var(--s-surface);border-right:1px solid var(--s-rule);padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.c-mark{font:800 12px/1 Inter,sans-serif;letter-spacing:.12em;color:var(--s-stop);padding:2px 8px 12px}
+.c-nav{padding:6px 8px;border-radius:6px;color:var(--s-ink-2);font-size:12px;display:flex;align-items:center;justify-content:space-between}
+.c-nav.is-on{background:var(--s-action-bg);color:var(--s-action);font-weight:600}
+.badge{font-style:normal;background:var(--s-stop);color:#fff;border-radius:8px;font-size:10px;padding:1px 6px}
+.c-main{padding:16px 18px;display:flex;flex-direction:column;gap:12px;background:var(--s-sunk)}
+.c-main--dim{background:var(--s-dim);align-items:center;justify-content:center}
+.c-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.c-title{font-weight:700;font-size:15px}
+.c-sub{font-weight:600;font-size:12.5px;color:var(--s-ink-2)}
+.c-form{display:flex;flex-direction:column;gap:8px;background:var(--s-surface);border:1px solid var(--s-rule);border-radius:10px;padding:12px}
+.c-head + .c-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.c-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.f{display:flex;flex-direction:column;gap:3px}
+.f>span:first-child{font-size:11px;color:var(--s-muted);font-weight:500}
+.in{display:block;border:1px solid var(--s-rule-strong);background:var(--s-surface);border-radius:6px;padding:6px 8px;font-size:12.5px;min-height:30px}
+.in--sel::after{content:"▾";float:right;color:var(--s-muted);margin-left:6px}
+.in--sm{padding:3px 6px;min-height:0;font-size:11.5px;display:inline-block}
+.link{color:var(--s-action);font-size:12px;font-weight:600}
+.hint{font-size:11.5px}.hint.ok{color:var(--s-accept)}
+.tick{display:flex;align-items:center;gap:6px;font-size:12px}
+.box{width:14px;height:14px;border:1.5px solid var(--s-rule-strong);border-radius:3px;display:inline-block}
+.box.on{background:var(--s-action);border-color:var(--s-action)}
+.photo-drop{border:1.5px dashed var(--s-rule-strong);border-radius:8px;padding:12px;text-align:center;font-size:12px;color:var(--s-ink-2);background:var(--s-surface-2)}
+.t{width:100%;border-collapse:collapse;background:var(--s-surface);border:1px solid var(--s-rule);border-radius:8px;font-size:12px}
+.t th{font:600 10.5px/1.2 Inter,sans-serif;text-transform:uppercase;letter-spacing:.04em;color:var(--s-muted);text-align:left;padding:7px 8px;background:var(--s-surface-2);border-bottom:1px solid var(--s-rule);white-space:nowrap}
+.t td.mono{white-space:nowrap}
+.t td{padding:7px 8px;border-bottom:1px solid var(--s-rule);font-family:Inter,sans-serif;vertical-align:middle}
+.t tr:last-child td{border-bottom:none}
+.t tr.chg td{background:var(--s-accent-bg)}
+.t td.big{font-size:15px;font-weight:700}
+.c-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px}
+.kpis{display:flex;gap:8px;flex-wrap:wrap}
+.kpi{background:var(--s-surface);border:1px solid var(--s-rule);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--s-muted);display:flex;flex-direction:column;gap:2px;min-width:110px}
+.kpi b:not(.pin){font-size:18px;color:var(--s-ink);font-family:"IBM Plex Mono",monospace}
+.kpi.ok b{color:var(--s-accept)}.kpi.warn b{color:var(--s-caution)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--s-rule)}
+.tabs span{padding:6px 10px;font-size:12px;color:var(--s-muted)}
+.tabs span.is-on{color:var(--s-action);font-weight:600;border-bottom:2px solid var(--s-action)}
+.step{font-family:"IBM Plex Mono",monospace;border:1px solid var(--s-rule-strong);border-radius:6px;padding:2px 8px;white-space:nowrap}
+.modal{background:var(--s-surface);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:9px;max-width:460px;box-shadow:0 12px 32px -8px rgba(0,0,0,.35)}
+.radio{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;padding:7px 8px;border:1px solid var(--s-rule);border-radius:8px}
+.radio i{width:14px;height:14px;border:1.5px solid var(--s-rule-strong);border-radius:50%;flex:none;margin-top:2px}
+.radio.on{border-color:var(--s-action);background:var(--s-action-bg)}
+.radio.on i{border:4px solid var(--s-action)}
+.setfull{margin-left:22px;display:flex;flex-direction:column;gap:3px;font-size:12px;background:var(--s-accept-bg);border-radius:8px;padding:8px 10px}
+
+/* chips and buttons */
+.chip{display:inline-block;font-size:11px;font-weight:600;padding:3px 8px;border-radius:12px;background:var(--s-surface-2);border:1px solid var(--s-rule-strong);color:var(--s-ink-2);width:max-content}
+.chip.ok{background:var(--s-accept-bg);color:var(--s-accept);border-color:transparent}
+.chip.warn{background:var(--s-caution-bg);color:var(--s-caution);border-color:transparent}
+.chip.stop{background:var(--s-stop-bg);color:var(--s-stop);border-color:transparent}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;background:var(--s-action);color:var(--s-action-ink);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:8px;white-space:nowrap}
+.btn--ok{background:var(--s-accept);color:#fff}
+.btn--ghost{background:transparent;color:var(--s-action);border:1.5px solid var(--s-action)}
+.btn--sm{padding:4px 8px;font-size:11px;border-radius:6px}
+.btn--wide{width:100%;padding:12px;font-size:14px;border-radius:10px}
+
+/* phone */
+.p-chrome{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--s-surface);border-bottom:1px solid var(--s-rule);font-size:12px;font-weight:600;color:var(--s-ink-2)}
+.p-chrome .c-mark{padding:0}
+.p-chrome .dot{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--s-accept)}
+.p-body{padding:14px 14px 16px;display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--s-muted)}
+.bigcode{font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:30px;letter-spacing:-.02em;line-height:1.05;color:var(--s-ink)}
+.bigcode em{font-style:normal;color:var(--s-hl);text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:4px}
+.bigcode--md{font-size:24px}
+.lede{font-size:14px;color:var(--s-ink-2)}
+.prod{display:flex;gap:10px;align-items:center;background:var(--s-surface);border:1px solid var(--s-rule);border-radius:10px;padding:8px;font-size:12.5px}
+.ph{width:42px;height:42px;border-radius:8px;flex:none;display:grid;place-items:center;font:700 16px Inter,sans-serif;font-style:normal;color:var(--s-action);background:var(--s-action-bg)}
+.count{font-size:14px}.count b{font-family:"IBM Plex Mono",monospace;font-size:26px}
+.take{font-size:16px;font-weight:600}.take b{font-family:"IBM Plex Mono",monospace;font-size:28px}
+.fifo{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--s-ink-2)}
+.fifo i{width:18px;height:18px;border-radius:4px;background:#1A73C8;flex:none}
+.scanzone{border:2px dashed var(--s-action);border-radius:10px;padding:14px;text-align:center;font-weight:600;color:var(--s-action);background:var(--s-action-bg)}
+.prog{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:7px 12px;font-size:11.5px;background:var(--s-surface);border-bottom:1px solid var(--s-rule)}
+.prog i{height:6px;border-radius:3px;background:var(--s-accept);display:block;box-shadow:inset 0 0 0 999px var(--s-accept)}
+.stophead{background:var(--s-stop);color:#fff;font-weight:700;padding:8px 10px;border-radius:8px;letter-spacing:.04em}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.vs>div{background:var(--s-surface);border:1px solid var(--s-rule);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px;font-size:11.5px}
+.vs>div:first-child{border-color:var(--s-stop)}
+.pastebox{border:2px dashed var(--s-rule-strong);border-radius:12px;min-height:130px;display:grid;place-items:center;text-align:center;padding:14px;background:var(--s-surface-2);font-weight:600;color:var(--s-ink-2)}
+kbd{font-family:"IBM Plex Mono",monospace;font-size:11px;border:1px solid var(--s-rule-strong);border-bottom-width:2px;border-radius:4px;padding:1px 5px;background:var(--s-surface);color:var(--s-ink)}
+.ordhead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.lines li{display:grid;grid-template-columns:1fr auto;gap:2px 8px;background:var(--s-surface);border:1px solid var(--s-rule);border-radius:8px;padding:7px 9px;font-size:12px}
+.lines li .mono{grid-column:1/-1;font-size:11.5px}
+.lines li b{font-family:"IBM Plex Mono",monospace}
+.stepper{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;text-align:center;border:1.5px solid var(--s-rule-strong);border-radius:10px;background:var(--s-surface);font-size:22px;font-weight:600}
+.stepper b{font-family:"IBM Plex Mono",monospace;font-size:28px}
+.wish{background:var(--s-accent-bg);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:3px;font-size:13px}
+.packpick{background:var(--s-surface);border:2px solid var(--s-action);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:2px}
+.pk{font-size:22px;font-weight:700}
+.banner{background:var(--s-accent-bg);border:1px solid var(--s-accent);border-radius:10px;padding:12px;font-size:14px;line-height:1.45}
+.hcard{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;background:var(--s-surface);border:1px solid var(--s-rule);border-radius:10px;padding:10px;font-size:12.5px}
+.hcard .age{font-family:"IBM Plex Mono",monospace;color:var(--s-muted)}
+.hcard.warn{background:var(--s-caution-bg);border-color:var(--s-caution)}
+.hcard.warn .age{color:var(--s-caution);font-weight:700}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tiles span{background:var(--s-surface);border:1.5px solid var(--s-rule-strong);border-radius:10px;padding:14px 8px;text-align:center;font-weight:600;font-size:12.5px}
+.tiles span:first-child{border-color:var(--s-action);background:var(--s-action-bg);color:var(--s-action)}
+.note{font-size:12px;background:var(--s-surface);border-left:3px solid var(--s-accent);padding:8px 10px;border-radius:4px}
+
+/* hiryu sketch */
+.sk-bar{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:7px 12px;border-bottom:1px dashed var(--s-rule-strong);font-size:11px}
+.sk-tag{font-weight:700;color:var(--s-caution)}
+.sk-body{padding:14px;display:flex;flex-direction:column;gap:10px}
+.sk-title{font-size:18px;font-weight:700}
+.sk-status{font-size:11px;font-weight:700;color:var(--s-muted)}
+.sk-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sk-card{border:1px solid var(--s-rule);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--s-ink-2)}
+.sk-card b{color:var(--s-ink)}
+.sk-raw{display:flex;align-items:center;gap:10px;border:1px solid var(--s-rule);border-radius:8px;padding:8px;font-size:12px;flex-wrap:wrap}
+.sk-show{border:1px solid var(--s-rule-strong);border-radius:5px;padding:2px 8px;font-size:11px}
+.stopnote{color:var(--s-stop);font-weight:700;font-size:11.5px}
+.keys{font-size:12.5px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+
+@media (max-width:600px){
+  .dev--phone{width:100%}
+  .sk-cards,.vs{grid-template-columns:1fr}
+}
+
+/* v3.1 additions: flags, new WMS screens, the interactive rack picture, and the Hiryu redraws. */
+.flagbar{background:var(--s-caution-bg);color:var(--s-caution);border:1px solid var(--s-caution);border-radius:8px;padding:8px 12px;font:600 12.5px/1.4 Inter,system-ui,sans-serif;max-width:620px}
+.warnbox{background:var(--s-caution-bg);color:var(--s-caution);border-radius:8px;padding:9px 10px;font-weight:600;font-size:12.5px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.rolechips{display:flex;flex-wrap:wrap;gap:5px}
+.rolechips i{font-style:normal;font-weight:400;opacity:.8}
+.hylink{display:flex;flex-direction:column;gap:5px;background:var(--s-accept-bg);border-radius:8px;padding:8px 10px}
+.thr{display:flex;flex-direction:column;gap:7px;position:relative}
+.thr>b.pin{position:absolute;right:0;top:-2px}
+.thr em{font-style:normal;font-size:11px;color:var(--s-muted);line-height:1.35}
+.btn--stop{background:var(--s-stop);color:#fff}
+.btn--stopline{color:var(--s-stop);border-color:var(--s-stop)}
+
+/* interactive rack picture */
+.dev--rack .c-main{gap:10px}
+.rk-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--s-surface);border:1px solid var(--s-rule);border-radius:10px;padding:8px 10px}
+.rk-lab{font-size:11px;color:var(--s-muted);font-weight:600;margin-left:6px}
+.seg{display:inline-flex;border:1px solid var(--s-rule-strong);border-radius:7px;overflow:hidden;background:var(--s-surface)}
+.seg button{font:600 12px Inter,system-ui,sans-serif;color:var(--s-ink-2);background:transparent;border:0;padding:5px 10px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--s-rule-strong)}
+.seg button.on{background:var(--s-action);color:var(--s-action-ink)}
+.seg button:focus-visible{outline:2px solid var(--s-accent);outline-offset:-2px}
+.seg--col{flex-direction:column;width:100%}
+.seg--col button{text-align:left;padding:8px 10px}
+.seg--col button+button{border-left:0;border-top:1px solid var(--s-rule-strong)}
+.seg[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.rk-wrap{display:grid;grid-template-columns:1fr 200px;gap:12px;align-items:start}
+.rk-pic{background:var(--s-surface);border:1px solid var(--s-rule);border-radius:10px;padding:14px 12px 10px 34px;display:flex;justify-content:center;overflow:hidden}
+.rk-bay{display:flex;flex-direction:column;border-left:6px solid #6B7686;border-right:6px solid #6B7686}
+.rk-bay+.rk-bay{border-left:0}
+.rk-lvl{position:relative;display:flex;align-items:flex-end;gap:1px;padding:0 2px;border:0;border-bottom:4px solid #6B7686;cursor:pointer;background:transparent;width:100%}
+.rk-lvl:hover{background:var(--s-action-bg)}
+.rk-lvl.sel{background:var(--s-accent-bg);box-shadow:inset 0 0 0 2px var(--s-accent)}
+.rk-lvl:focus-visible{outline:2px solid var(--s-accent);outline-offset:-2px}
+.rk-lvl .lvn{position:absolute;left:-30px;top:50%;transform:translateY(-50%);font:600 10px "IBM Plex Mono",monospace;color:var(--s-muted)}
+.rk-bay+.rk-bay .rk-lvl .lvn{display:none}
+.rk-lvl .empty{position:absolute;inset:0;display:grid;place-items:center;font-size:10.5px;color:var(--s-muted)}
+.rk-col{display:flex;flex-direction:column-reverse;gap:1px}
+.rk-bin{display:grid;place-items:center;font:700 9px "IBM Plex Mono",monospace;border-radius:2px 2px 3px 3px;border:1px solid rgba(0,0,0,.25);border-top-width:4px}
+.rk-bin.S{background:#CFE0F1;color:#1B3A5C;border-top-color:#1B3A5C}
+.rk-bin.L{background:#F6DDB0;color:#6A4306;border-top-color:#B06A00}
+.rk-bin.hot{outline:2px solid var(--s-accent)}
+.rk-baylab{text-align:center;font:600 10px "IBM Plex Mono",monospace;color:var(--s-muted);padding-top:4px}
+.rk-side{display:flex;flex-direction:column;gap:8px;background:var(--s-surface);border:1px solid var(--s-rule);border-radius:10px;padding:10px}
+.rk-sel{font-size:13px;font-weight:600}
+.rk-calc{font-size:12px;color:var(--s-ink-2);line-height:1.45}
+.rk-code{font-size:15px;font-weight:700;color:var(--s-hl)}
+.rk-sum{font-size:12.5px;font-weight:600}
+
+/* Hiryu, redrawn. Hiryu is a light-only app, so these keep Hiryu's own light colours in both themes. */
+.hy{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#171717;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:10px;font-size:12.5px;line-height:1.45;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.hy *{box-sizing:border-box}
+.hy .mono{color:#525252}
+.hy--app{display:grid;grid-template-columns:150px 1fr;width:860px;overflow:hidden}
+.hy--login{display:grid;place-items:center;padding:22px;width:100%;max-width:460px}
+.hy-card{background:#fff;border:1px solid #E5E5E5;border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:7px;width:100%;max-width:330px}
+.hy-brand{display:flex;align-items:center;gap:8px;font-size:15px}
+.hy-brand small{color:#737373;font-size:11px}
+.hy-logo{width:16px;height:16px;border:2px solid #16A34A;border-radius:3px;display:inline-block;flex:none}
+.hy-lab{font-size:11.5px;font-weight:500;margin-top:4px}
+.hy-seg{display:grid;grid-template-columns:1fr 1fr;background:#F5F5F5;border:1px solid #E5E5E5;border-radius:7px;padding:3px}
+.hy-seg span{text-align:center;padding:5px;border-radius:5px;color:#525252}
+.hy-seg span.on{background:#fff;color:#171717;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.hy-in{display:block;border:1px solid #D4D4D4;border-radius:6px;padding:6px 8px;min-height:30px;color:#A3A3A3;background:#fff}
+.hy-btn{display:inline-block;text-align:center;background:#16A34A;color:#fff;font-weight:600;border-radius:6px;padding:6px 12px}
+.hy-btn2{display:inline-block;border:1px solid #D4D4D4;background:#fff;border-radius:6px;padding:5px 10px;color:#404040}
+.hy-card .hy-btn{padding:8px;opacity:.55}
+.hy-or{text-align:center;color:#A3A3A3;font-size:10.5px}
+.hy-note{font-size:11.5px;color:#525252}
+.hy-google{border:1px solid #D4D4D4;border-radius:6px;padding:7px 10px;font-weight:500;color:#404040;background:#fff}
+.hy-side{background:#fff;border-right:1px solid #E5E5E5;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.hy-side .hy-brand{padding:0 6px 10px}
+.hy-nav{padding:5px 8px;border-radius:6px;color:#404040}
+.hy-nav.on{background:#F0FDF4;color:#15803D;font-weight:600}
+.hy-grp{font-size:9.5px;letter-spacing:.08em;color:#A3A3A3;padding:10px 8px 2px}
+.hy-foot{margin-top:auto;font-size:10px;color:#A3A3A3;padding:10px 8px 0}
+.hy-main{padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.hy-title{font-size:18px;font-weight:600;display:flex;align-items:center;gap:8px}
+.hy-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.hy-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hy-box{background:#fff;border:1px solid #E5E5E5;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.hy-box.hy-row{flex-direction:row}
+.hy-box dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:11.5px}
+.hy-box dt{color:#737373}
+.hy-box dd{margin:0;text-align:right}
+.hy-link{color:#15803D}
+.hy-hist{display:flex;justify-content:space-between;font-size:11.5px}
+.hy-hist i{font-style:normal}
+.hy-badge{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.03em;padding:2px 7px;border-radius:10px;background:#DCFCE7;color:#15803D}
+.hy-badge.amber{background:#FEF3C7;color:#B45309}
+.hy-badge.red{background:#FEE2E2;color:#B91C1C}
+.hy-item{display:grid;grid-template-columns:30px 1fr auto;gap:8px;padding:6px 0;border-top:1px solid #F5F5F5}
+.hy-oos{color:#C2410C}
+.hy-show{border:1px solid #D4D4D4;border-radius:6px;padding:3px 10px;font-size:11.5px}
+.hy-live{font-size:11px;color:#15803D}
+.hy-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.hy-kpis div{background:#fff;border:1px solid #E5E5E5;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:2px}
+.hy-kpis small{color:#737373;font-size:10.5px}
+.hy-kpis b{font-size:22px}
+.hy-kpis em{font-style:normal;font-size:10px;color:#A3A3A3}
+.hy-kpis div:nth-child(-n+3){border-color:#86EFAC}
+.hy-filters{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;background:#fff;border:1px solid #E5E5E5;border-radius:8px;padding:10px}
+.hy-filters label{display:flex;flex-direction:column;gap:3px}
+.hy-filters small{font-size:10.5px;color:#525252}
+.hy-filters .hy-in{color:#171717;font-size:11.5px;min-height:0}
+.hy-sel::after{content:"\25BE";float:right;color:#A3A3A3}
+.hy-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #E5E5E5;font-size:11.5px}
+.hy-table th{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#737373;text-align:left;padding:7px 8px;border-bottom:1px solid #E5E5E5;font-weight:600;background:#fff}
+.hy-table td{padding:7px 8px;border-bottom:1px solid #F5F5F5;vertical-align:middle;font-family:Inter,system-ui,sans-serif;color:#171717}
+.hy-tabs{display:flex;gap:16px;border-bottom:1px solid #E5E5E5}
+.hy-tabs span{padding:6px 0;color:#737373}
+.hy-tabs span.on{color:#15803D;font-weight:600;border-bottom:2px solid #16A34A}
+.hy-savebar{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:7px 10px;font-size:11.5px}
+.hy-num{display:inline-block;width:56px;text-align:right;color:#171717;font-family:"IBM Plex Mono",monospace}
+.hy-num.on{border-color:#F59E0B;background:#FFFBEB}
+.hy-num.off{color:#D4D4D4}
+.hy-note--stop{background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;border-radius:8px;padding:7px 10px}
+.hy .keys{color:#171717}
+.hy-badge.blue{background:#DBEAFE;color:#1D4ED8}
+.hy-crumb{font-size:11.5px;color:#737373}
+.hy-ctrls{display:flex;gap:6px;align-items:center}
+.hy-ctrls .hy-in{min-height:0;color:#171717;font-size:11px;padding:4px 8px}
+.hy-ctrls .hy-btn2{font-size:11px;padding:4px 8px}
+.hy-lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.hy-lanes>div{display:flex;flex-direction:column;gap:2px}
+.hy-lanes small{color:#737373;font-size:10.5px}
+.hy-empty{margin-top:6px;border:1px solid #E5E5E5;border-radius:8px;background:#fff;padding:14px;text-align:center;color:#A3A3A3;font-size:11px}
+
+/* v3.2 additions */
+.labelgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.labelgrid span{font:600 10.5px "IBM Plex Mono",monospace;border:1px dashed var(--s-rule-strong);border-radius:4px;padding:6px 4px;text-align:center;background:var(--s-surface)}
+.labelgrid span.kar{grid-column:span 5;border-color:var(--s-stop);color:var(--s-stop);background:var(--s-stop-bg)}
+.steps4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:11.5px}
+.steps4 span{padding:6px 8px;border-radius:6px;background:var(--s-surface);border:1px solid var(--s-rule);color:var(--s-muted)}
+.steps4 span.done{color:var(--s-accept);border-color:var(--s-accept-bg);background:var(--s-accept-bg)}
+.steps4 span.now{color:var(--s-action);border-color:var(--s-action);font-weight:600}
+.inrow{display:flex;align-items:center;gap:6px}
+.inrow .in{width:64px}
+.unit{display:inline-flex;border:1px solid var(--s-rule-strong);border-radius:6px;overflow:hidden}
+.unit i{font-style:normal;font-size:11px;padding:4px 7px;color:var(--s-muted)}
+.unit i.on{background:var(--s-action);color:var(--s-action-ink)}
+.calc{font-size:11px;color:var(--s-accept);font-weight:600}
+.chain{display:inline-flex;gap:3px;flex-wrap:wrap}
+.chain i{font-style:normal;font-size:10px;padding:2px 6px;border-radius:8px;border:1px solid var(--s-rule-strong);color:var(--s-muted)}
+.chain i.ok{background:var(--s-accept-bg);color:var(--s-accept);border-color:transparent}
+.chain i.now{border-color:var(--s-action);color:var(--s-action);font-weight:600}
+.hy .hy-val{color:#171717}
+.hy-badge.grey{background:#F5F5F5;color:#525252}
+.hy-box .hy-lab{margin-top:2px}
+.dev--sketch.gb{max-width:250px;flex:1 1 220px}
+.gb .sk-body{gap:7px;font-size:12px}
+.gb-btn{display:block;text-align:center;background:#00B14F;color:#fff;font-weight:700;border-radius:18px;padding:7px}
+
+/* v3.3: hub floors */
+.floors{font-family:Inter,system-ui,sans-serif;color:var(--s-ink);display:flex;flex-direction:column;gap:6px;max-width:760px}
+.floor{border:1.5px solid var(--s-rule-strong);border-radius:12px;background:var(--s-ground);padding:10px}
+.flabel{display:block;font:700 11px/1 "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--s-muted);margin-bottom:8px}
+.zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.zone{background:var(--s-surface);border:1px solid var(--s-rule);border-radius:10px;padding:9px;display:flex;flex-direction:column;gap:5px;font-size:12px}
+.zone small{color:var(--s-muted);font-size:11px}
+.zone.kar{border-color:var(--s-stop);background:var(--s-stop-bg)}
+.dvc{display:inline-flex;align-items:center;gap:4px;width:max-content;max-width:100%;font-weight:600;font-size:11.5px;padding:3px 8px;border-radius:12px;background:var(--s-action-bg);color:var(--s-action)}
+.dvc.pr{background:var(--s-surface-2);color:var(--s-ink-2);border:1px solid var(--s-rule-strong)}
+.stairs{text-align:center;font-size:11px;color:var(--s-muted);border-left:2px dashed var(--s-rule-strong);border-right:2px dashed var(--s-rule-strong);margin:0 40%;padding:4px 0}
+
+/* v4.1 (30 Sep): counted rack levels, label sheet, process map */
+.rk-counts{display:grid;grid-template-columns:auto auto;gap:6px 10px;align-items:center}
+.rk-counts[hidden]{display:none}
+.rk-counts .step button{border:0;background:none;font:inherit;cursor:pointer;padding:0 5px;color:var(--s-action)}
+.hy-ok{color:#15803D;font-weight:600}
+.a4{width:700px;background:#fff;color:#171717;border:1px solid var(--s-rule-strong);box-shadow:0 8px 24px -12px rgba(20,22,26,.25);padding:18px 18px 14px;font-family:Inter,sans-serif}
+.a4-head{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:10px;gap:10px}
+.a4-head span{color:#737373;font-size:11px}
+.a4-grid{display:grid;grid-template-columns:repeat(3,1fr)}
+.lbl{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border:1px dashed #A3A3A3;margin:-1px 0 0 -1px}
+.lbl b{font:700 17px/1.1 "IBM Plex Mono",monospace;letter-spacing:-.01em}
+.lbl small{font-size:9.5px;color:#525252}
+.bc{display:block;height:22px;background:repeating-linear-gradient(90deg,#171717 0 2px,#fff 2px 3px,#171717 3px 4px,#fff 4px 7px,#171717 7px 10px,#fff 10px 11px)}
+.a4-foot{margin-top:10px;font-size:11px;color:#525252}
+.pmfig .shotscroll{padding-bottom:.4rem}
+.pm{display:grid;grid-template-columns:92px repeat(8,minmax(138px,1fr));min-width:1220px;border:1px solid var(--s-rule);border-radius:10px;overflow:hidden;background:var(--s-surface);font-family:Inter,sans-serif}
+.pm>span{border-right:1px solid var(--s-rule);border-bottom:1px solid var(--s-rule);padding:8px}
+.pm-corner{font-size:10.5px;color:var(--s-muted);background:var(--s-sunk)}
+.pm-ph{background:var(--s-sunk);font-size:11.5px;font-weight:600;color:var(--s-ink);line-height:1.3}
+.pm-ph b{display:block;font:700 15px/1 "IBM Plex Mono",monospace;color:var(--s-action);margin-bottom:3px}
+.pm-lane{background:var(--s-sunk);font-size:12px;font-weight:700;color:var(--s-ink);display:flex;align-items:flex-start}
+.pm-c{display:flex;flex-direction:column;gap:5px}
+.pm-s{display:block;text-decoration:none;color:var(--s-ink);font-size:11px;line-height:1.3;padding:5px 7px;border-radius:6px;border:1px solid var(--s-rule);border-left-width:4px;background:var(--s-surface)}
+.pm-s b{display:block;font:600 10px "IBM Plex Mono",monospace;color:var(--s-muted)}
+.pm-s:hover{background:var(--s-surface-2);border-color:var(--s-rule-strong)}
+.pm-s:focus-visible{outline:2px solid var(--s-action);outline-offset:1px}
+.pm-s.hy{border-left-color:#16A34A}.pm-s.wms{border-left-color:#C0202D}.pm-s.hand{border-left-color:#8C8A85}
+.pm-key{display:inline-flex;align-items:center;gap:5px;margin-right:12px}
+.pm-key i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.pm-key i.hy{background:#16A34A}.pm-key i.wms{background:#C0202D}.pm-key i.hand{background:#8C8A85}
+
+
+*{box-sizing:border-box}
+html{scroll-padding-top:5.5rem}
+body{background:var(--paper);color:var(--ink);font:15px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.l-id{display:none} html[lang="id"] .l-id{display:inline} html[lang="id"] .l-en{display:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--paper) 92%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--rule)}
+.bar__in{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem 1.2rem;padding-block:.7rem;padding-inline:max(16px,2rem)}
+.brand{display:flex;align-items:baseline;gap:.6rem;min-width:0}
+.brand b{font:700 .8rem/1 "IBM Plex Mono",monospace;letter-spacing:.14em;color:var(--signal)}
+.brand h1{margin:0;font:700 1.15rem/1.1 Archivo,sans-serif;letter-spacing:-.01em;text-wrap:balance}
+.brand span{color:var(--ink-3);font:500 .8rem "IBM Plex Mono",monospace}
+.spacer{flex:1 1 auto}
+.counts{display:flex;gap:.9rem;font:500 .8rem "IBM Plex Mono",monospace;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.counts i{font-style:normal;display:inline-block;width:.6rem;height:.6rem;border-radius:50%;margin-right:.3rem;vertical-align:.05rem;background:var(--rule-strong)}
+.counts .c-ok i{background:var(--accept)} .counts .c-change i{background:var(--signal)} .counts .c-question i{background:var(--warn)}
+.seg{display:inline-flex;border:1px solid var(--rule-strong);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:.35rem .65rem;font:600 .78rem Inter,sans-serif;cursor:pointer;color:var(--ink-2)}
+.seg button+button{border-left:1px solid var(--rule)}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.seglabel{font:600 .7rem "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.ctl{display:flex;align-items:center;gap:.45rem}
+
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:2rem;padding-inline:max(16px,2rem);padding-block:1.5rem 5rem}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)} .rail{display:none}}
+.rail{position:sticky;top:5rem;max-height:calc(100vh - 6rem);overflow:auto;font-size:.8rem}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail .grp{margin-top:.9rem;padding:.2rem .4rem;font:600 .68rem/1.3 Archivo,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.rail .grp:first-child{margin-top:0}
+.rail a{display:grid;grid-template-columns:.7rem 1.6rem 1fr;align-items:center;gap:.35rem;padding:.25rem .4rem;border-radius:6px;color:var(--ink-2);text-decoration:none}
+.rail a:hover{background:var(--surface-2)}
+.rail .rn{font:500 .72rem "IBM Plex Mono",monospace;color:var(--ink-3)}
+.rail .rk{font-size:.78rem;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:.55rem;height:.55rem;border-radius:50%;border:1.5px solid var(--rule-strong)}
+[data-state="ok"] .dot{background:var(--accept);border-color:var(--accept)}
+[data-state="change"] .dot{background:var(--signal);border-color:var(--signal)}
+[data-state="question"] .dot{background:var(--warn);border-color:var(--warn)}
+
+.intro{max-width:70ch;margin:0 0 1.6rem;color:var(--ink-2)}
+.intro strong{color:var(--ink)}
+.cards{display:flex;flex-direction:column;gap:2.2rem;min-width:0}
+.card{min-width:0;border-top:1px solid var(--rule-strong);padding-top:1rem;display:flex;flex-direction:column;gap:1rem}
+.card__head{display:flex;gap:1rem;align-items:flex-start}
+.card__no{font:600 1.6rem/1 "IBM Plex Mono",monospace;color:var(--ink-3);font-variant-numeric:tabular-nums;min-width:2.4rem}
+.card__title{min-width:0}
+.card h2{margin:0;font:700 1.15rem/1.25 Archivo,sans-serif;letter-spacing:-.01em;text-wrap:balance}
+.card__meta{margin:.35rem 0 0;display:flex;flex-wrap:wrap;gap:.35rem .7rem;align-items:center;font-size:.8rem;color:var(--ink-3)}
+.card__meta code{font:500 .78rem "IBM Plex Mono",monospace;color:var(--ink-2);background:var(--surface-2);padding:.08rem .4rem;border-radius:4px}
+.tag{font:600 .68rem/1 Inter,sans-serif;letter-spacing:.04em;text-transform:uppercase;padding:.25rem .45rem;border-radius:4px;border:1px solid currentColor}
+.tag--hiryu{color:var(--hiryu)} .tag--wms{color:var(--signal)}
+
+/* The frame keeps its real size; only this box scrolls sideways when the window is narrower. */
+.stage{overflow-x:auto;min-width:0;padding:1.2rem;background:var(--surface-2);border-radius:10px}
+.stage__inner{width:max-content;min-width:100%}
+.stage figure.shot{margin:0;max-width:none}
+.stage figure.shot>*{max-width:none}
+.stage .shotscroll{overflow:visible}
+.stage figcaption{max-width:90ch}
+
+.audit{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.6rem 1rem;align-items:start}
+@media (max-width:760px){.audit{grid-template-columns:minmax(0,1fr)}}
+.verdicts{display:flex;flex-wrap:wrap;gap:.4rem}
+.verdicts button{border:1px solid var(--rule-strong);background:var(--surface);border-radius:999px;padding:.35rem .8rem;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--ink-2)}
+.verdicts button:hover{border-color:var(--ink-3)}
+.verdicts button[aria-pressed="true"][data-v="ok"]{background:var(--accept-soft);border-color:var(--accept);color:var(--accept)}
+.verdicts button[aria-pressed="true"][data-v="change"]{background:var(--signal-soft);border-color:var(--signal);color:var(--signal)}
+.verdicts button[aria-pressed="true"][data-v="question"]{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.note textarea{width:100%;min-height:2.6rem;resize:vertical;border:1px solid var(--rule-strong);border-radius:8px;background:var(--surface);color:var(--ink);padding:.5rem .65rem;font:inherit;font-size:.88rem}
+.saved{font:500 .74rem "IBM Plex Mono",monospace;color:var(--ink-3);padding-top:.5rem;white-space:nowrap}
+.card[hidden]{display:none}
+.offline{font-size:.8rem;color:var(--warn)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+
+<div class="bar"><div class="bar__in">
+  <div class="brand"><b>NINJA</b><h1><span class="l-en">Kilat WMS wireframes</span><span class="l-id">Wireframe Kilat WMS</span></h1><span>PRD v3.3 · 34 screens</span></div>
+  <span class="spacer"></span>
+  <div class="counts" aria-live="polite">
+    <span class="c-ok"><i></i><b data-count="ok">0</b> <span class="l-en">right</span><span class="l-id">benar</span></span>
+    <span class="c-change"><i></i><b data-count="change">0</b> <span class="l-en">change</span><span class="l-id">ubah</span></span>
+    <span class="c-question"><i></i><b data-count="question">0</b> <span class="l-en">question</span><span class="l-id">tanya</span></span>
+    <span class="c-open"><i></i><b data-count="open">0</b> <span class="l-en">to do</span><span class="l-id">belum</span></span>
+  </div>
+  <div class="ctl"><span class="seglabel"><span class="l-en">Show</span><span class="l-id">Tampilkan</span></span>
+    <div class="seg" data-seg="filter"><button type="button" data-val="all" class="on"><span class="l-en">All</span><span class="l-id">Semua</span></button><button type="button" data-val="open"><span class="l-en">To do</span><span class="l-id">Belum</span></button><button type="button" data-val="flagged"><span class="l-en">Flagged</span><span class="l-id">Ditandai</span></button><button type="button" data-val="wms">WMS</button><button type="button" data-val="hiryu">Hiryu</button></div></div>
+  <div class="ctl"><span class="seglabel">Zoom</span>
+    <div class="seg" data-seg="zoom"><button type="button" data-val="fit"><span class="l-en">Fit</span><span class="l-id">Pas</span></button><button type="button" data-val="1" class="on">100%</button><button type="button" data-val="1.25">125%</button><button type="button" data-val="1.5">150%</button></div></div>
+  <div class="seg" data-seg="lang"><button type="button" data-val="en" class="on">EN</button><button type="button" data-val="id">ID</button></div>
+</div></div>
+
+<div class="layout">
+  <nav class="rail" aria-label="Screens"><ol><li class="grp"><span class="l-en">1. Login and user access</span><span class="l-id">1. Login dan akses pengguna</span></li>
+<li><a href="#hiryu-login" data-key="hiryu-login"><span class="dot" aria-hidden="true"></span><span class="rn">01</span><span class="rk"><span class="l-en">1.1 Signing in to Hiryu</span><span class="l-id">1.1 Masuk ke Hiryu</span></span></a></li>
+<li class="grp"><span class="l-en">2. Registration and store setup: hub, brand, SKU, Grab store</span><span class="l-id">2. Pendaftaran dan pengaturan toko: hub, merek, SKU, toko Grab</span></li>
+<li><a href="#hiryu-darkstore" data-key="hiryu-darkstore"><span class="dot" aria-hidden="true"></span><span class="rn">02</span><span class="rk"><span class="l-en">2.1.1 In Hiryu: the instance, the dark store, its hours, the SPV login</span><span class="l-id">2.1.1 Di Hiryu: instance, dark store, jam buka, login SPV</span></span></a></li>
+<li><a href="#admin-setup" data-key="admin-setup"><span class="dot" aria-hidden="true"></span><span class="rn">03</span><span class="rk"><span class="l-en">2.1.2 In the WMS: the dark store</span><span class="l-id">2.1.2 Di WMS: dark store</span></span></a></li>
+<li><a href="#brand-form" data-key="brand-form"><span class="dot" aria-hidden="true"></span><span class="rn">04</span><span class="rk"><span class="l-en">2.2.1 Add the brand in the WMS</span><span class="l-id">2.2.1 Tambahkan merek di WMS</span></span></a></li>
+<li><a href="#hiryu-menu" data-key="hiryu-menu"><span class="dot" aria-hidden="true"></span><span class="rn">05</span><span class="rk"><span class="l-en">2.2.2 In Hiryu: build the first store&#x27;s menu</span><span class="l-id">2.2.2 Di Hiryu: buat menu toko pertama</span></span></a></li>
+<li><a href="#hiryu-skus" data-key="hiryu-skus"><span class="dot" aria-hidden="true"></span><span class="rn">06</span><span class="rk"><span class="l-en">2.2.4 In Hiryu: create the SKUs and connect every item</span><span class="l-id">2.2.4 Di Hiryu: buat SKU dan hubungkan setiap item</span></span></a></li>
+<li><a href="#hiryu-bundles" data-key="hiryu-bundles"><span class="dot" aria-hidden="true"></span><span class="rn">07</span><span class="rk"><span class="l-en">2.2.4 In Hiryu: create the SKUs and connect every item</span><span class="l-id">2.2.4 Di Hiryu: buat SKU dan hubungkan setiap item</span></span></a></li>
+<li><a href="#hiryu-map" data-key="hiryu-map"><span class="dot" aria-hidden="true"></span><span class="rn">08</span><span class="rk"><span class="l-en">2.2.5 In the WMS: check the menus and SKUs Hiryu sent</span><span class="l-id">2.2.5 Di WMS: cek menu dan SKU yang dikirim Hiryu</span></span></a></li>
+<li><a href="#sku-complete" data-key="sku-complete"><span class="dot" aria-hidden="true"></span><span class="rn">09</span><span class="rk"><span class="l-en">2.2.6 In the WMS: complete each SKU&#x27;s stock numbers</span><span class="l-id">2.2.6 Di WMS: lengkapi angka stok setiap SKU</span></span></a></li>
+<li><a href="#hiryu-store-hub" data-key="hiryu-store-hub"><span class="dot" aria-hidden="true"></span><span class="rn">10</span><span class="rk"><span class="l-en">2.4.2 Give it the hub</span><span class="l-id">2.4.2 Beri hub</span></span></a></li>
+<li><a href="#hiryu-store-menu" data-key="hiryu-store-menu"><span class="dot" aria-hidden="true"></span><span class="rn">11</span><span class="rk"><span class="l-en">2.4.3 Give it its menu</span><span class="l-id">2.4.3 Beri menu</span></span></a></li>
+<li><a href="#hiryu-store-activate" data-key="hiryu-store-activate"><span class="dot" aria-hidden="true"></span><span class="rn">12</span><span class="rk"><span class="l-en">2.4.4 Activate it on Grab</span><span class="l-id">2.4.4 Aktifkan di Grab</span></span></a></li>
+<li><a href="#grab-activate" data-key="grab-activate"><span class="dot" aria-hidden="true"></span><span class="rn">13</span><span class="rk"><span class="l-en">2.4.4 Activate it on Grab</span><span class="l-id">2.4.4 Aktifkan di Grab</span></span></a></li>
+<li class="grp"><span class="l-en">3. Racking setup</span><span class="l-id">3. Pengaturan rak</span></li>
+<li><a href="#inbound-area" data-key="inbound-area"><span class="dot" aria-hidden="true"></span><span class="rn">14</span><span class="rk"><span class="l-en">3.1 Temporary inbound bins and the quarantine tray</span><span class="l-id">3.1 Bin inbound sementara dan baki karantina</span></span></a></li>
+<li><a href="#rack-builder" data-key="rack-builder"><span class="dot" aria-hidden="true"></span><span class="rn">15</span><span class="rk"><span class="l-en">3.2 Build the racks</span><span class="l-id">3.2 Buat rak</span></span></a></li>
+<li><a href="#label-sheet" data-key="label-sheet"><span class="dot" aria-hidden="true"></span><span class="rn">16</span><span class="rk"><span class="l-en">3.2 Build the racks</span><span class="l-id">3.2 Buat rak</span></span></a></li>
+<li class="grp"><span class="l-en">4. Replenishment and thresholds</span><span class="l-id">4. Restock dan batas stok</span></li>
+<li><a href="#restock-po" data-key="restock-po"><span class="dot" aria-hidden="true"></span><span class="rn">17</span><span class="rk"><span class="l-en">4.1 Restock from the brand: the PO</span><span class="l-id">4.1 Restock dari merek: PO</span></span></a></li>
+<li><a href="#restock-awb" data-key="restock-awb"><span class="dot" aria-hidden="true"></span><span class="rn">18</span><span class="rk"><span class="l-en">4.1 Restock from the brand: the PO</span><span class="l-id">4.1 Restock dari merek: PO</span></span></a></li>
+<li><a href="#second-bin" data-key="second-bin"><span class="dot" aria-hidden="true"></span><span class="rn">19</span><span class="rk"><span class="l-en">4.2 The second-bin question</span><span class="l-id">4.2 Pertanyaan bin kedua</span></span></a></li>
+<li class="grp"><span class="l-en">5. Inbound and putaway</span><span class="l-id">5. Barang masuk dan penyimpanan</span></li>
+<li><a href="#putaway-full" data-key="putaway-full"><span class="dot" aria-hidden="true"></span><span class="rn">20</span><span class="rk"><span class="l-en">5.1 Receive a delivery</span><span class="l-id">5.1 Terima kiriman</span></span></a></li>
+<li><a href="#faktur-upload" data-key="faktur-upload"><span class="dot" aria-hidden="true"></span><span class="rn">21</span><span class="rk"><span class="l-en">5.1 Receive a delivery</span><span class="l-id">5.1 Terima kiriman</span></span></a></li>
+<li><a href="#inbound-noawb" data-key="inbound-noawb"><span class="dot" aria-hidden="true"></span><span class="rn">22</span><span class="rk"><span class="l-en">5.2 If the AWB is not in the WMS</span><span class="l-id">5.2 Jika AWB tidak ada di WMS</span></span></a></li>
+<li class="grp"><span class="l-en">6. Pick and pack</span><span class="l-id">6. Ambil dan kemas</span></li>
+<li><a href="#hiryu-live" data-key="hiryu-live"><span class="dot" aria-hidden="true"></span><span class="rn">23</span><span class="rk"><span class="l-en">6.1 Accept the order in Hiryu</span><span class="l-id">6.1 Terima pesanan di Hiryu</span></span></a></li>
+<li><a href="#pick" data-key="pick"><span class="dot" aria-hidden="true"></span><span class="rn">24</span><span class="rk"><span class="l-en">6.3 Pick</span><span class="l-id">6.3 Ambil barang</span></span></a></li>
+<li><a href="#pack" data-key="pack"><span class="dot" aria-hidden="true"></span><span class="rn">25</span><span class="rk"><span class="l-en">6.4 Pack</span><span class="l-id">6.4 Kemas</span></span></a></li>
+<li class="grp"><span class="l-en">7. Handover to Grab</span><span class="l-id">7. Serah ke Grab</span></li>
+<li><a href="#handover" data-key="handover"><span class="dot" aria-hidden="true"></span><span class="rn">26</span><span class="rk"><span class="l-en">7.1 Hand over to the Grab driver</span><span class="l-id">7.1 Serahkan ke driver Grab</span></span></a></li>
+<li class="grp"><span class="l-en">8. Cancellations and returns</span><span class="l-id">8. Pembatalan dan retur</span></li>
+<li><a href="#short" data-key="short"><span class="dot" aria-hidden="true"></span><span class="rn">27</span><span class="rk"><span class="l-en">8.1 An item is missing or short</span><span class="l-id">8.1 Barang tidak ada atau kurang</span></span></a></li>
+<li><a href="#cancel" data-key="cancel"><span class="dot" aria-hidden="true"></span><span class="rn">28</span><span class="rk"><span class="l-en">8.2 A cancelled order</span><span class="l-id">8.2 Pesanan dibatalkan</span></span></a></li>
+<li class="grp"><span class="l-en">9. Daily stock update to Hiryu</span><span class="l-id">9. Update stok harian ke Hiryu</span></li>
+<li><a href="#hiryu-stock" data-key="hiryu-stock"><span class="dot" aria-hidden="true"></span><span class="rn">29</span><span class="rk"><span class="l-en">9.3 What the SPV checks</span><span class="l-id">9.3 Yang dicek SPV</span></span></a></li>
+<li class="grp"><span class="l-en">11. Claims, quarantine and exceptions</span><span class="l-id">11. Klaim, karantina dan masalah stok</span></li>
+<li><a href="#report" data-key="report"><span class="dot" aria-hidden="true"></span><span class="rn">30</span><span class="rk"><span class="l-en">11.1 Report a problem</span><span class="l-id">11.1 Laporkan masalah</span></span></a></li>
+<li><a href="#exceptions" data-key="exceptions"><span class="dot" aria-hidden="true"></span><span class="rn">31</span><span class="rk"><span class="l-en">11.2 Problems and quarantine</span><span class="l-id">11.2 Masalah dan karantina</span></span></a></li>
+<li><a href="#karantina-task" data-key="karantina-task"><span class="dot" aria-hidden="true"></span><span class="rn">32</span><span class="rk"><span class="l-en">11.2 Problems and quarantine</span><span class="l-id">11.2 Masalah dan karantina</span></span></a></li>
+<li class="grp"><span class="l-en">12. Consumables and infrastructure</span><span class="l-id">12. Bahan habis pakai dan infrastruktur</span></li>
+<li><a href="#hub-devices" data-key="hub-devices"><span class="dot" aria-hidden="true"></span><span class="rn">33</span><span class="rk"><span class="l-en">12.1 Devices and who holds them</span><span class="l-id">12.1 Perangkat dan siapa memegangnya</span></span></a></li>
+<li class="grp"><span class="l-en">13. Shift routine</span><span class="l-id">13. Rutinitas shift</span></li>
+<li><a href="#todo-inbox" data-key="todo-inbox"><span class="dot" aria-hidden="true"></span><span class="rn">34</span><span class="rk"><span class="l-en">13.5 Perlu tindakan: what each role must settle</span><span class="l-id">13.5 Perlu tindakan: yang harus diselesaikan setiap peran</span></span></a></li></ol></nav>
+  <main>
+    <p class="intro"><span class="l-en">Every screen draft from the PRD, full size and in PRD order. Mark each one <strong>Looks right</strong>, <strong>Needs a change</strong> or <strong>Question</strong> and write what to change. Notes save by themselves and Claude can read them. Green tags are Hiryu screens redrawn from the real app; red tags are WMS drafts.</span><span class="l-id">Semua draf layar dari PRD, ukuran penuh dan urut seperti di PRD. Tandai tiap layar <strong>Sudah benar</strong>, <strong>Perlu diubah</strong> atau <strong>Pertanyaan</strong>, lalu tulis apa yang perlu diubah. Catatan tersimpan sendiri dan bisa dibaca Claude. Label hijau: layar Hiryu yang digambar ulang dari aplikasi aslinya; label merah: draf WMS.</span>
+    <span class="offline" data-offline hidden><span class="l-en"> Notes cannot be saved in this view.</span><span class="l-id"> Catatan tidak bisa disimpan di tampilan ini.</span></span></p>
+    <div class="cards">
+<section class="card" id="hiryu-login" data-key="hiryu-login" data-kind="hiryu">
+  <header class="card__head">
+    <span class="card__no">01</span>
+    <div class="card__title">
+      <h2><span class="l-en">1.1 Signing in to Hiryu</span><span class="l-id">1.1 Masuk ke Hiryu</span></h2>
+      <p class="card__meta"><code>hiryu-login</code><span class="tag tag--hiryu"><span class="l-en">Hiryu redraw</span><span class="l-id">Gambar ulang Hiryu</span></span>
+        <span class="crumb"><span class="l-en">1. Login and user access</span><span class="l-id">1. Login dan akses pengguna</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="hy hy--login">
+<div class="hy-card">
+<div class="hy-brand"><i class="hy-logo"></i><span><b>Hiryu</b><br><small>GrabMart operations</small></span></div>
+<span class="hy-lab">Country <b class="pin">1</b></span>
+<div class="hy-seg"><span>Malaysia</span><span class="on">Indonesia</span></div>
+<span class="hy-lab">Email <b class="pin">2</b></span><span class="hy-in">you@yourshop.com</span>
+<span class="hy-lab">Password</span><span class="hy-in"></span>
+<span class="hy-btn">Sign in</span>
+<span class="hy-or">OR</span>
+<span class="hy-note">NinjaVan staff — sign in with Google. <b class="pin">3</b></span>
+<span class="hy-google">Sign in with Google</span>
+</div>
+</div>
+<figcaption><span class="l-en">Hiryu, redrawn from the real login page (25 Sep). Choose <b>Indonesia</b> first. Hub staff use the email and password the SPV gives them; Ninja office staff use Google.</span><span class="l-id">Hiryu, digambar ulang dari halaman login aslinya (25 Sep). Pilih <b>Indonesia</b> dulu. Staf hub memakai email dan password dari SPV; staf kantor Ninja memakai Google.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-hiryu-login" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="hiryu-darkstore" data-key="hiryu-darkstore" data-kind="hiryu">
+  <header class="card__head">
+    <span class="card__no">02</span>
+    <div class="card__title">
+      <h2><span class="l-en">2.1.1 In Hiryu: the instance, the dark store, its hours, the SPV login</span><span class="l-id">2.1.1 Di Hiryu: instance, dark store, jam buka, login SPV</span></h2>
+      <p class="card__meta"><code>hiryu-darkstore</code><span class="tag tag--hiryu"><span class="l-en">Hiryu redraw</span><span class="l-id">Gambar ulang Hiryu</span></span>
+        <span class="crumb"><span class="l-en">2. Registration and store setup: hub, brand, SKU, Grab store</span><span class="l-id">2. Pendaftaran dan pengaturan toko: hub, merek, SKU, toko Grab</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="hy hy--app">
+<aside class="hy-side"><div class="hy-brand"><i class="hy-logo"></i><b>Hiryu</b></div><span class="hy-nav">Orders</span><span class="hy-nav">Live Orders</span><span class="hy-nav">Dashboard</span><span class="hy-grp">CATALOGUE</span><span class="hy-nav">Stores</span><span class="hy-nav">Menus</span><span class="hy-nav">SKUs</span><span class="hy-grp">NETWORK</span><span class="hy-nav on">Dark stores</span><span class="hy-grp">ADMIN</span><span class="hy-nav">Users</span><span class="hy-nav">Settings</span></aside>
+<div class="hy-main">
+<small class="hy-crumb">← Back to dark stores</small>
+<div class="hy-title">Cawang</div>
+<div class="hy-tabs"><span>Stores</span><span>Hours</span><span class="on">Staff <b class="pin">1</b></span></div>
+<div class="hy-row"><small>Staff can sign in with email and password to see and fulfil orders of this dark store's member stores.</small><span class="hy-btn">Add staff</span></div>
+<div class="hy-cols">
+<div class="hy-box"><b>Add staff <b class="pin">2</b></b><span class="hy-lab">Email</span><span class="hy-in hy-val">dewi.lestari@ninjavan.co</span><span class="hy-lab">Name (optional)</span><span class="hy-in hy-val">Dewi Lestari</span><span class="hy-lab">Role</span><div class="hy-seg"><span class="on">MANAGER</span><span>STAFF</span></div><small>Managers can also manage this dark store's staff.</small></div>
+<div class="hy-box"><b>Temporary password <b class="pin">3</b></b><span class="hy-in hy-val mono">••••••••••</span><small>Share this temporary password with Dewi. They'll be asked to choose their own password at first sign-in.</small><small class="hy-oos">This password will not be shown again.</small><span class="hy-btn">Done</span></div>
+</div>
+</div></div></div>
+<figcaption><span class="l-en">Hiryu dark store page, <b>Staff</b> tab, redrawn from Hiryu's own screen text (28 Sep). Only an ADMIN, an EDITOR or a MANAGER of this hub sees the Staff tab.</span><span class="l-id">Halaman dark store di Hiryu, tab <b>Staff</b>, digambar ulang dari teks layar Hiryu (28 Sep). Hanya ADMIN, EDITOR, atau MANAGER hub ini yang melihat tab Staff.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-hiryu-darkstore" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="admin-setup" data-key="admin-setup" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">03</span>
+    <div class="card__title">
+      <h2><span class="l-en">2.1.2 In the WMS: the dark store</span><span class="l-id">2.1.2 Di WMS: dark store</span></h2>
+      <p class="card__meta"><code>admin-setup</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">2. Registration and store setup: hub, brand, SKU, Grab store</span><span class="l-id">2. Pendaftaran dan pengaturan toko: hub, merek, SKU, toko Grab</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav is-on">Dark store &amp; pengguna</span><span class="c-nav">Merek</span><span class="c-nav">Produk</span><span class="c-nav">Menu Hiryu</span><span class="c-nav">Masalah</span></aside>
+<div class="c-main">
+<div class="c-grid2">
+<div class="c-form">
+<span class="c-title">Tambah dark store <b class="pin">1</b></span>
+<div class="row3"><label class="f"><span>Kode hub</span><span class="in mono">MA5</span></label><label class="f" style="grid-column:span 2"><span>Nama</span><span class="in">Cawang</span></label></div>
+<label class="f"><span>Alamat</span><span class="in">Jl. Raya Kalibata No. 4, Jakarta Timur</span></label>
+<label class="f"><span>Nama dark store di Hiryu</span><span class="in">Cawang</span></label>
+<label class="f"><span>SPV hub ini</span><span class="in in--sel">Dewi Lestari</span></label>
+<div class="note">Baki karantina <span class="mono hl">MA5-KARANTINA</span> dibuat otomatis. Bin sementara diatur SPV. <b class="pin">2</b></div>
+<span class="btn">Simpan dark store</span>
+</div>
+<div class="c-form">
+<span class="c-title">Tambah pengguna <b class="pin">3</b></span>
+<label class="f"><span>Email Google (@ninjavan.co)</span><span class="in">dewi.lestari@ninjavan.co</span></label>
+<label class="f"><span>Nama</span><span class="in">Dewi Lestari</span></label>
+<label class="f"><span>Peran</span><span class="in in--sel">SPV</span></label>
+<div class="rolechips"><span class="chip">Staf</span><span class="chip ok">SPV</span><span class="chip">Ops HQ</span><span class="chip muted">Ops Head <i>superadmin</i></span><span class="chip muted">Superadmin <i>superadmin</i></span></div>
+<label class="f"><span>Hub</span><span class="in in--sel">MA5 Cawang</span></label>
+<span class="btn">Tambah pengguna</span>
+<div class="note">Masuk sebagai SPV? Anda hanya bisa menambah <b>Staf</b>, di hub Anda sendiri. <b class="pin">4</b></div>
+</div>
+</div>
+</div></div></div>
+<figcaption><span class="l-en">Ops HQ · <b>Dark store &amp; pengguna</b>. Ops HQ registers the hub and its people. The quarantine tray is made automatically; the SPV sets up the temporary bins (§3.1).</span><span class="l-id">Ops HQ · <b>Dark store &amp; pengguna</b>. Ops HQ mendaftarkan hub dan orangnya. Baki karantina dibuat otomatis; bin sementara diatur SPV (§3.1).</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-admin-setup" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="brand-form" data-key="brand-form" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">04</span>
+    <div class="card__title">
+      <h2><span class="l-en">2.2.1 Add the brand in the WMS</span><span class="l-id">2.2.1 Tambahkan merek di WMS</span></h2>
+      <p class="card__meta"><code>brand-form</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">2. Registration and store setup: hub, brand, SKU, Grab store</span><span class="l-id">2. Pendaftaran dan pengaturan toko: hub, merek, SKU, toko Grab</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav">Dark store &amp; pengguna</span><span class="c-nav is-on">Merek</span><span class="c-nav">Produk</span><span class="c-nav">Menu Hiryu</span><span class="c-nav">Masalah</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">Tambah merek</span><span class="chip">Ops HQ · Superadmin</span></div>
+<div class="c-grid2">
+<div class="c-form">
+<label class="f"><span>Nama merek <b class="pin">1</b></span><span class="in">Labore</span></label>
+<label class="f"><span>Kode singkat</span><span class="in mono">LAB</span></label>
+<label class="f"><span>Perusahaan</span><span class="in">Paragon (PT Paragon Technology and Innovation)</span></label>
+<label class="f"><span>Model listing di Grab <b class="pin">2</b></span><span class="in in--sel">Grab minta Ninja jadi 3PL</span></label>
+<span class="small muted">Pilihan lain: Ninja mendaftarkan merchant sendiri di Grab.</span>
+<label class="f"><span>Pemilik stok</span><span class="in muted">Merek (selalu)</span></label>
+</div>
+<div class="c-form">
+<label class="f"><span>Kontak restock <b class="pin">3</b></span><span class="in">Nama, WhatsApp, email tim distribusi merek</span></label>
+<label class="f"><span>Dijual di hub <b class="pin">4</b></span><span class="in in--sel">MA5 Cawang, KJ5 Kemanggisan</span></label>
+<label class="f"><span>Barcode di kemasan</span><span class="in in--sel">Ya, barcode merek (EAN-13)</span></label>
+<span class="btn">Simpan merek</span>
+</div>
+</div>
+</div></div></div>
+<figcaption><span class="l-en">Ops HQ or superadmin · <b>Merek → Tambah merek</b>. A new brand comes before its SKUs.</span><span class="l-id">Ops HQ atau superadmin · <b>Merek → Tambah merek</b>. Merek baru didaftarkan sebelum SKU-nya.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-brand-form" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="hiryu-menu" data-key="hiryu-menu" data-kind="hiryu">
+  <header class="card__head">
+    <span class="card__no">05</span>
+    <div class="card__title">
+      <h2><span class="l-en">2.2.2 In Hiryu: build the first store&#x27;s menu</span><span class="l-id">2.2.2 Di Hiryu: buat menu toko pertama</span></h2>
+      <p class="card__meta"><code>hiryu-menu</code><span class="tag tag--hiryu"><span class="l-en">Hiryu redraw</span><span class="l-id">Gambar ulang Hiryu</span></span>
+        <span class="crumb"><span class="l-en">2. Registration and store setup: hub, brand, SKU, Grab store</span><span class="l-id">2. Pendaftaran dan pengaturan toko: hub, merek, SKU, toko Grab</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="hy hy--app">
+<aside class="hy-side"><div class="hy-brand"><i class="hy-logo"></i><b>Hiryu</b></div><span class="hy-nav">Orders</span><span class="hy-nav">Live Orders</span><span class="hy-nav">Dashboard</span><span class="hy-grp">CATALOGUE</span><span class="hy-nav">Stores</span><span class="hy-nav on">Menus</span><span class="hy-nav">SKUs</span><span class="hy-grp">NETWORK</span><span class="hy-nav">Dark stores</span></aside>
+<div class="hy-main">
+<small class="hy-crumb">← Back to menus</small>
+<div class="hy-row"><span class="hy-title">Labore</span><span class="hy-ctrls"><span class="hy-btn2">Export CSV</span><span class="hy-btn2">Import CSV</span><span class="hy-btn2">Bundles <b class="pin">4</b></span></span></div>
+<div class="hy-savebar"><span>Unsaved changes</span><span><span class="hy-btn2">Add category <b class="pin">1</b></span> <span class="hy-btn">Save menu <b class="pin">3</b></span></span></div>
+<div class="hy-cols">
+<div class="hy-box"><b>Cleanser (1)</b><table class="hy-table"><thead><tr><th>Name</th><th>Price</th><th>Status</th><th>Seq.</th></tr></thead><tbody><tr><td>GentleBiome Mild Cleanser 100 ml<br><small class="mono">LAB-GB-MC-100</small></td><td>IDR …</td><td><span class="hy-badge">AVAILABLE</span></td><td>1</td></tr></tbody></table><span class="hy-link">+ Add item</span></div>
+<div class="hy-box"><b>Edit item <b class="pin">2</b></b><span class="hy-lab">Item ID</span><span class="hy-in hy-val mono">LAB-GB-MC-100</span><small>Must be unique within this store's menu.</small><span class="hy-lab">Name · Price (IDR) · Sequence</span><span class="hy-in hy-val">GentleBiome Mild Cleanser 100 ml · … · 1</span><span class="hy-lab">Description</span><span class="hy-in hy-val">Shown to shoppers on the item page.</span><span class="hy-lab">Photos (1)</span><small>Up to 4 photos. Grab requires a 1:1 square photo.</small><span class="hy-btn">Add to draft</span></div>
+</div>
+</div></div></div>
+<figcaption><span class="l-en">Hiryu menu editor, redrawn from Hiryu's screen text. Changes stay a draft until <b>Save menu</b>; <b>Import CSV</b> replaces the whole menu.</span><span class="l-id">Editor menu Hiryu, digambar ulang dari teks layar Hiryu. Perubahan tetap draf sampai <b>Save menu</b>; <b>Import CSV</b> mengganti seluruh menu.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-hiryu-menu" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="hiryu-skus" data-key="hiryu-skus" data-kind="hiryu">
+  <header class="card__head">
+    <span class="card__no">06</span>
+    <div class="card__title">
+      <h2><span class="l-en">2.2.4 In Hiryu: create the SKUs and connect every item</span><span class="l-id">2.2.4 Di Hiryu: buat SKU dan hubungkan setiap item</span></h2>
+      <p class="card__meta"><code>hiryu-skus</code><span class="tag tag--hiryu"><span class="l-en">Hiryu redraw</span><span class="l-id">Gambar ulang Hiryu</span></span>
+        <span class="crumb"><span class="l-en">2. Registration and store setup: hub, brand, SKU, Grab store</span><span class="l-id">2. Pendaftaran dan pengaturan toko: hub, merek, SKU, toko Grab</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="hy hy--app">
+<aside class="hy-side"><div class="hy-brand"><i class="hy-logo"></i><b>Hiryu</b></div><span class="hy-nav">Orders</span><span class="hy-nav">Live Orders</span><span class="hy-nav">Dashboard</span><span class="hy-grp">CATALOGUE</span><span class="hy-nav">Stores</span><span class="hy-nav">Menus</span><span class="hy-nav on">SKUs</span><span class="hy-grp">NETWORK</span><span class="hy-nav">Dark stores</span></aside>
+<div class="hy-main">
+<div class="hy-row"><span class="hy-title">SKUs</span><span class="hy-btn">New SKU <b class="pin">1</b></span></div>
+<div class="hy-cols">
+<div class="hy-box"><b>New SKU</b><span class="hy-lab">Code <b class="pin">2</b></span><span class="hy-in hy-val mono">LAB-GB-MC-100</span><small>Upper-cased. How this SKU is referred to outside the app.</small><span class="hy-lab">Name</span><span class="hy-in hy-val">Labore GentleBiome Mild Cleanser 100 ml</span><span><span class="hy-btn2">Cancel</span> <span class="hy-btn">Create</span></span></div>
+<div class="hy-box"><b>Search name or code</b><table class="hy-table"><thead><tr><th>SKU</th><th>Sold as</th><th>Stock on hand</th></tr></thead><tbody><tr><td>Labore GentleBiome Mild Cleanser 100 ml<br><small class="mono">LAB-GB-MC-100</small></td><td>1 item</td><td>0 units</td></tr></tbody></table><small>Not counted only: SKUs no item is mapped to.</small></div>
+</div>
+</div></div></div>
+<figcaption><span class="l-en">Hiryu <b>SKUs → New SKU</b>, redrawn from Hiryu's screen text. The <b>Code</b> typed here is the <i>Kode SKU di Hiryu</i> the WMS needs.</span><span class="l-id">Hiryu <b>SKUs → New SKU</b>, digambar ulang dari teks layar Hiryu. <b>Code</b> yang diketik di sini adalah <i>Kode SKU di Hiryu</i> yang dibutuhkan WMS.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-hiryu-skus" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="hiryu-bundles" data-key="hiryu-bundles" data-kind="hiryu">
+  <header class="card__head">
+    <span class="card__no">07</span>
+    <div class="card__title">
+      <h2><span class="l-en">2.2.4 In Hiryu: create the SKUs and connect every item</span><span class="l-id">2.2.4 Di Hiryu: buat SKU dan hubungkan setiap item</span></h2>
+      <p class="card__meta"><code>hiryu-bundles</code><span class="tag tag--hiryu"><span class="l-en">Hiryu redraw</span><span class="l-id">Gambar ulang Hiryu</span></span>
+        <span class="crumb"><span class="l-en">2. Registration and store setup: hub, brand, SKU, Grab store</span><span class="l-id">2. Pendaftaran dan pengaturan toko: hub, merek, SKU, toko Grab</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="hy hy--app">
+<aside class="hy-side"><div class="hy-brand"><i class="hy-logo"></i><b>Hiryu</b></div><span class="hy-nav">Orders</span><span class="hy-nav">Live Orders</span><span class="hy-nav">Dashboard</span><span class="hy-grp">CATALOGUE</span><span class="hy-nav">Stores</span><span class="hy-nav on">Menus</span><span class="hy-nav">SKUs</span><span class="hy-grp">NETWORK</span><span class="hy-nav">Dark stores</span></aside>
+<div class="hy-main">
+<small class="hy-crumb">← Back to menu</small>
+<div class="hy-row"><span class="hy-title">Labore — bundles</span><span class="hy-ctrls"><span class="hy-btn2">One SKU per item <b class="pin">1</b></span><span class="hy-btn2">New SKU</span></span></div>
+<small>Stock is counted once against a SKU. An item drawing on it sells floor(count ÷ units). An item mapped to nothing is not counted at all, and selling it moves no stock.</small>
+<table class="hy-table"><thead><tr><th>Item</th><th>SKU <b class="pin">2</b></th><th>Units per sale <b class="pin">3</b></th></tr></thead><tbody>
+<tr><td>GentleBiome Mild Cleanser 100 ml</td><td><span class="hy-in hy-sel hy-val">LAB-GB-MC-100</span></td><td><span class="hy-in hy-num on">1</span></td></tr>
+<tr><td>GentleBiome Mild Cleanser 100 ml (isi 2)</td><td><span class="hy-in hy-sel hy-val">LAB-GB-MC-100</span></td><td><span class="hy-in hy-num on">2</span></td></tr>
+<tr><td>Mini Barrier Protection kit</td><td><span class="hy-in hy-sel">Not counted</span></td><td><span class="hy-in hy-num off">·</span></td></tr>
+</tbody></table>
+</div></div></div>
+<figcaption><span class="l-en">Hiryu <b>Menus → the menu → Bundles</b>, redrawn from Hiryu's screen text. Every item must point at a SKU, or Hiryu never counts it.</span><span class="l-id">Hiryu <b>Menus → menunya → Bundles</b>, digambar ulang dari teks layar Hiryu. Setiap item harus terhubung ke SKU, kalau tidak Hiryu tidak pernah menghitungnya.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-hiryu-bundles" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="hiryu-map" data-key="hiryu-map" data-kind="hiryu">
+  <header class="card__head">
+    <span class="card__no">08</span>
+    <div class="card__title">
+      <h2><span class="l-en">2.2.5 In the WMS: check the menus and SKUs Hiryu sent</span><span class="l-id">2.2.5 Di WMS: cek menu dan SKU yang dikirim Hiryu</span></h2>
+      <p class="card__meta"><code>hiryu-map</code><span class="tag tag--hiryu"><span class="l-en">Hiryu redraw</span><span class="l-id">Gambar ulang Hiryu</span></span>
+        <span class="crumb"><span class="l-en">2. Registration and store setup: hub, brand, SKU, Grab store</span><span class="l-id">2. Pendaftaran dan pengaturan toko: hub, merek, SKU, toko Grab</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav">Rak &amp; bin</span><span class="c-nav">Produk</span><span class="c-nav is-on">Menu Hiryu</span><span class="c-nav">Masalah</span><span class="c-nav">Laporan akhir hari</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">Menu Hiryu · Kahf - Cawang</span><span class="btn btn--ghost">Unggah CSV menu <b class="pin">1</b></span></div>
+<div class="kpis"><span class="kpi"><b>104</b>item di menu</span><span class="kpi ok"><b>68</b>SKU baru dibuat</span><span class="kpi ok"><b>96</b>terhubung otomatis</span><span class="kpi warn"><b>8</b>perlu dihubungkan <b class="pin">2</b></span></div>
+<table class="t"><thead><tr><th>Item Hiryu</th><th>Nama di Grab</th><th>SKU WMS</th><th>Kode SKU di Hiryu</th><th>Unit per jual <b class="pin">3</b></th></tr></thead><tbody>
+<tr><td class="mono">IDITE…0412</td><td>Kahf Face Wash Oil and Acne Care 100 ml (isi 2)</td><td><span class="in in--sel in--sm mono">KHF-FW-OAC-100</span></td><td class="mono">KHF-FW-OAC-100</td><td><span class="step">− <b>2</b> +</span></td></tr>
+<tr><td class="mono">IDITE…0388</td><td>Kahf Umrah and Hajj Package</td><td><span class="in in--sel in--sm muted">Pilih SKU…</span></td><td class="muted">·</td><td><span class="step">− <b>1</b> +</span></td></tr>
+</tbody></table>
+<div class="c-sub">Toko Hiryu <b class="pin">4</b></div>
+<table class="t"><thead><tr><th>No. toko</th><th>Nama toko</th><th>Hub</th><th>Merek</th></tr></thead><tbody>
+<tr><td class="mono">#21</td><td>Kahf - Cawang</td><td>MA5</td><td>Kahf</td></tr>
+<tr><td class="mono">#22</td><td>Labore - Cawang</td><td>MA5</td><td>Labore</td></tr>
+<tr><td class="mono">#23</td><td>Kahf - Kemanggisan</td><td>KJ5</td><td>Kahf</td></tr>
+<tr><td class="mono">#24</td><td>Labore - Kemanggisan</td><td>KJ5</td><td>Labore</td></tr>
+</tbody></table>
+</div></div></div>
+<figcaption><span class="l-en">Ops HQ · <b>Menu Hiryu</b>. Item IDs and store numbers are examples; Indonesia's real ones come from Hiryu.</span><span class="l-id">Ops HQ · <b>Menu Hiryu</b>. ID item dan nomor toko hanya contoh; yang asli untuk Indonesia datang dari Hiryu.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-hiryu-map" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="sku-complete" data-key="sku-complete" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">09</span>
+    <div class="card__title">
+      <h2><span class="l-en">2.2.6 In the WMS: complete each SKU&#x27;s stock numbers</span><span class="l-id">2.2.6 Di WMS: lengkapi angka stok setiap SKU</span></h2>
+      <p class="card__meta"><code>sku-complete</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">2. Registration and store setup: hub, brand, SKU, Grab store</span><span class="l-id">2. Pendaftaran dan pengaturan toko: hub, merek, SKU, toko Grab</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav">Rak &amp; bin</span><span class="c-nav is-on">Produk</span><span class="c-nav">Menu Hiryu</span><span class="c-nav">Masalah</span><span class="c-nav">Laporan akhir hari</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">Lengkapi data SKU · Labore</span><span><span class="btn btn--ghost">Unduh CSV</span> <span class="btn btn--ghost">Unggah CSV <b class="pin">3</b></span></span></div>
+<div class="kpis"><span class="kpi warn"><b>37</b>belum lengkap <b class="pin">1</b></span><span class="kpi ok"><b>0</b>lengkap</span></div>
+<table class="t"><thead><tr><th>Kode SKU di Hiryu</th><th>Nama (dari menu)</th><th>Ukuran bin</th><th>Isi sampai</th><th>Pesan ulang</th><th>Batas kritis</th><th>Cadangan Grab</th><th>Status</th></tr></thead><tbody>
+<tr><td class="mono">LAB-GB-MC-100</td><td>Labore GentleBiome Mild Cleanser 100 ml</td><td><span class="in in--sel in--sm">Kecil JX-2</span></td><td><span class="in in--sm mono">15</span></td><td><span class="in in--sm mono">25%</span> <small class="muted">= 4</small></td><td><span class="in in--sm mono">1</span></td><td><span class="in in--sm mono">1</span></td><td><span class="chip ok">lengkap</span></td></tr>
+<tr><td class="mono">LAB-GB-MC-225</td><td>Labore GentleBiome Mild Cleanser 225 ml</td><td><span class="in in--sel in--sm">Besar JX-4</span></td><td><span class="in in--sm mono muted">·</span> <b class="pin">2</b></td><td><span class="in in--sm mono">25%</span></td><td><span class="in in--sm mono">1</span></td><td><span class="in in--sm mono">1</span></td><td><span class="chip warn">belum lengkap</span></td></tr>
+<tr><td class="mono">LAB-SB-TN-150</td><td>Labore SkinBiome Toner 150 ml</td><td><span class="in in--sel in--sm muted">saran: Besar</span></td><td><span class="in in--sm mono muted">·</span></td><td><span class="in in--sm mono">25%</span></td><td><span class="in in--sm mono">1</span></td><td><span class="in in--sm mono">1</span></td><td><span class="chip warn">belum lengkap</span></td></tr>
+</tbody></table>
+<div class="c-foot"><span class="small muted">Dibuat dari unggahan menu Hiryu (§2.2.5). Nama dan kode berasal dari Hiryu dan tidak diketik ulang.</span><span class="btn">Simpan</span></div>
+</div></div></div>
+<figcaption><span class="l-en">Ops HQ · <b>Produk → Lengkapi data SKU</b>. The menu upload made the rows; Ops HQ adds the bin size and the stock numbers, here or by CSV. A row is complete when the bin size and <i>isi sampai</i> are set.</span><span class="l-id">Ops HQ · <b>Produk → Lengkapi data SKU</b>. Barisnya dibuat dari unggahan menu; Ops HQ menambah ukuran bin dan angka stok, di sini atau lewat CSV. Satu baris lengkap kalau ukuran bin dan <i>isi sampai</i> sudah diisi.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-sku-complete" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="hiryu-store-hub" data-key="hiryu-store-hub" data-kind="hiryu">
+  <header class="card__head">
+    <span class="card__no">10</span>
+    <div class="card__title">
+      <h2><span class="l-en">2.4.2 Give it the hub</span><span class="l-id">2.4.2 Beri hub</span></h2>
+      <p class="card__meta"><code>hiryu-store-hub</code><span class="tag tag--hiryu"><span class="l-en">Hiryu redraw</span><span class="l-id">Gambar ulang Hiryu</span></span>
+        <span class="crumb"><span class="l-en">2. Registration and store setup: hub, brand, SKU, Grab store</span><span class="l-id">2. Pendaftaran dan pengaturan toko: hub, merek, SKU, toko Grab</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="hy hy--app">
+<aside class="hy-side"><div class="hy-brand"><i class="hy-logo"></i><b>Hiryu</b></div><span class="hy-nav">Orders</span><span class="hy-nav">Live Orders</span><span class="hy-nav">Dashboard</span><span class="hy-grp">CATALOGUE</span><span class="hy-nav on">Stores</span><span class="hy-nav">Menus</span><span class="hy-nav">SKUs</span><span class="hy-grp">NETWORK</span><span class="hy-nav">Dark stores</span></aside>
+<div class="hy-main">
+<small class="hy-crumb">← Back to stores</small>
+<div class="hy-title">Labore - Cawang <span class="hy-badge grey">INACTIVE</span></div>
+<div class="hy-tabs"><span class="on">Overview</span><span>Menu</span><span>Stock</span><span>Hours</span></div>
+<div class="hy-cols">
+<div class="hy-box"><dl><dt>Store name</dt><dd>Labore - Cawang</dd><dt>Dark store <b class="pin">1</b></dt><dd class="muted">none: <u>Assign a dark store</u></dd><dt>Menu</dt><dd class="muted">none</dd><dt>Integration status</dt><dd>INACTIVE</dd></dl><small class="hy-oos">A store with no dark store reaches no Live Orders board.</small></div>
+<div class="hy-box"><b>Assign a dark store <b class="pin">2</b></b><span class="hy-lab">Dark store</span><span class="hy-in hy-sel hy-val">Cawang</span><small>The store follows the hub's hours. A store belongs to one hub: to move it, unassign it there first.</small><span class="hy-btn">Assign <b class="pin">3</b></span></div>
+</div>
+</div></div></div>
+<figcaption><span class="l-en">Hiryu store <b>Overview → Assign a dark store</b>, redrawn from Hiryu's screen text. The same can be done from <i>Dark stores → the hub → Stores → Assign</i>.</span><span class="l-id"><b>Overview → Assign a dark store</b> toko di Hiryu, digambar ulang dari teks layar Hiryu. Bisa juga dari <i>Dark stores → hub → Stores → Assign</i>.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-hiryu-store-hub" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="hiryu-store-menu" data-key="hiryu-store-menu" data-kind="hiryu">
+  <header class="card__head">
+    <span class="card__no">11</span>
+    <div class="card__title">
+      <h2><span class="l-en">2.4.3 Give it its menu</span><span class="l-id">2.4.3 Beri menu</span></h2>
+      <p class="card__meta"><code>hiryu-store-menu</code><span class="tag tag--hiryu"><span class="l-en">Hiryu redraw</span><span class="l-id">Gambar ulang Hiryu</span></span>
+        <span class="crumb"><span class="l-en">2. Registration and store setup: hub, brand, SKU, Grab store</span><span class="l-id">2. Pendaftaran dan pengaturan toko: hub, merek, SKU, toko Grab</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="hy hy--app">
+<aside class="hy-side"><div class="hy-brand"><i class="hy-logo"></i><b>Hiryu</b></div><span class="hy-nav">Orders</span><span class="hy-nav">Live Orders</span><span class="hy-nav">Dashboard</span><span class="hy-grp">CATALOGUE</span><span class="hy-nav on">Stores</span><span class="hy-nav">Menus</span><span class="hy-nav">SKUs</span><span class="hy-grp">NETWORK</span><span class="hy-nav">Dark stores</span></aside>
+<div class="hy-main">
+<small class="hy-crumb">← Back to stores</small>
+<div class="hy-title">Labore - Cawang <span class="hy-badge grey">INACTIVE</span></div>
+<div class="hy-tabs"><span class="on">Overview</span><span>Menu</span><span>Stock</span><span>Hours</span></div>
+<div class="hy-cols">
+<div class="hy-box"><dl><dt>Store name</dt><dd>Labore - Cawang</dd><dt>Dark store</dt><dd>Cawang</dd><dt>Menu <b class="pin">1</b></dt><dd><span class="hy-in hy-sel hy-val">Labore - Cawang</span></dd><dt>Integration status</dt><dd>INACTIVE</dd></dl></div>
+<div class="hy-box"><b>Choose the menu <b class="pin">2</b></b><span class="hy-in hy-val">Labore - Cawang</span><span class="hy-in">Labore - Kemanggisan</span><span class="hy-in">Kahf - Cawang</span><span class="hy-in">Kahf - Kemanggisan</span><span class="hy-btn">Assign <b class="pin">3</b></span><small class="hy-ok">Menu assigned to this store.</small></div>
+</div>
+</div></div></div>
+<figcaption><span class="l-en">Hiryu store <b>Overview → Menu</b>. Each store gets <b>its own menu</b>, named after the store (decided 30 Sep).</span><span class="l-id"><b>Overview → Menu</b> toko di Hiryu. Setiap toko mendapat <b>menunya sendiri</b>, dinamai sesuai tokonya (diputuskan 30 Sep).</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-hiryu-store-menu" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="hiryu-store-activate" data-key="hiryu-store-activate" data-kind="hiryu">
+  <header class="card__head">
+    <span class="card__no">12</span>
+    <div class="card__title">
+      <h2><span class="l-en">2.4.4 Activate it on Grab</span><span class="l-id">2.4.4 Aktifkan di Grab</span></h2>
+      <p class="card__meta"><code>hiryu-store-activate</code><span class="tag tag--hiryu"><span class="l-en">Hiryu redraw</span><span class="l-id">Gambar ulang Hiryu</span></span>
+        <span class="crumb"><span class="l-en">2. Registration and store setup: hub, brand, SKU, Grab store</span><span class="l-id">2. Pendaftaran dan pengaturan toko: hub, merek, SKU, toko Grab</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="hy hy--app">
+<aside class="hy-side"><div class="hy-brand"><i class="hy-logo"></i><b>Hiryu</b></div><span class="hy-nav">Orders</span><span class="hy-nav">Live Orders</span><span class="hy-nav">Dashboard</span><span class="hy-grp">CATALOGUE</span><span class="hy-nav on">Stores</span><span class="hy-nav">Menus</span><span class="hy-nav">SKUs</span><span class="hy-grp">NETWORK</span><span class="hy-nav">Dark stores</span></aside>
+<div class="hy-main">
+<small class="hy-crumb">← Back to stores</small>
+<div class="hy-title">Labore - Cawang <span class="hy-badge grey">INACTIVE</span></div>
+<div class="hy-tabs"><span class="on">Overview</span><span>Menu</span><span>Stock</span><span>Hours</span></div>
+<div class="hy-cols">
+<div class="hy-box"><dl><dt>Store name</dt><dd>Labore - Cawang</dd><dt>Partner store ID</dt><dd class="mono">STORE-3f1c…</dd><dt>Grab merchant ID</dt><dd class="muted">not activated</dd><dt>Menu <b class="pin">1</b></dt><dd><span class="hy-in hy-sel hy-val">Labore - Cawang</span></dd><dt>Integration status</dt><dd>INACTIVE</dd></dl></div>
+<div class="hy-box"><b>Activate on Grab <b class="pin">2</b></b><small>Starts Grab's self-serve activation journey for this store. The merchant will need to complete it (owner/manager login required).</small><span class="hy-btn">Start activation</span><span class="hy-row"><small class="mono">merchant.grab.com/self-serve-activation/…</small><span><span class="hy-btn2">Copy link</span> <span class="hy-btn2">Open link <b class="pin">3</b></span></span></span><small class="hy-oos">No menu yet: activation stays disabled. Grab rejects an empty menu.</small></div>
+</div>
+</div></div></div>
+<figcaption><span class="l-en">Hiryu store <b>Overview</b>, redrawn from Hiryu's screen text. Only an ADMIN sees <i>Activate on Grab</i>.</span><span class="l-id"><b>Overview</b> toko di Hiryu, digambar ulang dari teks layar Hiryu. Hanya ADMIN yang melihat <i>Activate on Grab</i>.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-hiryu-store-activate" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="grab-activate" data-key="grab-activate" data-kind="hiryu">
+  <header class="card__head">
+    <span class="card__no">13</span>
+    <div class="card__title">
+      <h2><span class="l-en">2.4.4 Activate it on Grab</span><span class="l-id">2.4.4 Aktifkan di Grab</span></h2>
+      <p class="card__meta"><code>grab-activate</code><span class="tag tag--hiryu"><span class="l-en">Hiryu redraw</span><span class="l-id">Gambar ulang Hiryu</span></span>
+        <span class="crumb"><span class="l-en">2. Registration and store setup: hub, brand, SKU, Grab store</span><span class="l-id">2. Pendaftaran dan pengaturan toko: hub, merek, SKU, toko Grab</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="pair">
+<div class="dev dev--sketch gb"><div class="sk-bar"><span class="sk-tag">Grab Merchant · sketch</span><span class="muted">weblogin.grab.com</span></div><div class="sk-body"><b>1 · Masuk <b class="pin">1</b></b><span class="hy-in hy-val">labore.cawang.manager</span><span class="hy-in">••••••••</span><span class="gb-btn">Masuk</span></div></div>
+<div class="dev dev--sketch gb"><div class="sk-bar"><span class="sk-tag">Grab Merchant · sketch</span></div><div class="sk-body"><b>2 · Pilih toko yang ingin dihubungkan <b class="pin">2</b></b><span class="small">Labore Official Store, Cawang<br>Jl. Raya Kalibata No. 4</span><span class="gb-btn">Hubungkan</span></div></div>
+<div class="dev dev--sketch gb"><div class="sk-bar"><span class="sk-tag">Grab Merchant · sketch</span></div><div class="sk-body"><b>3 · Aktifkan integrasi <b class="pin">3</b></b><span class="small">Menu dari POS menjadi menu utama. Perubahan di aplikasi GrabMerchant akan dibatalkan.</span><span class="gb-btn">Aktifkan integrasi</span></div></div>
+</div>
+<figcaption><span class="l-en">Grab's own pages after <b>Open link</b>. Sketched from the Malaysia linking video (12 Sep), where Grab showed them in Malay; the Indonesian wording may differ slightly.</span><span class="l-id">Halaman Grab sendiri setelah <b>Open link</b>. Digambar dari video penautan Malaysia (12 Sep), saat Grab menampilkannya dalam bahasa Melayu; kata-kata versi Indonesia bisa sedikit berbeda.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-grab-activate" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="inbound-area" data-key="inbound-area" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">14</span>
+    <div class="card__title">
+      <h2><span class="l-en">3.1 Temporary inbound bins and the quarantine tray</span><span class="l-id">3.1 Bin inbound sementara dan baki karantina</span></h2>
+      <p class="card__meta"><code>inbound-area</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">3. Racking setup</span><span class="l-id">3. Pengaturan rak</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav is-on">Rak &amp; bin</span><span class="c-nav">Pengguna hub</span><span class="c-nav">Pengingat</span><span class="c-nav">Masalah</span><span class="c-nav">Laporan akhir hari</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">Area barang masuk · MA5 Cawang</span><span class="chip">SPV</span></div>
+<div class="c-grid2">
+<div class="c-form">
+<span class="c-sub">Bin sementara <b class="pin">1</b></span>
+<div class="row2"><label class="f"><span>Jumlah</span><span class="in mono">10</span></label><label class="f"><span>Ukuran</span><span class="in in--sel">Besar JX-4</span></label></div>
+<span class="small muted">Satu SKU per bin sementara. Jumlahnya boleh diubah kapan saja.</span>
+<div class="labelgrid"><span>MA5-IN-01</span><span>MA5-IN-02</span><span>MA5-IN-03</span><span>MA5-IN-04</span><span>MA5-IN-05</span><span>MA5-IN-06</span><span>MA5-IN-07</span><span>MA5-IN-08</span><span>MA5-IN-09</span><span>MA5-IN-10</span></div>
+</div>
+<div class="c-form">
+<span class="c-sub">Baki karantina <b class="pin">2</b></span>
+<div class="labelgrid"><span class="kar">MA5-KARANTINA</span></div>
+<span class="small">Satu kotak atau keranjang berlabel, <b>jauh dari rak ambil</b>, untuk barang yang tidak boleh dijual: rusak, bocor, kedaluwarsa, atau diragukan. Dibuat otomatis untuk setiap hub.</span>
+<span class="c-sub">Cetak label <b class="pin">3</b></span>
+<span class="btn btn--ghost">Cetak 11 label (§3)</span>
+</div>
+</div>
+</div></div></div>
+<figcaption><span class="l-en">SPV · <b>Rak &amp; bin → Area barang masuk</b>. Ten temporary bins get ten labels, one each. The quarantine tray always exists; the SPV only places it and sticks its label.</span><span class="l-id">SPV · <b>Rak &amp; bin → Area barang masuk</b>. Sepuluh bin sementara mendapat sepuluh label, satu per bin. Baki karantina selalu ada; SPV hanya menaruhnya dan menempel labelnya.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-inbound-area" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="rack-builder" data-key="rack-builder" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">15</span>
+    <div class="card__title">
+      <h2><span class="l-en">3.2 Build the racks</span><span class="l-id">3.2 Buat rak</span></h2>
+      <p class="card__meta"><code>rack-builder</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">3. Racking setup</span><span class="l-id">3. Pengaturan rak</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="dev dev--console dev--rack" data-rack>
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav">Dark store &amp; pengguna</span><span class="c-nav is-on">Rak &amp; bin</span><span class="c-nav">Produk</span><span class="c-nav">Menu Hiryu</span><span class="c-nav">Masalah</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">Tambah rak A · MA5 Cawang</span><span class="chip">Coba gambarnya: klik tingkat, lalu − dan +</span></div>
+<div class="rk-controls"><span class="rk-lab">Bagian <b class="pin">1</b></span><span class="seg" data-set="bays"><button type="button" data-v="1">1</button><button type="button" data-v="2" class="on">2</button></span><span class="rk-lab">Tingkat</span><span class="seg" data-set="levels"><button type="button" data-v="3">3</button><button type="button" data-v="4" class="on">4</button><button type="button" data-v="5">5</button></span><span class="small muted">Tanpa jenis rak: isi sesuai rak yang berdiri di hub.</span></div>
+<div class="rk-wrap"><div class="rk-pic" data-pic aria-label="Gambar rak, tampak depan"></div>
+<div class="rk-side"><span class="c-sub">Tingkat yang dipilih <b class="pin">2</b></span><span class="rk-sel" data-sel>Klik satu tingkat di gambar</span><span class="seg seg--col" data-set="size"><button type="button" data-v="S">Bin kecil JX-2</button><button type="button" data-v="L">Bin besar JX-4</button><button type="button" data-v="-">Kosong</button></span><span class="rk-counts" data-counts><span class="rk-lab">Bin menyamping <b class="pin">3</b></span><span class="step"><button type="button" data-step="-1" data-what="across">−</button> <b data-n="across">5</b> <button type="button" data-step="1" data-what="across">+</button></span><span class="rk-lab">Ditumpuk</span><span class="step"><button type="button" data-step="-1" data-what="stack">−</button> <b data-n="stack">2</b> <button type="button" data-step="1" data-what="stack">+</button></span></span><span class="rk-calc" data-calc></span><span class="c-sub">Kode bin <b class="pin">4</b></span><span class="rk-code mono" data-code>Arahkan ke satu bin</span></div></div>
+<div class="c-foot"><span class="rk-sum" data-sum></span><span class="btn">Simpan rak <b class="pin">5</b></span></div>
+</div></div></div>
+<figcaption><span class="l-en">SPV · <b>Rak &amp; bin → Tambah rak</b>. This picture works: set the bays and levels, tap a level, choose its bin size, then enter <b>bins across</b> and <b>stacked</b> as counted at the real rack. Point at a bin to read its code.</span><span class="l-id">SPV · <b>Rak &amp; bin → Tambah rak</b>. Gambar ini bisa dicoba: atur jumlah bagian dan tingkat, ketuk satu tingkat, pilih ukuran bin, lalu isi <b>bin menyamping</b> dan <b>ditumpuk</b> sesuai hitungan di rak yang asli. Arahkan ke bin untuk membaca kodenya.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-rack-builder" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="label-sheet" data-key="label-sheet" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">16</span>
+    <div class="card__title">
+      <h2><span class="l-en">3.2 Build the racks</span><span class="l-id">3.2 Buat rak</span></h2>
+      <p class="card__meta"><code>label-sheet</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">3. Racking setup</span><span class="l-id">3. Pengaturan rak</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="a4">
+<div class="a4-head"><b>Label rak A · MA5 Cawang</b><span>Lembar 1 dari 3 · kertas stiker A4 · 3 × 8 label <b class="pin">1</b></span></div>
+<div class="a4-grid">
+<span class="lbl"><b>MA5-A1-1-01</b><i class="bc"></i><small>Rak A · bagian 1 · tingkat 1 · posisi 01</small></span>
+<span class="lbl"><b>MA5-A1-1-02</b><i class="bc"></i><small>Rak A · bagian 1 · tingkat 1 · posisi 02</small></span>
+<span class="lbl"><b>MA5-A1-1-03</b><i class="bc"></i><small>Rak A · bagian 1 · tingkat 1 · posisi 03</small></span>
+<span class="lbl"><b>MA5-A1-1-04</b><i class="bc"></i><small>Rak A · bagian 1 · tingkat 1 · posisi 04</small></span>
+<span class="lbl"><b>MA5-A1-1-05</b><i class="bc"></i><small>Rak A · bagian 1 · tingkat 1 · posisi 05</small></span>
+<span class="lbl"><b>MA5-A1-2-01B</b><i class="bc"></i><small>Rak A · bagian 1 · tingkat 2 · posisi 01 · bawah</small></span>
+<span class="lbl"><b>MA5-A1-2-01T</b><i class="bc"></i><small>Rak A · bagian 1 · tingkat 2 · posisi 01 · atas</small></span>
+<span class="lbl"><b>MA5-A1-2-02B</b><i class="bc"></i><small>Rak A · bagian 1 · tingkat 2 · posisi 02 · bawah</small></span>
+<span class="lbl"><b>MA5-A1-2-02T</b><i class="bc"></i><small>Rak A · bagian 1 · tingkat 2 · posisi 02 · atas</small></span>
+<span class="lbl"><b>MA5-A1-2-03B</b><i class="bc"></i><small>Rak A · bagian 1 · tingkat 2 · posisi 03 · bawah</small></span>
+<span class="lbl"><b>MA5-A1-2-03T</b><i class="bc"></i><small>Rak A · bagian 1 · tingkat 2 · posisi 03 · atas</small></span>
+<span class="lbl"><b>MA5-A1-2-04B</b><i class="bc"></i><small>Rak A · bagian 1 · tingkat 2 · posisi 04 · bawah</small></span>
+</div>
+<div class="a4-foot">✂ Potong mengikuti garis putus-putus <b class="pin">2</b> · tempel di depan bin, di tepi atas <b class="pin">3</b> · urut: tingkat 1 dulu, dari kiri</div>
+</div></div>
+<figcaption><span class="l-en">The A4 label sheet from <b>Rak &amp; bin → the rack → Cetak label</b>. Labels come in the order the bins stand, so staff stick them level by level from the left. The same sheet format is used for temporary bins and the quarantine tray.</span><span class="l-id">Lembar label A4 dari <b>Rak &amp; bin → rak → Cetak label</b>. Label keluar sesuai urutan bin berdiri, jadi staf menempelnya tingkat demi tingkat dari kiri. Format yang sama dipakai untuk bin sementara dan baki karantina.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-label-sheet" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="restock-po" data-key="restock-po" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">17</span>
+    <div class="card__title">
+      <h2><span class="l-en">4.1 Restock from the brand: the PO</span><span class="l-id">4.1 Restock dari merek: PO</span></h2>
+      <p class="card__meta"><code>restock-po</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">4. Replenishment and thresholds</span><span class="l-id">4. Restock dan batas stok</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Perlu tindakan <i class="badge">6</i></span><span class="c-nav">Rak &amp; bin</span><span class="c-nav is-on">Restock ke merek</span><span class="c-nav">Barang masuk</span><span class="c-nav">Masalah</span><span class="c-nav">Laporan merek</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">Buat PO · Kahf · MA5</span><span class="chip">Diajukan oleh SPV Dewi · 14 Okt 09:12 <b class="pin">1</b></span></div>
+<div class="c-grid2">
+<div class="c-form">
+<span class="c-sub">Kepala PO, boleh diubah <b class="pin">2</b></span>
+<label class="f"><span>PO number</span><span class="in mono">RPL-MA5-2610-02</span></label>
+<label class="f"><span>PO date</span><span class="in">14/10/2026</span></label>
+<label class="f"><span>To (brand)</span><span class="in">Kahf · PT Paragon Technology and Innovation</span></label>
+<label class="f"><span>Brand contact</span><span class="in">Restock contact · email · WhatsApp</span></label>
+<label class="f"><span>Deliver to</span><span class="in">MA5 Cawang · Jl. Raya Kalibata No. 4</span></label>
+<label class="f"><span>Requested delivery date</span><span class="in">17/10/2026 · 09:00 to 16:00</span></label>
+<label class="f"><span>Created by (Ops HQ)</span><span class="in">nama@ninjavan.co</span></label>
+</div>
+<div class="c-form">
+<span class="c-sub">SKU dan jumlah <b class="pin">3</b></span>
+<table class="t"><thead><tr><th>SKU</th><th>Barcode</th><th>Stok</th><th>Diminta</th></tr></thead><tbody>
+<tr><td class="mono">KHF-0001</td><td class="mono">8993137710428</td><td class="mono">8</td><td><span class="step">− <b>7</b> +</span></td></tr>
+<tr><td class="mono">KHF-0002</td><td class="mono">8993137740838</td><td class="mono">3</td><td><span class="step">− <b>12</b> +</span></td></tr>
+<tr><td class="mono">KHF-0009</td><td><span class="chip warn">MISSING</span></td><td class="mono">5</td><td><span class="step">− <b>10</b> +</span></td></tr>
+</tbody></table>
+</div>
+</div>
+<div class="c-foot"><span class="muted">14 SKU · 118 pcs · 3 SKU tanpa barcode</span><span><span class="btn btn--ghost">Unduh PO (Excel) <b class="pin">4</b></span> <span class="btn">Simpan PO</span></span></div>
+</div></div></div>
+<figcaption><span class="l-en">Ops HQ · <b>Restock ke merek → the request → Buat PO</b>. Every header field can be changed; the Excel carries each SKU's barcode, digits and printed, and marks the ones missing.</span><span class="l-id">Ops HQ · <b>Restock ke merek → permintaan → Buat PO</b>. Setiap kolom kepala PO bisa diubah; Excel memuat barcode tiap SKU, angka dan gambar, dan menandai yang belum ada.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-restock-po" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="restock-awb" data-key="restock-awb" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">18</span>
+    <div class="card__title">
+      <h2><span class="l-en">4.1 Restock from the brand: the PO</span><span class="l-id">4.1 Restock dari merek: PO</span></h2>
+      <p class="card__meta"><code>restock-awb</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">4. Replenishment and thresholds</span><span class="l-id">4. Restock dan batas stok</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Perlu tindakan <i class="badge">6</i></span><span class="c-nav">Rak &amp; bin</span><span class="c-nav is-on">Restock ke merek</span><span class="c-nav">Barang masuk</span><span class="c-nav">Masalah</span><span class="c-nav">Laporan merek</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">RPL-MA5-2610-02 · Labore</span><span class="chip warn">Terkirim, menunggu merek</span></div>
+<div class="steps4"><span class="done">1 Diajukan</span><span class="done">2 PO terkirim</span><span class="now">3 Catat pengiriman <b class="pin">1</b></span><span>4 Diterima</span></div>
+<div class="c-grid2">
+<div class="c-form">
+<label class="f"><span>No. AWB <b class="pin">2</b></span><span class="in mono">JX0042178831</span></label>
+<label class="f"><span>No. Surat Jalan</span><span class="in mono">SJ/LAB/1014/118</span></label>
+<label class="f"><span>Perkiraan tiba</span><span class="in">17 Okt 2026</span></label>
+</div>
+<div class="c-form">
+<span class="c-sub">Jumlah yang dikirim merek <b class="pin">3</b></span>
+<table class="t"><thead><tr><th>SKU</th><th>Diminta</th><th>Dikirim</th></tr></thead><tbody>
+<tr><td>Mild Cleanser 100 ml</td><td class="mono">24</td><td class="mono big">24</td></tr>
+<tr><td>Barrier Revive Cream 100 ml</td><td class="mono">12</td><td class="mono big">10</td></tr>
+</tbody></table>
+<span class="muted small">ED diisi nanti dari Faktur yang diunggah SPV.</span>
+</div>
+</div>
+<div class="c-foot"><span class="muted">Setelah disimpan, staf bisa menerima barang dengan AWB ini.</span><span class="btn">Simpan pengiriman <b class="pin">4</b></span></div>
+</div></div></div>
+<figcaption><span class="l-en">Ops HQ · <b>Restock ke merek → the PO → Catat pengiriman</b>. The AWB goes in here; expiry dates come later, from the Faktur.</span><span class="l-id">Ops HQ · <b>Restock ke merek → PO → Catat pengiriman</b>. AWB dimasukkan di sini; ED menyusul dari Faktur.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-restock-awb" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="second-bin" data-key="second-bin" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">19</span>
+    <div class="card__title">
+      <h2><span class="l-en">4.2 The second-bin question</span><span class="l-id">4.2 Pertanyaan bin kedua</span></h2>
+      <p class="card__meta"><code>second-bin</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">4. Replenishment and thresholds</span><span class="l-id">4. Restock dan batas stok</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav is-on">Rak &amp; bin</span><span class="c-nav">Produk</span><span class="c-nav">Pengingat <i class="badge">3</i></span><span class="c-nav">Masalah</span><span class="c-nav">Laporan akhir hari</span></aside>
+<div class="c-main c-main--dim">
+<div class="modal">
+<span class="c-title">Bin kedua untuk Labore GentleBiome Mild Cleanser 100 ml</span>
+<span class="muted">MA5-A1-3-06T ditambahkan oleh Agus S. saat barang masuk, 10:42</span>
+<span class="c-sub">Kenapa perlu bin kedua? <b class="pin">1</b></span>
+<span class="radio on"><i></i><span><b>Bin pertama penuh</b><br>Isi MA5-A1-3-05T sekarang: <b class="mono">12 unit</b></span></span>
+<div class="setfull">Jadikan <b>isi maks. per bin = 12</b> untuk bin Kecil JX-2, semua hub <b class="pin">2</b><span class="muted">Hub ini dan hub lain yang belum punya angka. Ops HQ bisa mengubahnya.</span></div>
+<span class="radio"><i></i><span>Stok datang jauh lebih banyak dari biasa (promo)</span></span>
+<span class="radio"><i></i><span>Pindah bin (bin rusak atau lokasi lebih baik)</span></span>
+<span class="radio"><i></i><span>Batal, pindahkan kembali ke satu bin</span></span>
+<div class="c-foot"><span></span><span class="btn">Simpan</span></div>
+</div>
+</div></div></div>
+<figcaption><span class="l-en">SPV · the second-bin question. Answering "full" is how the WMS learns how many units fill one bin.</span><span class="l-id">SPV · pertanyaan bin kedua. Menjawab "penuh" adalah cara WMS belajar berapa unit mengisi satu bin.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-second-bin" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="putaway-full" data-key="putaway-full" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">20</span>
+    <div class="card__title">
+      <h2><span class="l-en">5.1 Receive a delivery</span><span class="l-id">5.1 Terima kiriman</span></h2>
+      <p class="card__meta"><code>putaway-full</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">5. Inbound and putaway</span><span class="l-id">5. Barang masuk dan penyimpanan</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Barang masuk · batch 1</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Ambil dari MA5-IN-01, taruh di</span>
+<span class="bigcode">MA5-<em>A1</em>-<em>3</em>-05T</span>
+<span class="lede">Rak A bagian 1, tingkat 3, posisi 5, bin atas</span>
+<div class="prod"><i class="ph">L</i><span><b>Labore GentleBiome Mild Cleanser</b><br>100 ml</span></div>
+<div class="count"><b>12</b> / 20 <span class="muted">sudah di-scan</span></div>
+<span class="btn btn--wide">Scan berikutnya</span>
+<span class="btn btn--ghost btn--wide">Bin penuh <b class="pin">1</b></span>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Bin penuh</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Sisa 8 unit, taruh di bin kosong ini</span>
+<span class="bigcode">MA5-<em>A1</em>-<em>3</em>-06T</span>
+<span class="lede">Sebelahnya, ukuran sama (Kecil JX-2) <b class="pin">2</b></span>
+<div class="note">Bin pertama berisi 12 unit. Supervisor akan diminta memastikan apakah bin itu memang penuh. <b class="pin">3</b></div>
+<span class="btn btn--wide">Pakai bin ini</span>
+<span class="btn btn--ghost btn--wide">Pilih bin lain</span>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · putting away. <b>Bin penuh</b> is the only way a second bin gets added during a delivery.</span><span class="l-id">Staf · menaruh barang ke rak. <b>Bin penuh</b> adalah satu-satunya cara bin kedua ditambahkan saat barang masuk.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-putaway-full" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="faktur-upload" data-key="faktur-upload" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">21</span>
+    <div class="card__title">
+      <h2><span class="l-en">5.1 Receive a delivery</span><span class="l-id">5.1 Terima kiriman</span></h2>
+      <p class="card__meta"><code>faktur-upload</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">5. Inbound and putaway</span><span class="l-id">5. Barang masuk dan penyimpanan</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Perlu tindakan <i class="badge">3</i></span><span class="c-nav">Rak &amp; bin</span><span class="c-nav">Restock ke merek</span><span class="c-nav is-on">Barang masuk</span><span class="c-nav">Masalah</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">Penerimaan JX0042178831 · Kahf · MA5</span><span class="chip warn">Menunggu Faktur <b class="pin">1</b></span></div>
+<div class="c-grid2">
+<div class="c-form">
+<span class="c-sub">Faktur yang sudah ditandatangani <b class="pin">2</b></span>
+<div class="pastebox">Tarik foto atau PDF ke sini, atau ketuk untuk memotret. Semua halaman.</div>
+<span class="muted small">2 halaman terunggah · Faktur No. INV/KHF/1017/0442</span>
+</div>
+<div class="c-form">
+<span class="c-sub">Selisih penerimaan <b class="pin">3</b></span>
+<table class="t"><thead><tr><th>SKU</th><th>PO</th><th>Diterima</th><th></th></tr></thead><tbody>
+<tr><td class="mono">KHF-0002</td><td class="mono">12</td><td class="mono big">10</td><td><span class="chip warn">kurang 2</span></td></tr>
+<tr><td class="mono">KHF-0014</td><td class="mono">6</td><td class="mono big">7</td><td><span class="chip">lebih 1</span></td></tr>
+</tbody></table>
+<span class="btn btn--ghost">Ajukan selisih ke Ops HQ</span>
+</div>
+</div>
+<div class="c-foot"><span class="muted">Penerimaan ditutup setelah Faktur diunggah.</span><span class="btn">Simpan dan tutup <b class="pin">4</b></span></div>
+</div></div></div>
+<figcaption><span class="l-en">SPV · <b>Barang masuk → the receipt → Unggah Faktur</b>, after the inbound is finished. Short and extra units are raised to Ops HQ from here.</span><span class="l-id">SPV · <b>Barang masuk → penerimaan → Unggah Faktur</b>, setelah barang masuk selesai. Kekurangan dan kelebihan unit diajukan ke Ops HQ dari sini.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-faktur-upload" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="inbound-noawb" data-key="inbound-noawb" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">22</span>
+    <div class="card__title">
+      <h2><span class="l-en">5.2 If the AWB is not in the WMS</span><span class="l-id">5.2 Jika AWB tidak ada di WMS</span></h2>
+      <p class="card__meta"><code>inbound-noawb</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">5. Inbound and putaway</span><span class="l-id">5. Barang masuk dan penyimpanan</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Barang masuk</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">AWB dari Surat Jalan</span>
+<span class="bigcode bigcode--md">JX0042178831</span>
+<div class="warnbox">AWB ini belum dicatat Ops HQ. <b class="pin">1</b></div>
+<div class="photo-drop">Foto Surat Jalan <b class="pin">2</b></div>
+<div class="row2"><label class="f"><span>Merek</span><span class="in in--sel">Labore</span></label><label class="f"><span>Jumlah karton</span><span class="in mono">3</span></label></div>
+<span class="btn btn--wide">Kirim ke Ops HQ, lalu hitung</span>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Hitung dulu</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="chip warn">Menunggu Ops HQ · 12 mnt</span>
+<span class="lede">Scan tiap unit. Taruh di bin sementara yang disebut. Belum masuk stok. <b class="pin">3</b></span>
+<div class="lines"><li><span class="mono hl">MA5-IN-01</span><span>Labore Mild Cleanser 100 ml</span><b>24</b></li><li><span class="mono hl">MA5-IN-02</span><span>Labore Barrier Revive Cream 100 ml</span><b>12</b></li></div>
+<span class="muted small">Setelah Ops HQ menghubungkan AWB ini, tombol <b>Taruh di rak</b> muncul. <b class="pin">4</b></span>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · a delivery arrives with an AWB Ops HQ has not recorded. The staffer sends it to HQ and counts while the driver is still there; nothing is sellable until HQ links it.</span><span class="l-id">Staf · barang datang dengan AWB yang belum dicatat Ops HQ. Staf mengirimkannya ke HQ dan menghitung selagi driver masih ada; belum ada yang bisa dijual sampai HQ menghubungkannya.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-inbound-noawb" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="hiryu-live" data-key="hiryu-live" data-kind="hiryu">
+  <header class="card__head">
+    <span class="card__no">23</span>
+    <div class="card__title">
+      <h2><span class="l-en">6.1 Accept the order in Hiryu</span><span class="l-id">6.1 Terima pesanan di Hiryu</span></h2>
+      <p class="card__meta"><code>hiryu-live</code><span class="tag tag--hiryu"><span class="l-en">Hiryu redraw</span><span class="l-id">Gambar ulang Hiryu</span></span>
+        <span class="crumb"><span class="l-en">6. Pick and pack</span><span class="l-id">6. Ambil dan kemas</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="hy hy--app">
+<aside class="hy-side"><div class="hy-brand"><i class="hy-logo"></i><b>Hiryu</b></div><span class="hy-nav">Orders</span><span class="hy-nav on">Live Orders</span><span class="hy-nav">Dashboard</span><span class="hy-grp">CATALOGUE</span><span class="hy-nav">Stores</span><span class="hy-nav">Menus</span><span class="hy-nav">SKUs</span><span class="hy-grp">NETWORK</span><span class="hy-nav">Dark stores</span><span class="hy-foot">Live · Setup guide · Receipt printer</span></aside>
+<div class="hy-main">
+<div class="hy-row"><span><span class="hy-title">Live Orders</span><small class="hy-live">● Connected</small></span><span class="hy-ctrls"><span class="hy-in hy-sel">Cawang</span><span class="hy-in hy-sel">All stores in this shop</span><span class="hy-btn2">Sound on</span><span class="hy-btn2">Full screen</span></span></div>
+<div class="hy-kpis"><div><small>Pending accept</small><b>0</b><em>Grab waiting on you</em></div><div><small>Pending packing</small><b>0</b><em>Accepted, on the floor</em></div><div><small>Packed, awaiting pickup</small><b>0</b><em>Ready at the counter</em></div><div><small>Late</small><b>0</b><em>Past 10 min prep target</em></div><div><small>Avg prep today</small><b>6.2</b><em>minutes, last 12 orders</em></div></div>
+<div class="hy-lanes"><div><span class="hy-row"><b>New</b><small>0</small></span><small>Grab is waiting on you</small><span class="hy-empty">Nothing here</span></div><div><span class="hy-row"><b>Packing</b><small>0</small></span><small>Pick and pack the list</small><span class="hy-empty">Nothing here</span></div><div><span class="hy-row"><b>Awaiting pickup</b><small>0</small></span><small>Hand to the driver</small><span class="hy-empty">Nothing here</span></div></div>
+<div class="hy-note"><span class="l-en">New orders wait under <b>Pending accept</b>: press <b>Accept</b>. Only then does Hiryu send the order to the WMS.</span><span class="l-id">Pesanan baru menunggu di <b>Pending accept</b>: tekan <b>Accept</b>. Baru setelah itu Hiryu mengirim pesanan ke WMS.</span> <b class="pin">1</b></div>
+</div></div></div>
+<figcaption><span class="l-en">Hiryu Live Orders, redrawn from Hiryu Malaysia (25 Sep). The counters, lanes and captions are Hiryu's own; the hub picker sits top right.</span><span class="l-id">Hiryu Live Orders, digambar ulang dari Hiryu Malaysia (25 Sep). Penghitung, lajur dan keterangannya asli dari Hiryu; pilihan hub ada di kanan atas.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-hiryu-live" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="pick" data-key="pick" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">24</span>
+    <div class="card__title">
+      <h2><span class="l-en">6.3 Pick</span><span class="l-id">6.3 Ambil barang</span></h2>
+      <p class="card__meta"><code>pick</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">6. Pick and pack</span><span class="l-id">6. Ambil dan kemas</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Ambil · GM-358</span><span class="dot"></span></div>
+<div class="prog"><b>3 / 12</b><i style="width:25%"></i><span>sisa 9 mnt</span></div>
+<div class="p-body">
+<span class="eyebrow">Pergi ke <b class="pin">1</b></span>
+<span class="bigcode">MA5-<em>A1</em>-<em>3</em>-05</span>
+<div class="prod"><i class="ph">K</i><span><b>Kahf Face Wash Oil and Acne Care</b><br>100 ml</span></div>
+<div class="take">Ambil <b>7</b> lagi <b class="pin">2</b></div>
+<span class="fifo"><i></i>Ambil dari sekat paling lama dulu</span>
+<div class="scanzone">Scan tiap unit <b class="pin">3</b></div>
+<span class="btn btn--ghost btn--wide">Barang tidak ada <b class="pin">4</b></span>
+</div></div>
+<div class="dev dev--phone dev--stop">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Salah barang</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="stophead">STOP · bukan barang ini</span>
+<div class="vs"><div><i class="ph">K</i><b>Di-scan</b><span>Face Wash Brightening 100 ml</span></div><div><i class="ph">K</i><b>Seharusnya</b><span>Face Wash Oil and Acne Care 100 ml</span></div></div>
+<span class="btn btn--wide">Kembalikan, ambil yang benar</span>
+<span class="btn btn--ghost btn--wide">Barang ini salah tempat</span>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · picking. A wrong product stops the pick with both products side by side. Nobody can skip the stop.</span><span class="l-id">Staf · mengambil barang. Produk yang salah menghentikan pengambilan dengan kedua produk berdampingan. Tidak ada yang bisa melewati stop ini.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-pick" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="pack" data-key="pack" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">25</span>
+    <div class="card__title">
+      <h2><span class="l-en">6.4 Pack</span><span class="l-id">6.4 Kemas</span></h2>
+      <p class="card__meta"><code>pack</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">6. Pick and pack</span><span class="l-id">6. Ambil dan kemas</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Kemas · GM-358</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Semua 12 unit sudah di-scan ✓</span>
+<span class="eyebrow">Pakai <b class="pin">1</b></span>
+<div class="packpick"><span class="pk">Kardus</span><span class="muted">25 × 20 × 10 cm · karena 2 botol besar</span></div>
+<span class="link">Ganti kemasan…</span>
+<span class="lede">Kemas. Masukkan slip Hiryu, nomor GM terlihat. <b class="pin">2</b></span>
+<span class="btn btn--wide btn--ok">Selesai dikemas <b class="pin">3</b></span>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Kemas · GM-358</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="bigcode bigcode--md">GM-358</span>
+<span class="chip ok">Siap · Hiryu sudah diberi tahu</span>
+<span class="lede">Bawa ke rak siap ambil di bawah. <b class="pin">4</b></span>
+<span class="muted small">Pesanan ini sekarang ada di <b>Serah ke driver</b>.</span>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · packing. One tap, <b>Selesai dikemas</b>, and the WMS tells Hiryu the order is ready; nobody presses Mark ready in Hiryu. The pick scans are the check.</span><span class="l-id">Staf · mengemas. Satu ketukan, <b>Selesai dikemas</b>, dan WMS memberi tahu Hiryu bahwa pesanan siap; tidak ada yang menekan Mark ready di Hiryu. Scan saat mengambil barang menjadi pengecekannya.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-pack" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="handover" data-key="handover" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">26</span>
+    <div class="card__title">
+      <h2><span class="l-en">7.1 Hand over to the Grab driver</span><span class="l-id">7.1 Serahkan ke driver Grab</span></h2>
+      <p class="card__meta"><code>handover</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">7. Handover to Grab</span><span class="l-id">7. Serah ke Grab</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Serah ke driver</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Siap diambil · 3 <b class="pin">1</b></span>
+<div class="hcard"><span class="mono"><b>GM-358</b></span><span>Kardus · 12 unit</span><span class="age">6 mnt</span></div>
+<div class="hcard"><span class="mono"><b>GM-360</b></span><span>Kantong · 11 unit</span><span class="age">9 mnt</span></div>
+<div class="hcard warn"><span class="mono"><b>GM-352</b></span><span>Kantong · 14 unit</span><span class="age">24 mnt</span></div>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Serah ke driver</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="lede">Tanya driver nomor pesanannya. Sama dengan nomor GM di slip Hiryu? <b class="pin">2</b></span>
+<span class="bigcode bigcode--md">GM-358</span>
+<span class="btn btn--wide btn--ok">Ya, sudah diambil driver</span>
+<span class="btn btn--ghost btn--wide">Batal</span>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · handing over. Amber means the bag has waited more than 20 minutes; the SPV sees it too.</span><span class="l-id">Staf · serah terima. Kuning berarti kemasan sudah menunggu lebih dari 20 menit; SPV juga melihatnya.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-handover" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="short" data-key="short" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">27</span>
+    <div class="card__title">
+      <h2><span class="l-en">8.1 An item is missing or short</span><span class="l-id">8.1 Barang tidak ada atau kurang</span></h2>
+      <p class="card__meta"><code>short</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">8. Cancellations and returns</span><span class="l-id">8. Pembatalan dan retur</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Barang tidak ada</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Di MA5-A1-3-05 · perlu 7</span>
+<span class="lede">Berapa yang kamu temukan? <b class="pin">1</b></span>
+<span class="btn btn--ghost btn--wide">Tidak ada sama sekali</span>
+<div class="stepper"><span>−</span><b>3</b><span>+</span></div>
+<span class="btn btn--wide">Simpan: ketemu 3</span>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Cari dulu</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Kurang 4 · coba cek di sini <b class="pin">2</b></span>
+<div class="lines"><li><span class="mono hl">MA5-A1-3-06T</span><span>Bin kedua</span><b>2</b></li><li><span class="mono hl">MA5-IN-04</span><span>Bin sementara, belum disimpan</span><b>6</b></li></div>
+<span class="btn btn--wide btn--ok">Ketemu, lanjut ambil</span>
+<span class="btn btn--ghost btn--wide btn--stopline">Catat: tidak ada <b class="pin">3</b></span>
+<div class="warnbox">Hiryu membatalkan seluruh pesanan (2001). Kembalikan barang yang sudah diambil ke rak. <b class="pin">4</b></div>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · an item is missing. Look where the WMS says first; if it is really gone, one tap and Hiryu cancels the order by itself. The SPV sees it with the picker's name.</span><span class="l-id">Staf · barang tidak ada. Cek dulu tempat yang ditunjuk WMS; jika memang tidak ada, satu ketukan dan Hiryu membatalkan pesanan sendiri. SPV melihatnya beserta nama picker.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-short" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="cancel" data-key="cancel" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">28</span>
+    <div class="card__title">
+      <h2><span class="l-en">8.2 A cancelled order</span><span class="l-id">8.2 Pesanan dibatalkan</span></h2>
+      <p class="card__meta"><code>cancel</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">8. Cancellations and returns</span><span class="l-id">8. Pembatalan dan retur</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Pesanan · GM-361</span><span class="dot"></span></div>
+<div class="p-body">
+<div class="warnbox"><b>Dibatalkan</b> · pesanan ini dibatalkan di Grab. Berhenti mengambil. <b class="pin">1</b></div>
+<div class="ordhead"><span class="bigcode bigcode--md">GM-361</span><span class="chip">5 dari 9 sudah diambil</span></div>
+<span class="muted small">Labore - Cawang · masuk 15:02 · batal 15:06</span>
+<span class="btn btn--wide">Kembalikan ke rak <b class="pin">2</b></span>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Kembalikan ke rak</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Dari GM-361 · 5 unit</span>
+<div class="lines"><li><span class="mono hl">MA5-A1-3-05</span><span>Mild Cleanser 100 ml</span><b>3</b></li><li><span class="mono hl">MA5-A1-4-02B</span><span>Barrier Revive Cream</span><b>2</b></li></div>
+<div class="note">Scan unitnya, lalu scan label bin. Stok kembali saat bin di-scan. <b class="pin">3</b></div>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · a cancelled order. The cancel comes from Hiryu by itself; nobody presses anything. Picked units go back to their bins.</span><span class="l-id">Staf · pesanan dibatalkan. Pembatalan datang sendiri dari Hiryu; tidak ada yang perlu ditekan. Unit yang sudah diambil kembali ke bin-nya.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-cancel" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="hiryu-stock" data-key="hiryu-stock" data-kind="hiryu">
+  <header class="card__head">
+    <span class="card__no">29</span>
+    <div class="card__title">
+      <h2><span class="l-en">9.3 What the SPV checks</span><span class="l-id">9.3 Yang dicek SPV</span></h2>
+      <p class="card__meta"><code>hiryu-stock</code><span class="tag tag--hiryu"><span class="l-en">Hiryu redraw</span><span class="l-id">Gambar ulang Hiryu</span></span>
+        <span class="crumb"><span class="l-en">9. Daily stock update to Hiryu</span><span class="l-id">9. Update stok harian ke Hiryu</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="hy hy--app">
+<aside class="hy-side"><div class="hy-brand"><i class="hy-logo"></i><b>Hiryu</b></div><span class="hy-nav">Orders</span><span class="hy-nav">Live Orders</span><span class="hy-nav">Dashboard</span><span class="hy-grp">CATALOGUE</span><span class="hy-nav on">Stores</span><span class="hy-nav">Menus</span><span class="hy-nav">SKUs</span><span class="hy-grp">NETWORK</span><span class="hy-nav">Dark stores</span><span class="hy-foot">Live · Setup guide · Receipt printer</span></aside>
+<div class="hy-main">
+<small class="hy-link">← Back to stores</small>
+<div class="hy-title">Kahf - Cawang <span class="hy-badge">ACTIVE</span></div>
+<div class="hy-tabs"><span>Overview</span><span>Menu</span><span class="on">Stock <b class="pin">1</b></span><span>Hours</span></div>
+<div class="hy-savebar"><span>2 counts not saved. Grab is not told until you save.</span><span><span class="hy-btn2">Discard</span> <span class="hy-btn">Save stock <b class="pin">3</b></span></span></div>
+<table class="hy-table"><thead><tr><th>SKU</th><th>Units on hand</th><th>Arrived</th><th>Sells as</th></tr></thead><tbody>
+<tr><td>Kahf Face Wash Oil and Acne Care 100 ml<br><small class="mono">KHF-FW-OAC-100</small></td><td><span class="hy-in hy-num on">8</span> <b class="pin">2</b></td><td><span class="hy-in hy-num off">·</span></td><td><small>Face Wash 100 ml ×1 · 8 sellable<br>Face Wash 100 ml isi 2 ×2 · 4 sellable</small></td></tr>
+<tr><td>Kahf Body Wash 250 ml<br><small class="mono">KHF-BW-250</small></td><td><span class="hy-in hy-num on">3</span></td><td><span class="hy-in hy-num off">·</span></td><td><small>Body Wash 250 ml ×1 · 3 sellable</small></td></tr>
+</tbody></table>
+<div class="hy-note hy-note--stop"><span class="l-en">Never use <b>Arrived</b>: it adds to the count, and the WMS number already includes the delivery.</span><span class="l-id">Jangan pakai <b>Arrived</b>: kolom itu menambah hitungan, padahal angka WMS sudah termasuk barang yang datang.</span></div>
+</div></div></div>
+<figcaption><span class="l-en">Hiryu store Stock tab, redrawn from Hiryu Malaysia's page and its editor controls (21 Sep). A viewer login sees the same table without the input boxes.</span><span class="l-id">Tab Stock toko di Hiryu, digambar ulang dari halaman Hiryu Malaysia dan kontrol editornya (21 Sep). Login viewer melihat tabel yang sama tanpa kotak isian.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-hiryu-stock" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="report" data-key="report" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">30</span>
+    <div class="card__title">
+      <h2><span class="l-en">11.1 Report a problem</span><span class="l-id">11.1 Laporkan masalah</span></h2>
+      <p class="card__meta"><code>report</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">11. Claims, quarantine and exceptions</span><span class="l-id">11. Klaim, karantina dan masalah stok</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Laporkan masalah</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Apa masalahnya? <b class="pin">1</b></span>
+<div class="tiles"><span>Rusak atau bocor</span><span>Kedaluwarsa</span><span>Salah tempat</span><span>Barang ditemukan</span><span>Kembalian dari driver</span><span>Lainnya</span></div>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Rusak atau bocor</span><span class="dot"></span></div>
+<div class="p-body">
+<div class="prod"><i class="ph">L</i><span><b>Labore Hydrating Face &amp; Body Cleanser</b><br>250 ml · dari MA5-A1-4-03B</span></div>
+<div class="stepper"><span>−</span><b>1</b><span>+</span></div>
+<div class="photo-drop">Tambah foto <b class="pin">2</b></div>
+<span class="btn btn--wide">Taruh di MA5-KARANTINA <b class="pin">3</b></span>
+</div></div>
+</div>
+<figcaption><span class="l-en">Anyone · <b>Laporkan masalah</b>. The unit leaves sellable stock at once and waits in the quarantine tray for the SPV.</span><span class="l-id">Siapa saja · <b>Laporkan masalah</b>. Unit langsung keluar dari stok yang bisa dijual dan menunggu keputusan SPV di baki karantina.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-report" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="exceptions" data-key="exceptions" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">31</span>
+    <div class="card__title">
+      <h2><span class="l-en">11.2 Problems and quarantine</span><span class="l-id">11.2 Masalah dan karantina</span></h2>
+      <p class="card__meta"><code>exceptions</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">11. Claims, quarantine and exceptions</span><span class="l-id">11. Klaim, karantina dan masalah stok</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav">Peta hub &amp; stok</span><span class="c-nav">Rak &amp; bin</span><span class="c-nav">Produk</span><span class="c-nav">Pengingat</span><span class="c-nav is-on">Masalah <i class="badge">4</i></span><span class="c-nav">Laporan akhir hari</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">Masalah · MA5</span><span class="muted">Di baki karantina: 6 unit</span></div>
+<table class="t"><thead><tr><th>Masalah</th><th>Barang</th><th>Jml</th><th>Oleh · umur</th><th>Tanggungan <b class="pin">1</b></th><th>Status</th><th>Keputusan SPV <b class="pin">2</b></th></tr></thead><tbody>
+<tr><td><span class="chip stop">Rusak di hub</span></td><td>Labore Face &amp; Body Cleanser 250 ml</td><td class="mono">1</td><td>Dewi · 2 j</td><td>Ninja</td><td><span class="chain"><i class="ok">SPV ✓</i><i class="now">Ops HQ</i><i>Ops Head</i></span></td><td class="muted">Hapus stok diusulkan</td></tr>
+<tr><td><span class="chip stop">Rusak di hub</span></td><td>Kahf Body Wash 250 ml</td><td class="mono">1</td><td>Rizky · 20 mnt</td><td>Ninja</td><td>Menunggu SPV</td><td><span class="btn btn--sm">Usulkan hapus stok</span> <span class="btn btn--sm btn--ghost">Kembali ke rak</span></td></tr>
+<tr><td><span class="chip warn">Kedaluwarsa</span></td><td>Kahf Hair Tonic 100 ml</td><td class="mono">2</td><td>Rizky · 5 j</td><td>Merek</td><td>Menunggu SPV</td><td><span class="btn btn--sm">Retur ke merek</span></td></tr>
+<tr><td><span class="chip">Rusak di hub</span></td><td>Kahf Face Wash 50 ml</td><td class="mono">1</td><td>Agus · 1 h</td><td>Ninja</td><td><span class="chip ok">Kembali ke rak: tugas staf <b class="pin">3</b></span></td><td class="muted">SPV Dewi, 10:05</td></tr>
+<tr><td><span class="chip">Kedaluwarsa</span></td><td>Labore Mild Cleanser 15 ml</td><td class="mono">2</td><td>Agus · 3 h</td><td>Merek</td><td><span class="chip warn">Menunggu retur</span></td><td class="muted">Ikut pengiriman merek berikutnya</td></tr>
+</tbody></table>
+<span class="muted small">Setiap hapus stok: SPV mengusulkan, Ops HQ menyetujui, Ops Head menandatangani. <b class="pin">4</b></span>
+</div></div></div>
+<figcaption><span class="l-en">SPV · <b>Masalah</b>. Back to the rack and return to the brand are the SPV's call. A write-off goes SPV, then Ops HQ, then the Ops Head. Stock only changes when the physical move is scanned.</span><span class="l-id">SPV · <b>Masalah</b>. Kembali ke rak dan retur ke merek diputuskan SPV. Hapus stok melewati SPV, lalu Ops HQ, lalu Ops Head. Stok baru berubah saat pemindahan fisik di-scan.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-exceptions" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="karantina-task" data-key="karantina-task" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">32</span>
+    <div class="card__title">
+      <h2><span class="l-en">11.2 Problems and quarantine</span><span class="l-id">11.2 Masalah dan karantina</span></h2>
+      <p class="card__meta"><code>karantina-task</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">11. Claims, quarantine and exceptions</span><span class="l-id">11. Klaim, karantina dan masalah stok</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="pair">
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Tugas</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Tugas untuk hub ini <b class="pin">1</b></span>
+<div class="hcard"><span><b>Kembalikan dari karantina</b></span><span>Kahf Face Wash 50 ml · 1</span><span class="age">baru</span></div>
+<div class="hcard"><span><b>Kembalikan ke rak</b></span><span>GM-361 · 5 unit</span><span class="age">12 mnt</span></div>
+</div></div>
+<div class="dev dev--phone">
+<div class="p-chrome"><b class="c-mark">NINJA</b><span>Dari karantina</span><span class="dot"></span></div>
+<div class="p-body">
+<span class="eyebrow">Ambil dari MA5-KARANTINA, scan unitnya <b class="pin">2</b></span>
+<div class="prod"><i class="ph">K</i><span><b>Kahf Face Wash Oil and Acne Care</b><br>50 ml · 1 unit</span></div>
+<span class="eyebrow">Taruh di</span>
+<span class="bigcode">MA5-<em>A1</em>-<em>2</em>-08</span>
+<div class="scanzone">Scan bin untuk selesai <b class="pin">3</b></div>
+</div></div>
+</div>
+<figcaption><span class="l-en">Staff · moving a unit back from quarantine after the SPV decided "back to the rack". The unit is sellable again only after this scan.</span><span class="l-id">Staf · mengembalikan unit dari karantina setelah SPV memutuskan "kembali ke rak". Unit bisa dijual lagi hanya setelah scan ini.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-karantina-task" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="hub-devices" data-key="hub-devices" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">33</span>
+    <div class="card__title">
+      <h2><span class="l-en">12.1 Devices and who holds them</span><span class="l-id">12.1 Perangkat dan siapa memegangnya</span></h2>
+      <p class="card__meta"><code>hub-devices</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">12. Consumables and infrastructure</span><span class="l-id">12. Bahan habis pakai dan infrastruktur</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="floors">
+<div class="floor"><span class="flabel">Lantai 2 · pick &amp; pack</span>
+<div class="zones">
+<div class="zone"><b>Rak</b><span>Bin berlabel</span><span class="dvc ph">HP hub + scanner <b class="pin">2</b></span><small>Ambil, simpan, hitung</small></div>
+<div class="zone"><b>Meja kemas</b><span class="dvc lt">Laptop: Hiryu + WMS <b class="pin">1</b></span><span class="dvc pr">Printer struk 80 mm</span><small>Tempel pesanan, kemas, Mark ready, ketik stok (SPV)</small></div>
+<div class="zone"><b>Meja terima</b><span>Bin sementara MA5-IN-01…10</span><span class="dvc ph">HP hub + scanner</span><small>Hitung barang masuk</small></div>
+<div class="zone kar"><b>Baki karantina</b><span>MA5-KARANTINA</span><small>Jauh dari rak</small></div>
+</div></div>
+<div class="stairs">tangga · kemasan dibawa turun oleh yang mengemas</div>
+<div class="floor"><span class="flabel">Lantai 1 · serah terima</span>
+<div class="zones">
+<div class="zone"><b>Rak siap diambil</b><span>Kemasan menunggu driver</span></div>
+<div class="zone"><b>Meja serah terima</b><span class="dvc ph">HP kedua <b class="pin">3</b></span><small>Serah ke driver</small></div>
+</div></div>
+</div>
+<figcaption><span class="l-en">A hub with pick and pack upstairs and handover downstairs. Every person signs in to each device with their own account.</span><span class="l-id">Hub dengan pick dan kemas di atas, serah terima di bawah. Setiap orang masuk ke setiap perangkat dengan akunnya sendiri.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-hub-devices" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section>
+
+<section class="card" id="todo-inbox" data-key="todo-inbox" data-kind="wms">
+  <header class="card__head">
+    <span class="card__no">34</span>
+    <div class="card__title">
+      <h2><span class="l-en">13.5 Perlu tindakan: what each role must settle</span><span class="l-id">13.5 Perlu tindakan: yang harus diselesaikan setiap peran</span></h2>
+      <p class="card__meta"><code>todo-inbox</code><span class="tag tag--wms"><span class="l-en">WMS draft</span><span class="l-id">Draf WMS</span></span>
+        <span class="crumb"><span class="l-en">13. Shift routine</span><span class="l-id">13. Rutinitas shift</span></span></p>
+    </div>
+  </header>
+  <div class="stage"><div class="stage__inner"><figure class="shot"><div class="shotscroll"><div class="dev dev--console">
+<aside class="c-side"><b class="c-mark">NINJA</b><span class="c-nav is-on">Perlu tindakan <i class="badge">6</i></span><span class="c-nav">Papan antrean</span><span class="c-nav">Rak &amp; bin</span><span class="c-nav">Restock ke merek</span><span class="c-nav">Barang masuk</span><span class="c-nav">Masalah</span></aside>
+<div class="c-main">
+<div class="c-head"><span class="c-title">Perlu tindakan · SPV · MA5</span><span class="chip">6 hal <b class="pin">1</b></span></div>
+<table class="t"><thead><tr><th>Hal</th><th>Dari</th><th>Sejak</th><th>Batas</th><th></th></tr></thead><tbody>
+<tr class="chg"><td><b>Faktur belum diunggah</b> · JX0042178831</td><td>Barang masuk</td><td class="mono">26 jam</td><td><span class="chip warn">lewat · ke Ops HQ 48 jam</span></td><td><span class="link">Unggah</span></td></tr>
+<tr><td><b>Keputusan karantina</b> · 2 unit KHF-0013 bocor</td><td>Masalah</td><td class="mono">5 jam</td><td class="mono">24 jam</td><td><span class="link">Putuskan <b class="pin">2</b></span></td></tr>
+<tr><td><b>Draf restock</b> · Kahf, 14 SKU</td><td>Restock</td><td class="mono">1 jam</td><td class="mono">4 jam</td><td><span class="link">Ajukan ke Ops HQ</span></td></tr>
+<tr><td><b>Barang tidak ada</b> · KHF-0006, picker Agus</td><td>Ambil pesanan</td><td class="mono">40 mnt</td><td class="mono">hari ini</td><td><span class="link">Lihat</span></td></tr>
+<tr><td><b>Hasil hitung</b> · 3 bin berselisih</td><td>Hitung stok</td><td class="mono">2 jam</td><td class="mono">24 jam</td><td><span class="link">Cek</span></td></tr>
+<tr><td><b>Pertanyaan bin kedua</b> · LBR-0002</td><td>Barang masuk</td><td class="mono">30 mnt</td><td class="mono">4 jam</td><td><span class="link">Jawab</span></td></tr>
+</tbody></table>
+<div class="c-foot"><span class="muted">Yang lewat batas berwarna kuning dan juga muncul di daftar Ops HQ. <b class="pin">3</b></span></div>
+</div></div></div>
+<figcaption><span class="l-en"><b>Perlu tindakan</b> for an SPV. Every role has its own list, most urgent first; each row opens the screen where it is settled.</span><span class="l-id"><b>Perlu tindakan</b> untuk SPV. Setiap peran punya daftarnya sendiri, yang paling mendesak di atas; setiap baris membuka layar tempat hal itu diselesaikan.</span></figcaption></figure></div></div>
+  <div class="audit" data-audit>
+    <div class="verdicts" role="group" aria-label="Verdict">
+      <button type="button" data-v="ok"><span class="l-en">Looks right</span><span class="l-id">Sudah benar</span></button>
+      <button type="button" data-v="change"><span class="l-en">Needs a change</span><span class="l-id">Perlu diubah</span></button>
+      <button type="button" data-v="question"><span class="l-en">Question</span><span class="l-id">Pertanyaan</span></button>
+    </div>
+    <label class="note"><span class="sr"><span class="l-en">Note</span><span class="l-id">Catatan</span></span>
+      <textarea id="note-todo-inbox" rows="2" placeholder="What should change on this screen?" data-ph-en="What should change on this screen?" data-ph-id="Apa yang perlu diubah di layar ini?"></textarea></label>
+    <span class="saved" data-saved></span>
+  </div>
+</section></div>
+  </main>
+</div>
+
+<script>
+/* Interactive rack picture for the "rack-builder" screen draft (PRD v4.1, §3.2).
+   Front view. There is no rack type (decided 30 Sep): the SPV enters, per level,
+   the bin size and how many bins were counted across and stacked at the real
+   rack. Bin types and the stack limit follow PRD §3.4. */
+(function () {
+  var BINS = {
+    S: { w: 135, h: 120, stack: 3, name: 'Bin kecil JX-2' },
+    L: { w: 198, h: 170, stack: 2, name: 'Bin besar JX-4' }
+  };
+  var SCALE = 0.24, HUB = 'MA5', RACK = 'A', LEVEL_H = 450;
+  var DEFAULT = { S: [7, 3], L: [5, 2] };           // a first guess, overwritten by what the SPV counts
+  var DEFAULT_SIZE = ['L', 'S', 'S', 'L', 'S'];
+  var LETTERS = { 1: [''], 2: ['B', 'T'], 3: ['B', 'M', 'T'] };
+  var WHERE = { B: 'bawah', M: 'tengah', T: 'atas' };
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function init(root) {
+    var st = { bays: 2, levels: 4, sel: [1, 3], size: {}, across: {}, stack: {} };
+    var pic = root.querySelector('[data-pic]'), selEl = root.querySelector('[data-sel]'),
+        calc = root.querySelector('[data-calc]'), codeEl = root.querySelector('[data-code]'),
+        sum = root.querySelector('[data-sum]'), sizeSeg = root.querySelector('[data-set="size"]'),
+        counts = root.querySelector('[data-counts]');
+    function k(bay, lvl) { return bay + '-' + lvl; }
+    function sizeOf(bay, lvl) { return st.size[k(bay, lvl)] || DEFAULT_SIZE[lvl - 1]; }
+    function fit(bay, lvl) {
+      var size = sizeOf(bay, lvl);
+      if (size === '-') return { size: size, pos: 0, stack: 0 };
+      var key = k(bay, lvl), d = DEFAULT[size];
+      var pos = st.across[key] != null ? st.across[key] : d[0];
+      var stack = Math.min(BINS[size].stack, st.stack[key] != null ? st.stack[key] : d[1]);
+      return { size: size, pos: pos, stack: stack };
+    }
+
+    function hot(bin) {
+      pic.querySelectorAll('.rk-bin.hot').forEach(function (x) { x.classList.remove('hot'); });
+      bin.classList.add('hot');
+      var d = bin.dataset;
+      codeEl.innerHTML = d.code + '<br><small class="muted" style="font-weight:400;font-size:11px">Rak ' + RACK +
+        ', bagian ' + d.bay + ', tingkat ' + d.lvl + ', posisi ' + d.pos + (d.letter ? ', bin ' + WHERE[d.letter] : '') + '</small>';
+    }
+
+    function side() {
+      sizeSeg.querySelectorAll('button').forEach(function (b) { b.classList.remove('on'); });
+      if (!st.sel) {
+        sizeSeg.setAttribute('aria-disabled', 'true');
+        selEl.textContent = 'Klik satu tingkat di gambar';
+        calc.textContent = '';
+        if (counts) counts.hidden = true;
+        return;
+      }
+      sizeSeg.removeAttribute('aria-disabled');
+      var bay = st.sel[0], lvl = st.sel[1], f = fit(bay, lvl);
+      selEl.textContent = 'Bagian ' + bay + ', tingkat ' + lvl;
+      var on = sizeSeg.querySelector('[data-v="' + f.size + '"]');
+      if (on) on.classList.add('on');
+      if (counts) {
+        counts.hidden = !f.pos && f.size === '-';
+        counts.querySelector('[data-n="across"]').textContent = f.pos;
+        counts.querySelector('[data-n="stack"]').textContent = f.stack;
+      }
+      calc.innerHTML = f.size !== '-'
+        ? f.pos + ' bin menyamping × ' + f.stack + ' tumpuk = <b>' + (f.pos * f.stack) + ' bin</b>.<br>' +
+          'Angka dari hitungan SPV di rak. Tumpukan maks. ' + BINS[f.size].stack + ' untuk ' + BINS[f.size].name + '.'
+        : 'Tingkat ini dibiarkan kosong.';
+    }
+
+    function draw() {
+      pic.innerHTML = '';
+      var totals = { S: 0, L: 0 };
+      for (var bay = 1; bay <= st.bays; bay++) {
+        var bayEl = document.createElement('div');
+        bayEl.className = 'rk-bay';
+        var widest = 0;
+        for (var l2 = 1; l2 <= st.levels; l2++) {
+          var g = fit(bay, l2);
+          if (g.pos) widest = Math.max(widest, g.pos * (BINS[g.size].w * SCALE + 2));
+        }
+        bayEl.style.width = Math.max(160, widest + 30) + 'px';
+        for (var lvl = st.levels; lvl >= 1; lvl--) {
+          var f = fit(bay, lvl);
+          var row = document.createElement('button');
+          row.type = 'button';
+          row.className = 'rk-lvl';
+          row.style.height = (LEVEL_H * SCALE) + 'px';
+          row.setAttribute('aria-label', 'Bagian ' + bay + ', tingkat ' + lvl);
+          if (st.sel && st.sel[0] === bay && st.sel[1] === lvl) row.classList.add('sel');
+          var lvn = document.createElement('span');
+          lvn.className = 'lvn';
+          lvn.textContent = 'Tk ' + lvl;
+          row.appendChild(lvn);
+          if (!f.pos) {
+            var e = document.createElement('span');
+            e.className = 'empty';
+            e.textContent = 'kosong';
+            row.appendChild(e);
+          }
+          for (var p = 1; p <= f.pos; p++) {
+            var col = document.createElement('span');
+            col.className = 'rk-col';
+            for (var s = 0; s < f.stack; s++) {
+              var bin = document.createElement('span'), letter = LETTERS[f.stack][s];
+              bin.className = 'rk-bin ' + f.size;
+              bin.style.width = (BINS[f.size].w * SCALE) + 'px';
+              bin.style.height = (BINS[f.size].h * SCALE) + 'px';
+              bin.textContent = letter;
+              bin.dataset.code = HUB + '-' + RACK + bay + '-' + lvl + '-' + pad(p) + letter;
+              bin.dataset.bay = bay; bin.dataset.lvl = lvl; bin.dataset.pos = p; bin.dataset.letter = letter;
+              col.appendChild(bin);
+              totals[f.size]++;
+            }
+            row.appendChild(col);
+          }
+          row.addEventListener('click', (function (b, l) { return function () { st.sel = [b, l]; draw(); }; })(bay, lvl));
+          bayEl.appendChild(row);
+        }
+        var lab = document.createElement('span');
+        lab.className = 'rk-baylab';
+        lab.textContent = 'Bagian ' + bay;
+        bayEl.appendChild(lab);
+        pic.appendChild(bayEl);
+      }
+      pic.querySelectorAll('.rk-bin').forEach(function (b) {
+        b.addEventListener('mouseenter', function () { hot(b); });
+      });
+      sum.textContent = 'Rak ' + RACK + ': ' + (totals.S + totals.L) + ' bin (' + totals.L + ' besar, ' + totals.S + ' kecil)';
+      side();
+    }
+
+    root.querySelectorAll('[data-set]').forEach(function (seg) {
+      seg.addEventListener('click', function (ev) {
+        var b = ev.target.closest('button');
+        if (!b) return;
+        var what = seg.dataset.set, v = b.dataset.v;
+        if (what === 'size') {
+          if (!st.sel) return;
+          st.size[k(st.sel[0], st.sel[1])] = v;
+        } else {
+          st[what] = +v;
+          seg.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+          if (st.sel && (st.sel[0] > st.bays || st.sel[1] > st.levels)) st.sel = null;
+        }
+        draw();
+      });
+    });
+    if (counts) counts.addEventListener('click', function (ev) {
+      var b = ev.target.closest('button[data-step]');
+      if (!b || !st.sel) return;
+      var key = k(st.sel[0], st.sel[1]), f = fit(st.sel[0], st.sel[1]);
+      if (f.size === '-') return;
+      if (b.dataset.what === 'across') st.across[key] = Math.max(1, Math.min(12, f.pos + (+b.dataset.step)));
+      else st.stack[key] = Math.max(1, Math.min(BINS[f.size].stack, f.stack + (+b.dataset.step)));
+      draw();
+    });
+    draw();
+  }
+
+  window.WMS_initRacks = function () { document.querySelectorAll('[data-rack]').forEach(init); };
+  window.WMS_initRacks();
+})();
+
+</script>
+<script>
+(function () {
+  var root = document.documentElement;
+  var cards = [].slice.call(document.querySelectorAll('.card'));
+  var state = {};            // key -> {verdict, note}
+  var db = null, filter = 'all';
+
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+
+  /* ---- language ---- */
+  function setLang(l) {
+    root.setAttribute('lang', l);
+    document.querySelectorAll('textarea[data-ph-en]').forEach(function (t) { t.placeholder = t.getAttribute('data-ph-' + l); });
+    mark('lang', l); store('wf-lang', l);
+  }
+  /* ---- zoom: CSS zoom keeps the frame's layout, so the scroll box sizes to it ---- */
+  function setZoom(z) {
+    cards.forEach(function (c) {
+      var inner = c.querySelector('.stage__inner'), stage = c.querySelector('.stage');
+      inner.style.zoom = 1;
+      var f = z;
+      if (z === 'fit') { var room = stage.clientWidth - 40; f = Math.min(1, room / inner.scrollWidth); }
+      inner.style.zoom = f;
+    });
+    mark('zoom', String(z)); store('wf-zoom', String(z));
+  }
+  function mark(seg, val) {
+    document.querySelectorAll('[data-seg="' + seg + '"] button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-val') === val); });
+  }
+  document.querySelectorAll('[data-seg] button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var seg = b.parentNode.getAttribute('data-seg'), v = b.getAttribute('data-val');
+      if (seg === 'lang') setLang(v);
+      if (seg === 'zoom') setZoom(v === 'fit' ? 'fit' : parseFloat(v));
+      if (seg === 'filter') { filter = v; mark('filter', v); paint(); }
+    });
+  });
+  window.addEventListener('resize', function () { if (store('wf-zoom') === 'fit') setZoom('fit'); });
+
+  /* ---- verdicts and notes ---- */
+  function paint() {
+    var n = { ok: 0, change: 0, question: 0, open: 0 };
+    cards.forEach(function (c) {
+      var k = c.getAttribute('data-key'), s = state[k] || {}, v = s.verdict || '';
+      n[v || 'open']++;
+      c.querySelectorAll('.verdicts button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-v') === v ? 'true' : 'false'); });
+      var ta = c.querySelector('textarea');
+      if (document.activeElement !== ta && ta.value !== (s.note || '')) ta.value = s.note || '';
+      var link = document.querySelector('.rail a[data-key="' + k + '"]');
+      if (link) link.setAttribute('data-state', v);
+      c.hidden = !(filter === 'all' || (filter === 'open' && !v) || (filter === 'flagged' && (v === 'change' || v === 'question'))
+                   || filter === c.getAttribute('data-kind'));
+      var sv = c.querySelector('[data-saved]');
+      sv.textContent = s.at ? new Date(s.at).toLocaleString(root.lang === 'id' ? 'id-ID' : 'en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+    });
+    Object.keys(n).forEach(function (k) { var el = document.querySelector('[data-count="' + k + '"]'); if (el) el.textContent = n[k]; });
+  }
+
+  var timers = {};
+  function save(key) {
+    var s = state[key] || {};
+    s.at = new Date().toISOString();
+    state[key] = s; paint();
+    if (!db) { store('wf-notes', JSON.stringify(state)); return; }
+    clearTimeout(timers[key]);
+    timers[key] = setTimeout(function () {
+      db.doc('notes/' + key).set({ screen: key, verdict: s.verdict || '', note: s.note || '', at: s.at })
+        .catch(function (e) { if (e && e.code === 'invalid_argument') readOnly(); });
+    }, 500);
+  }
+  function readOnly() {
+    document.querySelector('[data-offline]').hidden = false;
+    document.querySelectorAll('.audit button, .audit textarea').forEach(function (el) { el.disabled = true; });
+  }
+  cards.forEach(function (c) {
+    var key = c.getAttribute('data-key');
+    c.querySelectorAll('.verdicts button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var s = state[key] || (state[key] = {});
+        s.verdict = s.verdict === b.getAttribute('data-v') ? '' : b.getAttribute('data-v');
+        save(key);
+      });
+    });
+    var ta = c.querySelector('textarea');
+    ta.addEventListener('input', function () { (state[key] || (state[key] = {})).note = ta.value; save(key); });
+  });
+
+  /* ---- start ---- */
+  setLang(store('wf-lang') === 'id' ? 'id' : 'en');
+  var z = store('wf-zoom');
+  setZoom(z === 'fit' ? 'fit' : (parseFloat(z) || 1));
+  try { state = JSON.parse(store('wf-notes') || '{}') || {}; } catch (e) { state = {}; }
+  paint();
+
+  if (window.claude && window.claude.use) {
+    window.claude.use('db').then(function (d) {
+      if (!d) { document.querySelector('[data-offline]').hidden = false; return; }
+      db = d;
+      db.collection('notes').onSnapshot(function (snap) {
+        snap.docs.forEach(function (doc) {
+          var x = doc.data() || {};
+          var local = state[doc.id];
+          if (!local || !local.at || (x.at && x.at >= local.at)) state[doc.id] = { verdict: x.verdict || '', note: x.note || '', at: x.at };
+        });
+        paint();
+      }, function () {});
+    });
+  }
+})();
+</script>

@@ -1,29 +1,36 @@
-/* Interactive rack picture for the "rack-builder" screen draft (PRD v3.1, A2.2).
-   Front view, to scale. Bin types and the stack rule follow PRD section 4.2. */
+/* Interactive rack picture for the "rack-builder" screen draft (PRD v4.1, §3.2).
+   Front view. There is no rack type (decided 30 Sep): the SPV enters, per level,
+   the bin size and how many bins were counted across and stacked at the real
+   rack. Bin types and the stack limit follow PRD §3.4. */
 (function () {
   var BINS = {
     S: { w: 135, h: 120, stack: 3, name: 'Bin kecil JX-2' },
     L: { w: 198, h: 170, stack: 2, name: 'Bin besar JX-4' }
   };
-  var BAY_W = 1000, LIFT = 15, SCALE = 0.24, HUB = 'MA5', RACK = 'A';
-  var HEIGHTS = [380, 450, 450, 450, 450];   // clear height per level, level 1 at the bottom
-  var DEFAULT = ['L', 'S', 'S', 'L', 'S'];
+  var SCALE = 0.24, HUB = 'MA5', RACK = 'A', LEVEL_H = 450;
+  var DEFAULT = { S: [7, 3], L: [5, 2] };           // a first guess, overwritten by what the SPV counts
+  var DEFAULT_SIZE = ['L', 'S', 'S', 'L', 'S'];
   var LETTERS = { 1: [''], 2: ['B', 'T'], 3: ['B', 'M', 'T'] };
   var WHERE = { B: 'bawah', M: 'tengah', T: 'atas' };
 
-  function fit(size, h) {
-    if (size === '-') return { pos: 0, stack: 0 };
-    var b = BINS[size];
-    return { pos: Math.floor(BAY_W / b.w), stack: Math.max(0, Math.min(b.stack, Math.floor((h - LIFT) / b.h))) };
-  }
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
   function init(root) {
-    var st = { bays: 2, levels: 4, sel: [1, 3], size: {} };
+    var st = { bays: 2, levels: 4, sel: [1, 3], size: {}, across: {}, stack: {} };
     var pic = root.querySelector('[data-pic]'), selEl = root.querySelector('[data-sel]'),
         calc = root.querySelector('[data-calc]'), codeEl = root.querySelector('[data-code]'),
-        sum = root.querySelector('[data-sum]'), sizeSeg = root.querySelector('[data-set="size"]');
-    function sizeOf(bay, lvl) { return st.size[bay + '-' + lvl] || DEFAULT[lvl - 1]; }
+        sum = root.querySelector('[data-sum]'), sizeSeg = root.querySelector('[data-set="size"]'),
+        counts = root.querySelector('[data-counts]');
+    function k(bay, lvl) { return bay + '-' + lvl; }
+    function sizeOf(bay, lvl) { return st.size[k(bay, lvl)] || DEFAULT_SIZE[lvl - 1]; }
+    function fit(bay, lvl) {
+      var size = sizeOf(bay, lvl);
+      if (size === '-') return { size: size, pos: 0, stack: 0 };
+      var key = k(bay, lvl), d = DEFAULT[size];
+      var pos = st.across[key] != null ? st.across[key] : d[0];
+      var stack = Math.min(BINS[size].stack, st.stack[key] != null ? st.stack[key] : d[1]);
+      return { size: size, pos: pos, stack: stack };
+    }
 
     function hot(bin) {
       pic.querySelectorAll('.rk-bin.hot').forEach(function (x) { x.classList.remove('hot'); });
@@ -39,17 +46,22 @@
         sizeSeg.setAttribute('aria-disabled', 'true');
         selEl.textContent = 'Klik satu tingkat di gambar';
         calc.textContent = '';
+        if (counts) counts.hidden = true;
         return;
       }
       sizeSeg.removeAttribute('aria-disabled');
-      var bay = st.sel[0], lvl = st.sel[1], size = sizeOf(bay, lvl), h = HEIGHTS[lvl - 1], f = fit(size, h);
-      selEl.textContent = 'Bagian ' + bay + ', tingkat ' + lvl + ' · tinggi bersih ' + h + ' mm';
-      var on = sizeSeg.querySelector('[data-v="' + size + '"]');
+      var bay = st.sel[0], lvl = st.sel[1], f = fit(bay, lvl);
+      selEl.textContent = 'Bagian ' + bay + ', tingkat ' + lvl;
+      var on = sizeSeg.querySelector('[data-v="' + f.size + '"]');
       if (on) on.classList.add('on');
-      calc.innerHTML = f.pos
-        ? f.pos + ' bin berjajar × ' + f.stack + ' tumpuk = <b>' + (f.pos * f.stack) + ' bin</b>.<br>' +
-          'Berjajar ' + f.pos + ' karena lebar ' + BAY_W + ' mm ÷ ' + BINS[size].w + ' mm. Tumpuk ' + f.stack +
-          ' karena tinggi ' + h + ' mm (maks. ' + BINS[size].stack + ' untuk bin ini).'
+      if (counts) {
+        counts.hidden = !f.pos && f.size === '-';
+        counts.querySelector('[data-n="across"]').textContent = f.pos;
+        counts.querySelector('[data-n="stack"]').textContent = f.stack;
+      }
+      calc.innerHTML = f.size !== '-'
+        ? f.pos + ' bin menyamping × ' + f.stack + ' tumpuk = <b>' + (f.pos * f.stack) + ' bin</b>.<br>' +
+          'Angka dari hitungan SPV di rak. Tumpukan maks. ' + BINS[f.size].stack + ' untuk ' + BINS[f.size].name + '.'
         : 'Tingkat ini dibiarkan kosong.';
     }
 
@@ -59,13 +71,18 @@
       for (var bay = 1; bay <= st.bays; bay++) {
         var bayEl = document.createElement('div');
         bayEl.className = 'rk-bay';
-        bayEl.style.width = (BAY_W * SCALE + 16) + 'px';
+        var widest = 0;
+        for (var l2 = 1; l2 <= st.levels; l2++) {
+          var g = fit(bay, l2);
+          if (g.pos) widest = Math.max(widest, g.pos * (BINS[g.size].w * SCALE + 2));
+        }
+        bayEl.style.width = Math.max(160, widest + 30) + 'px';
         for (var lvl = st.levels; lvl >= 1; lvl--) {
-          var h = HEIGHTS[lvl - 1], size = sizeOf(bay, lvl), f = fit(size, h);
+          var f = fit(bay, lvl);
           var row = document.createElement('button');
           row.type = 'button';
           row.className = 'rk-lvl';
-          row.style.height = (h * SCALE) + 'px';
+          row.style.height = (LEVEL_H * SCALE) + 'px';
           row.setAttribute('aria-label', 'Bagian ' + bay + ', tingkat ' + lvl);
           if (st.sel && st.sel[0] === bay && st.sel[1] === lvl) row.classList.add('sel');
           var lvn = document.createElement('span');
@@ -83,14 +100,14 @@
             col.className = 'rk-col';
             for (var s = 0; s < f.stack; s++) {
               var bin = document.createElement('span'), letter = LETTERS[f.stack][s];
-              bin.className = 'rk-bin ' + size;
-              bin.style.width = (BINS[size].w * SCALE) + 'px';
-              bin.style.height = (BINS[size].h * SCALE) + 'px';
+              bin.className = 'rk-bin ' + f.size;
+              bin.style.width = (BINS[f.size].w * SCALE) + 'px';
+              bin.style.height = (BINS[f.size].h * SCALE) + 'px';
               bin.textContent = letter;
               bin.dataset.code = HUB + '-' + RACK + bay + '-' + lvl + '-' + pad(p) + letter;
               bin.dataset.bay = bay; bin.dataset.lvl = lvl; bin.dataset.pos = p; bin.dataset.letter = letter;
               col.appendChild(bin);
-              totals[size]++;
+              totals[f.size]++;
             }
             row.appendChild(col);
           }
@@ -117,7 +134,7 @@
         var what = seg.dataset.set, v = b.dataset.v;
         if (what === 'size') {
           if (!st.sel) return;
-          st.size[st.sel[0] + '-' + st.sel[1]] = v;
+          st.size[k(st.sel[0], st.sel[1])] = v;
         } else {
           st[what] = +v;
           seg.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
@@ -125,6 +142,15 @@
         }
         draw();
       });
+    });
+    if (counts) counts.addEventListener('click', function (ev) {
+      var b = ev.target.closest('button[data-step]');
+      if (!b || !st.sel) return;
+      var key = k(st.sel[0], st.sel[1]), f = fit(st.sel[0], st.sel[1]);
+      if (f.size === '-') return;
+      if (b.dataset.what === 'across') st.across[key] = Math.max(1, Math.min(12, f.pos + (+b.dataset.step)));
+      else st.stack[key] = Math.max(1, Math.min(BINS[f.size].stack, f.stack + (+b.dataset.step)));
+      draw();
     });
     draw();
   }
