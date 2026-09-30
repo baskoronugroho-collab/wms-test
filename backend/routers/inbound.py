@@ -40,7 +40,29 @@ def _receipt_out(row: dict, rep: dict | None = None) -> dict:
         "batch_no": row.get("batch_no"),
         "final_batch": (bool(row["final_batch"]) if row.get("final_batch") is not None
                         else None),
+        "faktur_uploaded_at": (str(row["faktur_uploaded_at"])
+                               if row.get("faktur_uploaded_at") else None),
+        "faktur_uploaded_by": row.get("faktur_uploaded_by"),
+        "needs_faktur": needs_faktur(row),
     }
+
+
+def needs_faktur(row: dict) -> bool:
+    """A finished brand delivery whose signed Faktur the SPV has not uploaded
+    (§5.3.8). A batch that did not finish its AWB is not the end of the
+    delivery, so it does not ask for the Faktur yet; the last batch does."""
+    return (row.get("source_type") == "from_brand" and row.get("status") != "open"
+            and not row.get("faktur_uploaded_at")
+            and (not row.get("replenishment_id") or row.get("final_batch") != 0))
+
+
+# Counted per receipt for the list and the receipt view.
+_FAKTUR_COUNTS = (
+    "(SELECT COUNT(*) FROM faktur_documents fd WHERE fd.receipt_id = ir.id "
+    "   OR (ir.replenishment_id IS NOT NULL AND fd.replenishment_id = ir.replenishment_id)) "
+    "   AS faktur_pages, "
+    "(SELECT COUNT(*) FROM faktur_issues fi WHERE fi.receipt_id = ir.id "
+    "   AND fi.status = 'open') AS open_issues ")
 
 
 async def _batch_skus(receipt_id: int) -> int:
@@ -57,16 +79,21 @@ async def _receipt_full(row: dict) -> dict:
             "SELECT reference, surat_jalan_no FROM replenishments WHERE id = %s",
             (row["replenishment_id"],))
     site = await db.fetch_one("SELECT inbound_bins FROM sites WHERE id = %s", (row["site_id"],))
+    counts = await db.fetch_one(
+        "SELECT " + _FAKTUR_COUNTS + "FROM inbound_receipts ir WHERE ir.id = %s", (row["id"],))
     return dict(_receipt_out(row, rep),
                 inbound_bins=(site or {}).get("inbound_bins") if row["source_type"] == "from_brand"
                 else None,
-                batch_skus=await _batch_skus(row["id"]))
+                batch_skus=await _batch_skus(row["id"]),
+                faktur_pages=int((counts or {}).get("faktur_pages") or 0),
+                open_issues=int((counts or {}).get("open_issues") or 0))
 
 
 @router.get("/receipts", response_model=models.ReceiptList)
 async def list_receipts(
     site_id: int,
-    status: str = Query(default="all", pattern="^(all|open|completed|discrepancy_raised)$"),
+    status: str = Query(default="all",
+                        pattern="^(all|open|completed|discrepancy_raised|needs_faktur)$"),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     user: auth.User = Depends(auth.current_user),
@@ -74,18 +101,24 @@ async def list_receipts(
     """Every receipt at a site, newest first, open ones included.
 
     The slip archive only knows completed receipts; a supervisor also needs to
-    see the delivery still being scanned, and by whom.
+    see the delivery still being scanned, and by whom. `needs_faktur` is the
+    SPV's list of finished brand deliveries still waiting for the signed Faktur.
     """
     await auth.assert_site_access(user, site_id)
     where, params = "WHERE ir.site_id = %s", [site_id]
-    if status != "all":
+    if status == "needs_faktur":
+        where += (" AND ir.source_type = 'from_brand' AND ir.status <> 'open' "
+                  "AND ir.faktur_uploaded_at IS NULL "
+                  "AND (ir.replenishment_id IS NULL OR COALESCE(ir.final_batch, 1) = 1)")
+    elif status != "all":
         where += " AND ir.status = %s"
         params.append(status)
     rows = await db.fetch_all(
         "SELECT ir.*, ps.id AS slip_id, "
         "       (SELECT COUNT(*) FROM receipt_lines rl WHERE rl.receipt_id = ir.id) AS line_count, "
         "       (SELECT COALESCE(SUM(rl.qty_received),0) FROM receipt_lines rl "
-        "         WHERE rl.receipt_id = ir.id) AS units "
+        "         WHERE rl.receipt_id = ir.id) AS units, "
+        + _FAKTUR_COUNTS +
         "FROM inbound_receipts ir "
         "LEFT JOIN putaway_slips ps ON ps.receipt_id = ir.id "
         + where + " ORDER BY ir.opened_at DESC, ir.id DESC LIMIT %s OFFSET %s",
@@ -95,7 +128,9 @@ async def list_receipts(
         "SELECT COUNT(*) AS n FROM inbound_receipts ir " + where, tuple(params))
     return {
         "receipts": [dict(_receipt_out(r), line_count=int(r["line_count"] or 0),
-                          units=int(r["units"] or 0), slip_id=r["slip_id"])
+                          units=int(r["units"] or 0), slip_id=r["slip_id"],
+                          faktur_pages=int(r["faktur_pages"] or 0),
+                          open_issues=int(r["open_issues"] or 0))
                      for r in rows],
         "total": int(total["n"]),
     }

@@ -17,23 +17,60 @@ from fastapi import Depends, Header, HTTPException, Request
 
 import db
 
-ROLES = ("superadmin", "hq", "supervisor", "hub_operator", "staff")
+ROLES = ("superadmin", "ops_head", "hq", "supervisor", "hub_operator", "staff")
 
 # Rank for "at least this role" checks. Staff is the floor.
 #
 #   staff         receives against an AWB, picks, counts, raises an unknown-SKU
 #                 request
-#   hub_operator  staff plus hub dispatch
+#   hub_operator  staff plus hub dispatch (hidden in the first build, PRD §1.2.2)
 #   supervisor    SPV of their own hubs: racks and bins, SKU -> rack, counts,
-#                 acknowledging a replenishment variance
+#                 acknowledging a replenishment variance, registering staff at
+#                 their own hubs
 #   hq            Ops HQ across every hub: brands, SKUs, photos, thresholds,
 #                 racks, station requests, replenishment and variance sign-off,
-#                 staff accounts and sites (the former admin role)
-#   superadmin    everything, and may view the app as any other role
-_RANK = {"staff": 0, "hub_operator": 1, "supervisor": 2, "hq": 3, "superadmin": 4}
+#                 dark stores, user accounts up to Ops HQ (the former admin role)
+#   ops_head      everything Ops HQ does, plus the last approval on every
+#                 variance and write-off (PRD §1.2, §11.5). Ranked above hq so
+#                 every at_least("hq") check lets the Ops Head through; the
+#                 three-step approval that needs the difference is a later build.
+#   superadmin    everything, grants Ops Head and superadmin, and may view the
+#                 app as any other role
+_RANK = {"staff": 0, "hub_operator": 1, "supervisor": 2, "hq": 3, "ops_head": 4,
+         "superadmin": 5}
 
 # Roles a superadmin may preview. Previewing is read-only (see current_user).
-VIEWABLE = ("hq", "supervisor", "hub_operator", "staff")
+VIEWABLE = ("ops_head", "hq", "supervisor", "hub_operator", "staff")
+
+# Which roles each role may give when registering or editing a user (PRD §1.2,
+# decided 25 and 30 Sep). Ops HQ and the Ops Head stop at Ops HQ: a role that can
+# mint its own peers or superiors is not a hierarchy. The hidden hub operator is
+# left to a superadmin until the central warehouse returns.
+GRANTABLE = {
+    "superadmin": ROLES,
+    "ops_head": ("hq", "supervisor", "staff"),
+    "hq": ("hq", "supervisor", "staff"),
+    "supervisor": ("staff",),
+}
+
+# Every person in the operation signs in with a Ninja Van Google account
+# (PRD §1.3, §1.4.1). Checked when an account is registered.
+ALLOWED_EMAIL_DOMAIN = "ninjavan.co"
+
+
+def email_allowed(email: str) -> bool:
+    """True for an address on the Ninja Van domain, compared without case."""
+    email = (email or "").strip().lower()
+    return "@" in email and email.rsplit("@", 1)[1] == ALLOWED_EMAIL_DOMAIN
+
+
+def grantable_roles(role: str) -> tuple[str, ...]:
+    """The roles a person holding `role` may give. Empty for staff."""
+    return GRANTABLE.get(role, ())
+
+
+def rank(role: str | None) -> int:
+    return _RANK.get(role or "", 0)
 
 
 class User:
@@ -83,6 +120,10 @@ async def _auto_provision(email: str) -> dict | None:
     if not domain or "@" not in email:
         return None
     if email.rsplit("@", 1)[1].lower() != domain:
+        return None
+    # A misconfigured AUTO_PROVISION_DOMAIN must not open the door to accounts
+    # an admin could never have registered by hand.
+    if not email_allowed(email):
         return None
 
     site = await db.fetch_one(

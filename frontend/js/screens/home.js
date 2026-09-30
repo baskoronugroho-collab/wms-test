@@ -33,11 +33,20 @@
     const countNote = card('10-hitung-pilih-keranjang.html');
     const returnNote = card('18-kembalikan.html');
 
-    const [board, plans, returns] = await Promise.all([
+    const [board, plans, returns, link] = await Promise.all([
       api().pickBoard({ site_id: site.id }).catch(() => null),
       api().opnamePlans({ site_id: site.id, limit: 1 }).catch(() => null),
       api().returns ? api().returns({ site_id: site.id, status: 'open' }).catch(() => null) : null,
+      api().raw.get('/hiryu-link/status').catch(() => null),
     ]);
+
+    /* Once the Hiryu link runs, orders arrive by themselves and pasting is
+       off (PRD §6.6.4): the tile goes. /hiryu-link/status is for supervisors,
+       so staff read the same flag off the queue board. If neither answers the
+       tile stays; the paste endpoint refuses anyway when the link is live. */
+    if ((link && link.live) || (board && board.link_live)) {
+      document.querySelectorAll('[data-tile="paste"]').forEach(el => { el.hidden = true; });
+    }
 
     /* Always overwrite a count the mockup shipped: a fabricated number on the
        home screen is worse than none, because a staffer cannot tell it is

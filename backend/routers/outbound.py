@@ -1,10 +1,17 @@
-"""M5 / §9 — Order intake from the POS, allocation, and guided picking."""
+"""M5 / §9 — Order intake from the POS, allocation, and guided picking.
+
+From deploy 2 the WMS gives every order to a picker by itself (PRD §6.2): see
+assign.py. This router keeps the order's life on the floor: received, given
+out, picked, handed to the pack bench, cancelled, and the SPV's queue board.
+Packing and the handover to the driver are in routers/hiryu.py.
+"""
 import hmac
 import os
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 
+import assign
 import auth
 import common
 import daycolor
@@ -148,11 +155,11 @@ async def receive_order(body: models.OrderIn):
         order_id = await db.run(
             cur,
             "INSERT INTO orders (external_ref, site_id, brand_id, status, is_test, "
-            "channel, delivery_mode, placed_at, promised_at) "
-            "VALUES (%s,%s,%s,'received',%s,%s,%s,%s,%s)",
+            "channel, delivery_mode, placed_at, promised_at, scheduled_at) "
+            "VALUES (%s,%s,%s,'received',%s,%s,%s,%s,%s,%s)",
             (body.external_ref, site["id"], resolved[0][0]["brand_id"],
              1 if body.is_test else 0, body.channel, body.delivery_mode,
-             placed, promised),
+             placed, promised, _parse_ts(body.scheduled_at)),
         )
         task_id = await db.run(
             cur, "INSERT INTO pick_tasks (order_id, site_id, status) "
@@ -218,6 +225,10 @@ async def receive_order(body: models.OrderIn):
                  part["required"], part["allocated"]),
             )
 
+    # Given to a ready picker at once (§6.2 step 2), after the commit so the
+    # order is there for whoever gets it. A scheduled order waits until due.
+    await assign.assign_site(site["id"])
+
     return {
         "order_id": order_id, "external_ref": body.external_ref,
         "pick_task_id": task_id, "status": "accepted", "short_lines": short,
@@ -268,6 +279,10 @@ async def _task_payload(task_id: int) -> dict:
         "age_seconds": age,
         "channel": task.get("channel"), "delivery_mode": task.get("delivery_mode"),
         "promised_at": str(task["promised_at"]) if task.get("promised_at") else None,
+        "started_at": str(task["started_at"]) if task.get("started_at") else None,
+        "handed_to_pack_at": (str(task["handed_to_pack_at"])
+                              if task.get("handed_to_pack_at") else None),
+        "reassign_note": task.get("reassign_note"),
         "lines": [{
             "id": l["id"], "sequence_no": l["sequence_no"], "sku_id": l["sku_id"],
             "sku_name": l["name_display"], "photo_key": l["photo_key"],
@@ -302,33 +317,92 @@ async def list_tasks(
 
 @router.post("/pick-tasks/{task_id}/claim", response_model=models.PickTask)
 async def claim_task(task_id: int, user: auth.User = Depends(auth.current_user)):
-    """A claimed task is invisible to other pickers (M5.2.2).
+    """Open an order: the one the WMS gave you, or a waiting one you take by hand.
 
-    The conditional UPDATE is the lock: two pickers racing for the same task,
-    exactly one wins, decided by the database rather than by timing.
+    The phone calls this for the order /api/pickers/me names; for its holder it
+    changes nothing (above all not claimed_at, which the 2-minute rule measures
+    from), so reopening the screen is free.
+
+    Taking a waiting order by hand stays possible for the paste screen's "pick
+    it myself" while paste is still on. The conditional UPDATE is the lock: two
+    people racing for one order, exactly one wins. One order per picker: a
+    picker already holding one is refused.
     """
     head = await db.fetch_one("SELECT site_id FROM pick_tasks WHERE id = %s", (task_id,))
     if not head:
         raise HTTPException(404, "Pick task not found")
     # Access is checked before the claim is written, not after it.
     await auth.assert_site_access(user, head["site_id"])
-    async with db.tx() as cur:
-        task = await db.one(cur, "SELECT * FROM pick_tasks WHERE id = %s FOR UPDATE",
-                            (task_id,))
-        if task["status"] == "cancelled":
-            raise HTTPException(409, "Pesanan ini dibatalkan. / This order was cancelled.")
-        if task["status"] == "claimed" and task["claimed_by"] != user.email:
+    task = await db.fetch_one("SELECT * FROM pick_tasks WHERE id = %s", (task_id,))
+    if task["status"] == "cancelled":
+        raise HTTPException(409, "Pesanan ini dibatalkan. / This order was cancelled.")
+    if task["status"] == "completed":
+        raise HTTPException(409, "Pesanan ini sudah selesai diambil. / This order is already picked.")
+    if task["status"] == "claimed":
+        if task["claimed_by"] != user.email:
             raise HTTPException(
-                409, f"{task['claimed_by']} is already picking this order."
-            )
-        if task["status"] == "completed":
-            raise HTTPException(409, "This order is already picked.")
-        await db.run(
-            cur,
-            "UPDATE pick_tasks SET status='claimed', claimed_by=%s, claimed_at=NOW() "
-            "WHERE id = %s", (user.email, task_id),
-        )
+                409, f"{task['claimed_by']} sedang mengambil pesanan ini. / "
+                     f"{task['claimed_by']} is picking this order.")
+        return await _task_payload(task_id)
+    if task["status"] != "ready":
+        raise HTTPException(409, "Pesanan ini perlu supervisor. / This order needs a supervisor.")
+
+    other = await assign.held_task(head["site_id"], user.email)
+    if other:
+        raise HTTPException(
+            409, "Selesaikan dulu pesanan yang kamu pegang. / Finish the order you hold first.")
+    n = await db.execute(
+        "UPDATE pick_tasks SET status='claimed', claimed_by=%s, claimed_at=NOW(), "
+        "started_at=NULL WHERE id = %s AND status = 'ready' AND claimed_by IS NULL",
+        (user.email, task_id))
+    if n != 1:
+        raise HTTPException(409, "Pesanan ini baru saja diberikan ke orang lain. / "
+                                 "This order was just given to someone else.")
+    # Whoever takes an order by hand is picking now: ready, with this in hand,
+    # so the assigner neither gives them a second order nor forgets them after.
+    await assign.set_state(head["site_id"], user.email, "ready")
+    await db.execute(
+        "UPDATE picker_presence SET current_task_id = %s WHERE site_id = %s AND user_email = %s",
+        (task_id, head["site_id"], user.email))
     return await _task_payload(task_id)
+
+
+def _assert_holder(line: dict, user: auth.User) -> None:
+    """Only the picker holding an order scans for it. An order that went back
+    to the queue or to someone else is not yours any more, even with the screen
+    still open."""
+    status = line["task_status"]
+    if status == "cancelled":
+        raise HTTPException(409, "Pesanan ini sudah dibatalkan. / This order was cancelled.")
+    if status == "completed":
+        raise HTTPException(409, "Pesanan ini sudah selesai. / This order is already done.")
+    if status != "claimed" or line["claimed_by"] != user.email:
+        raise HTTPException(409, "Pesanan ini sudah dipindahkan. / This order was moved.")
+
+
+async def _lock_and_start(cur, task_id: int, user: auth.User) -> None:
+    """Inside the caller's transaction: lock the task, re-check the holder, and
+    record the first scan. Raising here rolls the caller's work back."""
+    task = await db.one(cur, "SELECT status, claimed_by, started_at FROM pick_tasks "
+                             "WHERE id = %s FOR UPDATE", (task_id,))
+    _assert_holder({"task_status": task["status"], "claimed_by": task["claimed_by"]}, user)
+    if task["started_at"] is None:
+        await db.run(cur, "UPDATE pick_tasks SET started_at = NOW() WHERE id = %s", (task_id,))
+
+
+@router.post("/pick-tasks/{task_id}/start", response_model=models.Ok)
+async def start_task(task_id: int, user: auth.User = Depends(auth.current_user)):
+    """The picker is working on this order without having scanned yet: the
+    first bin was empty and they opened Barang tidak ada. That counts as
+    starting, so the 2-minute rule does not pull the order away while they
+    look elsewhere. Only the holder; a no-op once started."""
+    head = await db.fetch_one("SELECT site_id FROM pick_tasks WHERE id = %s", (task_id,))
+    if not head:
+        raise HTTPException(404, "Pick task not found")
+    await auth.assert_site_access(user, head["site_id"])
+    async with db.tx() as cur:
+        await _lock_and_start(cur, task_id, user)
+    return {"ok": True, "message": "Dimulai. / Started."}
 
 
 @router.post("/pick-lines/{line_id}/confirm", response_model=models.PickConfirmResult)
@@ -355,14 +429,15 @@ async def confirm_pick(
     if not line:
         raise HTTPException(404, "Pick line not found")
     site = await auth.assert_site_access(user, line["site_id"])
-    if line["task_status"] in ("cancelled", "completed"):
-        raise HTTPException(409, "Pesanan ini sudah " + (
-            "dibatalkan. / This order was cancelled." if line["task_status"] == "cancelled"
-            else "selesai. / This order is already done."))
-    if line["claimed_by"] and line["claimed_by"] != user.email:
-        raise HTTPException(409, f"{line['claimed_by']} is picking this order.")
+    _assert_holder(line, user)
 
     code = body.code.strip()
+    # Any scan, right or wrong, shows the picker is at the rack: the order has
+    # started, and the 2-minute rule must not take it away while they sort out
+    # a wrong product. A no-op after the first scan.
+    await db.execute(
+        "UPDATE pick_tasks SET started_at = NOW() WHERE id = %s AND status = 'claimed' "
+        "AND claimed_by = %s AND started_at IS NULL", (line["pick_task_id"], user.email))
     scanned_sku = await common.sku_by_barcode(code)
     plate = None
 
@@ -412,6 +487,9 @@ async def confirm_pick(
         raise HTTPException(409, "This line is already picked.")
 
     async with db.tx() as cur:
+        # Still yours, and this scan starts the clock the 2-minute rule reads.
+        # Locked, so the sweep cannot hand the order back mid-scan.
+        await _lock_and_start(cur, line["pick_task_id"], user)
         await ledger.apply(
             cur, site_id=line["site_id"], sku_id=line["sku_id"],
             location_id=line["location_id"], qty_delta=-qty,
@@ -486,28 +564,38 @@ async def confirm_pick(
 
 @router.post("/pick-tasks/{task_id}/complete", response_model=models.PickTask)
 async def complete_task(task_id: int, user: auth.User = Depends(auth.current_user)):
+    """Serahkan ke meja packing: the picker hands the basket to the pack bench.
+
+    This is "Waiting to pack" (§6.11), not "ready": nothing goes to Hiryu from
+    here any more. Message 4 (order_ready) is queued when the packer taps
+    Selesai dikemas (routers/hiryu.py, `packed`). The picker is free the moment
+    this commits and the WMS gives them the next order.
+    """
     task = await db.fetch_one("SELECT * FROM pick_tasks WHERE id = %s", (task_id,))
     if not task:
         raise HTTPException(404, "Pick task not found")
     await auth.assert_site_access(user, task["site_id"])
     async with db.tx() as cur:
-        # Locked and re-checked: message 4 must go once, and never for an order
-        # Hiryu has already cancelled.
+        # Locked and re-checked: a cancel from Hiryu may land at the same moment.
         task = await db.one(cur, "SELECT * FROM pick_tasks WHERE id = %s FOR UPDATE",
                             (task_id,))
         if task["status"] == "completed":
             raise HTTPException(409, "Pesanan ini sudah selesai. / This order is already done.")
         if task["status"] == "cancelled":
             raise HTTPException(409, "Pesanan ini dibatalkan. / This order was cancelled.")
+        if (task["status"] == "claimed" and task["claimed_by"] != user.email
+                and not user.at_least("supervisor")):
+            raise HTTPException(
+                409, "Pesanan ini sudah dipindahkan. / This order was moved.")
         open_lines = await db.one(
             cur, "SELECT COUNT(*) AS n FROM pick_lines WHERE pick_task_id = %s "
                  "AND qty_picked < qty_required AND status <> 'short'", (task_id,))
         if open_lines["n"]:
             raise HTTPException(
                 409, "Masih ada barang yang belum diambil. / Items are still to be picked.")
-        await db.run(cur, "UPDATE pick_tasks SET status='completed', "
-                          "completed_at=NOW() WHERE id=%s", (task_id,))
-        await db.run(cur, "UPDATE orders SET status='picked' WHERE id=%s",
+        await db.run(cur, "UPDATE pick_tasks SET status='completed', completed_at=NOW(), "
+                          "handed_to_pack_at=NOW() WHERE id=%s", (task_id,))
+        await db.run(cur, "UPDATE orders SET status='picked' WHERE id=%s AND status <> 'cancelled'",
                      (task["order_id"],))
         # Only the units picked for THIS order leave. The whole site's picked
         # plates used to be marked shipped, including other orders' totes and
@@ -519,29 +607,12 @@ async def complete_task(task_id: int, user: auth.User = Depends(auth.current_use
             "JOIN pick_lines pl ON pl.id = m.ref_id "
             "SET up.state = 'shipped' "
             "WHERE pl.pick_task_id = %s AND up.state = 'picked'", (task_id,))
+        await ledger.audit(cur, actor_email=user.email, entity="pick_tasks",
+                           entity_id=task_id, action="pick_task.handed_to_pack", after={})
 
-        # Message 4 -- the bag is sealed. This is the trigger the POS turns into a
-        # receipt and passes to Grab; it is the only thing standing between a
-        # packed order and a customer being told it is on its way, so it goes out
-        # on the priority lane rather than behind queued stock updates.
-        order = await db.one(
-            cur, "SELECT external_ref, is_test FROM orders WHERE id = %s",
-            (task["order_id"],),
-        )
-        site = await db.one(
-            cur, "SELECT is_training FROM sites WHERE id = %s", (task["site_id"],)
-        )
-        if order:
-            await ledger.enqueue_pos_message(
-                cur, message_type="order_ready", site_id=task["site_id"],
-                order_ref=order["external_ref"],
-                is_training=bool(site["is_training"]) if site else False,
-                payload={
-                    "order_ref": order["external_ref"],
-                    "packed_by": user.email,
-                    "is_test": bool(order["is_test"]),
-                },
-            )
+    # An empty note: whatever the phone last had to explain is now old news.
+    await assign.free_picker(task["site_id"], task["claimed_by"] or user.email, task_id, note="")
+    await assign.assign_site(task["site_id"])
     return await _task_payload(task_id)
 
 
@@ -643,7 +714,9 @@ async def list_orders(
 async def queue_board(
     site_id: int, user: auth.User = Depends(auth.current_user)
 ):
-    """Everything waiting, everything being picked, and what finished today.
+    """The floor at a glance (§6.5.4): waiting (Terjadwal included), being
+    picked, waiting to pack, waiting for the driver, done today, and the
+    pickers with their states.
 
     One aggregate query rather than the per-task fan-out `list_tasks` does: a
     board showing fifty cards would otherwise run a hundred round trips, and
@@ -651,15 +724,24 @@ async def queue_board(
     """
     site = await auth.assert_site_access(user, site_id)
     day_start = _jakarta_day_start_utc()
+    lead = await assign.rule("grab_ready_minutes", 10)
 
     rows = await db.fetch_all(
         "SELECT pt.id, pt.order_id, pt.status, pt.claimed_by, pt.claimed_at, "
-        "       pt.completed_at, pt.created_at, o.external_ref, o.hiryu_short_no, o.is_test, "
-        "       o.channel, o.delivery_mode, o.promised_at, "
+        "       pt.completed_at, pt.created_at, pt.started_at, pt.handed_to_pack_at, "
+        "       pt.reassign_note, pt.requeue_count, "
+        "       o.external_ref, o.hiryu_short_no, o.is_test, o.status AS order_status, "
+        "       o.channel, o.delivery_mode, o.promised_at, o.scheduled_at, "
+        "       o.marked_ready_at, o.handed_over_at, "
+        "       (o.scheduled_at IS NOT NULL AND o.promised_at IS NOT NULL "
+        "        AND o.promised_at > NOW() + INTERVAL %s MINUTE) AS scheduled_hold, "
         "       TIMESTAMPDIFF(SECOND, NOW(), o.promised_at) AS remaining_seconds, "
         "       TIMESTAMPDIFF(SECOND, pt.created_at, o.promised_at) AS window_seconds, "
         "       TIMESTAMPDIFF(SECOND, pt.created_at, NOW()) AS age_seconds, "
         "       TIMESTAMPDIFF(SECOND, pt.claimed_at, NOW()) AS held_seconds, "
+        "       TIMESTAMPDIFF(SECOND, COALESCE(pt.handed_to_pack_at, pt.completed_at), NOW()) "
+        "         AS pack_wait_seconds, "
+        "       TIMESTAMPDIFF(SECOND, o.marked_ready_at, NOW()) AS driver_wait_seconds, "
         "       COUNT(DISTINCT pl.id) AS line_count, "
         "       COALESCE(SUM(pl.qty_required),0) AS total_units, "
         "       COALESCE(SUM(pl.qty_picked),0) AS picked_units, "
@@ -676,28 +758,49 @@ async def queue_board(
         "LEFT JOIN users u ON u.email = pt.claimed_by "
         "WHERE pt.site_id = %s "
         "  AND (pt.status IN ('ready','claimed','blocked') "
-        # Finished work is only interesting for the rest of the shift; keeping
-        # every completed task would make the board grow without bound.
-        "       OR (pt.status = 'completed' AND pt.completed_at >= %s)) "
+        # Picked and not yet with a driver: to pack, or packed and waiting.
+        # Two days back at most, so orders from before the handover screen
+        # existed (never handed over) do not sit on the board for ever.
+        "       OR (pt.status = 'completed' AND o.status <> 'cancelled' "
+        "           AND o.handed_over_at IS NULL AND pt.completed_at >= NOW() - INTERVAL 2 DAY) "
+        # Done today means handed to the driver today, at the station's midnight.
+        "       OR (o.handed_over_at IS NOT NULL AND o.handed_over_at >= %s)) "
         "GROUP BY pt.id, pt.order_id, pt.status, pt.claimed_by, pt.claimed_at, "
-        "         pt.completed_at, pt.created_at, o.external_ref, o.hiryu_short_no, o.is_test, "
-        "         o.channel, o.delivery_mode, o.promised_at, u.name "
+        "         pt.completed_at, pt.created_at, pt.started_at, pt.handed_to_pack_at, "
+        "         pt.reassign_note, pt.requeue_count, o.external_ref, o.hiryu_short_no, "
+        "         o.is_test, o.status, o.channel, o.delivery_mode, o.promised_at, "
+        "         o.scheduled_at, o.marked_ready_at, o.handed_over_at, u.name "
         "ORDER BY pt.created_at",
-        (site_id, day_start),
+        (lead, site_id, day_start),
     )
+
+    ts = lambda v: str(v) if v else None
+    num = lambda v: int(v) if v is not None else None
 
     def card(r: dict) -> dict:
         racks = sorted({c for c in (r["racks"] or "").split(",") if c})
+        wait = None
+        if r["status"] == "completed" and not r["marked_ready_at"]:
+            wait = num(r["pack_wait_seconds"])
+        elif r["marked_ready_at"] and not r["handed_over_at"]:
+            wait = num(r["driver_wait_seconds"])
         return {
             "id": r["id"], "order_id": r["order_id"],
             "external_ref": r["external_ref"], "short_no": r.get("hiryu_short_no"),
-            "status": r["status"],
+            "status": r["status"], "order_status": r["order_status"],
             "is_test": bool(r["is_test"]),
             "created_at": str(r["created_at"]),
-            "claimed_at": str(r["claimed_at"]) if r["claimed_at"] else None,
-            "completed_at": str(r["completed_at"]) if r["completed_at"] else None,
+            "claimed_at": ts(r["claimed_at"]),
+            "completed_at": ts(r["completed_at"]),
+            "started_at": ts(r["started_at"]),
+            "handed_to_pack_at": ts(r["handed_to_pack_at"]),
+            "packed_at": ts(r["marked_ready_at"]),
+            "handed_over_at": ts(r["handed_over_at"]),
+            "scheduled_at": ts(r["scheduled_at"]),
+            "scheduled_hold": bool(r["scheduled_hold"]),
+            "waiting_seconds": wait,
             "age_seconds": int(r["age_seconds"] or 0),
-            "held_seconds": int(r["held_seconds"]) if r["held_seconds"] is not None else None,
+            "held_seconds": num(r["held_seconds"]),
             "claimed_by": r["claimed_by"], "claimed_by_name": r["picker_name"],
             "line_count": int(r["line_count"] or 0),
             "total_units": int(r["total_units"] or 0),
@@ -706,38 +809,48 @@ async def queue_board(
             "racks": racks,
             "channel": r["channel"] or "grab",
             "delivery_mode": r["delivery_mode"] or "grab_rider",
-            "promised_at": str(r["promised_at"]) if r["promised_at"] else None,
-            "remaining_seconds": (int(r["remaining_seconds"])
-                                  if r["remaining_seconds"] is not None else None),
+            "promised_at": ts(r["promised_at"]),
+            "remaining_seconds": num(r["remaining_seconds"]),
             "urgency": _urgency(r["remaining_seconds"], r["window_seconds"]),
+            "reassign_note": r["reassign_note"],
+            "requeue_count": int(r["requeue_count"] or 0),
         }
 
     cards = [card(r) for r in rows]
-    lanes = []
-    for key, members in (
+    by_left = lambda c: (c["remaining_seconds"] if c["remaining_seconds"] is not None else 10**9)
+    waiting = [c for c in cards if c["status"] in ("ready", "blocked")]
+    lanes_def = (
         # Waiting orders are worked in order of time remaining, not age: with a
-        # 15-minute Grab promise and a 1-hour own-channel promise in one room,
-        # age would rank a comfortable order level with a late one.
-        ("waiting", sorted(
-            [c for c in cards if c["status"] in ("ready", "blocked")],
-            key=lambda c: (c["remaining_seconds"] if c["remaining_seconds"] is not None
-                           else 10**9))),
-        ("picking", [c for c in cards if c["status"] == "claimed"]),
-        ("done_today", [c for c in cards if c["status"] == "completed"]),
-    ):
-        if key == "done_today":
-            members = sorted(members, key=lambda c: c["completed_at"] or "", reverse=True)
-        lanes.append({"key": key, "count": len(members), "cards": members})
+        # 10-minute Grab promise and a 1-hour own-channel promise in one room,
+        # age would rank a comfortable order level with a late one. Terjadwal
+        # (scheduled, not due yet) comes after everything the pickers can have.
+        ("waiting", sorted(waiting, key=lambda c: (c["scheduled_hold"], by_left(c)))),
+        ("picking", sorted([c for c in cards if c["status"] == "claimed"],
+                           key=lambda c: -(c["held_seconds"] or 0))),
+        ("to_pack", sorted([c for c in cards if c["status"] == "completed"
+                            and not c["packed_at"] and not c["handed_over_at"]],
+                           key=lambda c: c["handed_to_pack_at"] or c["completed_at"] or "")),
+        ("to_driver", sorted([c for c in cards if c["packed_at"] and not c["handed_over_at"]],
+                             key=lambda c: c["packed_at"] or "")),
+        ("done_today", sorted([c for c in cards if c["handed_over_at"]],
+                              key=lambda c: c["handed_over_at"] or "", reverse=True)),
+    )
+    lanes = [{"key": k, "count": len(m), "cards": m} for k, m in lanes_def]
 
-    waiting = [c["age_seconds"] for c in cards if c["status"] in ("ready", "blocked")]
+    live_waiting = [c["age_seconds"] for c in waiting if not c["scheduled_hold"]]
+    thresholds = dict(AGE_THRESHOLDS)
+    thresholds["pick_start_seconds"] = 60 * await assign.rule("pick_start_minutes", 2)
+    thresholds["handover_wait_seconds"] = 60 * await assign.rule("handover_wait_minutes", 20)
     return {
         "site_id": site_id, "site_code": site["code"],
         # The board renders live clocks; it must tick against the server, not a
         # station laptop whose clock nobody has ever checked.
         "server_time": str(datetime.now(timezone.utc)),
         "lanes": lanes,
-        "oldest_waiting_seconds": max(waiting) if waiting else None,
-        "thresholds": AGE_THRESHOLDS,
+        "oldest_waiting_seconds": max(live_waiting) if live_waiting else None,
+        "thresholds": thresholds,
+        "pickers": await assign.picker_rows(site_id),
+        "link_live": bool(await assign.rule("hiryu_link_live", 0)),
     }
 
 
@@ -747,55 +860,97 @@ async def release_task(
     body: models.ReleaseIn,
     user: auth.User = Depends(auth.current_user),
 ):
-    """Hand a claimed order back to the queue.
+    """Hand a held order back to the queue.
 
-    Without this a claim is permanent: `claim` hides a task from every other
-    picker, so a dead tablet or an abandoned shift strands the order where
-    nobody can see it while Grab keeps counting.
-
-    Anyone may release their own claim; releasing someone else's needs
-    supervisor, because it takes work off a colleague who may simply be walking
-    back from the far rack.
+    Anyone may release their own; releasing someone else's needs supervisor,
+    because it takes work off a colleague who may simply be walking back from
+    the far rack. The order is given out again at once (§6.2), to the free
+    picker waiting longest. The SPV's usual tool is Pindahkan (`reassign`),
+    which names who gets it.
 
     Lines already picked keep their progress — the stock has physically moved
     and the ledger says so. The next picker resumes at the first pending line
     rather than starting the order again.
     """
+    task = await db.fetch_one("SELECT * FROM pick_tasks WHERE id = %s", (task_id,))
+    if not task:
+        raise HTTPException(404, "Pick task not found")
+    await auth.assert_site_access(user, task["site_id"])
     async with db.tx() as cur:
         task = await db.one(
             cur, "SELECT * FROM pick_tasks WHERE id = %s FOR UPDATE", (task_id,)
         )
-        if not task:
-            raise HTTPException(404, "Pick task not found")
         if task["status"] == "completed":
-            raise HTTPException(409, "Pesanan ini sudah selesai.")
+            raise HTTPException(409, "Pesanan ini sudah selesai. / This order is already done.")
         if task["status"] != "claimed":
-            raise HTTPException(409, "Pesanan ini belum diambil siapa pun.")
+            raise HTTPException(409, "Pesanan ini belum dipegang siapa pun. / Nobody holds this order.")
         if task["claimed_by"] != user.email and not user.at_least("supervisor"):
             raise HTTPException(
                 403,
                 f"{task['claimed_by']} sedang mengambil pesanan ini. "
-                "Minta supervisor untuk melepaskannya.",
+                "Minta supervisor untuk melepaskannya. / "
+                f"{task['claimed_by']} is picking this order. Ask a supervisor.",
             )
 
         await db.run(
             cur,
-            "UPDATE pick_tasks SET status='ready', claimed_by=NULL, claimed_at=NULL "
-            "WHERE id = %s", (task_id,),
+            "UPDATE pick_tasks SET status='ready', claimed_by=NULL, claimed_at=NULL, "
+            "started_at=NULL, reassign_note=%s WHERE id = %s",
+            ((body.reason or "released")[:255], task_id),
         )
-        await db.run(
-            cur,
-            "INSERT INTO audit_log (actor_email, action, entity, entity_id, after_json) "
-            "VALUES (%s,'pick_task.release','pick_tasks',%s,%s)",
-            (user.email, task_id,
-             f"released from {task['claimed_by']}: {body.reason or 'no reason given'}"),
-        )
+        await ledger.audit(cur, actor_email=user.email, entity="pick_tasks",
+                           entity_id=task_id, action="pick_task.release",
+                           after={"from": task["claimed_by"],
+                                  "reason": body.reason or "no reason given"})
 
-    await auth.assert_site_access(user, task["site_id"])
+    label = await assign.order_label(task_id)
+    await assign.free_picker(task["site_id"], task["claimed_by"], task_id, note=(
+        "" if task["claimed_by"] == user.email else
+        f"{label} dilepas ke antrean oleh SPV. / {label} was released to the queue by the SPV."))
+    await assign.assign_site(task["site_id"])
     return await _task_payload(task_id)
 
 
-# --- short pick (PRD 8.9) ----------------------------------------------------
+@router.post("/pick-tasks/{task_id}/reassign", response_model=models.ReassignResult)
+async def reassign_task(
+    task_id: int,
+    body: models.ReassignIn,
+    user: auth.User = Depends(auth.require("supervisor")),
+):
+    """Pindahkan (§6.2 step 6): the SPV moves an order to another picker, with a
+    reason. Named picker, or the free picker waiting longest. Audited with who
+    had it, who has it now and why."""
+    task = await db.fetch_one("SELECT site_id FROM pick_tasks WHERE id = %s", (task_id,))
+    if not task:
+        raise HTTPException(404, "Pesanan tidak ditemukan. / Order not found.")
+    await auth.assert_site_access(user, task["site_id"])
+    if body.to_email:
+        target = await db.fetch_one(
+            "SELECT u.id, u.role FROM users u WHERE LOWER(u.email) = %s AND u.active = 1",
+            (body.to_email.strip().lower(),))
+        if not target:
+            raise HTTPException(422, "Staf tidak ditemukan. / No such staff member.")
+        if target["role"] not in ("hq", "superadmin"):
+            member = await db.fetch_one(
+                "SELECT 1 AS ok FROM user_sites WHERE user_id = %s AND site_id = %s",
+                (target["id"], task["site_id"]))
+            if not member:
+                raise HTTPException(422, "Staf itu tidak terdaftar di hub ini. / "
+                                         "That person is not on this hub.")
+    try:
+        moved = await assign.reassign(task_id, actor=user.email, reason=body.reason.strip(),
+                                      to_email=body.to_email or None)
+    except LookupError as e:
+        raise HTTPException(404, str(e))
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+    label = await assign.order_label(task_id)
+    return {"ok": True, "task_id": task_id, "from_email": moved["from"],
+            "to_email": moved["to"],
+            "message": f"{label} dipindahkan ke {moved['to']}. / {label} moved to {moved['to']}."}
+
+
+# --- a missing item (PRD §8.1, §8.3) ------------------------------------------
 
 @router.post("/pick-lines/{line_id}/short", response_model=models.ShortPickResult)
 async def declare_short(
@@ -803,21 +958,31 @@ async def declare_short(
     body: models.ShortPickIn,
     user: auth.User = Depends(auth.current_user),
 ):
-    """The picker cannot find the stock. Two taps, and the POS hears immediately.
+    """Catat: tidak ada. The picker looked in the bin and everywhere else the
+    WMS knew of (the look-elsewhere step, routers/hiryu.py) and the item is not
+    there. One transaction does all of §8.3:
 
-    Grab refunds the customer and charges the merchant by default, so the whole
-    point of this endpoint is reaching the POS before the charge does.
+      1. the bin's count becomes what the picker found, so no other order is
+         sent to an empty bin, and Hiryu hears the new stock (message 3);
+      2. item short goes to Hiryu (message 5);
+      3. the order is cancelled in the WMS at once: holds released, units
+         already picked to Kembalikan ke rak. Hiryu then cancels with 2001 and
+         its cancel (message 2) finds the order already cancelled;
+      4. the declaration is kept, naming the picker, for the SPV (pick_shortfalls).
 
-    The stock correction here is DELIBERATELY unsigned, unlike every other
-    adjustment in this product (M6.3.3). If it waited for a supervisor the system
-    would keep selling stock that does not exist and produce a second short pick,
-    then a third. The signature catches up; the bleeding stops now. The cost is
-    that a staffer can zero a SKU with two taps -- which is why the exception row
-    names them and is indexed for repeat offenders.
+    No SPV step (decided 30 Sep): if it is not on the shelf, it is out of stock.
+    The stock correction is therefore unsigned, unlike every other adjustment
+    (M6.3.3); waiting would keep Grab selling what the hub does not have. The
+    cost is that a picker can zero a SKU with two taps, which is why the row
+    names them and the SPV sees every one.
+
+    The units found stay in the bin: the order is cancelled, so taking them
+    into the basket would only mean scanning them back.
     """
     line = await db.fetch_one(
-        "SELECT pl.*, pt.site_id, pt.status AS task_status, o.external_ref, "
-        "       o.is_test, s.name_display "
+        "SELECT pl.*, pt.site_id, pt.status AS task_status, pt.claimed_by, "
+        "       o.id AS order_id, o.external_ref, o.hiryu_short_no, o.is_test, "
+        "       ol.qty_ordered, ol.qty_picked AS line_qty_picked, s.name_display "
         "FROM pick_lines pl "
         "JOIN pick_tasks pt ON pt.id = pl.pick_task_id "
         "JOIN order_lines ol ON ol.id = pl.order_line_id "
@@ -830,30 +995,26 @@ async def declare_short(
         raise HTTPException(404, "Pick line not found")
     await auth.assert_site_access(user, line["site_id"])
     if line["status"] == "picked":
-        raise HTTPException(409, "Baris ini sudah selesai diambil.")
-    if line["task_status"] in ("cancelled", "completed"):
-        raise HTTPException(409, "Pesanan ini sudah ditutup. / This order is closed.")
+        raise HTTPException(409, "Baris ini sudah selesai diambil. / This line is already picked.")
+    _assert_holder(line, user)
 
     required = line["qty_required"] - line["qty_picked"]
     found = max(0, min(body.qty_found, required))
     if found >= required:
-        raise HTTPException(422, "Kalau barangnya lengkap, pindai seperti biasa.")
+        raise HTTPException(422, "Kalau barangnya lengkap, pindai seperti biasa. / "
+                                 "If it is all there, scan it as usual.")
     missing = required - found
+    label = line["hiryu_short_no"] or line["external_ref"]
 
     site = await db.fetch_one(
         "SELECT is_training, site_type FROM sites WHERE id = %s", (line["site_id"],)
     )
 
     async with db.tx() as cur:
-        # 1. Stop promising what is not there — this line's reservation only.
-        if line["location_id"]:
-            await ledger.release(
-                cur, site_id=line["site_id"], sku_id=line["sku_id"],
-                location_id=line["location_id"], qty=_outstanding_allocation(line),
-            )
+        await _lock_and_start(cur, line["pick_task_id"], user)
 
-        # 2. Correct on-hand to what the picker actually found. Only the
-        #    shortfall is written off; anything found is picked normally below.
+        # 1. The bin holds what the picker found. The reservation this line
+        #    held goes back with the cancel below, with every other line's.
         if line["location_id"]:
             bal = await db.one(
                 cur,
@@ -862,10 +1023,6 @@ async def declare_short(
                 (line["site_id"], line["sku_id"], line["location_id"]),
             )
             on_hand = int(bal["qty_on_hand"]) if bal else 0
-            # The picker found `found` units here and is taking all of them, so
-            # that is what the location really held. Bring the ledger to it.
-            # (Writing off only `missing` left the found units short of cover:
-            # the pick below then tried to go negative and was refused.)
             write_off = max(0, on_hand - found)
             if write_off:
                 await ledger.apply(
@@ -876,49 +1033,29 @@ async def declare_short(
                     scan_source="manual", is_training=bool(site["is_training"]),
                 )
 
-        # 3. Take what was actually found, if any.
-        if found and line["location_id"]:
-            await ledger.apply(
-                cur, site_id=line["site_id"], sku_id=line["sku_id"],
-                location_id=line["location_id"], qty_delta=-found,
-                movement_type="pick_out", actor_email=user.email,
-                ref_type="pick_line", ref_id=line_id,
-                is_training=bool(site["is_training"]),
-            )
+        await db.run(cur, "UPDATE pick_lines SET status = 'short' WHERE id = %s", (line_id,))
+        await db.run(cur, "UPDATE order_lines SET status = 'short' WHERE id = %s",
+                     (line["order_line_id"],))
 
-        await db.run(
-            cur,
-            # Its reservation was released above; zero what is left of it so a
-            # later cancel (PRD v3.3 §10.2) does not release it a second time.
-            "UPDATE pick_lines SET qty_picked = %s, qty_allocated = LEAST(qty_allocated, %s), "
-            "status = 'short' WHERE id = %s",
-            (line["qty_picked"] + found, line["qty_picked"] + found, line_id),
-        )
-        await db.run(
-            cur,
-            "UPDATE order_lines SET qty_picked = qty_picked + %s, status = 'short' "
-            "WHERE id = %s",
-            (found, line["order_line_id"]),
-        )
-
-        # 4. Message 5 -- a statement of fact. The POS decides refund,
-        #    substitution or cancellation, because the POS owns the customer.
+        # 2. Message 5. The sender builds the outgoing data from the database;
+        #    the units are here because they are a fact of this moment. Units
+        #    are for the whole order line (a SKU split over rack and overflow
+        #    is one line to Hiryu).
+        units_found = int(line["line_qty_picked"] or 0) + found
         await ledger.enqueue_pos_message(
             cur, message_type="order_short", site_id=line["site_id"],
             order_ref=line["external_ref"], sku_id=line["sku_id"],
             is_training=bool(site["is_training"]),
             payload={
                 "order_ref": line["external_ref"],
-                "line_id": line_id,
                 "sku_id": line["sku_id"],
-                "sku_name": line["name_display"],
-                "qty_required": required,
-                "qty_found": found,
-                "declared_by": user.email,
+                "units_wanted": int(line["qty_ordered"]),
+                "units_found": units_found,
+                "pick_line_id": line_id,
             },
         )
 
-        # 5. The supervisor exception, naming the staffer.
+        # 4. The SPV's list: who declared what, when (Perlu tindakan, §13.5).
         await db.run(
             cur,
             "INSERT INTO pick_shortfalls (pick_line_id, site_id, sku_id, "
@@ -927,22 +1064,33 @@ async def declare_short(
             (line_id, line["site_id"], line["sku_id"], required, found, user.email),
         )
 
+        # 3. Cancel the order here and now.
+        order = await db.one(
+            cur, "SELECT o.*, s.is_training FROM orders o JOIN sites s ON s.id = o.site_id "
+                 "WHERE o.id = %s FOR UPDATE", (line["order_id"],))
+        picked_back = await _cancel_locked(cur, order, actor=user.email, reason="item_short")
+
+    # The picker saw it happen on their own screen: nothing more to explain.
+    await assign.free_picker(line["site_id"], user.email, line["pick_task_id"], note="")
+    await assign.assign_site(line["site_id"])
     # Stock just dropped; the pick face may now need refilling.
     await replenish.evaluate(line["site_id"], line["sku_id"], user.email)
 
-    task = await _task_payload(line["pick_task_id"])
-    remaining = [x for x in task["lines"] if x["status"] == "pending"]
     return {
         "accepted": True,
         "qty_found": found,
         "qty_missing": missing,
-        "task_complete": not remaining,
-        "lines_remaining": len(remaining),
+        "task_complete": True,
+        "lines_remaining": 0,
+        "order_cancelled": True,
+        "units_to_return": picked_back,
+        "link_live": bool(await assign.rule("hiryu_link_live", 0)),
         "message": (
-            "Dicatat: " + str(found) + " dari " + str(required) +
-            ". Lanjut ambil barang lain."
-            if remaining else
-            "Dicatat: " + str(found) + " dari " + str(required) + ". Pesanan selesai."
+            f"{label} dibatalkan. Barang yang sudah diambil ({picked_back}): kembalikan ke rak. / "
+            f"{label} cancelled. Units already picked ({picked_back}): return them to the shelf."
+            if picked_back else
+            f"{label} dibatalkan. Tunggu pesanan berikutnya. / "
+            f"{label} cancelled. Wait for the next order."
         ),
     }
 
@@ -955,58 +1103,104 @@ async def cancel_order_http(external_ref: str, caller: str = Depends(hiryu_or_ad
     order lives in Hiryu, and a cancel made anywhere else would leave Hiryu
     promising a customer something the WMS has already dropped.
     """
-    return await cancel_order(external_ref)
+    return await cancel_order(external_ref, actor=caller)
 
 
-async def cancel_order(external_ref: str, site_id: int | None = None):
-    """Release what was only allocated; send what was already picked back.
+async def _cancel_locked(cur, order: dict, *, actor: str | None, reason: str | None) -> int:
+    """Cancel an order whose row the caller has locked. Returns units queued to
+    go back on the shelf.
 
     Allocated-but-unpicked units are released on the spot, so the stock is
     sellable again at once (and message 3 tells Hiryu). Picked units are in a
-    tote, not on a shelf, so they become return-to-shelf tasks and re-enter the
-    ledger only when someone scans each one back at the rack.
+    basket or a packed bag, not on a shelf, so they become return-to-shelf
+    tasks and re-enter the ledger only when someone scans each one back.
     """
-    order = await db.fetch_one(
-        "SELECT o.*, pt.id AS task_id, s.is_training FROM orders o "
-        "JOIN sites s ON s.id = o.site_id "
-        "LEFT JOIN pick_tasks pt ON pt.order_id = o.id WHERE o.external_ref = %s",
-        (external_ref,),
+    lines = await db.many(
+        cur,
+        "SELECT pl.id, pl.sku_id, pl.location_id, pl.qty_picked, "
+        "       pl.qty_allocated FROM pick_lines pl "
+        "JOIN order_lines ol ON ol.id = pl.order_line_id "
+        "WHERE ol.order_id = %s",
+        (order["id"],),
     )
-    if not order or (site_id is not None and order["site_id"] != site_id):
+    for l in lines:
+        outstanding = _outstanding_allocation(l)
+        if outstanding > 0 and l["location_id"]:
+            await ledger.release(
+                cur, site_id=order["site_id"], sku_id=l["sku_id"],
+                location_id=l["location_id"], qty=outstanding,
+            )
+    # Nothing is held any more; zero it so nothing can release it twice.
+    await db.run(
+        cur,
+        "UPDATE pick_lines pl JOIN order_lines ol ON ol.id = pl.order_line_id "
+        "SET pl.qty_allocated = LEAST(COALESCE(pl.qty_allocated, 0), pl.qty_picked) "
+        "WHERE ol.order_id = %s", (order["id"],))
+    picked_back = await returns.create_for_cancel(cur, order=order, lines=lines)
+
+    await db.run(cur, "UPDATE orders SET status='cancelled', "
+                      "cancelled_at = COALESCE(cancelled_at, UTC_TIMESTAMP()), "
+                      "cancelled_by = COALESCE(cancelled_by, %s) WHERE id=%s",
+                 (actor, order["id"]))
+    await db.run(cur, "UPDATE pick_tasks SET status='cancelled' WHERE order_id=%s",
+                 (order["id"],))
+    await ledger.audit(cur, actor_email=actor, entity="order", entity_id=order["id"],
+                       action="order.cancel",
+                       after={"reason": reason, "units_to_return": picked_back})
+    return picked_back
+
+
+async def cancel_order(external_ref: str, site_id: int | None = None,
+                       actor: str | None = None, reason: str | None = None):
+    """Cancel an order, from any state (§6.11, §8.4): message 2 from Hiryu, the
+    SPV's Dibatalkan di Hiryu while paste is on, or the training simulator.
+
+    The order row is locked, so a cancel racing Selesai dikemas or a missing
+    item is applied once, in one order or the other. A picker holding the
+    order is freed (their phone says why) and the WMS gives out the next order.
+    A bag already handed to the driver has nothing left here to release.
+    """
+    head = await db.fetch_one(
+        "SELECT id, site_id FROM orders WHERE external_ref = %s", (external_ref,))
+    if not head or (site_id is not None and head["site_id"] != site_id):
         raise HTTPException(404, "Order not found")
-    if order["status"] == "cancelled":
-        return {"ok": True, "message": "Already cancelled."}
 
     async with db.tx() as cur:
-        # Per pick line: each holds its own reservation at its own location,
-        # and its picked units go back to that same location.
-        lines = await db.many(
+        order = await db.one(
             cur,
-            "SELECT pl.id, pl.sku_id, pl.location_id, pl.qty_picked, "
-            "       pl.qty_allocated FROM pick_lines pl "
-            "JOIN order_lines ol ON ol.id = pl.order_line_id "
-            "WHERE ol.order_id = %s",
-            (order["id"],),
-        )
-        for l in lines:
-            outstanding = _outstanding_allocation(l)
-            if outstanding > 0 and l["location_id"]:
-                await ledger.release(
-                    cur, site_id=order["site_id"], sku_id=l["sku_id"],
-                    location_id=l["location_id"], qty=outstanding,
-                )
-        picked_back = await returns.create_for_cancel(cur, order=order, lines=lines)
+            "SELECT o.*, s.is_training FROM orders o JOIN sites s ON s.id = o.site_id "
+            "WHERE o.id = %s FOR UPDATE", (head["id"],))
+        if order["status"] == "cancelled":
+            return {"ok": True, "message": "Sudah dibatalkan. / Already cancelled."}
+        task = await db.one(
+            cur, "SELECT id, status, claimed_by FROM pick_tasks WHERE order_id = %s",
+            (order["id"],))
+        if order.get("handed_over_at"):
+            await db.run(cur, "UPDATE orders SET status='cancelled', "
+                              "cancelled_at = COALESCE(cancelled_at, UTC_TIMESTAMP()), "
+                              "cancelled_by = COALESCE(cancelled_by, %s) WHERE id=%s",
+                         (actor, order["id"]))
+            await ledger.audit(cur, actor_email=actor, entity="order", entity_id=order["id"],
+                               action="order.cancel_after_handover", after={"reason": reason})
+            return {"ok": True, "message": "Sudah diserahkan ke driver: tidak ada yang "
+                                           "dikembalikan ke rak. / Already with the driver: "
+                                           "nothing to return to the shelf."}
+        picked_back = await _cancel_locked(cur, order, actor=actor, reason=reason)
 
-        await db.run(cur, "UPDATE orders SET status='cancelled' WHERE id=%s",
-                     (order["id"],))
-        if order["task_id"]:
-            await db.run(cur, "UPDATE pick_tasks SET status='cancelled' WHERE id=%s",
-                         (order["task_id"],))
-
+    if task and task["status"] == "claimed" and task["claimed_by"]:
+        label = order.get("hiryu_short_no") or order["external_ref"]
+        await assign.free_picker(order["site_id"], task["claimed_by"], task["id"], note=(
+            f"{label} dibatalkan. Barang yang sudah diambil: Kembalikan ke rak. / "
+            f"{label} was cancelled. Units already picked: return them to the shelf."
+            if picked_back else
+            f"{label} dibatalkan. / {label} was cancelled."))
+    await assign.assign_site(order["site_id"])
     return {
         "ok": True,
         "message": (
+            f"Dibatalkan. {picked_back} barang masuk daftar Kembalikan ke rak. / "
             f"Cancelled. {picked_back} picked unit(s) added to the return-to-shelf list."
-            if picked_back else "Cancelled; nothing was picked."
+            if picked_back else
+            "Dibatalkan; belum ada yang diambil. / Cancelled; nothing was picked."
         ),
     }

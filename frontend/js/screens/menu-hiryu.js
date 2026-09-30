@@ -1,10 +1,14 @@
-/* menu-hiryu — console: Hiryu menu items and stores, kept by Ops HQ (PRD v3.3 §13.3).
+/* menu-hiryu: console, Hiryu menu items and stores (PRD §2.2.5, §2.12).
  *
- * Hiryu first: the menu and SKUs are built in Hiryu, then its menu CSV comes
- * here. An item whose barcode matches a WMS SKU of the brand connects itself
- * at 1 unit per sale; the rest are connected by hand, with units per sale for
- * bundles. The store map ties each Hiryu store number to a hub and a brand,
- * which is how a pasted order finds its hub.
+ * With the link on, Hiryu sends its stores, SKUs and each store's menu by
+ * itself (message 6), and this page shows what arrived: per store, each item
+ * with its SKU, units per sale and price. An item with no SKU cannot be picked
+ * and is fixed in Hiryu (Bundles), so it is highlighted, not edited here. A SKU
+ * the catalogue created in the last week is marked baru for Lengkapi data SKU.
+ *
+ * The older tab is the interim bridge: Hiryu's menu CSV uploaded by brand and
+ * items connected by hand. It is hidden while the link is on, because the next
+ * catalogue from Hiryu would overwrite anything typed there.
  */
 (function () {
   'use strict';
@@ -131,6 +135,86 @@
         await loadStores();
       } catch (err) { b.disabled = false; say(oneLang(err.message)); }
     });
+
+    /* ---- the catalogue Hiryu sent (message 6) ---- */
+    const catSel = field('cat-store');
+    const idr = v => v == null ? '-' : 'Rp ' + Number(v).toLocaleString('id-ID');
+
+    async function loadCatalogue() {
+      const store = catSel.value || '';
+      const cat = await NJW.api.raw.get('/hiryu-link/catalogue' + NJW.api.raw.qs({ store_no: store }));
+      // Link on: the CSV path is closed (PRD §2.2.5, nothing is uploaded).
+      const legacy = region('legacy-tab');
+      if (legacy) legacy.hidden = !!cat.live;
+      const csv = region('csv-upload');
+      if (csv) csv.hidden = !!cat.live;
+      const off = region('link-off-note');
+      if (off) off.hidden = !!cat.live;
+      if (cat.live && legacy && legacy.classList.contains('is-on')) $('.tab[data-tab="catalogue"]').click();
+
+      const st = region('cat-stores');
+      st.innerHTML = cat.stores.length ? cat.stores.map(x =>
+        '<tr' + (x.unconnected ? ' style="background:var(--caution-bg)"' : '') + '>' +
+        '<td class="td-num">#' + x.hiryu_store_no + '</td><td class="td-strong">' + esc(x.store_name) + '</td>' +
+        '<td>' + esc(x.site_code) + '</td><td>' + esc(x.brand_name) + '</td>' +
+        '<td><span class="tagline" ' + (x.active ? biAttr('Aktif', 'Active') : biAttr('Tidak aktif', 'Inactive')) + '></span></td>' +
+        '<td class="td-num">' + x.items + '</td>' +
+        '<td class="td-num"' + (x.unconnected ? ' style="color:var(--caution);font-weight:700"' : '') + '>' + x.unconnected + '</td>' +
+        '<td class="td-actions"><button class="cbtn cbtn--sm" type="button" data-open-store="' + x.hiryu_store_no + '" ' +
+          biAttr('Lihat menu', 'View menu') + '></button></td></tr>').join('')
+        : '<tr><td colspan="8" class="note" ' + biAttr('Hiryu belum mengirim toko.', 'Hiryu has not sent any store yet.') + '></td></tr>';
+      applyLangTo(st);
+
+      if (!catSel.options.length) {
+        catSel.innerHTML = '<option value="" ' + biAttr('Pilih toko Hiryu', 'Choose a Hiryu store') + '></option>' +
+          cat.stores.map(x => '<option value="' + x.hiryu_store_no + '">#' + x.hiryu_store_no + ' ' +
+            esc(x.store_name) + ' (' + esc(x.site_code) + ')</option>').join('');
+        applyLangTo(catSel);
+      }
+      setF('tab-catalogue', cat.stores.length);
+
+      const tb = region('cat-items');
+      if (!store) {
+        tb.innerHTML = '<tr><td colspan="5" class="note" ' + biAttr('Pilih toko.', 'Choose a store.') + '></td></tr>';
+        setF('cat-summary', '');
+        return applyLangTo(tb);
+      }
+      const onlyUnmapped = field('cat-unmapped').checked;
+      const items = cat.items.filter(i => !onlyUnmapped || (!i.sku_id && i.active));
+      const open = cat.items.filter(i => i.active && !i.sku_id).length;
+      setF('cat-summary', en()
+        ? cat.items.filter(i => i.active).length + ' items · ' + open + ' without a SKU'
+        : cat.items.filter(i => i.active).length + ' barang · ' + open + ' tanpa SKU');
+      tb.innerHTML = items.length ? items.map(i => {
+        const noSku = !i.sku_id;
+        const status = !i.active ? '<span class="tagline" ' + biAttr('Tidak di menu lagi', 'No longer on the menu') + '></span>'
+          : noSku ? '<span class="tagline" style="background:var(--caution-bg);color:var(--caution)" ' +
+              biAttr('Belum terhubung di Hiryu', 'Not connected in Hiryu') + '></span>'
+          : i.available_status === 'UNAVAILABLE' ? '<span class="tagline" ' + biAttr('Habis di Hiryu', 'Unavailable in Hiryu') + '></span>'
+          : '<span class="tagline" ' + biAttr('Dijual', 'On sale') + '></span>';
+        const sku = noSku ? '<span style="color:var(--caution);font-weight:600" ' + biAttr('Tanpa SKU', 'No SKU') + '></span>'
+          : '<span style="font-family:var(--font-code)">' + esc(i.sku_code || '') + '</span>' +
+            (i.sku_new ? ' <span class="spill spill--accent"><span class="spill__dot"></span><span ' + biAttr('baru', 'new') + '></span></span>' : '') +
+            '<br><span class="note">' + esc(i.sku_name || '') + '</span>';
+        return '<tr' + (noSku && i.active ? ' style="background:var(--caution-bg)"' : '') + (i.active ? '' : ' class="note"') + '>' +
+          '<td>' + esc(i.item_name || '') + '<br><span class="note" style="font-family:var(--font-code);font-size:12px">' + esc(i.hiryu_item_id) + '</span></td>' +
+          '<td>' + sku + '</td><td class="td-num">' + i.units_per_sale + '</td>' +
+          '<td class="td-num">' + idr(i.price_idr) + '</td><td>' + status + '</td></tr>';
+      }).join('') : '<tr><td colspan="5" class="note" ' + biAttr('Tidak ada barang.', 'No items.') + '></td></tr>';
+      applyLangTo(tb);
+    }
+    catSel.onchange = () => loadCatalogue().catch(fail);
+    field('cat-unmapped').onchange = () => loadCatalogue().catch(fail);
+    region('cat-stores').addEventListener('click', e => {
+      const b = e.target.closest('[data-open-store]');
+      if (!b) return;
+      catSel.value = b.dataset.openStore;
+      loadCatalogue().catch(fail);
+    });
+
+    try {
+      await loadCatalogue();
+    } catch (e) { fail(e); }
 
     try {
       [brands, sites] = await Promise.all([NJW.api.brands(), NJW.api.raw.get('/sites')]);

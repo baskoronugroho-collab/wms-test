@@ -1,11 +1,16 @@
-/* short-pick.js — 17: the item is not (all) in the basket (PRD v3.3 A9.1).
+/* short-pick.js — 17: the item is not (all) in the basket (PRD §8.1, §8.3).
  *
- * Grab does not allow an order to change, so a missing item cancels the whole
- * order. First the screen lists other places at this hub holding the SKU;
- * found there, the line moves and the pick carries on. If not, the picker
- * records what is really in the bin (the server corrects the count at once so
- * no other order is sent to an empty bin), then the SPV cancels in Hiryu first
- * (Cancel order, 2001 Item out of stock) and taps Sudah dibatalkan di Hiryu.
+ * A missing item cancels the whole order (decided 30 Sep). First the screen
+ * lists any other place at this hub the WMS records the SKU; found there,
+ * Ketemu, lanjut ambil moves the line and the pick goes on. If not, the
+ * picker says what is really in the bin and taps Catat: tidak ada. In one
+ * step the server then sets the bin's count to that number, tells Hiryu the
+ * item is short (message 5), cancels the order in the WMS (holds released,
+ * picked units to Kembalikan ke rak) and keeps the declaration, with the
+ * picker's name, for the SPV. No SPV step here.
+ *
+ * The picker sees Pesanan dibatalkan and goes back to waiting; the WMS gives
+ * the next order. Units already picked go back to the shelf first.
  *
  * Caution colours, never stop red: the picker did nothing wrong.
  */
@@ -19,6 +24,7 @@
   NJW.screens['short-pick'] = async () => {
     const s = CTX.get('shortLine');
     if (!s || !s.line) return go('07-ambil-pesanan.html');
+    const site = W.site();
     const line = s.line;
     const no = s.external_ref;
     const wanted = Math.max(0, line.qty_required - line.qty_picked);
@@ -26,7 +32,7 @@
     const mode = $('.chrome__mode');
     if (mode) { mode.dataset.keep = '1'; bi(mode, 'Ambil pesanan · ' + no, 'Pick order · ' + no); }
     const where = $('.banner--caution .code');
-    if (where) where.textContent = line.location_code || '—';
+    if (where) where.textContent = line.location_code || '';
 
     const img = $('.product__photo');
     if (img) { img.dataset.photoKey = line.photo_key || (line.brand_sku_code || '').toLowerCase(); img.alt = line.sku_name; }
@@ -35,56 +41,66 @@
     if (meta) meta.textContent = [line.unit_size, line.brand_sku_code, line.location_code].filter(Boolean).join(' · ');
     if (NJW.paintPhotos) NJW.paintPhotos();
 
-    bi($('.notice__body'),
-       'Stoknya yang tidak cocok, bukan cara kamu mengambil. Supervisor melihat selisih ini beserta namamu.',
-       'The stock did not match, not the way you picked. A supervisor sees this gap with your name.');
-
-    /* ---- the cancel step, once the shortfall is recorded ---- */
-    function showCancel() {
+    /* ---- after Catat: the order is cancelled ---- */
+    function showCancelled(r) {
       const banner = $('.banner--caution');
-      if (banner) bi(banner.querySelector('span[data-id]'),
-                     'Pesanan harus dibatalkan', 'The order must be cancelled');
+      if (banner) bi(banner.querySelector('span[data-id]'), 'Pesanan dibatalkan', 'Order cancelled');
+      const back = r.units_to_return || 0;
       const main = $('.main');
       main.innerHTML =
         '<div class="col" style="gap:16px;max-width:760px">' +
         '<span class="code" style="font-size:44px">' + esc(no) + '</span>' +
-        '<div class="notice notice--caution"><span class="code code--sm" aria-hidden="true">!</span>' +
-        '<div class="col" style="gap:6px"><span class="notice__title" ' + biAttr('Panggil SPV', 'Call the SPV') + '></span>' +
+        '<span class="h1" ' + biAttr('Pesanan dibatalkan', 'Order cancelled') + '></span>' +
+        '<div class="notice notice--caution"><span class="code code--sm" aria-hidden="true">i</span>' +
+        '<div class="col" style="gap:6px">' +
         '<span class="notice__body" ' + biAttr(
-          'Grab tidak mengizinkan pesanan diubah. SPV: di Hiryu buka ' + no +
-            ', tekan Cancel order, alasan 2001 Item out of stock. Setelah itu tekan tombol di bawah.',
-          'Grab does not allow an order to change. SPV: in Hiryu open ' + no +
-            ', press Cancel order, reason 2001 Item out of stock. Then tap the button below.') + '></span>' +
+          'Jumlah di keranjang sudah dicatat ' + r.qty_found + '. Barang yang ada biarkan di keranjang.',
+          'The basket count is now ' + r.qty_found + '. Leave what is there in the basket.') + '></span>' +
+        (r.link_live
+          ? '<span class="notice__body" ' + biAttr(
+              'WMS sudah memberi tahu Hiryu. Hiryu membatalkan pesanan ini dengan sendirinya.',
+              'The WMS has told Hiryu. Hiryu cancels this order by itself.') + '></span>'
+          : '<span class="notice__body" ' + biAttr(
+              'Sambungan Hiryu belum aktif: minta SPV membatalkan ' + no + ' di Hiryu (2001 Item out of stock).',
+              'The Hiryu link is not on yet: ask the SPV to cancel ' + no + ' in Hiryu (2001 Item out of stock).') + '></span>') +
         '</div></div>' +
-        '<button class="btn btn--primary btn--lg btn--block" type="button" data-act="cancelled" ' +
-          biAttr('Sudah dibatalkan di Hiryu', 'Cancelled in Hiryu') + '></button>' +
-        '<span class="note" ' + biAttr(
-          'Barang yang sudah diambil masuk Kembalikan ke rak. SPV lalu mengetik stok SKU ini ke Hiryu.',
-          'Units already picked go to Return to shelf. The SPV then types this SKU stock into Hiryu.') + '></span>' +
+        (back
+          ? '<div class="notice notice--action"><span class="code code--sm" aria-hidden="true">' + back + '</span>' +
+            '<span class="notice__body" ' + biAttr(
+              back + ' barang yang sudah kamu ambil untuk pesanan ini harus kembali ke rak dulu.',
+              back + (back === 1 ? ' unit' : ' units') + ' you already picked for this order must go back to the shelf first.') +
+            '></span></div>' +
+            '<button class="btn btn--primary btn--lg btn--block" type="button" data-act="return" ' +
+              biAttr('Kembalikan ke rak', 'Return to the shelf') + '></button>' +
+            '<button class="btn btn--outline btn--lg btn--block" type="button" data-act="wait" ' +
+              biAttr('Tunggu pesanan berikutnya', 'Wait for the next order') + '></button>'
+          : '<button class="btn btn--primary btn--lg btn--block" type="button" data-act="wait" ' +
+              biAttr('Tunggu pesanan berikutnya', 'Wait for the next order') + '></button>') +
         '</div>';
       applyLangTo(main);
-      const b = $('[data-act="cancelled"]');
-      b.onclick = async () => {
-        if (!confirm(en() ? 'Is ' + no + ' cancelled in Hiryu?' : 'Apakah ' + no + ' sudah dibatalkan di Hiryu?')) return;
+      main.onclick = async (e) => {
+        const b = e.target.closest('button[data-act]');
+        if (!b || b.disabled) return;
         b.disabled = true;
-        try {
-          const r = await NJW.api.hiryu.cancelledInHiryu(s.order_id);
-          CTX.del('shortLine'); CTX.del('task');
-          say(oneLang(r.message));
-          setTimeout(() => go('18-kembalikan.html'), 1500);
-        } catch (err) {
-          if (err.status === 401) return fail(err);
-          b.disabled = false;
-          say(oneLang(err.message));
+        CTX.del('shortLine'); CTX.del('task');
+        if (b.dataset.act === 'return') {
+          // A break while walking units back, so no order is given meanwhile.
+          // Siap ambil on Ambil pesanan brings the next one.
+          try { await NJW.api.raw.post('/pickers/break', { site_id: site.id }); }
+          catch (err) { if (err.status === 401) return fail(err); }
+          return go('18-kembalikan.html');
         }
+        go('07-ambil-pesanan.html');
       };
+      if (!back) setTimeout(() => { if (CTX.get('shortLine')) { CTX.del('shortLine'); CTX.del('task'); } go('07-ambil-pesanan.html'); }, 6000);
     }
-    if (s.recorded) return showCancel();
+    if (s.result) return showCancelled(s.result);
 
     /* ---- look elsewhere first ---- */
     (async () => {
       let places = [];
-      try { places = (await NJW.api.hiryu.elsewhere(line.id)).places || []; } catch (e) { return; }
+      try { places = (await NJW.api.raw.get('/hiryu/pick-lines/' + line.id + '/elsewhere')).places || []; }
+      catch (e) { return; }
       if (!places.length) return;
       const box = document.createElement('div');
       box.className = 'notice notice--action';
@@ -105,7 +121,7 @@
         if (!b) return;
         b.disabled = true;
         try {
-          await NJW.api.hiryu.moveLine(line.id, +b.dataset.move);
+          await NJW.api.raw.post('/hiryu/pick-lines/' + line.id + '/move', { location_id: +b.dataset.move });
           CTX.del('shortLine');
           go('07-ambil-pesanan.html');
         } catch (err) {
@@ -131,7 +147,7 @@
       if (stepper) stepper.style.opacity = choice === 'some' ? '' : '.45';
       $$('[data-step]').forEach(b => { b.disabled = choice !== 'some'; });
       setF('wanted', wanted);
-      setF('found', maxSome >= 1 ? found : '—');
+      setF('found', maxSome >= 1 ? found : '');
       setF('found-num', n);
       setF('short', wanted - n);
     }
@@ -149,42 +165,47 @@
     });
     paint();
 
-    bi($('.main .lede'), 'Pilih satu. Pesanan ini akan dibatalkan di Hiryu, jadi berhenti mengambil barang lain.',
-                         'Pick one. This order will be cancelled in Hiryu, so stop picking the other items.');
-
-    /* ---- record, then the cancel step ---- */
-    const carryOn = $('.stats a.btn--primary');
-    if (carryOn) {
-      carryOn.removeAttribute('href');
-      carryOn.setAttribute('role', 'button');
-      carryOn.style.cursor = 'pointer';
-      bi(carryOn, 'Catat, lalu panggil SPV', 'Record it, then call the SPV');
+    /* ---- Catat: tidak ada ---- */
+    const record = $('.stats a.btn--primary');
+    if (record) {
+      record.removeAttribute('href');
+      record.setAttribute('role', 'button');
+      record.style.cursor = 'pointer';
+      bi(record, 'Catat: tidak ada', 'Record: not there');
       let sending = false;
-      carryOn.onclick = async (e) => {
+      record.onclick = async (e) => {
         e.preventDefault();
         if (sending) return;
+        const n = choice === 'none' ? 0 : found;
+        if (!confirm(en()
+          ? 'Only ' + n + ' in the basket and nowhere else? ' + no + ' will be cancelled.'
+          : 'Hanya ada ' + n + ' dan tidak ada di tempat lain? ' + no + ' akan dibatalkan.')) return;
         sending = true;
-        carryOn.classList.add('is-locked');
+        record.classList.add('is-locked');
         try {
-          await NJW.api.raw.post('/pick-lines/' + line.id + '/short',
-            { qty_found: choice === 'none' ? 0 : found });
-          s.recorded = true;
+          const r = await NJW.api.raw.post('/pick-lines/' + line.id + '/short', { qty_found: n });
+          s.result = r;
           CTX.set('shortLine', s);
-          showCancel();
+          CTX.del('task');
+          showCancelled(r);
         } catch (err) {
           if (err.status === 409) {
-            // Cancelled or finished meanwhile: the pick screen shows what is true now.
+            // Cancelled or moved meanwhile: the pick screen shows what is true now.
             say(oneLang(err.message));
             CTX.del('shortLine');
             return setTimeout(() => go('07-ambil-pesanan.html'), 2500);
           }
           sending = false;
-          carryOn.classList.remove('is-locked');
-          fail(err);
+          record.classList.remove('is-locked');
+          if (err.status === 401) return fail(err);
+          say(oneLang(err.message));
         }
       };
     }
     const cancel = $('.stats a.btn:not(.btn--primary)');
-    if (cancel) cancel.onclick = () => CTX.del('shortLine');
+    if (cancel) {
+      bi(cancel, 'Kembali', 'Back');
+      cancel.onclick = () => CTX.del('shortLine');
+    }
   };
 })();

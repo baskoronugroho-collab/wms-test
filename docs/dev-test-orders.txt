@@ -1,5 +1,7 @@
-DEV TEST ORDERS: fake Hiryu order pages for wms-test--dev. Copy one block (between the lines)
-and paste it into Tempel pesanan Grab. Store numbers 901 to 904 are test stores from the dev seed.
+DEV TEST ORDERS for wms-test--dev. Store numbers 901 to 904 are test stores from the dev seed:
+901 Kahf and 902 Labore at KJR (MAC-KJR), 903 Kahf and 904 Labore at MA5 (MAC-MA5).
+
+PASTE (link off): copy one block (between the lines) and paste it into Tempel pesanan Grab.
 Set the station to MAC-MA5 first. The order time is fixed, so orders show as late: that is expected.
 
 1. A normal Kahf order at MA5 (with a customer note that must NOT reach the WMS)
@@ -92,7 +94,7 @@ Items
 Paket isi 2: Kahf Oil and Acne Care Face Wash 100 ml
 IDITE20260929000000001
 If out of stock: Remove item
-IDR 43900
+IDR 85800
 Raw payload
 Show
 ------------------------------------------------------------
@@ -148,7 +150,7 @@ Items
 Kahf gift set (TEST, not connected)
 IDITE20260929000000002
 If out of stock: Remove item
-IDR 0
+IDR 150000
 Raw payload
 Show
 ------------------------------------------------------------
@@ -212,4 +214,186 @@ If out of stock: Remove item
 IDR 29000
 Raw payload
 Show
+------------------------------------------------------------
+
+HIRYU LINK (link on): message 1 and message 2 bodies
+============================================================
+Easiest: console > Simulator Grab > Uji sambungan Hiryu (Ops HQ) builds and sends these.
+By hand, as Hiryu (the path is public, the secret is POS_SHARED_SECRET of wms-test--dev):
+  curl -X POST https://<dev host>/api/hiryu/v1/orders -H 'Content-Type: application/json' \
+       -H 'X-Hiryu-Key: <secret>' -d @body.json
+Each message_id is used once: sending the same body again returns the first answer.
+Change message_id and grab_order_id to send a new order.
+
+L1. A normal Kahf order at MA5 (store 903). Expect 201 accepted. Again with a new message_id: 200 duplicate
+------------------------------------------------------------
+{
+  "message_id": "dev-ord-001",
+  "grab_order_id": "TEST-LINK000001",
+  "gm_number": "GM-L001",
+  "hiryu_store_id": 903,
+  "order_time": "2026-10-01T09:15:00+07:00",
+  "scheduled_time": null,
+  "estimated_ready_time": null,
+  "lines": [
+    {
+      "sku_code": "KHF-0001",
+      "units": 2,
+      "hiryu_item_id": "IDITE202609200001001",
+      "item_qty": 2,
+      "item_price": 43900
+    },
+    {
+      "sku_code": "KHF-0002",
+      "units": 1,
+      "hiryu_item_id": "IDITE202609200001002",
+      "item_qty": 1,
+      "item_price": 29000
+    }
+  ]
+}
+------------------------------------------------------------
+
+L2. A Labore order at MA5 (store 904) with 2 units of a SKU that has 1 in its bin (test Barang tidak ada, then message 5 item_short)
+------------------------------------------------------------
+{
+  "message_id": "dev-ord-002",
+  "grab_order_id": "TEST-LINK000002",
+  "gm_number": "GM-L002",
+  "hiryu_store_id": 904,
+  "order_time": "2026-10-01T09:15:00+07:00",
+  "scheduled_time": null,
+  "estimated_ready_time": null,
+  "lines": [
+    {
+      "sku_code": "LBR-0001",
+      "units": 1,
+      "hiryu_item_id": "IDITE202609200001069",
+      "item_qty": 1,
+      "item_price": 96000
+    },
+    {
+      "sku_code": "LBR-0006",
+      "units": 2,
+      "hiryu_item_id": "IDITE202609200001074",
+      "item_qty": 2,
+      "item_price": 69000
+    }
+  ]
+}
+------------------------------------------------------------
+
+L3. A bundle: 1 x Paket isi 2 = 2 units of one SKU, plus the single of the same SKU (one order line of 3 units; item_price_idr is weighted by item quantity)
+------------------------------------------------------------
+{
+  "message_id": "dev-ord-003",
+  "grab_order_id": "TEST-LINK000003",
+  "gm_number": "GM-L003",
+  "hiryu_store_id": 903,
+  "order_time": "2026-10-01T09:15:00+07:00",
+  "scheduled_time": null,
+  "estimated_ready_time": null,
+  "lines": [
+    {
+      "sku_code": "KHF-0001",
+      "units": 2,
+      "hiryu_item_id": "IDITE20260929000000001",
+      "item_qty": 1,
+      "item_price": 85800
+    },
+    {
+      "sku_code": "KHF-0001",
+      "units": 1,
+      "hiryu_item_id": "IDITE202609200001001",
+      "item_qty": 1,
+      "item_price": 43900
+    }
+  ]
+}
+------------------------------------------------------------
+
+L4. A scheduled order at KJR (store 901): ready-by = scheduled time - scheduled_lead_minutes
+------------------------------------------------------------
+{
+  "message_id": "dev-ord-004",
+  "grab_order_id": "TEST-LINK000004",
+  "gm_number": "GM-L004",
+  "hiryu_store_id": 901,
+  "order_time": "2026-10-01T09:15:00+07:00",
+  "scheduled_time": "2026-10-01T11:00:00+07:00",
+  "estimated_ready_time": null,
+  "lines": [
+    {
+      "sku_code": "KHF-0004",
+      "units": 1,
+      "hiryu_item_id": "IDITE202609200001004",
+      "item_qty": 1,
+      "item_price": 29000
+    }
+  ]
+}
+------------------------------------------------------------
+
+L5. An unknown SKU code. Expect 422 and a red row on Integrasi Hiryu
+------------------------------------------------------------
+{
+  "message_id": "dev-ord-005",
+  "grab_order_id": "TEST-LINK000005",
+  "gm_number": "GM-L005",
+  "hiryu_store_id": 903,
+  "order_time": "2026-10-01T09:15:00+07:00",
+  "scheduled_time": null,
+  "estimated_ready_time": null,
+  "lines": [
+    {
+      "sku_code": "KHF-9999",
+      "units": 1,
+      "hiryu_item_id": "IDITE20269999999999",
+      "item_qty": 1,
+      "item_price": 10000
+    }
+  ]
+}
+------------------------------------------------------------
+
+L6. An unknown store. Expect 422
+------------------------------------------------------------
+{
+  "message_id": "dev-ord-006",
+  "grab_order_id": "TEST-LINK000006",
+  "gm_number": "GM-L006",
+  "hiryu_store_id": 999,
+  "order_time": "2026-10-01T09:15:00+07:00",
+  "scheduled_time": null,
+  "estimated_ready_time": null,
+  "lines": [
+    {
+      "sku_code": "KHF-0001",
+      "units": 1,
+      "hiryu_item_id": "IDITE202609200001001",
+      "item_qty": 1,
+      "item_price": 43900
+    }
+  ]
+}
+------------------------------------------------------------
+
+C1. Cancel L1 (POST /api/hiryu/v1/orders/TEST-LINK000001/cancel)
+------------------------------------------------------------
+{
+  "message_id": "dev-can-001",
+  "reason_code": "2001",
+  "reason": "Item out of stock",
+  "cancelled_at": "2026-10-01T09:21:00+07:00"
+}
+------------------------------------------------------------
+
+C2. A cancel BEFORE its order: send to /orders/TEST-LINK000007/cancel first, then an order with grab_order_id TEST-LINK000007. Expect 200 pending, then the order arrives cancelled
+------------------------------------------------------------
+{
+  "message_id": "dev-can-002",
+  "reason_code": "2001",
+  "reason": "Item out of stock",
+  "cancelled_at": "2026-10-01T09:22:00+07:00"
+}
 ------------------------------------------------------------

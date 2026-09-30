@@ -428,6 +428,8 @@ async def _needs_rack(site_id: int, count_only: bool = False):
         "LEFT JOIN brand_sites bs ON bs.brand_id = b.id AND bs.site_id = st.id "
         "WHERE s.active = 1 AND b.active = 1 AND st.site_type <> 'hub' "
         "  AND COALESCE(bs.active, 1) = 1 "
+        # Only complete SKUs wait for a rack: bin size and isi sampai set (PRD §2.6.2).
+        "  AND s.bin_size IS NOT NULL AND s.default_full_threshold IS NOT NULL "
         "  AND NOT EXISTS (SELECT 1 FROM slot_assignments sa WHERE sa.site_id = st.id "
         "                  AND sa.sku_id = s.id AND sa.slot_role = 'primary') "
     )

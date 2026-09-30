@@ -9,6 +9,14 @@
  * The gate is not decoration. The API refuses a test order on a live site,
  * but a user must never get as far as the refusal, so nothing on this page
  * calls a training endpoint unless the active site says is_training.
+ *
+ * Ops HQ also gets the Hiryu link test at the top of the page, on any site:
+ * it sends message 1 (an order) and message 2 (a cancel) in the contract
+ * format (docs/hiryu-link-v1.md) through /api/hiryu-link/test-order and
+ * /api/hiryu-link/test-cancel, which run the same handlers as Hiryu's own
+ * calls. That is how dev is tested before Hiryu's side exists. The public
+ * /api/hiryu/v1 paths cannot be used from a browser: the sign-in proxy strips
+ * the user there, and only Hiryu's secret gets in.
  */
 (function () {
   'use strict';
@@ -41,7 +49,134 @@
     return '<span class="spill ' + cls + '"><span class="spill__dot"></span><span ' + biAttr(id, e) + '>' + esc(id) + '</span></span>';
   };
 
+  /* ---- the Hiryu link test (Ops HQ) ------------------------------------ */
+  const rand = (n, chars) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  const newGid = () => 'TEST-' + rand(10, 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789');
+  const newGm = () => 'GM-T' + rand(3, '0123456789');
+  const newMsgId = (kind) => 'sim-' + kind + '-' + rand(8, '0123456789abcdef');
+
+  async function linkTest() {
+    const box = region('link-test');
+    if (!box || !W.atLeast('hq')) return;
+    const r = NJW.api.raw;
+    const storeSel = field('lt-store'), itemSel = field('lt-item');
+    const gid = field('lt-gid'), gm = field('lt-gm'), cancelGid = field('lt-cancel-gid');
+    const linesHost = region('lt-lines'), logEl = field('lt-log');
+    let items = [];
+    const lines = [];   // {sku_code, units_per_sale, hiryu_item_id, item_qty, item_price, label}
+
+    gid.value = newGid();
+    gm.value = newGm();
+    const show = (sent, got) => { logEl.textContent = JSON.stringify({ sent, answer: got }, null, 2); };
+    const oneLang = m => { const p = String(m || '').split(' / '); return (en() ? p[1] : p[0]) || m; };
+
+    function paintLines() {
+      if (!lines.length) {
+        linesHost.innerHTML = '<span style="color:var(--muted)" ' + biAttr('Belum ada barang.', 'No items yet.') + '>Belum ada barang.</span>';
+        return applyLangTo(linesHost);
+      }
+      linesHost.innerHTML = lines.map((l, i) =>
+        '<span class="lineitem"><span class="lineitem__name" title="' + esc(l.label) + '">' + esc(l.label) + '</span>' +
+        '<span class="td-code" style="color:var(--muted)">' + esc(l.sku_code) + ' x' + l.units_per_sale + '</span>' +
+        '<input class="input" type="number" min="1" max="99" value="' + l.item_qty + '" data-lt-qty="' + i + '" style="width:70px" aria-label="qty">' +
+        '<button class="cbtn cbtn--sm cbtn--ghost" type="button" data-lt-remove="' + i + '" aria-label="' +
+        (en() ? 'Remove line' : 'Hapus baris') + '">✕</button></span>').join('');
+    }
+    linesHost.addEventListener('input', e => {
+      const q = e.target.closest('[data-lt-qty]');
+      if (q) lines[+q.dataset.ltQty].item_qty = Math.max(1, Math.min(99, parseInt(q.value, 10) || 1));
+    });
+    linesHost.addEventListener('click', e => {
+      const b = e.target.closest('[data-lt-remove]');
+      if (b) { lines.splice(+b.dataset.ltRemove, 1); paintLines(); }
+    });
+
+    async function loadItems() {
+      itemSel.innerHTML = '';
+      items = [];
+      if (!storeSel.value) return;
+      const cat = await r.get('/hiryu-link/catalogue' + r.qs({ store_no: storeSel.value }));
+      items = cat.items.filter(i => i.active && i.sku_id);
+      itemSel.innerHTML = items.map((i, k) => '<option value="' + k + '">' + esc(i.item_name || i.hiryu_item_id) +
+        ' (' + esc(i.sku_code) + (i.units_per_sale > 1 ? ' x' + i.units_per_sale : '') + ')</option>').join('');
+    }
+    try {
+      const cat = await r.get('/hiryu-link/catalogue');
+      const stores = cat.stores.filter(x => x.active);
+      storeSel.innerHTML = stores.map(x => '<option value="' + x.hiryu_store_no + '">#' + x.hiryu_store_no + ' ' +
+        esc(x.store_name) + ' (' + esc(x.site_code) + ')</option>').join('');
+      await loadItems();
+    } catch (e) { fail(e); }
+    storeSel.onchange = () => { lines.length = 0; paintLines(); loadItems().catch(fail); };
+    paintLines();
+
+    async function sendOrder() {
+      if (!lines.length) return say(en() ? 'Add at least one item.' : 'Tambah minimal satu barang.');
+      const body = {
+        message_id: newMsgId('ord'), grab_order_id: gid.value.trim(), gm_number: gm.value.trim(),
+        hiryu_store_id: +storeSel.value, order_time: new Date().toISOString(),
+        scheduled_time: null, estimated_ready_time: null,
+        lines: lines.map(l => ({ sku_code: l.sku_code, units: l.item_qty * l.units_per_sale,
+                                 hiryu_item_id: l.hiryu_item_id, item_qty: l.item_qty, item_price: l.item_price })),
+      };
+      try {
+        const got = await r.post('/hiryu-link/test-order', body);
+        show(body, got);
+        say(got.answer.status === 'duplicate'
+          ? (en() ? 'Already received: duplicate.' : 'Sudah pernah diterima: duplikat.')
+          : (en() ? 'Order ' + got.answer.order_id + ' created.' : 'Pesanan ' + got.answer.order_id + ' dibuat.'));
+        cancelGid.value = body.grab_order_id;
+        gid.value = newGid(); gm.value = newGm();
+        lines.length = 0; paintLines();
+      } catch (err) { show(body, { http_status: err.status, detail: err.message }); say(oneLang(err.message)); }
+    }
+
+    async function sendCancel() {
+      const [code, reason] = field('lt-reason').value.split('|');
+      const body = { grab_order_id: cancelGid.value.trim(), message_id: newMsgId('can'),
+                     reason_code: code || null, reason: reason || null };
+      if (!body.grab_order_id) return say(en() ? 'Enter the Grab order ID.' : 'Isi Grab order ID.');
+      try {
+        const got = await r.post('/hiryu-link/test-cancel', body);
+        show(body, got);
+        const st = got.answer.status;
+        say(st === 'pending' ? (en() ? 'Kept: the order has not arrived yet.' : 'Disimpan: pesanannya belum datang.')
+          : st === 'already_cancelled' ? (en() ? 'Already cancelled.' : 'Sudah dibatalkan.')
+          : (en() ? 'Cancelled.' : 'Dibatalkan.'));
+      } catch (err) { show(body, { http_status: err.status, detail: err.message }); say(oneLang(err.message)); }
+    }
+
+    box.addEventListener('click', async e => {
+      const act = e.target.closest('[data-action^="lt-"]');
+      if (!act) return;
+      const a = act.dataset.action;
+      if (a === 'lt-add') {
+        const it = items[+itemSel.value];
+        if (!it) return say(en() ? 'Choose a menu item.' : 'Pilih barang menu.');
+        const same = lines.find(l => l.hiryu_item_id === it.hiryu_item_id);
+        if (same) same.item_qty = Math.min(99, same.item_qty + 1);
+        else lines.push({ sku_code: it.sku_code, units_per_sale: it.units_per_sale, hiryu_item_id: it.hiryu_item_id,
+                          item_qty: 1, item_price: it.price_idr, label: it.item_name || it.hiryu_item_id });
+        return paintLines();
+      }
+      if (a === 'lt-add-code') {
+        const code = field('lt-code').value.trim().toUpperCase();
+        if (!/^[A-Z0-9._\/+-]{1,64}$/.test(code)) return say(en() ? 'Type a SKU code.' : 'Ketik kode SKU.');
+        lines.push({ sku_code: code, units_per_sale: 1, hiryu_item_id: 'TEST-' + code.slice(0, 50),
+                     item_qty: 1, item_price: null, label: code });
+        field('lt-code').value = '';
+        return paintLines();
+      }
+      act.disabled = true;
+      try {
+        if (a === 'lt-send') await sendOrder();
+        else if (a === 'lt-cancel') await sendCancel();
+      } finally { act.disabled = false; }
+    });
+  }
+
   NJW.screens['simulator-grab'] = async () => {
+    await linkTest();
     const site = W.site(), me = W.me();
 
     /* ---- which site: real sites from /me, never the design's TRN/UT5 ---- */

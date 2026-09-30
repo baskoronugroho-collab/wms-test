@@ -32,7 +32,7 @@
     // A hub holds bulk stock and asks nobody for more: say so plainly.
     if (site.site_type === 'hub' && NJW.applySiteType) return NJW.applySiteType('hub', site.code);
 
-    const canSend = ['supervisor', 'admin'].includes(me.role);
+    const canSend = W.atLeast('supervisor');
     let threshold = 10;
     let reqs = [];
 

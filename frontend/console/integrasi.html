@@ -12,9 +12,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="../css/tokens.css?v=d6aec40">
-<link rel="stylesheet" href="../css/app.css?v=d6aec40">
-<link rel="stylesheet" href="../css/console.css?v=d6aec40">
+<link rel="stylesheet" href="../css/tokens.css?v=eb89448">
+<link rel="stylesheet" href="../css/app.css?v=eb89448">
+<link rel="stylesheet" href="../css/console.css?v=eb89448">
 </head>
 <body>
 <div class="console" data-screen="integrasi">
@@ -25,6 +25,7 @@
       </div>
       <nav class="sidebar__section">
         <a class="sidebar__link" href="index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2"/><path d="M5.6 9v11.4h12.8V9"/></svg></span><span class="sidebar__label" data-id="Ringkasan" data-en="Overview">Ringkasan</span></a>
+        <a class="sidebar__link" href="perlu-tindakan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="1.5"/><path d="M8 9l1.6 1.6L12.5 7.5"/><path d="M14 9h2.5"/><path d="M8 15l1.6 1.6 2.9-3.1"/><path d="M14 15h2.5"/></svg></span><span class="sidebar__label" data-id="Perlu tindakan" data-en="To do">Perlu tindakan</span><span class="navbadge" data-field="todo-badge" hidden></span></a>
         <a class="sidebar__link" href="pengingat.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span><span class="sidebar__label" data-id="Pengingat &amp; flag" data-en="Reminders &amp; flags">Pengingat &amp; flag</span><span class="navbadge" data-field="flag-badge" hidden></span></a>
       </nav>
       <nav class="sidebar__section">
@@ -50,6 +51,8 @@
         <a class="sidebar__link" href="peta-hub.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5-5.5 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg></span><span class="sidebar__label" data-id="Peta hub &amp; stok" data-en="Hub map &amp; stock">Peta hub &amp; stok</span></a>
         <a class="sidebar__link" href="permintaan-sku.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><path d="M12 8.5v4"/><circle cx="12" cy="15.6" r=".9" fill="currentColor"/></svg></span><span class="sidebar__label" data-id="Permintaan SKU" data-en="SKU requests">Permintaan SKU</span></a>
         <a class="sidebar__link" href="menu-hiryu.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span class="sidebar__label" data-id="Menu &amp; toko Hiryu" data-en="Hiryu menu &amp; stores">Menu &amp; toko Hiryu</span></a>
+        <a class="sidebar__link" href="lengkapi-sku.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.6"/></svg></span><span class="sidebar__label" data-id="Lengkapi data SKU" data-en="Complete SKU data">Lengkapi data SKU</span></a>
+        <a class="sidebar__link" href="laporan-merek.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h8.5L18 7v13.5H6z"/><path d="M9 17v-3M12 17v-6M15 17v-4"/></svg></span><span class="sidebar__label" data-id="Laporan merek" data-en="Brand report">Laporan merek</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
@@ -59,7 +62,7 @@
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
         <a class="sidebar__link" href="hub.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
-        <a class="sidebar__link" href="staf.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
+        <a class="sidebar__link" href="staf.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
         <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
         <a class="sidebar__link is-current" href="integrasi.html" aria-current="page"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</span></a>
       </nav>
@@ -88,72 +91,94 @@
       <div class="page__heading">
         <span class="page__eyebrow" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
         <h1 class="page__title" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</h1>
-        <p class="page__sub" data-id="Hanya Hiryu (OMS) yang bicara dengan WMS: dua pesan masuk dari Hiryu, tiga keluar ke Hiryu. WMS tidak pernah memanggil Grab — Hiryu yang memegang semua saluran. Layar ini menjawab satu pertanyaan: gudangnya yang bermasalah, atau salurannya?" data-en="Only Hiryu (the OMS) talks to the WMS: two messages come in from Hiryu, three go out to it. The WMS never calls Grab — Hiryu owns every channel. This screen answers one question: is the warehouse the problem, or the pipe?">Hanya Hiryu (OMS) yang bicara dengan WMS: dua pesan masuk dari Hiryu, tiga keluar ke Hiryu. WMS tidak pernah memanggil Grab — Hiryu yang memegang semua saluran. Layar ini menjawab satu pertanyaan: gudangnya yang bermasalah, atau salurannya?</p>
+        <p class="page__sub" data-id="Hiryu dan WMS tersambung lewat API. Tiga pesan masuk dari Hiryu (pesanan, pembatalan, katalog), tiga keluar ke Hiryu (stok, pesanan siap, barang kurang). Cek di sini saat buka toko: 0 menunggu, 0 gagal, dan kapan pesan terakhir terkirim." data-en="Hiryu and the WMS are linked by API. Three messages come in from Hiryu (orders, cancels, catalogue), three go out to Hiryu (stock, order ready, item short). Check here at opening: 0 waiting, 0 failed, and when the last message was sent.">Hiryu dan WMS tersambung lewat API. Tiga pesan masuk dari Hiryu (pesanan, pembatalan, katalog), tiga keluar ke Hiryu (stok, pesanan siap, barang kurang). Cek di sini saat buka toko: 0 menunggu, 0 gagal, dan kapan pesan terakhir terkirim.</p>
       </div>
       <div class="page__actions">
-        <!-- A read-out, not a switch: the mode is set on the server, and a
-             client must never be able to make the boundary look open. -->
-        <span class="seg" role="group" aria-label="Mode" data-region="mode" title="Diatur di server, bukan dari layar ini">
-          <button class="seg__opt" type="button" data-view="shadow" disabled data-id="Mode bayangan" data-en="Shadow mode">Mode bayangan</button>
-          <button class="seg__opt" type="button" data-view="live" disabled data-id="Tersambung" data-en="Live">Tersambung</button>
-        </span>
+        <label class="cbtn" data-min-role="hq" style="gap:8px" title="Ops HQ">
+          <input type="checkbox" data-field="live-switch">
+          <span data-id="Sambungan Hiryu aktif" data-en="Hiryu link on">Sambungan Hiryu aktif</span>
+        </label>
         <button class="cbtn" type="button" data-action="refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v4h-4"/></svg><span data-id="Muat ulang" data-en="Refresh">Muat ulang</span></button>
       </div>
     </header>
 
-    <div class="shadowbar" data-region="view-shadow" style="display:none">
+    <div class="shadowbar" data-region="view-off" style="display:none">
       <span class="shadowbar__icon" aria-hidden="true">!</span>
       <span class="shadowbar__text">
-        <span class="shadowbar__title" data-id="Mode bayangan — tidak ada satu pun pesan yang dikirim ke Hiryu" data-en="Shadow mode — not one message is being sent to Hiryu">Mode bayangan — tidak ada satu pun pesan yang dikirim ke Hiryu</span>
-        <span class="shadowbar__body" data-id="Pengiriman ke Hiryu sengaja dimatikan untuk sekarang. WMS menghitung setiap angka dan menahannya di antrean. Angka di bawah adalah yang AKAN dikirim, bukan yang sudah. Ini sikap pilot, bukan kerusakan — tapi jangan baca layar ini sebagai integrasi yang sehat." data-en="Sending to Hiryu is deliberately switched off for now. The WMS computes every number and holds it in the queue. The figures below are what WOULD be sent, not what has been. This is the pilot posture, not a fault — but do not read this screen as a healthy integration.">Pengiriman ke Hiryu sengaja dimatikan untuk sekarang. WMS menghitung setiap angka dan menahannya di antrean. Angka di bawah adalah yang AKAN dikirim, bukan yang sudah. Ini sikap pilot, bukan kerusakan — tapi jangan baca layar ini sebagai integrasi yang sehat.</span>
+        <span class="shadowbar__title" data-id="Tidak ada pesan yang dikirim ke Hiryu" data-en="No message is being sent to Hiryu">Tidak ada pesan yang dikirim ke Hiryu</span>
+        <span class="shadowbar__body" data-field="off-body"></span>
       </span>
     </div>
-    <div class="inline-note" data-region="view-live" style="display:none"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span data-field="live-note" data-id="Batas terbuka: pesan dikirim ke Hiryu." data-en="The boundary is open: messages are being delivered to Hiryu.">Batas terbuka: pesan dikirim ke Hiryu.</span></div>
-    <div class="inline-note inline-note--warn" data-region="training-note" style="display:none"><span data-id="Lokasi latihan: semua pesan ditahan di batas dan tidak pernah sampai ke Hiryu, apa pun modenya." data-en="Training site: every message is held at the boundary and never reaches Hiryu, whatever the mode.">Lokasi latihan: semua pesan ditahan di batas dan tidak pernah sampai ke Hiryu, apa pun modenya.</span></div>
+    <div class="inline-note" data-region="view-on" style="display:none"><span aria-hidden="true">i</span><span data-field="on-note" data-id="Sambungan aktif: pesan dikirim ke Hiryu." data-en="The link is on: messages are being sent to Hiryu.">Sambungan aktif: pesan dikirim ke Hiryu.</span></div>
+    <div class="inline-note inline-note--warn" data-region="training-note" style="display:none"><span data-id="Lokasi latihan: pesan dari sini tidak pernah sampai ke Hiryu." data-en="Training site: messages from here never reach Hiryu.">Lokasi latihan: pesan dari sini tidak pernah sampai ke Hiryu.</span></div>
 
     <section class="kpis">
       <div class="kpi-card">
-        <span class="kpi-card__label" data-id="Antre sekarang" data-en="Queued now">Antre sekarang</span>
-        <span class="kpi-card__num" data-field="kpi-queued">—</span>
-        <span class="kpi-card__foot" data-field="kpi-queued-foot" data-id="memuat…" data-en="loading…">memuat…</span>
+        <span class="kpi-card__label" data-id="Menunggu dikirim" data-en="Waiting to send">Menunggu dikirim</span>
+        <span class="kpi-card__num" data-field="kpi-queued">0</span>
+        <span class="kpi-card__foot" data-field="kpi-queued-foot"></span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-card__label" data-id="Pesan tertua di antrean" data-en="Oldest queued message">Pesan tertua di antrean</span>
-        <span class="kpi-card__num" data-field="kpi-oldest">—</span>
-        <span class="kpi-card__foot" data-field="kpi-oldest-foot" data-id="memuat…" data-en="loading…">memuat…</span>
+        <span class="kpi-card__label" data-id="Menunggu paling lama" data-en="Oldest waiting">Menunggu paling lama</span>
+        <span class="kpi-card__num" data-field="kpi-oldest">0</span>
+        <span class="kpi-card__foot" data-field="kpi-oldest-foot"></span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-card__label" data-id="Terkirim" data-en="Delivered">Terkirim</span>
-        <span class="kpi-card__num" data-field="kpi-sent">—</span>
-        <span class="kpi-card__foot" data-field="kpi-sent-foot" data-id="memuat…" data-en="loading…">memuat…</span>
+        <span class="kpi-card__label" data-id="Terakhir terkirim" data-en="Last sent">Terakhir terkirim</span>
+        <span class="kpi-card__num" data-field="kpi-sent">0</span>
+        <span class="kpi-card__foot" data-field="kpi-sent-foot"></span>
       </div>
       <div class="kpi-card">
         <span class="kpi-card__label" data-id="Gagal" data-en="Failed">Gagal</span>
-        <span class="kpi-card__num" data-field="kpi-failed">—</span>
-        <span class="kpi-card__foot" data-field="kpi-failed-foot" data-id="memuat…" data-en="loading…">memuat…</span>
+        <span class="kpi-card__num" data-field="kpi-failed">0</span>
+        <span class="kpi-card__foot" data-field="kpi-failed-foot"></span>
       </div>
     </section>
 
+    <div class="toolbar" data-min-role="hq" style="margin:var(--sp-3) 0;gap:var(--sp-2)">
+      <button class="cbtn" type="button" data-action="snapshot" data-id="Kirim snapshot penuh" data-en="Send full snapshot">Kirim snapshot penuh</button>
+      <button class="cbtn" type="button" data-action="retry" data-id="Coba lagi yang gagal" data-en="Retry failed">Coba lagi yang gagal</button>
+      <span class="note" data-id="Snapshot: angka stok setiap SKU di setiap toko Hiryu. Juga terkirim sendiri setiap malam pukul 03.00 WIB." data-en="Snapshot: the stock number of every SKU at every Hiryu store. Also sent by itself every night at 03:00 WIB.">Snapshot: angka stok setiap SKU di setiap toko Hiryu. Juga terkirim sendiri setiap malam pukul 03.00 WIB.</span>
+    </div>
+
     <section class="section">
-      <h2 class="section__title" data-id="Lima pesan" data-en="The five messages">Lima pesan</h2>
+      <h2 class="section__title" data-id="Enam pesan" data-en="The six messages">Enam pesan</h2>
       <div class="msggrid" data-region="messages">
-        <p class="note" data-id="Memuat…" data-en="Loading…">Memuat…</p>
+        <p class="note" data-id="Memuat..." data-en="Loading...">Memuat...</p>
+      </div>
+    </section>
+
+    <section class="section" data-region="fail-section" style="display:none">
+      <h2 class="section__title" data-id="Pesan yang gagal" data-en="Failed messages">Pesan yang gagal</h2>
+      <p class="page__sub" data-id="Hiryu menolak pesan ini. Perbaiki penyebabnya (biasanya kode SKU atau toko), lalu tekan Coba lagi yang gagal." data-en="Hiryu refused these messages. Fix the cause (usually a SKU code or store), then press Retry failed.">Hiryu menolak pesan ini. Perbaiki penyebabnya (biasanya kode SKU atau toko), lalu tekan Coba lagi yang gagal.</p>
+      <div class="table-scroll">
+        <table class="dtable">
+          <thead><tr>
+            <th data-id="Pesan" data-en="Message">Pesan</th>
+            <th data-id="Pesanan" data-en="Order">Pesanan</th>
+            <th class="td-num" data-id="Percobaan" data-en="Tries">Percobaan</th>
+            <th data-id="Alasan" data-en="Reason">Alasan</th>
+            <th data-id="Dibuat" data-en="Created">Dibuat</th>
+          </tr></thead>
+          <tbody data-region="failures"></tbody>
+        </table>
       </div>
     </section>
 
     <section class="section">
-      <h2 class="section__title" data-id="Yang dibawa pesan 3 sekarang" data-en="What message 3 carries right now">Yang dibawa pesan 3 sekarang</h2>
-      <p class="page__sub" data-id="Tersedia = di rak − sudah dialokasikan ke pesanan. Sepuluh SKU dengan stok tersedia paling sedikit — yang paling mungkin terjual padahal tidak ada. Hiryu tidak mengirim balik angkanya ke WMS, jadi perbandingan dengan Hiryu belum bisa ditampilkan." data-en="Available = on hand − already allocated to orders. The ten SKUs with the least available — the likeliest to be sold when they are not there. Hiryu does not send its own figure back to the WMS, so a comparison with Hiryu cannot be shown yet.">Tersedia = di rak − sudah dialokasikan ke pesanan. Sepuluh SKU dengan stok tersedia paling sedikit — yang paling mungkin terjual padahal tidak ada. Hiryu tidak mengirim balik angkanya ke WMS, jadi perbandingan dengan Hiryu belum bisa ditampilkan.</p>
+      <h2 class="section__title" data-id="Pesan terakhir dari Hiryu" data-en="Latest messages from Hiryu">Pesan terakhir dari Hiryu</h2>
+      <p class="page__sub" data-id="Yang ditolak (toko atau kode SKU tidak dikenal) ditandai merah. Ops HQ memperbaiki katalognya di Hiryu, lalu Hiryu mengirim ulang." data-en="Refusals (unknown store or SKU code) are marked red. Ops HQ fixes the catalogue in Hiryu, then Hiryu sends again.">Yang ditolak (toko atau kode SKU tidak dikenal) ditandai merah. Ops HQ memperbaiki katalognya di Hiryu, lalu Hiryu mengirim ulang.</p>
       <div class="table-scroll">
-        <table class="dtable" id="tbl-stock-now">
+        <table class="dtable">
           <thead><tr>
-            <th data-id="Produk" data-en="Product">Produk</th>
-            <th class="td-num" data-id="Di rak" data-en="On hand">Di rak</th>
-            <th class="td-num" data-id="Dialokasikan" data-en="Allocated">Dialokasikan</th>
-            <th class="td-num" data-id="Tersedia" data-en="Available">Tersedia</th>
+            <th data-id="Waktu" data-en="Time">Waktu</th>
+            <th data-id="Pesan" data-en="Message">Pesan</th>
+            <th data-id="Pesanan / toko" data-en="Order / store">Pesanan / toko</th>
+            <th data-id="Hasil" data-en="Outcome">Hasil</th>
+            <th data-id="Keterangan" data-en="Detail">Keterangan</th>
           </tr></thead>
-          <tbody data-region="stock-now">
-            <tr><td colspan="4" class="note" data-id="Memuat…" data-en="Loading…">Memuat…</td></tr>
+          <tbody data-region="inbound">
+            <tr><td colspan="5" class="note" data-id="Memuat..." data-en="Loading...">Memuat...</td></tr>
           </tbody>
         </table>
       </div>
@@ -161,10 +186,13 @@
   </main>
 </div>
 
-<script src="../js/api.js?v=d6aec40"></script>
-<script src="../js/app.js?v=d6aec40"></script>
-<script src="../js/console.js?v=d6aec40"></script>
-<script src="../js/wire.js?v=d6aec40"></script>
-<script src="../js/screens/integrasi.js?v=d6aec40"></script>
+<style>
+  [data-screen="integrasi"] [hidden] { display: none !important; }
+</style>
+<script src="../js/api.js?v=eb89448"></script>
+<script src="../js/app.js?v=eb89448"></script>
+<script src="../js/console.js?v=eb89448"></script>
+<script src="../js/wire.js?v=eb89448"></script>
+<script src="../js/screens/integrasi.js?v=eb89448"></script>
 </body>
 </html>

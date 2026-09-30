@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lengkapi data SKU · Ninja Kilat WMS</title>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#1B3A5C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="../assets/app/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../css/tokens.css?v=eb89448">
+<link rel="stylesheet" href="../css/app.css?v=eb89448">
+<link rel="stylesheet" href="../css/console.css?v=eb89448">
+</head>
+<body>
+<div class="console" data-screen="lengkapi-sku">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <span class="sidebar__mark">NINJA</span>
+        <span class="sidebar__product">Kilat WMS</span>
+      </div>
+      <nav class="sidebar__section">
+        <a class="sidebar__link" href="index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2"/><path d="M5.6 9v11.4h12.8V9"/></svg></span><span class="sidebar__label" data-id="Ringkasan" data-en="Overview">Ringkasan</span></a>
+        <a class="sidebar__link" href="perlu-tindakan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="1.5"/><path d="M8 9l1.6 1.6L12.5 7.5"/><path d="M14 9h2.5"/><path d="M8 15l1.6 1.6 2.9-3.1"/><path d="M14 15h2.5"/></svg></span><span class="sidebar__label" data-id="Perlu tindakan" data-en="To do">Perlu tindakan</span><span class="navbadge" data-field="todo-badge" hidden></span></a>
+        <a class="sidebar__link" href="pengingat.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span><span class="sidebar__label" data-id="Pengingat &amp; flag" data-en="Reminders &amp; flags">Pengingat &amp; flag</span><span class="navbadge" data-field="flag-badge" hidden></span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk & keluar</span>
+        <a class="sidebar__link" href="barang-masuk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10.5"/><path d="M8.2 10.2 12 14l3.8-3.8"/><path d="M4 17.5v3h16v-3"/></svg></span><span class="sidebar__label" data-id="Barang masuk" data-en="Inbound">Barang masuk</span></a>
+        <a class="sidebar__link" href="pesanan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V10.5"/><path d="M8.2 14.3 12 10.5l3.8 3.8"/><path d="M4 6.5v-3h16v3"/></svg></span><span class="sidebar__label" data-id="Pesanan" data-en="Orders">Pesanan</span></a>
+        <a class="sidebar__link" href="papan-antrean.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="5" height="15" rx="1.2"/><rect x="9.5" y="4.5" width="5" height="11" rx="1.2"/><rect x="15.5" y="4.5" width="5" height="7" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Papan antrean" data-en="Queue board">Papan antrean</span></a>
+        <a class="sidebar__link" href="transfer.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5h13"/><path d="M13.5 5 17 8.5 13.5 12"/><path d="M20 15.5H7"/><path d="M10.5 12 7 15.5 10.5 19"/></svg></span><span class="sidebar__label" data-id="Transfer gudang" data-en="Transfers">Transfer gudang</span></a>
+        <a class="sidebar__link" href="restock-brand.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5h11v9h-11z"/><path d="M14.5 10.5h3.5l2.5 3v3h-6"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg></span><span class="sidebar__label" data-id="Restock ke brand" data-en="Restock from brand">Restock ke brand</span></a>
+        <a class="sidebar__link" href="selisih-restock.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/><path d="M17 14l4 4m0-4-4 4"/></svg></span><span class="sidebar__label" data-id="Selisih restock" data-en="Restock variances">Selisih restock</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Stok" data-en="Stock">Stok</span>
+        <a class="sidebar__link" href="stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="3.5" width="8" height="8" rx="1.2"/><rect x="3.5" y="12.5" width="8" height="8" rx="1.2"/><rect x="12.5" y="12.5" width="8" height="8" rx="1.2"/></svg></span><span class="sidebar__label" data-id="Stok" data-en="Inventory">Stok</span></a>
+        <a class="sidebar__link" href="stok-perhatian.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 21 19.5H3z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="16.8" r=".9" fill="currentColor"/></svg></span><span class="sidebar__label" data-id="Stok perlu perhatian" data-en="Stock needs attention">Stok perlu perhatian</span></a>
+        <a class="sidebar__link" href="hitung-stok.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2l2.6 2.6 4.6-5.2"/></svg></span><span class="sidebar__label" data-id="Hitung stok" data-en="Stock count">Hitung stok</span></a>
+        <a class="sidebar__link" href="registry.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17"/><path d="M9 9.5v10"/><path d="M13.5 13h4"/></svg></span><span class="sidebar__label" data-id="Penempatan & batas" data-en="Slotting & thresholds">Penempatan & batas</span></a>
+        <a class="sidebar__link" href="rak.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="1"/><path d="M4 9.2h16M4 14.8h16"/><path d="M9.3 3.5v17M14.7 3.5v17"/></svg></span><span class="sidebar__label" data-id="Rak &amp; bin" data-en="Racks &amp; bins">Rak &amp; bin</span></a>
+        <a class="sidebar__link" href="stok-hiryu.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h9"/><path d="M16.5 15.5l2 2 3.5-4"/></svg></span><span class="sidebar__label" data-id="Stok untuk Hiryu" data-en="Stock for Hiryu">Stok untuk Hiryu</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Ops HQ" data-en="Ops HQ">Ops HQ</span>
+        <a class="sidebar__link" href="peta-hub.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5-5.5 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg></span><span class="sidebar__label" data-id="Peta hub &amp; stok" data-en="Hub map &amp; stock">Peta hub &amp; stok</span></a>
+        <a class="sidebar__link" href="permintaan-sku.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><path d="M12 8.5v4"/><circle cx="12" cy="15.6" r=".9" fill="currentColor"/></svg></span><span class="sidebar__label" data-id="Permintaan SKU" data-en="SKU requests">Permintaan SKU</span></a>
+        <a class="sidebar__link" href="menu-hiryu.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span class="sidebar__label" data-id="Menu &amp; toko Hiryu" data-en="Hiryu menu &amp; stores">Menu &amp; toko Hiryu</span></a>
+        <a class="sidebar__link is-current" href="lengkapi-sku.html" aria-current="page" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.6"/></svg></span><span class="sidebar__label" data-id="Lengkapi data SKU" data-en="Complete SKU data">Lengkapi data SKU</span></a>
+        <a class="sidebar__link" href="laporan-merek.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h8.5L18 7v13.5H6z"/><path d="M9 17v-3M12 17v-6M15 17v-4"/></svg></span><span class="sidebar__label" data-id="Laporan merek" data-en="Brand report">Laporan merek</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
+        <a class="sidebar__link" href="slip-putaway.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h7.5L18 8v12.5H6z"/><path d="M13.2 3.7V8H18"/><path d="M8.8 12h6.4"/><path d="M8.8 15.5h4.4"/></svg></span><span class="sidebar__label" data-id="Slip putaway" data-en="Putaway slips">Slip putaway</span></a>
+        <a class="sidebar__link" href="label-warna-hari.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="7" height="6" rx="1"/><rect x="13.5" y="4.5" width="7" height="6" rx="1"/><rect x="3.5" y="13.5" width="7" height="6" rx="1"/><rect x="13.5" y="13.5" width="7" height="6" rx="1"/></svg></span><span class="sidebar__label" data-id="Label & warna hari" data-en="Labels & day colour">Label & warna hari</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
+        <a class="sidebar__link" href="hub.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
+        <a class="sidebar__link" href="staf.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
+        <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
+        <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</span></a>
+      </nav>
+      <nav class="sidebar__section">
+        <span class="sidebar__heading" data-id="Uji coba" data-en="Testing">Uji coba</span>
+        <a class="sidebar__link" href="simulator-grab.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></span><span class="sidebar__label" data-id="Simulator Grab" data-en="Grab simulator">Simulator Grab</span></a>
+        <a class="sidebar__link" href="mode-latihan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5v17"/><path d="M6.5 4.5h11l-2.2 4.2 2.2 4.2h-11"/></svg></span><span class="sidebar__label" data-id="Mode latihan" data-en="Training mode">Mode latihan</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <span class="sidebar__site">
+          <span class="sidebar__label" data-id="Lokasi aktif" data-en="Active site">Lokasi aktif</span>
+          <strong data-field="site-code">UT5</strong>
+        </span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="lang" role="group" aria-label="Bahasa">
+            <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
+            <button class="lang__opt" data-lang="en" type="button">EN</button>
+          </span>
+          <button class="cbtn cbtn--icon cbtn--ghost" data-action="toggle-theme" type="button" aria-label="Ganti tema">◐</button>
+        </div>
+        <a class="sidebar__link" href="../index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14v6H4V6h6"/></svg></span><span class="sidebar__label" data-id="Buka aplikasi station" data-en="Open station app">Buka aplikasi station</span></a>
+      </div>
+    </aside>
+  <main class="page">
+    <header class="page__head">
+      <div class="page__heading">
+        <span class="page__eyebrow" data-id="Ops HQ" data-en="Ops HQ">Ops HQ</span>
+        <h1 class="page__title" data-id="Lengkapi data SKU" data-en="Complete SKU data">Lengkapi data SKU</h1>
+        <p class="page__sub" data-id="SKU datang dari Hiryu dengan kode, nama dan barcode. Isi sisanya di sini: ukuran bin, angka stok, cadangan Grab dan data kemasan. SKU lengkap bila ukuran bin dan isi sampai sudah diisi; baru setelah itu SKU muncul di daftar Perlu rak setiap hub." data-en="SKUs arrive from Hiryu with a code, a name and a barcode. Fill in the rest here: bin size, stock numbers, Grab buffer and pack data. A SKU is complete once its bin size and fill up to are set; only then does it appear on every hub's Needs a bin list.">SKU datang dari Hiryu dengan kode, nama dan barcode. Isi sisanya di sini: ukuran bin, angka stok, cadangan Grab dan data kemasan. SKU lengkap bila ukuran bin dan isi sampai sudah diisi; baru setelah itu SKU muncul di daftar Perlu rak setiap hub.</p>
+      </div>
+      <div class="page__actions">
+        <button class="cbtn" type="button" data-action="download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M8 10.5l4 4 4-4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Unduh CSV" data-en="Download CSV">Unduh CSV</span></button>
+        <button class="cbtn cbtn--primary" type="button" data-action="upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14.5v-11"/><path d="M8 7.5l4-4 4 4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Unggah CSV" data-en="Upload CSV">Unggah CSV</span></button>
+        <input type="file" accept=".csv,text/csv" data-field="csv-file" hidden>
+      </div>
+    </header>
+
+    <section class="kpis">
+      <div class="kpi-card kpi-card--caution">
+        <span class="kpi-card__label" data-id="Belum lengkap" data-en="Not complete">Belum lengkap</span>
+        <span class="kpi-card__num" data-field="kpi-incomplete">0</span>
+        <span class="kpi-card__foot" data-id="ukuran bin atau isi sampai masih kosong" data-en="bin size or fill up to still empty">ukuran bin atau isi sampai masih kosong</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="SKU aktif" data-en="Active SKUs">SKU aktif</span>
+        <span class="kpi-card__num" data-field="kpi-total">0</span>
+        <span class="kpi-card__foot" data-id="semua merek" data-en="all brands">semua merek</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label" data-id="Cadangan Grab bawaan" data-en="Default Grab buffer">Cadangan Grab bawaan</span>
+        <span class="kpi-card__num" data-field="kpi-buffer">1</span>
+        <span class="kpi-card__foot" data-id="unit per SKU bila kolomnya kosong" data-en="units per SKU when the box is empty">unit per SKU bila kolomnya kosong</span>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <span class="seg" role="group" data-region="status-filter">
+        <button class="seg__opt is-on" type="button" data-status="incomplete" data-id="Belum lengkap" data-en="Not complete">Belum lengkap</button>
+        <button class="seg__opt" type="button" data-status="all" data-id="Semua" data-en="All">Semua</button>
+      </span>
+      <select class="select" data-field="brand-filter" style="width:auto" aria-label="Merek">
+        <option value="" data-id="Semua merek" data-en="All brands">Semua merek</option>
+      </select>
+      <label class="search">
+        <span class="search__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></span>
+        <input class="search__input" type="search" data-field="search" placeholder="Cari nama, kode atau barcode" data-id-placeholder="Cari nama, kode atau barcode" data-en-placeholder="Search name, code or barcode" aria-label="Cari">
+      </label>
+      <span class="toolbar__spacer"></span>
+      <span class="pager__info"><strong data-field="result-count">0</strong> <span data-id="tampil" data-en="shown">tampil</span></span>
+    </div>
+
+    <div class="inline-note"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5"/><circle cx="12" cy="8" r=".9" fill="currentColor"/></svg></span><span data-id="Pesan ulang saat sisa dan batas kritis boleh unit atau persen dari isi sampai: ketik 4 atau 25%. Pesan ulang otomatis 25% bila dikosongkan. Cadangan Grab kosong berarti angka bawaan. Hub yang masih memakai angka SKU ikut berubah; hub yang angkanya diubah sendiri tetap." data-en="Reorder at and critical level take units or a percentage of fill up to: type 4 or 25%. Reorder at fills in as 25% when left empty. An empty Grab buffer means the default. Hubs still on the SKU's numbers follow a change; hubs with their own numbers keep them.">Pesan ulang saat sisa dan batas kritis boleh unit atau persen dari isi sampai: ketik 4 atau 25%. Pesan ulang otomatis 25% bila dikosongkan. Cadangan Grab kosong berarti angka bawaan. Hub yang masih memakai angka SKU ikut berubah; hub yang angkanya diubah sendiri tetap.</span></div>
+
+    <div class="table-scroll">
+      <table class="dtable dtable--rows-tall" id="tbl-sku">
+        <thead><tr>
+          <th class="td-thumb" data-id="Foto" data-en="Photo">Foto</th>
+          <th data-id="Produk" data-en="Product">Produk</th>
+          <th data-id="Ukuran bin *" data-en="Bin size *">Ukuran bin *</th>
+          <th class="td-num" data-id="Isi sampai *" data-en="Fill up to *">Isi sampai *</th>
+          <th class="td-num" data-id="Pesan ulang saat sisa" data-en="Reorder at">Pesan ulang saat sisa</th>
+          <th class="td-num" data-id="Batas kritis" data-en="Critical level">Batas kritis</th>
+          <th class="td-num" data-id="Cadangan Grab" data-en="Grab buffer">Cadangan Grab</th>
+          <th class="td-num" data-id="Isi maks. per bin" data-en="Bin max">Isi maks. per bin</th>
+          <th data-id="Status" data-en="Status">Status</th>
+          <th class="td-actions"></th>
+        </tr></thead>
+        <tbody data-region="rows">
+          <tr><td colspan="10" class="note" data-id="Memuat…" data-en="Loading…">Memuat…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<div class="scrim"></div>
+
+<aside class="drawer" id="drawer-sku" aria-label="Data SKU" style="width:min(640px,100vw)">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-field="d-title">SKU</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <dl class="deflist">
+      <dt data-id="Merek" data-en="Brand">Merek</dt><dd data-field="d-brand">-</dd>
+      <dt data-id="Kode SKU di Hiryu" data-en="Hiryu SKU code">Kode SKU di Hiryu</dt><dd class="td-code" data-field="d-hiryu">-</dd>
+      <dt data-id="Barcode" data-en="Barcode">Barcode</dt><dd class="td-code" data-field="d-barcodes">-</dd>
+    </dl>
+    <label class="field"><span class="field__label" data-id="Kode SKU brand" data-en="Brand SKU code">Kode SKU brand</span><input class="input" type="text" maxlength="64" data-field="d-code" autocomplete="off">
+      <span class="field__hint" data-id="Kode milik merek, kalau ada. Tercetak di PO." data-en="The brand's own code, if it has one. Printed on the PO.">Kode milik merek, kalau ada. Tercetak di PO.</span></label>
+    <div class="field">
+      <span class="field__label" data-id="Kemasan (dari merek, boleh kosong)" data-en="Pack (from the brand, may stay empty)">Kemasan (dari merek, boleh kosong)</span>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-3)">
+        <label class="field"><span class="field__label" data-id="Panjang mm" data-en="Length mm">Panjang mm</span><input class="input" type="number" min="1" data-field="d-l"></label>
+        <label class="field"><span class="field__label" data-id="Lebar mm" data-en="Width mm">Lebar mm</span><input class="input" type="number" min="1" data-field="d-w"></label>
+        <label class="field"><span class="field__label" data-id="Tinggi mm" data-en="Height mm">Tinggi mm</span><input class="input" type="number" min="1" data-field="d-h"></label>
+        <label class="field"><span class="field__label" data-id="Berat g" data-en="Weight g">Berat g</span><input class="input" type="number" min="1" data-field="d-g"></label>
+      </div>
+      <label class="checkline"><input class="checkbox" type="checkbox" data-field="d-liquid"> <span data-id="Cairan dalam botol" data-en="Liquid in a bottle">Cairan dalam botol</span></label>
+      <label class="checkline"><input class="checkbox" type="checkbox" data-field="d-large"> <span data-id="Botol besar (150 ml atau lebih)" data-en="Large bottle (150 ml or more)">Botol besar (150 ml atau lebih)</span></label>
+      <span class="field__hint" data-id="Ukuran kemasan dipakai untuk menyarankan ukuran bin; cair dan botol besar dipakai aturan karton." data-en="The pack size suggests the bin size; liquid and large bottle drive the carton rule.">Ukuran kemasan dipakai untuk menyarankan ukuran bin; cair dan botol besar dipakai aturan karton.</span>
+    </div>
+    <label class="field"><span class="field__label" data-id="Tambah barcode" data-en="Add a barcode">Tambah barcode</span><input class="input" type="text" maxlength="64" data-field="d-barcode" autocomplete="off" inputmode="numeric">
+      <span class="field__hint" data-id="Satu barcode hanya untuk satu SKU. Barcode yang sudah ada tidak dihapus di sini." data-en="One barcode belongs to one SKU. Existing barcodes are not removed here.">Satu barcode hanya untuk satu SKU. Barcode yang sudah ada tidak dihapus di sini.</span></label>
+    <div class="field">
+      <span class="field__label" data-id="Foto produk" data-en="Product photo">Foto produk</span>
+      <div style="display:flex;gap:var(--sp-3);align-items:center">
+        <img class="thumb thumb--lg" src="../assets/products/placeholder.svg" alt="" data-field="d-photo-preview">
+        <input class="input" type="file" accept="image/jpeg,image/png,image/webp" data-field="d-photo">
+      </div>
+      <span class="field__hint" data-id="1:1, minimal 800 × 800 px, latar putih. JPG, PNG atau WEBP, maksimal 8 MB." data-en="1:1, at least 800 × 800 px, white background. JPG, PNG or WEBP, 8 MB at most.">1:1, minimal 800 × 800 px, latar putih. JPG, PNG atau WEBP, maksimal 8 MB.</span>
+    </div>
+    <div class="field">
+      <span class="field__label" data-id="Angka per hub" data-en="Numbers per hub">Angka per hub</span>
+      <div class="table-scroll">
+        <table class="dtable">
+          <thead><tr>
+            <th data-id="Hub" data-en="Hub">Hub</th>
+            <th data-id="Bin" data-en="Bin">Bin</th>
+            <th class="td-num" data-id="Isi sampai" data-en="Fill up to">Isi sampai</th>
+            <th class="td-num" data-id="Pesan ulang" data-en="Reorder at">Pesan ulang</th>
+            <th class="td-num" data-id="Kritis" data-en="Critical">Kritis</th>
+            <th class="td-actions"></th>
+          </tr></thead>
+          <tbody data-region="d-hubs"></tbody>
+        </table>
+      </div>
+      <span class="field__hint" data-id="Hanya hub yang sudah memberi SKU ini bin. Ikut SKU: hub memakai angka SKU dan ikut berubah." data-en="Only hubs that have given this SKU a bin. Follows the SKU: the hub uses the SKU's numbers and changes with them.">Hanya hub yang sudah memberi SKU ini bin. Ikut SKU: hub memakai angka SKU dan ikut berubah.</span>
+    </div>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-action="save-detail" data-id="Simpan" data-en="Save">Simpan</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
+  </div>
+</aside>
+
+<aside class="drawer" id="drawer-csv" aria-label="Pratinjau CSV" style="width:min(820px,100vw)">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-id="Pratinjau unggahan CSV" data-en="CSV upload preview">Pratinjau unggahan CSV</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <div class="inline-note"><span data-field="csv-summary">-</span></div>
+    <span class="field__hint" data-id="Sel kosong tidak mengubah apa pun; tanda - mengosongkan isinya. Baris bermasalah dilewati, sisanya disimpan bersama." data-en="An empty cell changes nothing; a single - clears the field. Rows with a problem are skipped; the rest are saved together.">Sel kosong tidak mengubah apa pun; tanda - mengosongkan isinya. Baris bermasalah dilewati, sisanya disimpan bersama.</span>
+    <div class="table-scroll">
+      <table class="dtable">
+        <thead><tr>
+          <th class="td-num" data-id="Baris" data-en="Row">Baris</th>
+          <th data-id="SKU" data-en="SKU">SKU</th>
+          <th data-id="Perubahan" data-en="Changes">Perubahan</th>
+          <th data-id="Status" data-en="Status">Status</th>
+        </tr></thead>
+        <tbody data-region="csv-rows"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="drawer__foot">
+    <button class="cbtn cbtn--primary" type="button" style="flex:1 1 auto" data-action="csv-commit" data-id="Simpan" data-en="Save">Simpan</button>
+    <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
+  </div>
+</aside>
+<script src="../js/api.js?v=eb89448"></script>
+<script src="../js/app.js?v=eb89448"></script>
+<script src="../js/console.js?v=eb89448"></script>
+<script src="../js/wire.js?v=eb89448"></script>
+<script src="../js/screens/lengkapi-sku.js?v=eb89448"></script>
+</body>
+</html>

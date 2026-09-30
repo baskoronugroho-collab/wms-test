@@ -12,9 +12,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="../css/tokens.css?v=d6aec40">
-<link rel="stylesheet" href="../css/app.css?v=d6aec40">
-<link rel="stylesheet" href="../css/console.css?v=d6aec40">
+<link rel="stylesheet" href="../css/tokens.css?v=eb89448">
+<link rel="stylesheet" href="../css/app.css?v=eb89448">
+<link rel="stylesheet" href="../css/console.css?v=eb89448">
 </head>
 <body>
 <div class="console" data-screen="barang-masuk">
@@ -25,6 +25,7 @@
       </div>
       <nav class="sidebar__section">
         <a class="sidebar__link" href="index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2"/><path d="M5.6 9v11.4h12.8V9"/></svg></span><span class="sidebar__label" data-id="Ringkasan" data-en="Overview">Ringkasan</span></a>
+        <a class="sidebar__link" href="perlu-tindakan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="1.5"/><path d="M8 9l1.6 1.6L12.5 7.5"/><path d="M14 9h2.5"/><path d="M8 15l1.6 1.6 2.9-3.1"/><path d="M14 15h2.5"/></svg></span><span class="sidebar__label" data-id="Perlu tindakan" data-en="To do">Perlu tindakan</span><span class="navbadge" data-field="todo-badge" hidden></span></a>
         <a class="sidebar__link" href="pengingat.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span><span class="sidebar__label" data-id="Pengingat &amp; flag" data-en="Reminders &amp; flags">Pengingat &amp; flag</span><span class="navbadge" data-field="flag-badge" hidden></span></a>
       </nav>
       <nav class="sidebar__section">
@@ -50,6 +51,8 @@
         <a class="sidebar__link" href="peta-hub.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5-5.5 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg></span><span class="sidebar__label" data-id="Peta hub &amp; stok" data-en="Hub map &amp; stock">Peta hub &amp; stok</span></a>
         <a class="sidebar__link" href="permintaan-sku.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><path d="M12 8.5v4"/><circle cx="12" cy="15.6" r=".9" fill="currentColor"/></svg></span><span class="sidebar__label" data-id="Permintaan SKU" data-en="SKU requests">Permintaan SKU</span></a>
         <a class="sidebar__link" href="menu-hiryu.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span class="sidebar__label" data-id="Menu &amp; toko Hiryu" data-en="Hiryu menu &amp; stores">Menu &amp; toko Hiryu</span></a>
+        <a class="sidebar__link" href="lengkapi-sku.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.6"/></svg></span><span class="sidebar__label" data-id="Lengkapi data SKU" data-en="Complete SKU data">Lengkapi data SKU</span></a>
+        <a class="sidebar__link" href="laporan-merek.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h8.5L18 7v13.5H6z"/><path d="M9 17v-3M12 17v-6M15 17v-4"/></svg></span><span class="sidebar__label" data-id="Laporan merek" data-en="Brand report">Laporan merek</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
@@ -59,7 +62,7 @@
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
         <a class="sidebar__link" href="hub.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
-        <a class="sidebar__link" href="staf.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
+        <a class="sidebar__link" href="staf.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
         <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
         <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</span></a>
       </nav>
@@ -117,6 +120,28 @@
         <span class="kpi-card__foot" data-id="ditandai untuk supervisor" data-en="flagged for a supervisor">ditandai untuk supervisor</span>
       </div>
     </section>
+    <section class="section" data-region="issues-panel" hidden>
+      <div class="toolbar">
+        <h2 class="section__title" data-id="Selisih Faktur yang diajukan ke Ops HQ" data-en="Faktur differences raised to Ops HQ">Selisih Faktur yang diajukan ke Ops HQ</h2>
+        <span class="toolbar__spacer"></span>
+        <span class="note" data-id="Barang lebih diselesaikan Ops HQ dengan brand lewat email. Kurang dan rusak tetap lewat persetujuan selisih." data-en="Ops HQ settles extra units with the brand by email. Short and damaged units still go through the variance approval.">Barang lebih diselesaikan Ops HQ dengan brand lewat email. Kurang dan rusak tetap lewat persetujuan selisih.</span>
+      </div>
+      <div class="table-scroll">
+        <table class="dtable">
+          <thead><tr>
+            <th data-id="Hub" data-en="Hub">Hub</th>
+            <th data-id="Kiriman" data-en="Delivery">Kiriman</th>
+            <th data-id="Produk" data-en="Product">Produk</th>
+            <th data-id="Jenis" data-en="Kind">Jenis</th>
+            <th class="td-num" data-id="Unit" data-en="Units">Unit</th>
+            <th data-id="Catatan SPV" data-en="SPV's note">Catatan SPV</th>
+            <th data-id="Diajukan" data-en="Raised">Diajukan</th>
+            <th class="td-actions"></th>
+          </tr></thead>
+          <tbody data-region="issues"></tbody>
+        </table>
+      </div>
+    </section>
     <div class="toolbar">
         <label class="search">
           <span class="search__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></span>
@@ -126,6 +151,7 @@
         <button class="seg__opt is-on" type="button" data-id="Semua" data-en="All">Semua</button>
         <button class="seg__opt" type="button" data-id="Berjalan" data-en="Open">Berjalan</button>
         <button class="seg__opt" type="button" data-id="Ditutup" data-en="Closed">Ditutup</button>
+        <button class="seg__opt" type="button" data-id="Menunggu Faktur" data-en="Waiting for Faktur">Menunggu Faktur</button>
       </span>
       <span class="toolbar__spacer"></span>
       <button class="cbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M8 10.5l4 4 4-4"/><path d="M4.5 18v2.5h15V18"/></svg><span data-id="Ekspor" data-en="Export">Ekspor</span></button>
@@ -216,11 +242,73 @@
       </div>
   </main>
 </div>
+<div class="scrim"></div>
 
-<script src="../js/api.js?v=d6aec40"></script>
-<script src="../js/app.js?v=d6aec40"></script>
-<script src="../js/console.js?v=d6aec40"></script>
-<script src="../js/wire.js?v=d6aec40"></script>
-<script src="../js/screens/barang-masuk.js?v=d6aec40"></script>
+<aside class="drawer" id="drawer-receipt" aria-label="Penerimaan" style="width:min(720px,100vw)">
+  <div class="drawer__head">
+    <h2 class="drawer__title" data-field="rc-title">-</h2>
+    <button class="cbtn cbtn--icon cbtn--ghost" type="button" data-drawer-close aria-label="Tutup">✕</button>
+  </div>
+  <div class="drawer__body">
+    <dl class="deflist">
+      <dt data-id="PO" data-en="PO">PO</dt><dd class="mono" data-field="rc-po">-</dd>
+      <dt data-id="Dibuka" data-en="Opened">Dibuka</dt><dd data-field="rc-opened">-</dd>
+      <dt data-id="Ditutup" data-en="Closed">Ditutup</dt><dd data-field="rc-closed">-</dd>
+      <dt data-id="Batas klaim 24 jam" data-en="24 h claim window">Batas klaim 24 jam</dt><dd data-field="rc-deadline">-</dd>
+    </dl>
+
+    <div class="table-scroll">
+      <table class="dtable">
+        <thead><tr>
+          <th data-id="Produk" data-en="Product">Produk</th>
+          <th class="td-num" data-id="Diharapkan" data-en="Expected">Diharapkan</th>
+          <th class="td-num" data-id="Diterima" data-en="Received">Diterima</th>
+          <th class="td-num" data-id="Selisih" data-en="Variance">Selisih</th>
+          <th class="td-actions"></th>
+        </tr></thead>
+        <tbody data-region="rc-lines"></tbody>
+      </table>
+    </div>
+
+    <section data-region="rc-faktur" style="display:flex;flex-direction:column;gap:var(--sp-3)">
+      <h3 class="section__title" data-id="Faktur yang ditandatangani" data-en="Signed Faktur">Faktur yang ditandatangani</h3>
+      <span class="field__hint" data-field="rc-faktur-state"></span>
+      <div data-region="rc-pages" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      <div data-region="rc-upload" style="display:flex;flex-direction:column;gap:var(--sp-2)">
+        <span class="field__hint" data-id="Foto atau pindai setiap halaman Faktur yang sudah ditandatangani. Bisa beberapa foto, atau satu PDF." data-en="Photograph or scan every page of the signed Faktur. Several photos, or one PDF.">Foto atau pindai setiap halaman Faktur yang sudah ditandatangani. Bisa beberapa foto, atau satu PDF.</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label class="cbtn"><input type="file" accept="image/*" capture="environment" multiple data-field="rc-camera" hidden><span data-id="Foto dengan kamera" data-en="Take a photo">Foto dengan kamera</span></label>
+          <label class="cbtn"><input type="file" accept="image/*,application/pdf" multiple data-field="rc-files" hidden><span data-id="Pilih file (foto atau PDF)" data-en="Choose files (photos or PDF)">Pilih file (foto atau PDF)</span></label>
+        </div>
+        <div data-region="rc-pending" style="display:flex;flex-direction:column;gap:4px"></div>
+        <button class="cbtn cbtn--primary" type="button" data-action="upload-faktur" data-id="Unggah Faktur" data-en="Upload Faktur">Unggah Faktur</button>
+      </div>
+    </section>
+
+    <section data-region="rc-issues" style="display:flex;flex-direction:column;gap:var(--sp-3)">
+      <h3 class="section__title" data-id="Selisih ke Ops HQ" data-en="Differences to Ops HQ">Selisih ke Ops HQ</h3>
+      <div data-region="rc-issue-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      <div data-region="rc-issue-form" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--sp-3)">
+        <label class="field"><span class="field__label" data-id="Jenis" data-en="Kind">Jenis</span>
+          <select class="select" data-field="is-kind">
+            <option value="extra" data-id="Lebih (di atas PO)" data-en="Extra (above the PO)">Lebih (di atas PO)</option>
+            <option value="short" data-id="Kurang" data-en="Short">Kurang</option>
+            <option value="damaged" data-id="Rusak" data-en="Damaged">Rusak</option>
+            <option value="other" data-id="Lainnya" data-en="Other">Lainnya</option>
+          </select></label>
+        <label class="field" style="grid-column:span 2"><span class="field__label" data-id="Produk" data-en="Product">Produk</span><select class="select" data-field="is-sku"></select></label>
+        <label class="field"><span class="field__label" data-id="Unit" data-en="Units">Unit</span><input class="input" type="number" min="0" data-field="is-qty"></label>
+        <label class="field" style="grid-column:1/-1"><span class="field__label" data-id="Catatan untuk Ops HQ" data-en="Note for Ops HQ">Catatan untuk Ops HQ</span><input class="input" type="text" maxlength="400" data-field="is-note" placeholder="Misalnya: lebih 1 LBR-0002, tertulis di Faktur dan Surat Jalan"></label>
+        <button class="cbtn cbtn--primary" type="button" style="grid-column:1/-1" data-action="raise-issue" data-id="Ajukan selisih ke Ops HQ" data-en="Raise the difference to Ops HQ">Ajukan selisih ke Ops HQ</button>
+      </div>
+    </section>
+  </div>
+</aside>
+
+<script src="../js/api.js?v=eb89448"></script>
+<script src="../js/app.js?v=eb89448"></script>
+<script src="../js/console.js?v=eb89448"></script>
+<script src="../js/wire.js?v=eb89448"></script>
+<script src="../js/screens/barang-masuk.js?v=eb89448"></script>
 </body>
 </html>

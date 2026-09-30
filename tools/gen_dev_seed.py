@@ -15,8 +15,13 @@ bridge can be tested end to end:
   - racks A to E (5 levels x 5 bins) at both hubs, one bin per SKU, 12 units
     each; a few SKUs also have units in a spare bin, to test "Cek dulu di
     tempat lain"
-  - four TEST Hiryu stores (901 to 904) and one Hiryu item per SKU, plus one
-    two-unit bundle and one item left unconnected, to test the paste checks
+  - four TEST Hiryu stores (901 to 904) and, per store, one Hiryu menu item
+    per SKU of its brand with its price (the menu is per store since V23),
+    plus in the Kahf stores one two-unit bundle and one item left unconnected,
+    to test the paste checks and the Hiryu link (message 1)
+
+It also writes docs/dev-test-orders.txt: order pages to paste (link off) and
+message-1 / message-2 JSON bodies for the link (link on).
 
 Nothing here is customer data. Re-runnable: every insert is INSERT IGNORE or
 ON DUPLICATE KEY UPDATE.
@@ -24,6 +29,7 @@ ON DUPLICATE KEY UPDATE.
     python tools/gen_dev_seed.py
 """
 import csv
+import json
 import pathlib
 import re
 
@@ -102,10 +108,7 @@ def main():
             barcodes.append(f"  ({esc(bc)}, {sku_id}, '{src}', 'seed@ninjavan.co')")
             item_id = f"IDITE2026092{sku_id:08d}"
             item_name = f"{name} {size}".strip()   # Grab shows the size in the item name
-            items.append(f"  ({esc(item_id)}, {brand_id}, {esc(item_name)}, {esc(bc)}, 'AVAILABLE', {sku_id}, 1, 'seed@ninjavan.co')")
-            if price != "NULL":
-                prices.append(f"  ({esc(item_id)}, {price}, '2026-09-28')")
-            sku_rows.append((sku_id, brand_id, sku_code, item_name, item_id, price))
+            sku_rows.append((sku_id, brand_id, sku_code, item_name, item_id, price, bc))
 
     sql.append("INSERT INTO skus (id, brand_id, brand_sku_code, name_display, category, product_line, unit_size, "
                "price_idr, unit_cube_cm3, expiry_tier, identity_mode, hiryu_sku_code) VALUES")
@@ -165,15 +168,32 @@ def main():
     sql.append(",\n".join(f"  ({no}, {esc(nm)}, 'TEST-{no}', {s}, {b}, 1, 'seed@ninjavan.co')" for no, nm, s, b in STORES))
     sql.append("ON DUPLICATE KEY UPDATE store_name = VALUES(store_name);\n")
 
-    # One bundle (2 units of the first Kahf SKU) and one unconnected item.
+    # Each store's menu (V23: per store). One item per SKU of the store's brand;
+    # in the Kahf stores also a bundle (2 units of the first Kahf SKU) and one
+    # item with no SKU, as Hiryu sends an item that is not counted.
     first_kahf = sku_rows[0]
-    items.append(f"  ('IDITE20260929000000001', 10, {esc('Paket isi 2: ' + first_kahf[3])}, NULL, 'AVAILABLE', {first_kahf[0]}, 2, 'seed@ninjavan.co')")
-    items.append("  ('IDITE20260929000000002', 10, 'Kahf gift set (TEST, not connected)', NULL, 'AVAILABLE', NULL, 1, NULL)")
-    sql.append("INSERT INTO hiryu_items (hiryu_item_id, brand_id, item_name, barcode, available_status, sku_id, "
-               "units_per_sale, mapped_by) VALUES")
+    bundle_price = int(first_kahf[5]) * 2 - 2000 if first_kahf[5] != "NULL" else None
+    for no, _nm, _site, brand in STORES:
+        for sid, b, _code, item_name, item_id, price, bc in sku_rows:
+            if b != brand:
+                continue
+            items.append(f"  ({no}, {esc(item_id)}, {b}, {esc(item_name)}, {esc(bc)}, 'AVAILABLE', {sid}, 1, "
+                         f"{price}, 'seed@ninjavan.co')")
+            if price != "NULL":
+                prices.append(f"  ({no}, {esc(item_id)}, {price}, '2026-09-28')")
+        if brand == 10:
+            items.append(f"  ({no}, 'IDITE20260929000000001', 10, {esc('Paket isi 2: ' + first_kahf[3])}, NULL, "
+                         f"'AVAILABLE', {first_kahf[0]}, 2, {bundle_price or 'NULL'}, 'seed@ninjavan.co')")
+            items.append(f"  ({no}, 'IDITE20260929000000002', 10, 'Kahf gift set (TEST, not connected)', NULL, "
+                         "'AVAILABLE', NULL, 1, 150000, NULL)")
+            if bundle_price:
+                prices.append(f"  ({no}, 'IDITE20260929000000001', {bundle_price}, '2026-09-28')")
+    sql.append("INSERT INTO hiryu_items (hiryu_store_no, hiryu_item_id, brand_id, item_name, barcode, "
+               "available_status, sku_id, units_per_sale, price_idr, mapped_by) VALUES")
     sql.append(",\n".join(items))
-    sql.append("ON DUPLICATE KEY UPDATE item_name = VALUES(item_name);\n")
-    sql.append("INSERT IGNORE INTO hiryu_item_prices (hiryu_item_id, price_idr, effective_date) VALUES")
+    sql.append("ON DUPLICATE KEY UPDATE item_name = VALUES(item_name), sku_id = VALUES(sku_id), "
+               "units_per_sale = VALUES(units_per_sale), price_idr = VALUES(price_idr);\n")
+    sql.append("INSERT IGNORE INTO hiryu_item_prices (hiryu_store_no, hiryu_item_id, price_idr, effective_date) VALUES")
     sql.append(",\n".join(prices) + ";\n")
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -198,8 +218,8 @@ def main():
         lines += ["Raw payload", "Show"]
         return "\n".join(lines)
 
-    bundle = (1, (None, 10, None, "Paket isi 2: " + first_kahf[3], "IDITE20260929000000001", first_kahf[5]))
-    unmapped = (1, (None, 10, None, "Kahf gift set (TEST, not connected)", "IDITE20260929000000002", "0"))
+    bundle = (1, (None, 10, None, "Paket isi 2: " + first_kahf[3], "IDITE20260929000000001", bundle_price))
+    unmapped = (1, (None, 10, None, "Kahf gift set (TEST, not connected)", "IDITE20260929000000002", "150000"))
     samples = [
         ("1. A normal Kahf order at MA5 (with a customer note that must NOT reach the WMS)",
          page("GM-T001", "TEST-A1B2C3D4E5", 903, [(2, kahf[0]), (1, kahf[1])], note="Tolong dibungkus rapi ya kak")),
@@ -216,11 +236,67 @@ def main():
         ("7. A Kahf order at KJR (KJ5) pasted while the station is set to MA5 (expect: Toko ini milik hub lain)",
          page("GM-T007", "TEST-B6C7D8E9F0", 901, [(1, kahf[3])])),
     ]
+    # Message 1 and 2 bodies for the link (docs/hiryu-link-v1.md). Units = item
+    # quantity x units per sale, as Hiryu works them out from Bundles.
+    low = [r for i, r in enumerate(sku_rows) if i % 17 == 5]   # 1 unit in its bin
+    low_lab = next((r for r in low if r[1] == 11), lab[0])
+
+    def line(q, r, ups=1, item_id=None, price=None):
+        return {"sku_code": r[2], "units": q * ups, "hiryu_item_id": item_id or r[4], "item_qty": q,
+                "item_price": None if (price or r[5]) in (None, "NULL") else int(price or r[5])}
+
+    def msg(mid, gid, gm, store, lines, scheduled=None, estimated=None):
+        return {"message_id": mid, "grab_order_id": gid, "gm_number": gm, "hiryu_store_id": store,
+                "order_time": "2026-10-01T09:15:00+07:00", "scheduled_time": scheduled,
+                "estimated_ready_time": estimated, "lines": lines}
+
+    link = [
+        ("L1. A normal Kahf order at MA5 (store 903). Expect 201 accepted. Again with a new message_id: 200 duplicate",
+         msg("dev-ord-001", "TEST-LINK000001", "GM-L001", 903, [line(2, kahf[0]), line(1, kahf[1])])),
+        ("L2. A Labore order at MA5 (store 904) with 2 units of a SKU that has 1 in its bin "
+         "(test Barang tidak ada, then message 5 item_short)",
+         msg("dev-ord-002", "TEST-LINK000002", "GM-L002", 904, [line(1, lab[0]), line(2, low_lab)])),
+        ("L3. A bundle: 1 x Paket isi 2 = 2 units of one SKU, plus the single of the same SKU "
+         "(one order line of 3 units; item_price_idr is weighted by item quantity)",
+         msg("dev-ord-003", "TEST-LINK000003", "GM-L003", 903,
+             [line(1, first_kahf, ups=2, item_id="IDITE20260929000000001", price=bundle_price),
+              line(1, first_kahf)])),
+        ("L4. A scheduled order at KJR (store 901): ready-by = scheduled time - scheduled_lead_minutes",
+         msg("dev-ord-004", "TEST-LINK000004", "GM-L004", 901, [line(1, kahf[3])],
+             scheduled="2026-10-01T11:00:00+07:00")),
+        ("L5. An unknown SKU code. Expect 422 and a red row on Integrasi Hiryu",
+         msg("dev-ord-005", "TEST-LINK000005", "GM-L005", 903,
+             [{"sku_code": "KHF-9999", "units": 1, "hiryu_item_id": "IDITE20269999999999",
+               "item_qty": 1, "item_price": 10000}])),
+        ("L6. An unknown store. Expect 422",
+         msg("dev-ord-006", "TEST-LINK000006", "GM-L006", 999, [line(1, kahf[0])])),
+    ]
+    cancels = [
+        ("C1. Cancel L1 (POST /api/hiryu/v1/orders/TEST-LINK000001/cancel)",
+         {"message_id": "dev-can-001", "reason_code": "2001", "reason": "Item out of stock",
+          "cancelled_at": "2026-10-01T09:21:00+07:00"}),
+        ("C2. A cancel BEFORE its order: send to /orders/TEST-LINK000007/cancel first, then an "
+         "order with grab_order_id TEST-LINK000007. Expect 200 pending, then the order arrives cancelled",
+         {"message_id": "dev-can-002", "reason_code": "2001", "reason": "Item out of stock",
+          "cancelled_at": "2026-10-01T09:22:00+07:00"}),
+    ]
+    link_text = (
+        "\n\nHIRYU LINK (link on): message 1 and message 2 bodies\n" + "=" * 60 + "\n"
+        "Easiest: console > Simulator Grab > Uji sambungan Hiryu (Ops HQ) builds and sends these.\n"
+        "By hand, as Hiryu (the path is public, the secret is POS_SHARED_SECRET of wms-test--dev):\n"
+        "  curl -X POST https://<dev host>/api/hiryu/v1/orders -H 'Content-Type: application/json' \\\n"
+        "       -H 'X-Hiryu-Key: <secret>' -d @body.json\n"
+        "Each message_id is used once: sending the same body again returns the first answer.\n"
+        "Change message_id and grab_order_id to send a new order.\n\n" +
+        "\n\n".join(f"{t}\n{'-' * 60}\n{json.dumps(b, indent=2, ensure_ascii=False)}\n{'-' * 60}"
+                     for t, b in link + cancels) + "\n")
     SAMPLE.write_text(
-        "DEV TEST ORDERS: fake Hiryu order pages for wms-test--dev. Copy one block (between the lines)\n"
-        "and paste it into Tempel pesanan Grab. Store numbers 901 to 904 are test stores from the dev seed.\n"
+        "DEV TEST ORDERS for wms-test--dev. Store numbers 901 to 904 are test stores from the dev seed:\n"
+        "901 Kahf and 902 Labore at KJR (MAC-KJR), 903 Kahf and 904 Labore at MA5 (MAC-MA5).\n\n"
+        "PASTE (link off): copy one block (between the lines) and paste it into Tempel pesanan Grab.\n"
         "Set the station to MAC-MA5 first. The order time is fixed, so orders show as late: that is expected.\n\n" +
-        "\n\n".join(f"{t}\n{'-' * 60}\n{p}\n{'-' * 60}" for t, p in samples) + "\n", encoding="utf-8")
+        "\n\n".join(f"{t}\n{'-' * 60}\n{p}\n{'-' * 60}" for t, p in samples) + link_text,
+        encoding="utf-8")
     print(f"{OUT.relative_to(ROOT)}: {len(sku_rows)} SKUs "
           f"(Kahf {len(kahf)}, Labore {len(lab)}), {len(loc_rows)} bins; {SAMPLE.relative_to(ROOT)}")
 

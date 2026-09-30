@@ -1,13 +1,10 @@
-/* pick-done.js — 09: every line picked; hand the tote to packing.
+/* pick-done.js — 09: every unit picked; hand the basket to the pack bench.
  *
- * Replaces the wire.js `pick-done` handler. The order is completed HERE, on
- * the hand-off, not the moment the last unit is scanned. Hiryu hears nothing
- * from here (no API yet): staff press Mark ready in Hiryu, then record it with
- * Sudah Mark ready di Hiryu (PRD v3.3 A8.4).
- *
- * "Pick the next order" stays locked until the hand-off is done. Otherwise an
- * order with everything picked would sit claimed and unfinished, invisible to
- * the queue, while its promise ran out.
+ * Deploy 2 (PRD §6.3 step 5, §6.11): Serahkan ke meja packing completes the
+ * pick task ("Waiting to pack") and frees the picker, who goes straight back
+ * to Ambil pesanan, where the WMS gives the next order or they wait. Nothing
+ * goes to Hiryu from here: the packer's Selesai dikemas sends order ready.
+ * There is no Mark ready step for the picker any more.
  *
  * Rows are pick lines (stops): a SKU split over rack and overflow shows twice,
  * once per location, which is how it was actually walked.
@@ -43,34 +40,26 @@
     }
 
     const task = done.task;
+    const no = task.short_no || task.external_ref;
     const mode = $('.chrome__mode');
-    if (mode) { mode.dataset.keep = '1'; bi(mode, 'Ambil pesanan · ' + (task.short_no || task.external_ref), 'Pick order · ' + (task.short_no || task.external_ref)); }
+    if (mode) { mode.dataset.keep = '1'; bi(mode, 'Ambil pesanan · ' + no, 'Pick order · ' + no); }
     const bannerRef = banner && $('.code', banner);
-    if (bannerRef) bannerRef.textContent = (task.short_no || task.external_ref);
+    if (bannerRef) bannerRef.textContent = no;
 
     /* ---- what was picked ---- */
     const lines = task.lines;
     const units = lines.reduce((n, l) => n + (l.qty_picked || 0), 0);
     const places = new Set(lines.map(l => l.location_code).filter(Boolean)).size;
-    // Short is counted in units: with a split, one stop can be short while the
-    // other stop for the same SKU made up part of it.
-    const shortUnits = lines.reduce((n, l) => n + Math.max(0, l.qty_required - l.qty_picked), 0);
 
     const tbody = $('.table tbody');
     if (tbody) {
-      tbody.innerHTML = lines.map(l => {
-        const short = l.qty_picked < l.qty_required;
-        return '<tr><td class="td-code">' + esc(l.location_code || '—') + '</td>' +
-          '<td>' + esc(l.sku_name) +
-          (short ? ' <span style="color:var(--caution);font-weight:700" ' +
-            biAttr('· kurang ' + (l.qty_required - l.qty_picked),
-                   '· short ' + (l.qty_required - l.qty_picked)) + '></span>' : '') + '</td>' +
-          '<td class="td-qty" style="white-space:nowrap">' + l.qty_picked + (short ? ' / ' + l.qty_required : '') + '</td></tr>';
-      }).join('');
-      applyLangTo(tbody);
+      tbody.innerHTML = lines.map(l =>
+        '<tr><td class="td-code">' + esc(l.location_code || '') + '</td>' +
+        '<td>' + esc(l.sku_name) + '</td>' +
+        '<td class="td-qty" style="white-space:nowrap">' + l.qty_picked + '</td></tr>').join('');
     }
 
-    // Duration from the moment this picker took the order, when we know it.
+    // Duration from the moment this phone opened the order, when we know it.
     let dur = null;
     if (done.startedAt && done.finishedAt) {
       const s = Math.max(0, Math.round((new Date(done.finishedAt) - new Date(done.startedAt)) / 1000));
@@ -82,91 +71,28 @@
        units + ' items · ' + places + (places === 1 ? ' basket' : ' baskets') +
          (dur ? ' · ' + dur[0] + ' min ' + dur[1] + ' s' : ''));
 
-    /* Short lines were already reported (message 5) when they were declared.
-       Say so, and say who decides — the station never substitutes. */
-    if (shortUnits && tbody && !$('.wire-shortnote')) {
-      const note = document.createElement('div');
-      note.className = 'notice notice--caution wire-shortnote';
-      note.innerHTML = '<span class="code code--sm" aria-hidden="true">!</span>' +
-        '<div class="col" style="gap:4px"><span class="notice__title" ' +
-        biAttr(shortUnits + ' barang kurang: jangan dikemas',
-               shortUnits + (shortUnits === 1 ? ' unit' : ' units') + ' short: do not pack') + '></span>' +
-        '<span class="notice__body" ' +
-        biAttr('Grab tidak mengizinkan pesanan diubah. Panggil SPV: batalkan di Hiryu (2001 Item out of stock), lalu Dibatalkan di Hiryu di WMS.',
-               'Grab does not allow an order to change. Call the SPV: cancel in Hiryu (2001 Item out of stock), then Dibatalkan di Hiryu in the WMS.') +
-        '></span></div>';
-      tbody.closest('table').parentNode.insertBefore(note, tbody.closest('table'));
-      applyLangTo(note);
-    }
-
-    /* ---- the ticket: the order reference is what packing calls out ---- */
+    /* ---- the number the pack bench works by ---- */
     const ticket = $('.panel .code');
     if (ticket) {
-      ticket.textContent = (task.short_no || task.external_ref);
-      ticket.style.fontSize = (task.short_no || task.external_ref).length > 10 ? '30px' : '56px';
+      ticket.textContent = no;
+      ticket.style.fontSize = no.length > 10 ? '30px' : '56px';
       ticket.style.overflowWrap = 'anywhere';
     }
     const ticketLabel = $('.panel .eyebrow');
     bi(ticketLabel, 'Nomor pesanan untuk packing', 'Order number for packing');
 
-    /* ---- hand-off = message 4 ---- */
+    /* ---- hand-off, then straight back to waiting ---- */
     const handoff = $('button.btn--primary');
-    const next = $('a.btn--outline[href="07-ambil-pesanan.html"]');
-
-    function lockNext(locked) {
-      if (!next) return;
-      next.classList.toggle('is-locked', locked);
-      next.setAttribute('aria-disabled', String(locked));
-      if (!locked) { next.classList.remove('btn--outline'); next.classList.add('btn--primary'); }
+    function back(ms) {
+      CTX.del('doneTask');
+      setTimeout(() => go('07-ambil-pesanan.html'), ms);
     }
-
-    function paintHanded() {
-      if (handoff) {
-        handoff.disabled = true;
-        handoff.classList.add('is-locked');
-        bi(handoff, '✓ Sudah diserahkan ke meja packing', '✓ Handed to packing');
-      }
-      const note = $('.panel .note');
-      bi(note, 'Kemas, lalu tekan Mark ready di Hiryu. Sendirian? Tekan tombol di bawah setelah Mark ready.',
-               'Pack it, then press Mark ready in Hiryu. On your own? Tap the button below after Mark ready.');
-      lockNext(false);
-      addMarkedReady();
+    function closeButton(id, enText) {
+      if (!handoff) return;
+      handoff.disabled = true;
+      handoff.classList.add('is-locked');
+      bi(handoff, id, enText);
     }
-
-    /* One person on duty packs too (A1.2): after Mark ready in Hiryu, they
-       record it here instead of walking to the pack laptop's list. */
-    function addMarkedReady() {
-      if (!task.order_id || $('.wire-marked')) return;
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'btn btn--outline btn--lg btn--block wire-marked';
-      bi(b, 'Sudah Mark ready di Hiryu', 'Marked ready in Hiryu');
-      handoff.parentNode.insertBefore(b, next);
-      b.onclick = async () => {
-        const no = (task.short_no || task.external_ref);
-        if (!confirm(en() ? 'Did you press Mark ready in Hiryu for ' + no + '?'
-                          : 'Sudah tekan Mark ready di Hiryu untuk ' + no + '?')) return;
-        b.disabled = true;
-        try {
-          await NJW.api.hiryu.markedReady(task.order_id);
-          bi(b, '✓ Siap, taruh di rak siap ambil', '✓ Ready, put it on the ready shelf');
-          b.classList.add('is-locked');
-        } catch (e) { b.disabled = false; say(oneLang(e.message)); }
-      };
-    }
-
-    if (next) next.addEventListener('click', (e) => {
-      if (next.classList.contains('is-locked')) {
-        e.preventDefault();
-        say(en()
-          ? 'Hand the tote to packing first.' : 'Serahkan dulu ke meja packing.');
-      } else {
-        CTX.del('doneTask');
-      }
-    });
-
-    if (done.handed) { paintHanded(); return; }
-    lockNext(true);
 
     let sending = false;
     if (handoff) handoff.onclick = async () => {
@@ -174,39 +100,32 @@
       sending = true;
       try {
         await NJW.api.raw.post('/pick-tasks/' + task.id + '/complete', {});
-        done.handed = true;
-        CTX.set('doneTask', done);
-        paintHanded();
-        say(localStorage.getItem('njw.lang') === 'en'
-          ? 'Handed to packing.' : 'Sudah diserahkan ke meja packing.');
+        closeButton('Sudah diserahkan ke meja packing', 'Handed to the pack bench');
+        say(en() ? no + ' is at the pack bench. Next order...' : no + ' di meja packing. Pesanan berikutnya...');
+        back(900);
       } catch (e) {
-        if (e.status !== 409) return fail(e);
+        if (e.status !== 409) { sending = false; return fail(e); }
         const msg = oneLang(e.message);
+        say(msg);
         if (/already done|sudah selesai/i.test(e.message)) {
-          // Someone (or an earlier tap) already completed it: message 4 went.
-          done.handed = true;
-          CTX.set('doneTask', done);
-          paintHanded();
-          say(msg);
+          // An earlier tap already went through.
+          closeButton('Sudah diserahkan ke meja packing', 'Handed to the pack bench');
+          back(1500);
         } else if (/still to be picked|belum diambil/i.test(e.message)) {
-          // The server knows of a stop this screen does not (e.g. a stale
-          // snapshot). Back to the pick screen, which reloads the order.
-          say(msg);
+          // The server knows of a stop this screen does not. Back to the pick.
           bi(handoff, 'Kembali ambil barang yang tersisa', 'Go back and pick what is left');
-          handoff.onclick = () => { CTX.del('doneTask'); go('07-ambil-pesanan.html'); };
-        } else if (/cancel|batal/i.test(e.message)) {
-          // Hiryu cancelled while it was being picked. Nothing to hand off;
-          // the picked units are already on the return-to-shelf list.
-          say(msg);
-          handoff.disabled = true;
-          handoff.classList.add('is-locked');
-          bi(handoff, 'Dibatalkan — barangnya masuk daftar Kembalikan ke rak',
-                      'Cancelled — its units are on the Return-to-shelf list');
-          lockNext(false);
+          handoff.onclick = () => back(0);
+          sending = false;
         } else {
-          say(msg);
+          // Cancelled from Hiryu, or moved by the SPV, while it was picked.
+          // Picked units of a cancelled order are already on Kembalikan ke rak.
+          closeButton(/cancel|batal/i.test(e.message)
+            ? 'Dibatalkan: barangnya masuk Kembalikan ke rak' : 'Pesanan ini sudah dipindahkan',
+            /cancel|batal/i.test(e.message)
+            ? 'Cancelled: its units are on Return to shelf' : 'This order was moved');
+          back(3500);
         }
-      } finally { sending = false; }
+      }
     };
   };
 })();

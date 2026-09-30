@@ -210,9 +210,10 @@
   }
 
   /* ---------- roles: the same ladder as auth.py ---------- */
-  const RANK = { staff: 0, hub_operator: 1, supervisor: 2, hq: 3, superadmin: 4 };
-  const ROLE_NAME = { superadmin: ['Superadmin', 'Superadmin'], hq: ['Ops HQ', 'Ops HQ'],
-    supervisor: ['SPV', 'SPV'], hub_operator: ['Operator hub', 'Hub operator'], staff: ['Staf', 'Staff'] };
+  const RANK = { staff: 0, hub_operator: 1, supervisor: 2, hq: 3, ops_head: 4, superadmin: 5 };
+  const ROLE_NAME = { superadmin: ['Superadmin', 'Superadmin'], ops_head: ['Ops Head', 'Ops Head'],
+    hq: ['Ops HQ', 'Ops HQ'], supervisor: ['SPV', 'SPV'], hub_operator: ['Operator hub', 'Hub operator'],
+    staff: ['Staf', 'Staff'] };
 
   /* A superadmin can look at the app as any other role: the same menu, the
      same screens, the same refusals. It is read-only — the server refuses any
@@ -240,7 +241,7 @@
       'align-items:center;padding:8px 16px;font-size:14px;background:' +
       (ME.viewing_as ? 'var(--accent-bg);color:var(--ink);border-bottom:2px solid var(--accent)' :
                        'var(--surface-2);color:var(--muted);border-bottom:1px solid var(--rule)');
-    const opts = ['', 'hq', 'supervisor', 'hub_operator', 'staff'].map(k =>
+    const opts = ['', 'ops_head', 'hq', 'supervisor', 'hub_operator', 'staff'].map(k =>
       '<option value="' + k + '"' + ((ME.viewing_as || '') === k ? ' selected' : '') + '>' +
       (k ? esc(ROLE_NAME[k][0]) : 'Superadmin (' + (localStorage.getItem('njw.lang') === 'en' ? 'yourself' : 'diri sendiri') + ')') +
       '</option>').join('');
@@ -293,6 +294,29 @@
     badge.hidden = !n;
     badge.textContent = n > 99 ? '99+' : String(n);
     badge.classList.toggle('is-critical', (c.critical || 0) > 0);
+  }
+
+  /* ---------- the Perlu tindakan badge (PRD §13.5) ---------- */
+  // The count for this person's role; cached two minutes per tab. The page
+  // itself refreshes the cache every time it loads its list.
+  async function paintTodoBadge() {
+    const badge = field('todo-badge');
+    if (!badge || !isConsole()) return;
+    let c = null;
+    try {
+      const hit = JSON.parse(sessionStorage.getItem('njw.todoCount') || 'null');
+      if (hit && Date.now() - hit.at < 2 * 60 * 1000) c = hit.counts;
+    } catch (e) { /* no cache */ }
+    if (!c) {
+      try {
+        c = (await api().raw.get('/todo')).counts;
+        sessionStorage.setItem('njw.todoCount', JSON.stringify({ at: Date.now(), counts: c }));
+      } catch (e) { return; }
+    }
+    const n = c.total || 0;
+    badge.hidden = !n;
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.classList.toggle('is-critical', (c.overdue || 0) > 0);
   }
 
   /* ---------- photos: stored keys load through the API ---------- */
@@ -353,6 +377,7 @@
       paintViewAs();
       gateSidebar();
       watchPhotos();
+      if (name !== 'perlu-tindakan') paintTodoBadge();
       if (name !== 'pengingat') paintFlagBadge();
       else sessionStorage.removeItem('njw.flagCount');
       const fn = screens[name];

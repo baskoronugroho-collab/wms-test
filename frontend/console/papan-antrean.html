@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Papan antrean — Ninja Kilat WMS</title>
+<title>Papan antrean · Ninja Kilat WMS</title>
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#1B3A5C">
 <meta name="mobile-web-app-capable" content="yes">
@@ -12,9 +12,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="../css/tokens.css?v=d6aec40">
-<link rel="stylesheet" href="../css/app.css?v=d6aec40">
-<link rel="stylesheet" href="../css/console.css?v=d6aec40">
+<link rel="stylesheet" href="../css/tokens.css?v=eb89448">
+<link rel="stylesheet" href="../css/app.css?v=eb89448">
+<link rel="stylesheet" href="../css/console.css?v=eb89448">
 </head>
 <body>
 <div class="console" data-screen="papan-antrean">
@@ -25,6 +25,7 @@
       </div>
       <nav class="sidebar__section">
         <a class="sidebar__link" href="index.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2"/><path d="M5.6 9v11.4h12.8V9"/></svg></span><span class="sidebar__label" data-id="Ringkasan" data-en="Overview">Ringkasan</span></a>
+        <a class="sidebar__link" href="perlu-tindakan.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="1.5"/><path d="M8 9l1.6 1.6L12.5 7.5"/><path d="M14 9h2.5"/><path d="M8 15l1.6 1.6 2.9-3.1"/><path d="M14 15h2.5"/></svg></span><span class="sidebar__label" data-id="Perlu tindakan" data-en="To do">Perlu tindakan</span><span class="navbadge" data-field="todo-badge" hidden></span></a>
         <a class="sidebar__link" href="pengingat.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span><span class="sidebar__label" data-id="Pengingat &amp; flag" data-en="Reminders &amp; flags">Pengingat &amp; flag</span><span class="navbadge" data-field="flag-badge" hidden></span></a>
       </nav>
       <nav class="sidebar__section">
@@ -50,6 +51,8 @@
         <a class="sidebar__link" href="peta-hub.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5-5.5 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg></span><span class="sidebar__label" data-id="Peta hub &amp; stok" data-en="Hub map &amp; stock">Peta hub &amp; stok</span></a>
         <a class="sidebar__link" href="permintaan-sku.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><path d="M12 8.5v4"/><circle cx="12" cy="15.6" r=".9" fill="currentColor"/></svg></span><span class="sidebar__label" data-id="Permintaan SKU" data-en="SKU requests">Permintaan SKU</span></a>
         <a class="sidebar__link" href="menu-hiryu.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span class="sidebar__label" data-id="Menu &amp; toko Hiryu" data-en="Hiryu menu &amp; stores">Menu &amp; toko Hiryu</span></a>
+        <a class="sidebar__link" href="lengkapi-sku.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.6"/></svg></span><span class="sidebar__label" data-id="Lengkapi data SKU" data-en="Complete SKU data">Lengkapi data SKU</span></a>
+        <a class="sidebar__link" href="laporan-merek.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h8.5L18 7v13.5H6z"/><path d="M9 17v-3M12 17v-6M15 17v-4"/></svg></span><span class="sidebar__label" data-id="Laporan merek" data-en="Brand report">Laporan merek</span></a>
       </nav>
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Cetak" data-en="Print">Cetak</span>
@@ -59,7 +62,7 @@
       <nav class="sidebar__section">
         <span class="sidebar__heading" data-id="Pengaturan" data-en="Settings">Pengaturan</span>
         <a class="sidebar__link" href="hub.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20.5V7l8-3.5L20 7v13.5"/><path d="M9.5 20.5v-6h5v6"/></svg></span><span class="sidebar__label" data-id="Hub" data-en="Hubs">Hub</span></a>
-        <a class="sidebar__link" href="staf.html" data-min-role="hq"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
+        <a class="sidebar__link" href="staf.html" data-min-role="supervisor"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 20c0-3.2 2.5-5.2 5.5-5.2s5.5 2 5.5 5.2"/><path d="M16 5.8a3.2 3.2 0 0 1 0 5.6"/><path d="M17.5 14.8c1.8.6 3 2.4 3 5.2"/></svg></span><span class="sidebar__label" data-id="Staf" data-en="Staff">Staf</span></a>
         <a class="sidebar__link" href="produk.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 20.5 12 12 20.8 3.5 12z"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="sidebar__label" data-id="Produk (SKU)" data-en="Products (SKU)">Produk (SKU)</span></a>
         <a class="sidebar__link" href="integrasi.html"><span class="sidebar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3.5v5M15 3.5v5"/><path d="M6.5 8.5h11v3.2a5.5 5.5 0 0 1-11 0z"/><path d="M12 17.2v3.3"/></svg></span><span class="sidebar__label" data-id="Integrasi Hiryu" data-en="Hiryu integration">Integrasi Hiryu</span></a>
       </nav>
@@ -86,328 +89,96 @@
   <main class="page">
     <header class="page__head">
       <div class="page__heading">
-        <span class="page__eyebrow" data-id="Masuk & keluar · Station UT5" data-en="Inbound & outbound · Station UT5">Masuk &amp; keluar · Station UT5</span>
-        <h1 class="page__title" data-id="Papan antrean ambil" data-en="Pick queue board">Papan antrean ambil</h1>
-        <p class="page__sub" data-id="Apa yang menunggu, siapa sedang mengambil apa, dan apa yang tersendat. Yang menunggu urut dari sisa waktu paling sedikit: pesanan Grab harus siap 15 menit setelah sampai di Hiryu, pesanan kanal sendiri 1 jam setelah pelanggan memesan. Ini antrean, bukan daftar untuk dipilih-pilih." data-en="What is waiting, who is picking what, and what has stalled. The waiting lane runs by least time left: a Grab order must be ready 15 minutes after it reaches Hiryu, an own-channel order 1 hour after the customer placed it. This is a queue, not a list to browse.">Apa yang menunggu, siapa sedang mengambil apa, dan apa yang tersendat. Yang menunggu urut dari sisa waktu paling sedikit: pesanan Grab harus siap 15 menit setelah sampai di Hiryu, pesanan kanal sendiri 1 jam setelah pelanggan memesan. Ini antrean, bukan daftar untuk dipilih-pilih.</p>
+        <span class="page__eyebrow" data-id="Masuk & keluar" data-en="Inbound & outbound">Masuk &amp; keluar</span>
+        <h1 class="page__title" data-id="Papan antrean" data-en="Queue board">Papan antrean</h1>
+        <p class="page__sub" data-id="WMS memberi setiap pesanan ke picker yang paling lama siap, satu pesanan per orang, yang sisa waktunya paling sedikit lebih dulu. Pesanan yang belum dimulai dalam 2 menit kembali ke antrean. Pindahkan kalau perlu, dengan alasan." data-en="The WMS gives every order to the picker who has been ready longest, one order each, least time left first. An order not started within 2 minutes goes back to the queue. Move one when needed, with a reason.">WMS memberi setiap pesanan ke picker yang paling lama siap, satu pesanan per orang, yang sisa waktunya paling sedikit lebih dulu. Pesanan yang belum dimulai dalam 2 menit kembali ke antrean. Pindahkan kalau perlu, dengan alasan.</p>
       </div>
       <div class="page__actions">
-        <span class="livedot"><span class="livedot__dot"></span><span data-field="last-poll" data-id="Diperbarui 8 dtk lalu" data-en="Updated 8 s ago">Diperbarui 8 dtk lalu</span></span>
+        <span class="livedot"><span class="livedot__dot"></span><span data-field="last-poll" data-id="Memuat" data-en="Loading">Memuat</span></span>
         <button class="cbtn" type="button" data-action="poll-now"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v4h-4"/></svg><span data-id="Muat ulang" data-en="Refresh">Muat ulang</span></button>
       </div>
     </header>
 
-    <div class="stuckbar" data-region="stuck-alert">
+    <!-- What needs the SPV now: late orders, orders sent back unstarted, bags
+         waiting too long for a driver, nobody ready while orders wait. -->
+    <div class="stuckbar" data-region="alert" style="display:none">
       <span class="stuckbar__icon" aria-hidden="true">!</span>
-      <span class="stuckbar__text"><strong data-field="stuck-ref">GM-8843</strong> <span data-id="sudah dipegang" data-en="has been held for">sudah dipegang</span> <strong data-field="stuck-held">24 menit</strong> <span data-id="oleh" data-en="by">oleh</span> <strong data-field="stuck-holder" style="font-family:var(--font-ui)">Agus Setiawan</strong>. <span data-id="Selama diklaim, pesanan ini tidak terlihat oleh pemetik lain. Kalau tabletnya mati, lepaskan kembali ke antrean." data-en="While it is claimed no other picker can see it. If their tablet has died, release it back to the queue.">Selama diklaim, pesanan ini tidak terlihat oleh pemetik lain. Kalau tabletnya mati, lepaskan kembali ke antrean.</span></span>
-      <button class="cbtn cbtn--primary" type="button" data-release="9016" data-holder="Agus Setiawan" data-ref="GM-8843" data-held="24"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v9"/><path d="M8.2 9l3.8 3.5L15.8 9"/><path d="M4.5 15v5.5h15V15"/></svg><span data-id="Lepaskan" data-en="Release">Lepaskan</span></button>
+      <span class="stuckbar__text" data-field="alert-text"></span>
     </div>
 
     <button class="stagepill" type="button" data-action="apply-staged">
-      <span class="stagepill__n" data-field="staged-count">3</span>
-      <span data-id="perubahan tertahan — muat sekarang" data-en="changes held — load now">perubahan tertahan — muat sekarang</span>
+      <span class="stagepill__n" data-field="staged-count">0</span>
+      <span data-id="perubahan tertahan, muat sekarang" data-en="changes held, load now">perubahan tertahan, muat sekarang</span>
     </button>
 
-    <div class="board">
+    <section class="col" style="gap:var(--sp-2)">
+      <header class="lane__head">
+        <span class="lane__title">
+          <span class="lane__count" data-field="count-ready">0</span>
+          <span class="lane__name" data-id="Picker siap" data-en="Pickers ready">Picker siap</span>
+        </span>
+        <span class="lane__meta" data-field="pickers-meta"></span>
+      </header>
+      <div data-region="pickers" style="display:flex;flex-wrap:wrap;gap:var(--sp-2)"></div>
+    </section>
+
+    <div class="board" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">
       <section class="lane">
         <header class="lane__head">
           <span class="lane__title">
-            <span class="lane__count" data-field="count-waiting">7</span>
+            <span class="lane__count" data-field="count-waiting">0</span>
             <span class="lane__name" data-id="Menunggu" data-en="Waiting">Menunggu</span>
           </span>
-          <span class="lane__meta"><span data-id="Tertua" data-en="Oldest">Tertua</span> <strong data-field="oldest-waiting">12 menit</strong></span>
+          <span class="lane__meta"><span data-id="Tertua" data-en="Oldest">Tertua</span> <strong data-field="oldest-waiting"></strong></span>
         </header>
-        <div class="lane__body" data-region="waiting">
-        <article class="pcard is-late" data-task="9012" data-age-seconds="720">
-          <span class="pcard__rule" aria-hidden="true"></span>
-          <span class="pcard__top">
-            <span class="pcard__ref" data-field="ref">GM-8839</span>
-          </span>
-          <span class="pcard__age">
-            <span class="pcard__age-num" data-field="age">12</span>
-            <span class="pcard__age-unit" data-id="menit menunggu" data-en="min waiting">menit menunggu</span>
-            <span class="agechip agechip--late"><span class="agechip__dot"></span><span data-id="Terlambat" data-en="Late">Terlambat</span></span>
-          </span>
-          <span class="pcard__facts">
-            <span><span class="n">6</span> <span data-id="barang" data-en="lines">barang</span></span>
-            <span class="dot">·</span>
-            <span><span class="n">9</span> <span data-id="unit" data-en="units">unit</span></span>
-          </span>
-        <span class="pcard__racks">
-          <span class="pcard__racks-label" data-id="Rak" data-en="Racks">Rak</span>
-          <span class="rackdot">A</span>
-          <span class="rackdot">C</span>
-          <span class="rackdot">D</span>
-          <span class="rackdot">F</span>
-        </span>
-        <span class="shortflag">
-          <span aria-hidden="true">!</span>
-          <span>2 <span data-id="baris kurang stok — perlu diputuskan orang" data-en="lines short — a person must decide">baris kurang stok — perlu diputuskan orang</span></span>
-        </span>
-        </article>
-        <article class="pcard is-ageing" data-task="9014" data-age-seconds="480">
-          <span class="pcard__rule" aria-hidden="true"></span>
-          <span class="pcard__top">
-            <span class="pcard__ref" data-field="ref">GM-8841</span>
-          </span>
-          <span class="pcard__age">
-            <span class="pcard__age-num" data-field="age">8</span>
-            <span class="pcard__age-unit" data-id="menit menunggu" data-en="min waiting">menit menunggu</span>
-            <span class="agechip agechip--ageing"><span class="agechip__dot"></span><span data-id="Menua" data-en="Ageing">Menua</span></span>
-          </span>
-          <span class="pcard__facts">
-            <span><span class="n">3</span> <span data-id="barang" data-en="lines">barang</span></span>
-            <span class="dot">·</span>
-            <span><span class="n">6</span> <span data-id="unit" data-en="units">unit</span></span>
-          </span>
-        <span class="pcard__racks">
-          <span class="pcard__racks-label" data-id="Rak" data-en="Racks">Rak</span>
-          <span class="rackdot">A</span>
-          <span class="rackdot">C</span>
-        </span>
-        </article>
-        <article class="pcard is-ageing is-test" data-task="9015" data-age-seconds="420">
-          <span class="pcard__rule" aria-hidden="true"></span>
-          <span class="pcard__top">
-            <span class="pcard__ref" data-field="ref">TEST-B87D14FF6C</span>
-            <span class="badge-test" data-id="UJI COBA" data-en="TEST">UJI COBA</span>
-          </span>
-          <span class="pcard__age">
-            <span class="pcard__age-num" data-field="age">7</span>
-            <span class="pcard__age-unit" data-id="menit menunggu" data-en="min waiting">menit menunggu</span>
-            <span class="agechip agechip--ageing"><span class="agechip__dot"></span><span data-id="Menua" data-en="Ageing">Menua</span></span>
-          </span>
-          <span class="pcard__facts">
-            <span><span class="n">2</span> <span data-id="barang" data-en="lines">barang</span></span>
-            <span class="dot">·</span>
-            <span><span class="n">3</span> <span data-id="unit" data-en="units">unit</span></span>
-          </span>
-        <span class="pcard__racks">
-          <span class="pcard__racks-label" data-id="Rak" data-en="Racks">Rak</span>
-          <span class="rackdot">A</span>
-          <span class="rackdot">B</span>
-        </span>
-        </article>
-        <article class="pcard" data-task="9018" data-age-seconds="240">
-          <span class="pcard__rule" aria-hidden="true"></span>
-          <span class="pcard__top">
-            <span class="pcard__ref" data-field="ref">GM-8844</span>
-          </span>
-          <span class="pcard__age">
-            <span class="pcard__age-num" data-field="age">4</span>
-            <span class="pcard__age-unit" data-id="menit menunggu" data-en="min waiting">menit menunggu</span>
-            <span class="agechip agechip--fresh"><span class="agechip__dot"></span><span data-id="Baru" data-en="Fresh">Baru</span></span>
-          </span>
-          <span class="pcard__facts">
-            <span><span class="n">2</span> <span data-id="barang" data-en="lines">barang</span></span>
-            <span class="dot">·</span>
-            <span><span class="n">2</span> <span data-id="unit" data-en="units">unit</span></span>
-          </span>
-        <span class="pcard__racks">
-          <span class="pcard__racks-label" data-id="Rak" data-en="Racks">Rak</span>
-          <span class="rackdot">C</span>
-        </span>
-        </article>
-        <article class="pcard" data-task="9019" data-age-seconds="120">
-          <span class="pcard__rule" aria-hidden="true"></span>
-          <span class="pcard__top">
-            <span class="pcard__ref" data-field="ref">GM-8845</span>
-          </span>
-          <span class="pcard__age">
-            <span class="pcard__age-num" data-field="age">2</span>
-            <span class="pcard__age-unit" data-id="menit menunggu" data-en="min waiting">menit menunggu</span>
-            <span class="agechip agechip--fresh"><span class="agechip__dot"></span><span data-id="Baru" data-en="Fresh">Baru</span></span>
-          </span>
-          <span class="pcard__facts">
-            <span><span class="n">3</span> <span data-id="barang" data-en="lines">barang</span></span>
-            <span class="dot">·</span>
-            <span><span class="n">4</span> <span data-id="unit" data-en="units">unit</span></span>
-          </span>
-        <span class="pcard__racks">
-          <span class="pcard__racks-label" data-id="Rak" data-en="Racks">Rak</span>
-          <span class="rackdot">A</span>
-          <span class="rackdot">E</span>
-          <span class="rackdot">G</span>
-        </span>
-        </article>
-        <article class="pcard" data-task="9020" data-age-seconds="60">
-          <span class="pcard__rule" aria-hidden="true"></span>
-          <span class="pcard__top">
-            <span class="pcard__ref" data-field="ref">GM-8846</span>
-          </span>
-          <span class="pcard__age">
-            <span class="pcard__age-num" data-field="age">1</span>
-            <span class="pcard__age-unit" data-id="menit menunggu" data-en="min waiting">menit menunggu</span>
-            <span class="agechip agechip--fresh"><span class="agechip__dot"></span><span data-id="Baru" data-en="Fresh">Baru</span></span>
-          </span>
-          <span class="pcard__facts">
-            <span><span class="n">1</span> <span data-id="barang" data-en="lines">barang</span></span>
-            <span class="dot">·</span>
-            <span><span class="n">1</span> <span data-id="unit" data-en="units">unit</span></span>
-          </span>
-        <span class="pcard__racks">
-          <span class="pcard__racks-label" data-id="Rak" data-en="Racks">Rak</span>
-          <span class="rackdot">D</span>
-        </span>
-        </article>
-        <article class="pcard" data-task="9021" data-age-seconds="0">
-          <span class="pcard__rule" aria-hidden="true"></span>
-          <span class="pcard__top">
-            <span class="pcard__ref" data-field="ref">GM-8847</span>
-          </span>
-          <span class="pcard__age">
-            <span class="pcard__age-num" data-field="age">0</span>
-            <span class="pcard__age-unit" data-id="menit menunggu" data-en="min waiting">menit menunggu</span>
-            <span class="agechip agechip--fresh"><span class="agechip__dot"></span><span data-id="Baru" data-en="Fresh">Baru</span></span>
-          </span>
-          <span class="pcard__facts">
-            <span><span class="n">4</span> <span data-id="barang" data-en="lines">barang</span></span>
-            <span class="dot">·</span>
-            <span><span class="n">7</span> <span data-id="unit" data-en="units">unit</span></span>
-          </span>
-        <span class="pcard__racks">
-          <span class="pcard__racks-label" data-id="Rak" data-en="Racks">Rak</span>
-          <span class="rackdot">B</span>
-          <span class="rackdot">C</span>
-        </span>
-        </article>
-        </div>
+        <div class="lane__body" data-region="waiting"></div>
       </section>
 
       <section class="lane">
         <header class="lane__head">
           <span class="lane__title">
-            <span class="lane__count" data-field="count-claimed">3</span>
+            <span class="lane__count" data-field="count-claimed">0</span>
             <span class="lane__name" data-id="Sedang diambil" data-en="Being picked">Sedang diambil</span>
           </span>
-          <span class="lane__meta"><strong data-field="count-stuck">1</strong> <span data-id="klaim tersendat" data-en="stuck claim">klaim tersendat</span></span>
+          <span class="lane__meta"><strong data-field="count-unstarted">0</strong> <span data-id="belum dimulai" data-en="not started">belum dimulai</span></span>
         </header>
-        <div class="lane__body" data-region="claimed">
-        <article class="pcard is-stuck" data-task="9016" data-held-seconds="1440">
-          <span class="pcard__rule" aria-hidden="true"></span>
-          <span class="pcard__top">
-            <span class="pcard__ref" data-field="ref">GM-8843</span>
+        <div class="lane__body" data-region="claimed"></div>
+      </section>
+
+      <section class="lane">
+        <header class="lane__head">
+          <span class="lane__title">
+            <span class="lane__count" data-field="count-pack">0</span>
+            <span class="lane__name" data-id="Menunggu dikemas" data-en="Waiting to pack">Menunggu dikemas</span>
           </span>
-          <span class="pcard__age">
-            <span class="pcard__age-num" data-field="age">27</span>
-            <span class="pcard__age-unit" data-id="menit sejak pesanan masuk" data-en="min since the order arrived">menit sejak pesanan masuk</span>
+        </header>
+        <div class="lane__body" data-region="to-pack"></div>
+      </section>
+
+      <section class="lane">
+        <header class="lane__head">
+          <span class="lane__title">
+            <span class="lane__count" data-field="count-driver">0</span>
+            <span class="lane__name" data-id="Menunggu driver" data-en="Waiting for the driver">Menunggu driver</span>
           </span>
-          <span class="pcard__facts">
-            <span><span class="n">5</span> <span data-id="barang" data-en="lines">barang</span></span>
-            <span class="dot">·</span>
-            <span><span class="n">7</span> <span data-id="unit" data-en="units">unit</span></span>
-          </span>
-        <span class="pcard__racks">
-          <span class="pcard__racks-label" data-id="Rak" data-en="Racks">Rak</span>
-          <span class="rackdot">A</span>
-          <span class="rackdot">C</span>
-          <span class="rackdot">E</span>
-        </span>
-          <span class="pcard__picker">
-            <span class="pcard__avatar" aria-hidden="true">AS</span>
-            <span class="pcard__who">
-              <span class="pcard__who-name">Agus Setiawan</span>
-              <span class="pcard__who-held" data-field="held">Ditahan 24 menit</span>
-            </span>
-          </span>
-          <span class="pcard__foot">
-            <span class="agechip agechip--stuck"><span class="agechip__dot"></span><span data-id="Klaim tersendat" data-en="Stuck claim">Klaim tersendat</span></span>
-            <span class="toolbar__spacer"></span>
-            <button class="cbtn cbtn--primary" type="button" data-release="9016" data-holder="Agus Setiawan" data-ref="GM-8843" data-held="24"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v9"/><path d="M8.2 9l3.8 3.5L15.8 9"/><path d="M4.5 15v5.5h15V15"/></svg><span data-id="Lepaskan ke antrean" data-en="Release to the queue">Lepaskan ke antrean</span></button>
-          </span>
-        </article>
-        <article class="pcard is-test" data-task="9017" data-held-seconds="360">
-          <span class="pcard__rule" aria-hidden="true"></span>
-          <span class="pcard__top">
-            <span class="pcard__ref" data-field="ref">TEST-4C21A9EE10</span>
-            <span class="badge-test" data-id="UJI COBA" data-en="TEST">UJI COBA</span>
-          </span>
-          <span class="pcard__age">
-            <span class="pcard__age-num" data-field="age">9</span>
-            <span class="pcard__age-unit" data-id="menit sejak pesanan masuk" data-en="min since the order arrived">menit sejak pesanan masuk</span>
-          </span>
-          <span class="pcard__facts">
-            <span><span class="n">2</span> <span data-id="barang" data-en="lines">barang</span></span>
-            <span class="dot">·</span>
-            <span><span class="n">2</span> <span data-id="unit" data-en="units">unit</span></span>
-          </span>
-        <span class="pcard__racks">
-          <span class="pcard__racks-label" data-id="Rak" data-en="Racks">Rak</span>
-          <span class="rackdot">B</span>
-        </span>
-          <span class="pcard__picker">
-            <span class="pcard__avatar" aria-hidden="true">MA</span>
-            <span class="pcard__who">
-              <span class="pcard__who-name">Maya Anggraini</span>
-              <span class="pcard__who-held" data-field="held">Dipegang 6 menit</span>
-            </span>
-          </span>
-          <span class="pcard__foot">
-            <span class="agechip agechip--held"><span class="agechip__dot"></span><span data-id="Berjalan normal" data-en="On track">Berjalan normal</span></span>
-            <span class="toolbar__spacer"></span>
-            <button class="cbtn cbtn--sm" type="button" data-release="9017" data-holder="Maya Anggraini" data-ref="TEST-4C21A9EE10" data-held="6" data-id="Lepaskan" data-en="Release">Lepaskan</button>
-          </span>
-        </article>
-        <article class="pcard" data-task="9013" data-held-seconds="180">
-          <span class="pcard__rule" aria-hidden="true"></span>
-          <span class="pcard__top">
-            <span class="pcard__ref" data-field="ref">GM-8842</span>
-          </span>
-          <span class="pcard__age">
-            <span class="pcard__age-num" data-field="age">6</span>
-            <span class="pcard__age-unit" data-id="menit sejak pesanan masuk" data-en="min since the order arrived">menit sejak pesanan masuk</span>
-          </span>
-          <span class="pcard__facts">
-            <span><span class="n">4</span> <span data-id="barang" data-en="lines">barang</span></span>
-            <span class="dot">·</span>
-            <span><span class="n">5</span> <span data-id="unit" data-en="units">unit</span></span>
-          </span>
-        <span class="pcard__racks">
-          <span class="pcard__racks-label" data-id="Rak" data-en="Racks">Rak</span>
-          <span class="rackdot">A</span>
-          <span class="rackdot">D</span>
-        </span>
-        <span class="shortflag">
-          <span aria-hidden="true">!</span>
-          <span>1 <span data-id="baris kurang stok — perlu diputuskan orang" data-en="lines short — a person must decide">baris kurang stok — perlu diputuskan orang</span></span>
-        </span>
-          <span class="pcard__picker">
-            <span class="pcard__avatar" aria-hidden="true">SN</span>
-            <span class="pcard__who">
-              <span class="pcard__who-name">Siti Nurhaliza</span>
-              <span class="pcard__who-held" data-field="held">Dipegang 3 menit</span>
-            </span>
-          </span>
-          <span class="pcard__foot">
-            <span class="agechip agechip--held"><span class="agechip__dot"></span><span data-id="Berjalan normal" data-en="On track">Berjalan normal</span></span>
-            <span class="toolbar__spacer"></span>
-            <button class="cbtn cbtn--sm" type="button" data-release="9013" data-holder="Siti Nurhaliza" data-ref="GM-8842" data-held="3" data-id="Lepaskan" data-en="Release">Lepaskan</button>
-          </span>
-        </article>
-        </div>
+          <span class="lane__meta"><strong data-field="count-driver-late">0</strong> <span data-field="driver-limit" data-id="lewat batas" data-en="over the limit">lewat batas</span></span>
+        </header>
+        <div class="lane__body" data-region="to-driver"></div>
       </section>
 
       <section class="lane donelane">
         <header class="lane__head">
           <span class="lane__title">
-            <span class="lane__count" data-field="count-done">84</span>
+            <span class="lane__count" data-field="count-done">0</span>
             <span class="lane__name" data-id="Selesai hari ini" data-en="Done today">Selesai hari ini</span>
           </span>
-          <span class="lane__meta"><span data-id="rata-rata" data-en="average">rata-rata</span> <span data-field="avg-pick">—</span></span>
+          <span class="lane__meta"><span data-id="rata-rata masuk sampai diserahkan" data-en="average, arrival to handover">rata-rata masuk sampai diserahkan</span> <span data-field="avg-pick"></span></span>
         </header>
         <details>
           <summary class="done-toggle">
             <span data-id="Lihat yang sudah selesai" data-en="Show completed">Lihat yang sudah selesai</span>
-            <span class="done-toggle__chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
           </summary>
-          <div class="lane__body" data-region="done" style="gap:0;margin-top:var(--sp-2);background:var(--surface);border-radius:var(--radius-card);box-shadow:var(--shadow-1);overflow:hidden">
-            <span class="donerow"><span class="donerow__ref">GM-8838</span><span class="donerow__time">14.22</span></span>
-            <span class="donerow"><span class="donerow__ref">GM-8837</span><span class="donerow__time">14.19</span></span>
-            <span class="donerow"><span class="donerow__ref">GM-8836</span><span class="donerow__time">14.15</span></span>
-            <span class="donerow"><span class="donerow__ref">GM-8835</span><span class="donerow__time">14.11</span></span>
-            <span class="donerow"><span class="donerow__ref">GM-8834</span><span class="donerow__time">14.04</span></span>
-            <span class="donerow"><span class="donerow__ref">GM-8833</span><span class="donerow__time">13.58</span></span>
-            <span class="donerow" style="color:var(--muted-2)"><span data-id="…dan 78 lainnya" data-en="…and 78 more">…dan 78 lainnya</span></span>
-          </div>
+          <div class="lane__body" data-region="done" style="gap:0;margin-top:var(--sp-2);background:var(--surface);border-radius:var(--radius-card);box-shadow:var(--shadow-1);overflow:hidden"></div>
         </details>
       </section>
     </div>
@@ -415,26 +186,34 @@
 </div>
 
 <div class="scrim"></div>
-<div class="cdialog" id="dlg-release" role="dialog" aria-modal="true" aria-labelledby="dlg-release-title">
-  <h2 class="cdialog__title" id="dlg-release-title" data-id="Lepaskan pesanan ini ke antrean?" data-en="Release this order back to the queue?">Lepaskan pesanan ini ke antrean?</h2>
-  <div class="cdialog__who">
-    <span class="pcard__avatar" data-field="dlg-avatar" aria-hidden="true">AS</span>
+<div class="cdialog" id="dlg-move" role="dialog" aria-modal="true" aria-labelledby="dlg-move-title">
+  <h2 class="cdialog__title" id="dlg-move-title"><span data-id="Pindahkan" data-en="Move">Pindahkan</span> <span data-field="dlg-ref"></span></h2>
+  <div class="cdialog__who" data-region="dlg-holder">
+    <span class="pcard__avatar" data-field="dlg-avatar" aria-hidden="true"></span>
     <span class="pcard__who">
-      <span class="pcard__who-name" data-field="dlg-holder">Agus Setiawan</span>
-      <span class="pcard__who-held" style="color:var(--caution);font-weight:700"><span data-id="memegang" data-en="holding">memegang</span> <span data-field="dlg-ref">GM-8843</span> · <span data-field="dlg-held">24 menit</span></span>
+      <span class="pcard__who-name" data-field="dlg-holder"></span>
+      <span class="pcard__who-held" style="color:var(--caution);font-weight:700" data-field="dlg-held"></span>
     </span>
   </div>
-  <p class="cdialog__body" data-id="Pekerjaan orang lain akan dibatalkan dan pesanannya kembali ke urutan paling atas. Kalau dia sebenarnya masih mengambil, dia akan kehilangan progresnya. Pastikan dulu." data-en="You are cancelling someone else’s work and putting the order back at the top of the queue. If they are in fact still picking, they will lose their progress. Check first.">Pekerjaan orang lain akan dibatalkan dan pesanannya kembali ke urutan paling atas. Kalau dia sebenarnya masih mengambil, dia akan kehilangan progresnya. Pastikan dulu.</p>
+  <label class="col" style="gap:6px">
+    <span class="note" data-id="Ke picker" data-en="To picker">Ke picker</span>
+    <select data-field="dlg-to" style="min-height:40px;border:1px solid var(--rule);border-radius:8px;padding:0 8px;background:var(--surface);color:var(--ink)"></select>
+  </label>
+  <label class="col" style="gap:6px">
+    <span class="note" data-id="Alasan (wajib)" data-en="Reason (required)">Alasan (wajib)</span>
+    <input data-field="dlg-reason" maxlength="200" style="min-height:40px;border:1px solid var(--rule);border-radius:8px;padding:0 8px;background:var(--surface);color:var(--ink)">
+  </label>
+  <p class="cdialog__body" data-id="Barang yang sudah diambil tetap tercatat; picker baru melanjutkan dari barang berikutnya. Pastikan keranjangnya ikut pindah." data-en="Units already picked stay counted; the new picker carries on from the next item. Make sure the basket moves too.">Barang yang sudah diambil tetap tercatat; picker baru melanjutkan dari barang berikutnya. Pastikan keranjangnya ikut pindah.</p>
   <div class="cdialog__actions">
-    <button class="cbtn cbtn--primary" type="button" data-action="confirm-release" style="flex:1 1 auto" data-id="Ya, lepaskan" data-en="Yes, release it">Ya, lepaskan</button>
+    <button class="cbtn cbtn--primary" type="button" data-action="confirm-move" style="flex:1 1 auto" data-id="Pindahkan" data-en="Move">Pindahkan</button>
     <button class="cbtn" type="button" data-drawer-close data-id="Batal" data-en="Cancel">Batal</button>
   </div>
 </div>
 
-<script src="../js/api.js?v=d6aec40"></script>
-<script src="../js/app.js?v=d6aec40"></script>
-<script src="../js/console.js?v=d6aec40"></script>
-<script src="../js/wire.js?v=d6aec40"></script>
-<script src="../js/screens/papan-antrean.js?v=d6aec40"></script>
+<script src="../js/api.js?v=eb89448"></script>
+<script src="../js/app.js?v=eb89448"></script>
+<script src="../js/console.js?v=eb89448"></script>
+<script src="../js/wire.js?v=eb89448"></script>
+<script src="../js/screens/papan-antrean.js?v=eb89448"></script>
 </body>
 </html>

@@ -1,8 +1,13 @@
 /* screens/staf.js — staff accounts (console/staf.html).
  *
- * GET/POST/PATCH /api/admin/users, all admin-only. The list is small (one
+ * GET/POST/PATCH /api/admin/users, SPV and up. The list is small (one
  * pilot, tens of people) and the endpoint has no paging, so search, filters
  * and the pager work client-side over the whole list.
+ *
+ * Who registers whom is the server's rule (PRD §1.2): it returns the roles
+ * this person may give in `roles`, and an SPV only gets the staff of their own
+ * hubs. Rows this person may not change have their buttons switched off, so a
+ * refusal never arrives as a surprise.
  *
  * The API refuses self-deactivation and self-role-change with a 422. Those
  * controls are disabled on the signed-in admin's own row so the click never
@@ -15,8 +20,9 @@
   const api = NJW.api;
 
   const PER = 25;
-  const ROLE_LABEL = { superadmin: 'Superadmin', hq: 'Ops HQ', supervisor: 'SPV', hub_operator: 'Operator hub', staff: 'Staf' };
-  const ROLE_TONE = { superadmin: 'accent', hq: 'accent', supervisor: 'info' };
+  const ROLE_LABEL = { superadmin: 'Superadmin', ops_head: 'Ops Head', hq: 'Ops HQ', supervisor: 'SPV',
+    hub_operator: 'Operator hub', staff: 'Staf' };
+  const ROLE_TONE = { superadmin: 'accent', ops_head: 'accent', hq: 'accent', supervisor: 'info' };
 
   function openDrawer(sel) {
     const d = $(sel), sc = $('.scrim');
@@ -74,7 +80,7 @@
 
   NJW.screens.staf = async () => {
     const me = W.me();
-    let users = [], roles = Object.keys(ROLE_LABEL), sites = [];
+    let users = [], roles = Object.keys(ROLE_LABEL), grantable = [], sites = [];
     let status = 'all', page = 1, editing = null;
 
     const host = region('staff');
@@ -83,13 +89,14 @@
     try {
       const [u, s] = await Promise.all([api.users(), api.sites().catch(() => ({ sites: [] }))]);
       users = u.users;
-      roles = u.roles && u.roles.length ? u.roles : roles;
+      grantable = u.roles || [];
+      roles = u.all_roles && u.all_roles.length ? u.all_roles : roles;
       sites = s.sites;
     } catch (e) {
       if (e.status === 403) {
         host.innerHTML = '<tr><td colspan="7" class="note" ' +
-          biAttr('Hanya admin yang bisa melihat dan mengubah daftar staf.',
-                 'Only an admin can see and change the staff list.') + '></td></tr>';
+          biAttr('Hanya SPV, Ops HQ dan di atasnya yang bisa melihat dan mengubah daftar staf.',
+                 'Only an SPV, Ops HQ or above can see and change the staff list.') + '></td></tr>';
         applyLangTo(host);
         $$('[data-action="new-user"]').forEach(b => { b.disabled = true; b.classList.add('is-disabled'); });
         return;
@@ -103,10 +110,18 @@
     const roleFilter = field('role-filter');
     roleFilter.insertAdjacentHTML('beforeend', roles.map(r =>
       '<option value="' + esc(r) + '">' + esc(ROLE_LABEL[r] || r) + '</option>').join(''));
-    // Only a superadmin can grant superadmin; the API refuses it for anyone else.
-    const grantable = me && me.real_role === 'superadmin' ? roles : roles.filter(r => r !== 'superadmin');
-    field('u-role').innerHTML = grantable.map(r =>
-      '<option value="' + esc(r) + '">' + esc(ROLE_LABEL[r] || r) + '</option>').join('');
+    // The server says which roles this person may give (Ops HQ stops at Ops HQ,
+    // an SPV gives staff only); the picker never offers one it would refuse.
+    const roleOptions = extra => grantable.concat(extra && !grantable.includes(extra) ? [extra] : [])
+      .map(r => '<option value="' + esc(r) + '"' + (grantable.includes(r) ? '' : ' disabled') + '>' +
+        esc(ROLE_LABEL[r] || r) + '</option>').join('');
+    field('u-role').innerHTML = roleOptions();
+    const isSpv = !!me && !W.atLeast('hq');
+    const spvHint = field('u-role-spv');
+    if (spvHint) spvHint.hidden = !isSpv;
+    // May this person change that account at all? The same rule as the server.
+    const liveSites = () => sites.filter(s => s.active && !s.is_training);
+    const canManage = u => !!me && (me.role === 'superadmin' || grantable.includes(u.role));
 
     function visible() {
       const q = (field('search').value || '').trim().toLowerCase();
@@ -118,8 +133,24 @@
           .toLowerCase().includes(q)));
     }
 
+    function actions(u, self, locked) {
+      const off = (id, en, title) => '<button class="cbtn cbtn--sm is-disabled" type="button" disabled title="' +
+        esc(title) + '" ' + biAttr(id, en) + '>' + esc(id) + '</button>';
+      if (locked) {
+        return off('Ubah', 'Edit', 'Akun ini di atas wewenang Anda.') +
+          off('Nonaktifkan', 'Deactivate', 'Akun ini di atas wewenang Anda.');
+      }
+      const edit = '<button class="cbtn cbtn--sm" type="button" data-edit="' + u.id + '" ' +
+        biAttr('Ubah', 'Edit') + '>Ubah</button>';
+      if (self) return edit + off('Nonaktifkan', 'Deactivate', 'Tidak bisa menonaktifkan akun sendiri. Minta admin lain.');
+      return edit + '<button class="cbtn cbtn--sm" type="button" data-toggle="' + u.id + '" ' +
+        (u.active ? biAttr('Nonaktifkan', 'Deactivate') + '>Nonaktifkan'
+                  : biAttr('Aktifkan', 'Reactivate') + '>Aktifkan') + '</button>';
+    }
+
     function row(u) {
       const self = me && u.email === me.email;
+      const locked = !self && !canManage(u);
       const tone = ROLE_TONE[u.role] || 'neutral';
       return '<tr data-uid="' + u.id + '"' + (self ? ' data-self="true"' : '') +
         (u.active ? '' : ' class="is-inactive"') + '>' +
@@ -133,15 +164,7 @@
           ? '<span class="spill spill--ok"><span class="spill__dot"></span><span ' + biAttr('Aktif', 'Active') + '>Aktif</span></span>'
           : '<span class="spill spill--neutral"><span class="spill__dot"></span><span ' + biAttr('Nonaktif', 'Inactive') + '>Nonaktif</span></span>') +
         '</td>' +
-        '<td class="td-actions">' +
-        '<button class="cbtn cbtn--sm" type="button" data-edit="' + u.id + '" ' + biAttr('Ubah', 'Edit') + '>Ubah</button>' +
-        (self
-          ? '<button class="cbtn cbtn--sm is-disabled" type="button" disabled title="Tidak bisa menonaktifkan akun sendiri — minta admin lain." ' +
-            biAttr('Nonaktifkan', 'Deactivate') + '>Nonaktifkan</button>'
-          : '<button class="cbtn cbtn--sm" type="button" data-toggle="' + u.id + '" ' +
-            (u.active ? biAttr('Nonaktifkan', 'Deactivate') + '>Nonaktifkan'
-                      : biAttr('Aktifkan', 'Reactivate') + '>Aktifkan') + '</button>') +
-        '</td></tr>';
+        '<td class="td-actions">' + actions(u, self, locked) + '</td></tr>';
     }
 
     function render() {
@@ -181,16 +204,21 @@
       email.disabled = !!u;          // the email is the sign-in identity; changing it is a new account
       field('u-name').value = u ? (u.name || '') : '';
       const role = field('u-role');
-      role.value = u ? u.role : 'staff';
+      // Your own role shows even when you could not give it; it cannot change anyway.
+      role.innerHTML = roleOptions(u ? u.role : null);
+      role.value = u ? u.role : (grantable.includes('staff') ? 'staff' : grantable[0] || '');
       role.disabled = !!self;
       field('u-role-hint').style.display = self ? '' : 'none';
       const def = field('u-default');
       def.innerHTML = '<option value="">—</option>' + sites.filter(s => s.active).map(s =>
         '<option value="' + s.id + '">' + esc(s.code + ' — ' + s.name) + '</option>').join('');
       def.value = u && u.default_site_id ? String(u.default_site_id) : '';
-      // New staff start on the training site, as the hint under the chips says.
+      // New staff start on the training site, as the hint under the chips says;
+      // an SPV with one hub gets that hub ticked too.
       const trn = sites.find(s => s.is_training && s.active);
-      siteChips(region('u-sites'), u ? siteIdsOf(u) : (trn ? [trn.id] : []));
+      const live = liveSites();
+      const fresh = (trn ? [trn.id] : []).concat(isSpv && live.length === 1 ? [live[0].id] : []);
+      siteChips(region('u-sites'), u ? siteIdsOf(u) : fresh);
       applyLangTo($('#drawer-staff'));
       openDrawer('#drawer-staff');
     }
@@ -205,7 +233,12 @@
       try {
         if (!editing) {
           const email = field('u-email').value.trim().toLowerCase();
-          if (!/^[^@\s]+@ninjavan\.co$/.test(email)) return say('Pakai email @ninjavan.co.');
+          if (!/^[^@\s]+@ninjavan\.co$/.test(email)) {
+            return say('Hanya email @ninjavan.co yang bisa didaftarkan. / Only @ninjavan.co emails can be registered.');
+          }
+          if (isSpv && !site_ids.some(id => liveSites().some(s => s.id === id))) {
+            return say('Pilih minimal satu hub Anda. / Choose at least one of your hubs.');
+          }
           await api.createUser({ email, name, role: field('u-role').value, default_site_id, site_ids });
           say(email + ' ditambahkan.');
         } else {
@@ -261,7 +294,7 @@
       if (e.target.closest('[data-action="bulk-deactivate"]')) {
         const ids = selectedIds().filter(id => {
           const u = users.find(x => x.id === id);
-          return u && u.active && !(me && u.email === me.email);
+          return u && u.active && !(me && u.email === me.email) && canManage(u);
         });
         if (!ids.length) return say('Tidak ada akun aktif lain yang dipilih.');
         if (!confirm('Nonaktifkan ' + ids.length + ' akun?')) return;

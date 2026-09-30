@@ -19,29 +19,37 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 
+import assign
 import auth
 import db
 import models
+import pos_sender
 from routers import (
     admin,
+    faktur,
     flow,
     hiryu,
+    hiryu_link,
     inbound,
     inventory,
     locations,
     master,
     opname,
     outbound,
+    pickers,
     plates,
     product_master,
     racks,
     registry,
     reminders,
     replenishment,
+    reports,
     requests,
     returns,
     scan,
     slips,
+    todo,
+    sku_complete,
     stock_upload,
     training,
 )
@@ -63,14 +71,42 @@ async def _auto_replenish_loop():
             log.exception("auto replenishment sweep failed")
 
 
+async def _hiryu_sender_loop():
+    """Messages 3 to 5 to Hiryu (PRD §0.6): send what is due, reclaim rows a
+    dead pod left half-sent, and queue the nightly stock snapshot at 03:00 WIB.
+    Sends nothing while POS_PUSH_ENABLED is off."""
+    while True:
+        await asyncio.sleep(5)
+        try:
+            if db.ready():
+                await pos_sender.loop_tick()
+        except Exception:
+            log.exception("hiryu sender tick failed")
+
+
+async def _assign_loop():
+    """Every 5 s: orders not started in time go back to the queue, and waiting
+    orders go to ready pickers (PRD §6.2)."""
+    while True:
+        await asyncio.sleep(5)
+        try:
+            if db.ready():
+                await assign.sweep_all()
+        except Exception:
+            log.exception("assignment sweep failed")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await db.connect()
-    task = asyncio.create_task(_auto_replenish_loop())
+    tasks = [asyncio.create_task(_auto_replenish_loop()),
+             asyncio.create_task(_hiryu_sender_loop()),
+             asyncio.create_task(_assign_loop())]
     try:
         yield
     finally:
-        task.cancel()
+        for task in tasks:
+            task.cancel()
         await db.disconnect()
 
 
@@ -165,6 +201,9 @@ async def unhandled(request: Request, exc: Exception):
 for module in (
     master, locations, scan, inbound, plates, outbound, opname, inventory,
     stock_upload, product_master, slips, admin, registry, flow, training,
-    returns, racks, requests, replenishment, reminders, hiryu,
+    returns, racks, requests, replenishment, reminders, hiryu, faktur,
+    sku_complete, reports, todo, pickers,
 ):
     app.include_router(module.router)
+app.include_router(hiryu_link.router)      # /api/hiryu/v1, Hiryu only (shared secret)
+app.include_router(hiryu_link.ui_router)   # /api/hiryu-link, the console

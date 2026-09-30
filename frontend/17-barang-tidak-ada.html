@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=d6aec40">
-<link rel="stylesheet" href="css/app.css?v=d6aec40">
+<link rel="stylesheet" href="css/tokens.css?v=eb89448">
+<link rel="stylesheet" href="css/app.css?v=eb89448">
 </head>
 <body>
 <div class="app" data-screen="short-pick" data-screen-label="17">
@@ -46,7 +46,7 @@
         <div class="col col--grow">
           <div class="col">
             <span class="eyebrow" data-id="Berapa yang ada di keranjang?" data-en="How many are in the basket?">Berapa yang ada di keranjang?</span>
-            <p class="lede" data-id="Pilih satu. Kamu tetap melanjutkan pesanan ini setelahnya — sisa barangnya masih perlu diambil." data-en="Pick one. You carry on with this order afterwards — the rest of it still needs picking.">Pilih satu. Kamu tetap melanjutkan pesanan ini setelahnya — sisa barangnya masih perlu diambil.</p>
+            <p class="lede" data-id="Pilih satu. Kalau barangnya memang tidak ada, pesanan ini dibatalkan." data-en="Pick one. If the item really is not there, this order is cancelled.">Pilih satu. Kalau barangnya memang tidak ada, pesanan ini dibatalkan.</p>
           </div>
 
           <div class="shortpick">
@@ -54,14 +54,14 @@
               <span class="shortpick__num">0</span>
               <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
                 <span class="shortpick__title" data-id="Tidak ada sama sekali" data-en="None at all">Tidak ada sama sekali</span>
-                <span class="shortpick__body" data-id="Keranjang kosong. Satu ketukan, selesai." data-en="The basket is empty. One tap, done.">Keranjang kosong. Satu ketukan, selesai.</span>
+                <span class="shortpick__body" data-id="Keranjang kosong." data-en="The basket is empty.">Keranjang kosong.</span>
               </span>
             </button>
             <button class="shortpick__choice is-on" type="button" data-choice="some">
               <span class="shortpick__num" data-field="found">1</span>
               <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
                 <span class="shortpick__title" data-id="Cuma ada sebagian" data-en="Only some are there">Cuma ada sebagian</span>
-                <span class="shortpick__body" data-id="Atur jumlahnya di bawah, lalu lanjut." data-en="Set the number below, then carry on.">Atur jumlahnya di bawah, lalu lanjut.</span>
+                <span class="shortpick__body" data-id="Atur jumlahnya di bawah." data-en="Set the number below.">Atur jumlahnya di bawah.</span>
               </span>
             </button>
           </div>
@@ -88,7 +88,7 @@
           </div>
 
           <div class="stats">
-            <a class="btn btn--primary btn--lg btn--grow" href="07-ambil-pesanan.html" style="min-height:88px;font-size:24px" data-id="Lanjut ambil barang lain" data-en="Carry on with the other items">Lanjut ambil barang lain</a>
+            <a class="btn btn--primary btn--lg btn--grow" href="07-ambil-pesanan.html" style="min-height:88px;font-size:24px" data-id="Catat: tidak ada" data-en="Record: not there">Catat: tidak ada</a>
             <a class="btn btn--lg" href="07-ambil-pesanan.html" data-id="Batal" data-en="Cancel">Batal</a>
           </div>
         </div>
@@ -103,18 +103,18 @@
             <span class="code code--sm" aria-hidden="true">i</span>
             <div class="col" style="gap:4px">
               <span class="notice__title" data-id="Ini bukan kesalahanmu" data-en="This is not your mistake">Ini bukan kesalahanmu</span>
-              <span class="notice__body" data-id="Stoknya yang tidak cocok, bukan cara kamu mengambil. Supervisor akan melihat selisih ini dan keranjangnya masuk daftar hitung ulang." data-en="The stock did not match, not the way you picked. A supervisor sees this gap and the basket goes on the recount list.">Stoknya yang tidak cocok, bukan cara kamu mengambil. Supervisor akan melihat selisih ini dan keranjangnya masuk daftar hitung ulang.</span>
+              <span class="notice__body" data-id="Stoknya yang tidak cocok, bukan cara kamu mengambil. Supervisor melihat catatan ini beserta namamu." data-en="The stock did not match, not the way you picked. A supervisor sees this record with your name.">Stoknya yang tidak cocok, bukan cara kamu mengambil. Supervisor melihat catatan ini beserta namamu.</span>
             </div>
           </div>
         </div>
       </div>
     </main>
 </div>
-<script src="js/api.js?v=d6aec40"></script>
-<script src="js/scan.js?v=d6aec40"></script>
-<script src="js/app.js?v=d6aec40"></script>
-<script src="js/wire.js?v=d6aec40"></script>
-<script src="js/screens/short-pick.js?v=d6aec40"></script>
+<script src="js/api.js?v=eb89448"></script>
+<script src="js/scan.js?v=eb89448"></script>
+<script src="js/app.js?v=eb89448"></script>
+<script src="js/wire.js?v=eb89448"></script>
+<script src="js/screens/short-pick.js?v=eb89448"></script>
 
 </body>
 </html>

@@ -283,6 +283,13 @@ class Receipt(BaseModel):
         default=None, description="Most different SKUs this batch can take (the hub's "
                                   "temporary inbound bins); null = not limited")
     batch_skus: int = Field(default=0, description="Different SKUs scanned in this batch so far")
+    faktur_uploaded_at: str | None = Field(
+        default=None, description="When the SPV uploaded the signed Faktur (§5.3.8)")
+    faktur_uploaded_by: str | None = None
+    faktur_pages: int = Field(default=0, description="Faktur files attached to this receipt")
+    needs_faktur: bool = Field(
+        default=False, description="A completed brand delivery still waiting for its Faktur")
+    open_issues: int = Field(default=0, description="Differences raised to Ops HQ, not settled")
 
 
 class ReceiptCompleteIn(BaseModel):
@@ -350,6 +357,66 @@ class ReceiptSummary(BaseModel):
     open_sku_requests: int = Field(
         default=0, description="Unknown products from this delivery still with HQ or "
                                "waiting to be put away")
+
+
+# --- the signed Faktur and differences raised to Ops HQ (§5.1 steps 8 and 9) --------
+
+class FakturPage(BaseModel):
+    id: int
+    receipt_id: int
+    replenishment_id: int | None = None
+    content_type: str
+    file_name: str | None = None
+    size_bytes: int | None = None
+    page_no: int
+    uploaded_by: str
+    uploaded_at: str
+    url: str = Field(description="Streams the file behind the same sign-in (inline)")
+
+
+class FakturPageList(BaseModel):
+    receipt_id: int
+    faktur_uploaded_at: str | None = None
+    faktur_uploaded_by: str | None = None
+    pages: list[FakturPage]
+
+
+class FakturIssueIn(BaseModel):
+    kind: str = Field(description="extra | short | damaged | other")
+    sku_id: int | None = None
+    qty: int | None = Field(default=None, ge=0)
+    note: str | None = None
+
+
+class FakturIssue(BaseModel):
+    id: int
+    receipt_id: int
+    replenishment_id: int | None = None
+    replenishment_reference: str | None = None
+    site_id: int
+    site_code: str | None = None
+    brand_name: str | None = None
+    sku_id: int | None = None
+    sku_name: str | None = None
+    brand_sku_code: str | None = None
+    kind: str
+    qty: int | None = None
+    note: str | None = None
+    status: str = Field(description="open | settled")
+    raised_by: str
+    raised_at: str
+    settled_by: str | None = None
+    settled_at: str | None = None
+    outcome: str | None = None
+    age_hours: int | None = None
+
+
+class FakturIssueList(BaseModel):
+    issues: list[FakturIssue]
+
+
+class FakturSettleIn(BaseModel):
+    outcome: str = Field(description="What was agreed with the brand, in a sentence")
 
 
 # --- plates (Mode B) --------------------------------------------------------
@@ -438,6 +505,11 @@ class OrderIn(BaseModel):
         description="Ready-by time. If absent: Grab = received + 15 min; "
                     "own channels = placed + 60 min.",
     )
+    scheduled_at: str | None = Field(
+        default=None,
+        description="A scheduled order's time (ISO 8601). The order waits in the "
+                    "Terjadwal lane and is not given to a picker until it is due.",
+    )
 
 
 class OrderRow(BaseModel):
@@ -511,6 +583,9 @@ class PickTask(BaseModel):
     channel: str | None = None
     delivery_mode: str | None = None
     promised_at: str | None = None
+    started_at: str | None = Field(default=None, description="The holder's first scan")
+    handed_to_pack_at: str | None = None
+    reassign_note: str | None = None
 
 
 class PickTaskList(BaseModel):
@@ -916,7 +991,8 @@ class AdminUser(BaseModel):
 
 class AdminUserList(BaseModel):
     users: list[AdminUser]
-    roles: list[str]
+    roles: list[str] = Field(description="Roles the caller may give (PRD §1.2)")
+    all_roles: list[str] = Field(default_factory=list, description="Every role, for filters")
 
 
 class AdminUserIn(BaseModel):
@@ -1039,12 +1115,39 @@ class PickQueueCard(BaseModel):
     racks: list[str] = Field(
         default_factory=list, description="Distinct racks the pick touches"
     )
+    order_status: str | None = None
+    started_at: str | None = Field(default=None, description="The holder's first scan")
+    scheduled_at: str | None = None
+    scheduled_hold: bool = Field(
+        default=False, description="Terjadwal: scheduled and not due yet, so not given out")
+    handed_to_pack_at: str | None = None
+    packed_at: str | None = Field(default=None, description="Selesai dikemas (orders.marked_ready_at)")
+    handed_over_at: str | None = None
+    waiting_seconds: int | None = Field(
+        default=None, description="Waiting to pack: since the hand-off; waiting for the "
+                                  "driver: since packing")
+    reassign_note: str | None = None
+    requeue_count: int = 0
 
 
 class PickQueueLane(BaseModel):
     key: str
     count: int
     cards: list[PickQueueCard]
+
+
+class PickerRow(BaseModel):
+    email: str
+    name: str | None = None
+    state: str = Field(description="ready | break | off")
+    since: str | None = None
+    idle_since: str | None = None
+    phone_online: bool = Field(description="The phone polled in the last 90 s")
+    task_id: int | None = None
+    order_ref: str | None = Field(default=None, description="GM number of the order in hand")
+    held_seconds: int | None = None
+    started: bool = False
+    note: str | None = None
 
 
 class PickQueueBoard(BaseModel):
@@ -1054,6 +1157,45 @@ class PickQueueBoard(BaseModel):
     lanes: list[PickQueueLane]
     oldest_waiting_seconds: int | None
     thresholds: dict[str, int]
+    pickers: list[PickerRow] = Field(default_factory=list)
+    link_live: bool = False
+
+
+class PickerList(BaseModel):
+    site_id: int
+    pickers: list[PickerRow]
+
+
+class PickerStateIn(BaseModel):
+    site_id: int
+
+
+class PickerMe(BaseModel):
+    site_id: int
+    state: str = Field(description="ready | break | off")
+    since: str | None = None
+    task_id: int | None = Field(default=None, description="The order the WMS gave me")
+    order_ref: str | None = Field(default=None, description="Its GM number")
+    started: bool = False
+    note: str | None = Field(
+        default=None, description="Why an order was taken away, 'Indonesian / English'")
+    waiting_orders: int = 0
+    ready_pickers: int = 0
+    server_time: str
+
+
+class ReassignIn(BaseModel):
+    to_email: str | None = Field(
+        default=None, description="A named picker; empty = the free picker waiting longest")
+    reason: str = Field(min_length=3, max_length=200)
+
+
+class ReassignResult(BaseModel):
+    ok: bool
+    task_id: int
+    from_email: str | None
+    to_email: str
+    message: str
 
 
 class ReleaseIn(BaseModel):
@@ -1174,6 +1316,13 @@ class ShortPickResult(BaseModel):
     task_complete: bool
     lines_remaining: int
     message: str
+    order_cancelled: bool = Field(
+        default=False, description="A missing item cancels the whole order (§8.3)")
+    units_to_return: int = Field(
+        default=0, description="Units already picked, now on Kembalikan ke rak")
+    link_live: bool = Field(
+        default=False, description="Hiryu link on: Hiryu cancels by itself. Off: the "
+                                   "SPV must cancel the order in Hiryu")
 
 
 class ShortfallRow(BaseModel):
@@ -1495,8 +1644,12 @@ class ReplenishmentLineIn(BaseModel):
 class ReplenishmentIn(BaseModel):
     site_id: int
     brand_id: int
-    lines: list[ReplenishmentLineIn]
+    lines: list[ReplenishmentLineIn] = []
     note: str | None = None
+    fill_all: bool = Field(
+        default=False,
+        description="Ops HQ only, for a hub's first delivery (§4.1 step 3): every active SKU "
+                    "of the brand, each filled up to its isi sampai; `lines` is then ignored")
 
 
 class ReplenishmentEditIn(BaseModel):
@@ -1523,6 +1676,12 @@ class ReplenishmentLine(BaseModel):
     qty_final: int | None = Field(default=None, description="The count the SPV stands behind")
     final_note: str | None = None
     qty_billed: int | None = Field(default=None, description="Set once closed: what both sides bill on")
+    stock_at_po: int | None = Field(default=None, description="Held at the hub when the PO was saved")
+    fill_to_at_po: int | None = Field(default=None, description="Isi sampai when the PO was saved")
+    po_note: str | None = None
+    expiry_month: str | None = Field(
+        default=None, description="YYYY-MM from the Faktur; null = none (aged from inbound)")
+    expiry_entered_at: str | None = None
 
 
 class VarianceLineIn(BaseModel):
@@ -1539,6 +1698,67 @@ class VarianceSignOffIn(BaseModel):
     note: str | None = None
 
 
+# --- raise to Ops HQ, the PO, expiry from the Faktur (§4.1 steps 2 to 7) -----------
+
+class ReplenishmentRaiseIn(BaseModel):
+    note: str | None = None
+
+
+class PoHeader(BaseModel):
+    reference: str = Field(description="The PO number, RPL-<hub>-<yymm>-<n>")
+    po_date: str | None = Field(default=None, description="YYYY-MM-DD")
+    po_to: str | None = Field(default=None, description="To (brand), as printed")
+    po_brand_contact: str | None = None
+    po_deliver_to: str | None = Field(default=None, description="Hub name and address")
+    po_receiving_hours: str | None = Field(default=None, description="e.g. 09:00 to 16:00 WIB")
+    po_requested_date: str | None = Field(default=None, description="YYYY-MM-DD")
+    po_created_by_name: str | None = None
+    po_note: str | None = None
+
+
+class PoLine(BaseModel):
+    sku_id: int
+    sku_name: str
+    brand_sku_code: str | None = None
+    hiryu_sku_code: str | None = None
+    barcode: str | None = Field(default=None, description="Null = MISSING on the PO")
+    unit_size: str | None = None
+    current_stock: int
+    fill_to: int | None = Field(default=None, description="Isi sampai; null = not set yet")
+    qty_requested: int
+    note: str | None = None
+
+
+class PoDraft(BaseModel):
+    replenishment_id: int
+    status: str
+    saved: bool = Field(description="True once Ops HQ saved the PO: quantities are frozen")
+    header: PoHeader
+    lines: list[PoLine]
+
+
+class PoLineIn(BaseModel):
+    sku_id: int
+    qty_requested: int = Field(ge=0)
+    note: str | None = None
+
+
+class PoSaveIn(PoHeader):
+    lines: list[PoLineIn] | None = Field(
+        default=None, description="Final quantities. Required from draft or raised; once the "
+                                  "PO is saved only the header can change")
+
+
+class ExpiryLineIn(BaseModel):
+    sku_id: int
+    expiry_month: str | None = Field(
+        default=None, description="YYYY-MM from the Faktur; empty = the Faktur lists none")
+
+
+class ExpiryIn(BaseModel):
+    lines: list[ExpiryLineIn]
+
+
 class Replenishment(BaseModel):
     id: int
     reference: str
@@ -1547,8 +1767,8 @@ class Replenishment(BaseModel):
     site_name: str
     brand_id: int
     brand_name: str
-    status: str = Field(description="draft | sent | confirmed | variance_review | "
-                                     "variance_signoff | received | cancelled")
+    status: str = Field(description="draft | raised | po | sent | confirmed | receiving | "
+                                     "variance_review | variance_signoff | received | cancelled")
     awb: str | None = None
     surat_jalan_no: str | None = None
     eta_date: str | None = None
@@ -1574,6 +1794,19 @@ class Replenishment(BaseModel):
     total_received: int
     batches: int = Field(default=0, description="Inbound batches received against it so far")
     auto_created: bool = False
+    raised_by: str | None = None
+    raised_at: str | None = None
+    raise_note: str | None = None
+    po_saved_by: str | None = None
+    po_saved_at: str | None = None
+    po_header: PoHeader | None = Field(default=None, description="Set once the PO is saved")
+    faktur_uploaded_at: str | None = None
+    faktur_pages: list[FakturPage] = []
+    expiry_entered_at: str | None = None
+    expiry_due: bool = Field(
+        default=False, description="The Faktur is uploaded and Ops HQ has not entered the EDs")
+    extra_units: int = Field(default=0, description="Units received beyond the confirmation")
+    open_issues: int = Field(default=0, description="Faktur differences not settled yet")
 
 
 class BrandReplenishmentList(BaseModel):
@@ -1742,14 +1975,30 @@ class HandoverOrder(BaseModel):
     units: int
     units_ordered: int = 0
     promised_at: str | None
-    marked_ready_at: str | None
+    marked_ready_at: str | None = Field(description="Selesai dikemas: packed, order_ready sent")
     handed_over_at: str | None
     waiting_seconds: int | None
+    stage: str = Field(
+        default="picking",
+        description="waiting | picking | to_pack | to_driver | cancelled")
+    cancelled: bool = False
+    cancelled_at: str | None = None
+    handed_to_pack_at: str | None = None
+    picker: str | None = Field(default=None, description="Who holds or picked it")
+    pack_seconds: int | None = Field(default=None, description="Waiting to pack since the hand-off")
 
 
 class HandoverList(BaseModel):
     orders: list[HandoverOrder]
     wait_limit_seconds: int
+    link_live: bool = Field(
+        default=False, description="Hiryu link on: cancels arrive by themselves, "
+                                   "no Dibatalkan di Hiryu button")
+
+
+class PackedIn(BaseModel):
+    gm_number: str = Field(min_length=1, max_length=32,
+                           description="The GM number the packer read off the slip")
 
 
 class ElsewherePlace(BaseModel):
@@ -1854,3 +2103,140 @@ class StockTypedRow(BaseModel):
 class StockTypedIn(BaseModel):
     site_id: int
     rows: list[StockTypedRow]
+
+
+# --- Lengkapi data SKU (PRD §2.2.6, §2.6) -------------------------------------
+
+class SkuHubNumbers(BaseModel):
+    site_id: int
+    site_code: str
+    location_code: str | None = None
+    fill_to: int | None = Field(default=None, description="Isi sampai at this hub")
+    reorder_at: int | None = Field(default=None, description="Pesan ulang saat sisa at this hub")
+    critical_at: int | None = Field(default=None, description="Batas kritis at this hub")
+    follows_default: bool = Field(
+        description="The hub still carries the SKU's own numbers, so a change to them "
+                    "reaches this hub too")
+
+
+class SkuCompleteRow(BaseModel):
+    id: int
+    brand_id: int
+    brand_code: str | None = None
+    brand_name: str | None = None
+    brand_sku_code: str
+    hiryu_sku_code: str | None = None
+    name_display: str
+    unit_size: str | None = None
+    category: str | None = None
+    photo_key: str | None = None
+    barcodes: list[str] = Field(default_factory=list)
+    bin_size: str | None = None
+    suggested_bin_size: str | None = None
+    bin_max: int | None = Field(default=None, description="Isi maks. per bin; empty = learned")
+    fill_to: int | None = Field(default=None, description="Isi sampai (P)")
+    reorder_at: int | None = Field(default=None, description="Pesan ulang saat sisa (R), units")
+    reorder_pct: int | None = Field(default=None, description="R as % of isi sampai, if entered so")
+    critical_at: int | None = Field(default=None, description="Batas kritis (S), units")
+    critical_pct: int | None = Field(default=None, description="S as % of isi sampai, if entered so")
+    grab_buffer: int | None = Field(default=None, description="Cadangan Grab; null = the default")
+    pack_length_mm: int | None = None
+    pack_width_mm: int | None = None
+    pack_height_mm: int | None = None
+    pack_weight_g: int | None = None
+    is_liquid: bool | None = None
+    is_large_bottle: bool | None = None
+    complete: bool = Field(description="Bin size and isi sampai are set (§2.6.2)")
+    missing: list[str] = Field(default_factory=list, description="bin_size | fill_to")
+    hubs: list[SkuHubNumbers] = Field(default_factory=list)
+
+
+class SkuCompleteList(BaseModel):
+    rows: list[SkuCompleteRow]
+    total: int
+    incomplete: int = Field(description="Of the rows matching brand and search")
+    bin_sizes: list[str]
+    grab_buffer_default: int
+    restock_default_pct: int | None = None
+
+
+class SkuCompleteSummary(BaseModel):
+    incomplete: int
+    total: int
+
+
+class SkuCompleteIn(BaseModel):
+    """Only the fields sent are changed; an explicit null clears a field."""
+    brand_sku_code: str | None = None
+    bin_size: str | None = None
+    bin_max: int | None = None
+    fill_to: int | None = None
+    reorder_at: int | None = None
+    reorder_pct: int | None = None
+    critical_at: int | None = None
+    critical_pct: int | None = None
+    grab_buffer: int | None = None
+    pack_length_mm: int | None = None
+    pack_width_mm: int | None = None
+    pack_height_mm: int | None = None
+    pack_weight_g: int | None = None
+    is_liquid: bool | None = None
+    is_large_bottle: bool | None = None
+    add_barcodes: list[str] = Field(default_factory=list, description="Added, never removed")
+
+
+class SkuHubNumbersIn(BaseModel):
+    fill_to: int
+    reorder_at: int | None = None
+    reorder_pct: int | None = None
+    critical_at: int | None = None
+    critical_pct: int | None = None
+
+
+class SkuCompleteSaved(BaseModel):
+    row: SkuCompleteRow
+    hubs_updated: int = 0
+    barcodes_added: int = 0
+    message: str
+
+
+class SkuCsvChange(BaseModel):
+    field: str
+    label: str
+    old: str | None = None
+    new: str | None = None
+
+
+class SkuCsvRow(BaseModel):
+    row_no: int
+    sku_id: int | None = None
+    code: str | None = None
+    name: str | None = None
+    status: str = Field(description="change | same | error")
+    changes: list[SkuCsvChange] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
+
+
+class SkuCsvResult(BaseModel):
+    committed: bool
+    rows: list[SkuCsvRow]
+    to_change: int
+    unchanged: int
+    errors: int
+    saved: int = 0
+    message: str
+
+
+# --- brand sales report (PRD §15.1) -----------------------------------------------
+
+class BrandReportPeriod(BaseModel):
+    brand_id: int
+    brand_name: str
+    period: str = Field(description="weekly | monthly")
+    start: str = Field(description="First day, WIB")
+    end: str = Field(description="Last day, WIB")
+    label: str
+    reference: str
+    hubs: list[str]
+    is_current: bool = Field(description="The period has not ended yet")
+    file_name: str

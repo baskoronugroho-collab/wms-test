@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=d6aec40">
-<link rel="stylesheet" href="css/app.css?v=d6aec40">
+<link rel="stylesheet" href="css/tokens.css?v=eb89448">
+<link rel="stylesheet" href="css/app.css?v=eb89448">
 </head>
 <body>
 <div class="app" data-screen="home">
@@ -38,11 +38,12 @@
         <h1 class="h1" data-id="Pilih pekerjaan" data-en="Choose a task">Pilih pekerjaan</h1>
       </div>
       <nav class="home">
+        <a class="home__card" href="console/perlu-tindakan.html" style="box-shadow:var(--shadow-1),inset 4px 0 0 var(--caution)"><span class="eyebrow" data-id="Mulai di sini" data-en="Start here">Mulai di sini</span><span class="home__title" data-id="Perlu tindakan" data-en="To do">Perlu tindakan</span><span class="note" data-id="Yang harus Anda selesaikan hari ini" data-en="What you must settle today">Yang harus Anda selesaikan hari ini</span></a>
         <a class="home__card" href="01-mulai-barang-masuk.html"><span class="eyebrow" data-id="Alur A" data-en="Flow A">Alur A</span><span class="home__title" data-id="Barang masuk" data-en="Inbound">Barang masuk</span><span class="note" data-id="Terima kiriman dan simpan ke keranjang" data-en="Receive a delivery into baskets">Terima kiriman dan simpan ke keranjang</span></a>
         <!-- Unit labelling is hidden until a brand without barcodes onboards. -->
         <a class="home__card" hidden href="05-label-unit.html"><span class="eyebrow" data-id="Alur B" data-en="Flow B">Alur B</span><span class="home__title" data-id="Label unit" data-en="Unit labelling">Label unit</span><span class="note" data-id="Tempel stiker Ninja satu per satu" data-en="Apply one Ninja label per unit">Tempel stiker Ninja satu per satu</span></a>
-        <a class="home__card" href="20-tempel-pesanan.html" style="box-shadow:var(--shadow-1),inset 4px 0 0 var(--action)"><span class="eyebrow" data-id="Hiryu dulu" data-en="Hiryu first">Hiryu dulu</span><span class="home__title" data-id="Tempel pesanan Grab" data-en="Paste a Grab order">Tempel pesanan Grab</span><span class="note" data-id="Salin halaman pesanan di Hiryu, tempel di sini" data-en="Copy the order page in Hiryu, paste it here">Salin halaman pesanan di Hiryu, tempel di sini</span></a>
-        <a class="home__card" href="21-pesanan-hub.html"><span class="eyebrow" data-id="Kemas" data-en="Pack">Kemas</span><span class="home__title" data-id="Kemas &amp; serah ke driver" data-en="Pack &amp; hand over">Kemas &amp; serah ke driver</span><span class="note" data-id="Mark ready, rak siap ambil, driver" data-en="Mark ready, the ready shelf, the driver">Mark ready, rak siap ambil, driver</span></a>
+        <a class="home__card" data-tile="paste" href="20-tempel-pesanan.html" style="box-shadow:var(--shadow-1),inset 4px 0 0 var(--action)"><span class="eyebrow" data-id="Hiryu dulu" data-en="Hiryu first">Hiryu dulu</span><span class="home__title" data-id="Tempel pesanan Grab" data-en="Paste a Grab order">Tempel pesanan Grab</span><span class="note" data-id="Salin halaman pesanan di Hiryu, tempel di sini" data-en="Copy the order page in Hiryu, paste it here">Salin halaman pesanan di Hiryu, tempel di sini</span></a>
+        <a class="home__card" href="21-pesanan-hub.html"><span class="eyebrow" data-id="Kemas" data-en="Pack">Kemas</span><span class="home__title" data-id="Kemas &amp; serah ke driver" data-en="Pack &amp; hand over">Kemas &amp; serah ke driver</span><span class="note" data-id="Selesai dikemas, rak siap ambil, driver" data-en="Packed, the ready shelf, the driver">Selesai dikemas, rak siap ambil, driver</span></a>
         <a class="home__card" href="07-ambil-pesanan.html"><span class="eyebrow" data-id="Alur C" data-en="Flow C">Alur C</span><span class="home__title" data-id="Ambil pesanan" data-en="Pick order">Ambil pesanan</span><span class="note" data-id="7 pesanan menunggu diambil" data-en="7 orders waiting to pick">7 pesanan menunggu diambil</span></a>
         <a class="home__card" href="10-hitung-pilih-keranjang.html"><span class="eyebrow" data-id="Alur D" data-en="Flow D">Alur D</span><span class="home__title" data-id="Hitung stok" data-en="Stock count">Hitung stok</span><span class="note" data-id="24 keranjang belum dihitung minggu ini" data-en="24 baskets left this week">24 keranjang belum dihitung minggu ini</span></a>
         <a class="home__card" href="18-kembalikan.html" style="box-shadow:var(--shadow-1),inset 4px 0 0 var(--caution)"><span class="eyebrow" data-id="Alur E" data-en="Flow E">Alur E</span><span class="home__title" data-id="Kembalikan ke rak" data-en="Return to shelf">Kembalikan ke rak</span><span class="note" data-id="Barang dari pesanan yang dibatalkan" data-en="Units from cancelled orders">Barang dari pesanan yang dibatalkan</span></a>
@@ -82,7 +83,7 @@
           </div>
           <div class="home__card" style="gap:8px">
             <span class="eyebrow" data-id="Ambil pesanan" data-en="Picking">Ambil pesanan</span>
-            <a href="20-tempel-pesanan.html" style="font-size:17px" data-id="Tempel pesanan Grab" data-en="Paste a Grab order">Tempel pesanan Grab</a>
+            <a href="20-tempel-pesanan.html" data-tile="paste" style="font-size:17px" data-id="Tempel pesanan Grab" data-en="Paste a Grab order">Tempel pesanan Grab</a>
             <a href="07-ambil-pesanan.html" style="font-size:17px" data-id="Ambil pesanan" data-en="Pick an order">Ambil pesanan</a>
             <a href="21-pesanan-hub.html" style="font-size:17px" data-id="Kemas &amp; serah ke driver" data-en="Pack &amp; hand over">Kemas &amp; serah ke driver</a>
             <a href="08-salah-barang.html" style="font-size:17px" data-id="Salah barang" data-en="Wrong item">Salah barang</a>
@@ -110,11 +111,11 @@
       </details>
     </main>
 </div>
-<script src="js/api.js?v=d6aec40"></script>
-<script src="js/scan.js?v=d6aec40"></script>
-<script src="js/app.js?v=d6aec40"></script>
-<script src="js/wire.js?v=d6aec40"></script>
-<script src="js/screens/home.js?v=d6aec40"></script>
+<script src="js/api.js?v=eb89448"></script>
+<script src="js/scan.js?v=eb89448"></script>
+<script src="js/app.js?v=eb89448"></script>
+<script src="js/wire.js?v=eb89448"></script>
+<script src="js/screens/home.js?v=eb89448"></script>
 
 </body>
 </html>

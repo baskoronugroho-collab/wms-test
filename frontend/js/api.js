@@ -233,7 +233,6 @@
   const r = NJW.api.raw;
   NJW.api.hiryu = {
     paste: (b) => r.post('/hiryu/paste', b),
-    markedReady: (orderId) => r.post('/hiryu/orders/' + orderId + '/marked-ready', {}),
     handedOver: (orderId) => r.post('/hiryu/orders/' + orderId + '/handed-over', {}),
     cancelledInHiryu: (orderId) => r.post('/hiryu/orders/' + orderId + '/cancelled-in-hiryu', {}),
     reopen: (orderId) => r.post('/hiryu/orders/' + orderId + '/reopen', {}),

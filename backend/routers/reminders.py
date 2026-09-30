@@ -27,6 +27,7 @@ import auth
 import db
 import ledger
 import models
+from routers import replenishment
 
 router = APIRouter(prefix="/api/reminders", tags=["reminders"])
 log = logging.getLogger("wms.reminders")
@@ -54,6 +55,21 @@ RULES = {
                         "Flag SKUs still without a rack at a hub after", "hari|days"),
     "slow_mover_days": ("Tandai SKU yang tidak terambil sama sekali selama",
                         "Flag SKUs not picked at all for", "hari|days"),
+    # PRD §5.3.8, §5.5 and §13.5 (deploy 2)
+    "faktur_spv_hours": ("Faktur belum diunggah SPV: kuning setelah",
+                         "Faktur not uploaded by the SPV: amber after", "jam|hours"),
+    "faktur_hq_hours": ("Faktur belum diunggah: masuk daftar Ops HQ setelah",
+                        "Faktur not uploaded: onto Ops HQ's list after", "jam|hours"),
+    "stock_old_days": ("Tandai Stok lama (tanpa ED) setelah masuk lebih dari",
+                       "Flag old stock (no ED) once in the hub for more than", "hari|days"),
+    "ed_near_days": ("Tandai ED dekat saat kedaluwarsa kurang dari",
+                     "Flag near expiry when the ED is less than", "hari|days"),
+    "pick_start_minutes": ("Pesanan belum mulai diambil: kembali ke antrean setelah",
+                           "Order not started: back to the queue after", "menit|min"),
+    "handover_wait_minutes": ("Tas menunggu driver: kuning setelah",
+                              "Bag waiting for a driver: amber after", "menit|min"),
+    "link_wait_alert_minutes": ("Pesan ke Hiryu menunggu: merah setelah",
+                                "Message to Hiryu waiting: red after", "menit|min"),
 }
 
 
@@ -165,7 +181,7 @@ async def _auto_for_site(site: dict, sku_ids: list[int] | None) -> int:
             "    AND NOT EXISTS (SELECT 1 FROM replenishment_lines rl "
             "        JOIN replenishments rp ON rp.id = rl.replenishment_id "
             "       WHERE rp.site_id = sa.site_id AND rl.sku_id = sa.sku_id "
-            "         AND rp.status IN ('draft','sent','confirmed','receiving'))"
+            "         AND rp.status IN ('draft','raised','po','sent','confirmed','receiving'))"
             ") x WHERE x.qty <= x.restock_point", params)
         if not rows:
             return 0
@@ -189,7 +205,8 @@ async def _auto_for_site(site: dict, sku_ids: list[int] | None) -> int:
                      "Dibuat otomatis: stok turun ke titik restock. Periksa lalu kirim ke brand.",
                      "system"))
             for l in lines:
-                target = (l["full_threshold"] or l["restock_point"] * 2) * 2
+                # Fill up to isi sampai (P), PRD §4.4; twice R stands in when P is unset.
+                target = replenishment.fill_to(l["full_threshold"], l["restock_point"]) or 0
                 await db.run(
                     cur,
                     "INSERT INTO replenishment_lines (replenishment_id, sku_id, qty_requested) "
@@ -244,7 +261,7 @@ async def compute_flags(user: auth.User, site_id: int | None) -> list[dict]:
         "         (SELECT rp.reference FROM replenishment_lines rl "
         "            JOIN replenishments rp ON rp.id = rl.replenishment_id "
         "           WHERE rp.site_id = sa.site_id AND rl.sku_id = sa.sku_id "
-        "             AND rp.status IN ('draft','sent','confirmed','receiving') LIMIT 1) AS open_ref "
+        "             AND rp.status IN ('draft','raised','po','sent','confirmed','receiving') LIMIT 1) AS open_ref "
         "  FROM slot_assignments sa JOIN skus s ON s.id = sa.sku_id "
         f" WHERE sa.site_id IN ({ph}) AND sa.slot_role = 'primary' AND s.active = 1 "
         "    AND sa.restock_point IS NOT NULL"
@@ -278,7 +295,7 @@ async def compute_flags(user: auth.User, site_id: int | None) -> list[dict]:
         "       TIMESTAMPDIFF(HOUR, COALESCE(acknowledged_at, received_at), NOW()) AS h_var, "
         "       DATEDIFF(CURDATE(), COALESCE(eta_date, DATE(confirmed_at))) AS d_late "
         f"FROM replenishments WHERE site_id IN ({ph}) "
-        "AND status IN ('draft','sent','confirmed','receiving','variance_review','variance_signoff')", ids)
+        "AND status IN ('draft','raised','po','sent','confirmed','receiving','variance_review','variance_signoff')", ids)
     for r in reps:
         site = by_id[r["site_id"]]
         ref = r["reference"]

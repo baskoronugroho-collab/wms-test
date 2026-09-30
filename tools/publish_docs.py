@@ -15,6 +15,7 @@ DOCS = ROOT / "frontend" / "docs"
 shutil.copyfile(ROOT / "PRD.html", DOCS / "prd.html")
 shutil.copyfile(ROOT / "Wireframes.html", DOCS / "wireframes.html")
 shutil.copyfile(ROOT / "openapi.json", DOCS / "openapi.json")
+shutil.copyfile(ROOT / "docs" / "hiryu-link-v1.md", DOCS / "hiryu-link-v1.txt")
 for old in (DOCS / "templates").glob("*.xlsx"):
     old.unlink()
 for f in (ROOT / "docs" / "templates").glob("*.xlsx"):
