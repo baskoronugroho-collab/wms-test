@@ -1,98 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hitung stok — menghitung — Ninja Kilat WMS</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1B3A5C">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=eb89448">
-<link rel="stylesheet" href="css/app.css?v=eb89448">
+<title>Kilat WMS</title>
+<!-- This address moved to the one app (frontend/app/). legacy.js keeps the
+     query string and hash; the refresh below is the no-JavaScript fallback.
+     The old page: git show d925210:frontend/11-hitung-menghitung.html -->
+<script src="app/legacy.js?v=d925210"></script>
+<meta http-equiv="refresh" content="0; url=app/hitung-stok.html">
 </head>
-<body>
-<div class="app" data-screen="counting">
-    <header class="chrome">
-      <span class="chrome__mark">NINJA</span>
-      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
-      <span class="chrome__sep"></span>
-      <span class="chrome__mode" data-id="Hitung stok" data-en="Stock count">Hitung stok</span>
-      <span class="spacer"></span>
-      <span class="conn" role="status">
-        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
-      </span>
-      <span class="lang" role="group" aria-label="Bahasa">
-        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
-        <button class="lang__opt" data-lang="en" type="button">EN</button>
-      </span>
-      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
-      <span class="chrome__user">Siti N. · UT5</span>
-    </header>
-    <main class="main main--tight main--dense">
-      <div class="row-split">
-        <div class="col" style="flex:0 0 420px">
-          <div class="col" style="gap:8px">
-            <span class="eyebrow" data-id="Keranjang" data-en="Basket">Keranjang</span>
-            <span class="code code--lg" data-field="location">—</span>
-          </div>
-          <img class="product__photo product__photo--fill" src="assets/products/placeholder.svg" data-photo-key="" alt="">
-          <div class="col" style="gap:6px">
-            <span class="product__meta" data-field="meta"></span>
-            <span class="product__name" data-field="sku-name">—</span>
-          </div>
-          <p class="panel note" style="padding:14px 16px;margin:0" data-field="blind-note" data-id="Jumlah di sistem sengaja disembunyikan. Pindai setiap barang satu per satu. Barcode rusak? Tambah pakai tombol +." data-en="The system quantity is deliberately hidden. Scan every item, one by one. Barcode unreadable? Add it with the + button.">Jumlah di sistem sengaja disembunyikan. Pindai setiap barang satu per satu. Barcode rusak? Tambah pakai tombol +.</p>
-        </div>
-        <div class="col col--grow">
-          <div class="scanzone" data-scan-label="Pindai setiap barang di keranjang" data-offline-msg="Tunggu koneksi kembali">
-            <span class="scanzone__state" data-id="Menunggu pindaian" data-en="Waiting for scan">Menunggu pindaian</span>
-            <span class="scanzone__prompt" data-id="Pindai setiap barang di keranjang" data-en="Scan every item in the basket">Pindai setiap barang di keranjang</span>
-            <input class="scanzone__input" aria-label="Pindai setiap barang di keranjang">
-          </div>
-          <div class="counter">
-            <button class="step step--minus" type="button" data-action="dec" aria-label="Kurangi">−</button>
-            <span class="counter__col">
-              <span class="eyebrow" data-id="Hitungan kamu" data-en="Your count">Hitungan kamu</span>
-              <span class="counter__num" data-field="count">0</span>
-              <span class="note" data-field="count-split"></span>
-            </span>
-            <button class="step step--plus" type="button" data-action="inc" aria-label="Tambah">+</button>
-          </div>
-          <div class="keypad">
-            <button class="keypad__key" type="button" data-key="1">1</button>
-            <button class="keypad__key" type="button" data-key="2">2</button>
-            <button class="keypad__key" type="button" data-key="3">3</button>
-            <button class="keypad__key" type="button" data-key="4">4</button>
-            <button class="keypad__key" type="button" data-key="5">5</button>
-            <button class="keypad__key" type="button" data-key="6">6</button>
-            <button class="keypad__key" type="button" data-key="7">7</button>
-            <button class="keypad__key" type="button" data-key="8">8</button>
-            <button class="keypad__key" type="button" data-key="9">9</button>
-            <button class="keypad__key keypad__key--word" type="button" data-key="del" data-id="Hapus" data-en="Delete">Hapus</button>
-            <button class="keypad__key" type="button" data-key="0">0</button>
-            <button class="keypad__key keypad__key--word" type="button" data-key="zero" data-id="Kosong (0)" data-en="Empty (0)">Kosong (0)</button>
-          </div>
-          <div class="stats">
-            <a class="btn btn--outline btn--lg" href="10-hitung-pilih-keranjang.html" style="flex:0 0 260px" data-id="Lewati keranjang ini" data-en="Skip this basket">Lewati keranjang ini</a>
-            <a class="btn btn--primary btn--lg btn--grow" href="12-hasil-hitung.html" data-action="save" data-id="Simpan hitungan" data-en="Save count">Simpan hitungan</a>
-          </div>
-        </div>
-      </div>
-    </main>
-</div>
-<style>
-  /* One block more than the design (the scan zone) must still fit 1366x768
-     without scrolling to the save button; the keys stay well above 48 px. */
-  [data-screen="counting"] .keypad__key { min-height: 60px; }
-</style>
-<script src="js/api.js?v=eb89448"></script>
-<script src="js/scan.js?v=eb89448"></script>
-<script src="js/app.js?v=eb89448"></script>
-<script src="js/wire.js?v=eb89448"></script>
-<script src="js/screens/counting.js?v=eb89448"></script>
-</body>
+<body><p><a href="app/hitung-stok.html">Halaman ini sudah pindah. Buka Kilat WMS.</a></p></body>
 </html>

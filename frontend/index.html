@@ -1,121 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Beranda — Ninja Kilat WMS</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1B3A5C">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=eb89448">
-<link rel="stylesheet" href="css/app.css?v=eb89448">
+<title>Kilat WMS</title>
+<!-- This address moved to the one app (frontend/app/). legacy.js keeps the
+     query string and hash; the refresh below is the no-JavaScript fallback.
+     The old page: git show d925210:frontend/index.html -->
+<script src="app/legacy.js?v=d925210"></script>
+<meta http-equiv="refresh" content="0; url=app/">
 </head>
-<body>
-<div class="app" data-screen="home">
-    <header class="chrome">
-      <span class="chrome__mark">NINJA</span>
-      <span class="chrome__sep"></span>
-      <span class="chrome__mode" data-id="Station UT5" data-en="Station UT5">Station UT5</span>
-      <span class="spacer"></span>
-      <span class="conn" role="status">
-        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
-      </span>
-      <span class="lang" role="group" aria-label="Bahasa">
-        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
-        <button class="lang__opt" data-lang="en" type="button">EN</button>
-      </span>
-      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
-      <span class="chrome__user">Rina P. · UT5</span>
-    </header>
-    <main class="main">
-      <div class="col">
-        <span class="eyebrow">Ninja Kilat WMS · Station app</span>
-        <h1 class="h1" data-id="Pilih pekerjaan" data-en="Choose a task">Pilih pekerjaan</h1>
-      </div>
-      <nav class="home">
-        <a class="home__card" href="console/perlu-tindakan.html" style="box-shadow:var(--shadow-1),inset 4px 0 0 var(--caution)"><span class="eyebrow" data-id="Mulai di sini" data-en="Start here">Mulai di sini</span><span class="home__title" data-id="Perlu tindakan" data-en="To do">Perlu tindakan</span><span class="note" data-id="Yang harus Anda selesaikan hari ini" data-en="What you must settle today">Yang harus Anda selesaikan hari ini</span></a>
-        <a class="home__card" href="01-mulai-barang-masuk.html"><span class="eyebrow" data-id="Alur A" data-en="Flow A">Alur A</span><span class="home__title" data-id="Barang masuk" data-en="Inbound">Barang masuk</span><span class="note" data-id="Terima kiriman dan simpan ke keranjang" data-en="Receive a delivery into baskets">Terima kiriman dan simpan ke keranjang</span></a>
-        <!-- Unit labelling is hidden until a brand without barcodes onboards. -->
-        <a class="home__card" hidden href="05-label-unit.html"><span class="eyebrow" data-id="Alur B" data-en="Flow B">Alur B</span><span class="home__title" data-id="Label unit" data-en="Unit labelling">Label unit</span><span class="note" data-id="Tempel stiker Ninja satu per satu" data-en="Apply one Ninja label per unit">Tempel stiker Ninja satu per satu</span></a>
-        <a class="home__card" data-tile="paste" href="20-tempel-pesanan.html" style="box-shadow:var(--shadow-1),inset 4px 0 0 var(--action)"><span class="eyebrow" data-id="Hiryu dulu" data-en="Hiryu first">Hiryu dulu</span><span class="home__title" data-id="Tempel pesanan Grab" data-en="Paste a Grab order">Tempel pesanan Grab</span><span class="note" data-id="Salin halaman pesanan di Hiryu, tempel di sini" data-en="Copy the order page in Hiryu, paste it here">Salin halaman pesanan di Hiryu, tempel di sini</span></a>
-        <a class="home__card" href="21-pesanan-hub.html"><span class="eyebrow" data-id="Kemas" data-en="Pack">Kemas</span><span class="home__title" data-id="Kemas &amp; serah ke driver" data-en="Pack &amp; hand over">Kemas &amp; serah ke driver</span><span class="note" data-id="Selesai dikemas, rak siap ambil, driver" data-en="Packed, the ready shelf, the driver">Selesai dikemas, rak siap ambil, driver</span></a>
-        <a class="home__card" href="07-ambil-pesanan.html"><span class="eyebrow" data-id="Alur C" data-en="Flow C">Alur C</span><span class="home__title" data-id="Ambil pesanan" data-en="Pick order">Ambil pesanan</span><span class="note" data-id="7 pesanan menunggu diambil" data-en="7 orders waiting to pick">7 pesanan menunggu diambil</span></a>
-        <a class="home__card" href="10-hitung-pilih-keranjang.html"><span class="eyebrow" data-id="Alur D" data-en="Flow D">Alur D</span><span class="home__title" data-id="Hitung stok" data-en="Stock count">Hitung stok</span><span class="note" data-id="24 keranjang belum dihitung minggu ini" data-en="24 baskets left this week">24 keranjang belum dihitung minggu ini</span></a>
-        <a class="home__card" href="18-kembalikan.html" style="box-shadow:var(--shadow-1),inset 4px 0 0 var(--caution)"><span class="eyebrow" data-id="Alur E" data-en="Flow E">Alur E</span><span class="home__title" data-id="Kembalikan ke rak" data-en="Return to shelf">Kembalikan ke rak</span><span class="note" data-id="Barang dari pesanan yang dibatalkan" data-en="Units from cancelled orders">Barang dari pesanan yang dibatalkan</span></a>
-        <a class="home__card" href="13-peta-rak.html"><span class="eyebrow" data-id="Alur F" data-en="Flow F">Alur F</span><span class="home__title" data-id="Peta rak" data-en="Rack map">Peta rak</span><span class="note" data-id="Untuk supervisor: isi rak dan selisih" data-en="Supervisor: occupancy and variance">Untuk supervisor: isi rak dan selisih</span></a>
-      </nav>
-
-      <div class="col" style="gap:12px">
-        <span class="eyebrow" data-id="Kalau kamu bekerja di Gudang Logos" data-en="If you work at the Logos hub">Kalau kamu bekerja di Gudang Logos</span>
-        <nav class="home">
-        <a class="home__card" href="19-gudang-kirim.html"><span class="eyebrow" data-id="Hub" data-en="Hub">Hub</span><span class="home__title" data-id="Kirim tote ke darkstore" data-en="Dispatch a tote">Kirim tote ke darkstore</span><span class="note" data-id="Susun tote, segel, lalu cetak labelnya" data-en="Build a tote, seal it, print its label">Susun tote, segel, lalu cetak labelnya</span></a>
-        <a class="home__card" href="01-mulai-barang-masuk.html"><span class="eyebrow" data-id="Hub" data-en="Hub">Hub</span><span class="home__title" data-id="Terima kiriman dari brand" data-en="Receive from the brand">Terima kiriman dari brand</span><span class="note" data-id="Alurnya sama persis dengan darkstore" data-en="Exactly the same flow as a darkstore">Alurnya sama persis dengan darkstore</span></a>
-        </nav>
-      </div>
-
-      <div class="home" style="grid-template-columns:1fr">
-        <a class="home__card" href="console/index.html" style="box-shadow:var(--shadow-1),inset 4px 0 0 var(--accent)"><span class="eyebrow" data-id="Untuk supervisor" data-en="For supervisors">Untuk supervisor</span><span class="home__title" data-id="Buka konsol supervisor" data-en="Open the supervisor console">Buka konsol supervisor</span><span class="note" data-id="Antrean ambil, penempatan & batas, transfer gudang, integrasi POS, slip putaway, label warna hari, staf, hub, dan produk." data-en="The pick queue, slotting & thresholds, transfers, POS integration, putaway slips, day-colour labels, staff, hubs and products.">Antrean ambil, penempatan &amp; batas, transfer gudang, integrasi POS, slip putaway, label warna hari, staf, hub, dan produk.</span></a>
-      </div>
-
-      <!-- Every screen, grouped by the flow it belongs to. This used to be a
-           run-on link list that read like a developer's index; the states a
-           person actually lands in deserve to be named. -->
-      <details class="col" style="gap:12px">
-        <summary class="eyebrow" style="cursor:pointer" data-id="Semua layar station" data-en="Every station screen">Semua layar station</summary>
-        <div class="home">
-          <div class="home__card" style="gap:8px">
-            <span class="eyebrow" data-id="Barang masuk" data-en="Inbound">Barang masuk</span>
-            <a href="01-mulai-barang-masuk.html" style="font-size:17px" data-id="Mulai penerimaan" data-en="Start a receipt">Mulai penerimaan</a>
-            <a href="02-barang-masuk-scan.html" style="font-size:17px" data-id="Pindai barang masuk" data-en="Scan inbound">Pindai barang masuk</a>
-            <a href="03-barcode-tidak-dikenal.html" style="font-size:17px" data-id="Barcode tidak dikenal" data-en="Unknown barcode">Barcode tidak dikenal</a>
-            <a href="04-buat-keranjang.html" style="font-size:17px" data-id="Buat keranjang baru" data-en="Create a basket">Buat keranjang baru</a>
-            <a href="15-penerimaan-selesai.html" style="font-size:17px" data-id="Penerimaan selesai" data-en="Receipt complete">Penerimaan selesai</a>
-          </div>
-          <div class="home__card" hidden style="gap:8px">
-            <span class="eyebrow" data-id="Label unit" data-en="Unit labelling">Label unit</span>
-            <a href="05-label-unit.html" style="font-size:17px" data-id="Tempel label unit" data-en="Apply a unit label">Tempel label unit</a>
-            <a href="06-label-sudah-terpakai.html" style="font-size:17px" data-id="Label sudah terpakai" data-en="Label already used">Label sudah terpakai</a>
-          </div>
-          <div class="home__card" style="gap:8px">
-            <span class="eyebrow" data-id="Ambil pesanan" data-en="Picking">Ambil pesanan</span>
-            <a href="20-tempel-pesanan.html" data-tile="paste" style="font-size:17px" data-id="Tempel pesanan Grab" data-en="Paste a Grab order">Tempel pesanan Grab</a>
-            <a href="07-ambil-pesanan.html" style="font-size:17px" data-id="Ambil pesanan" data-en="Pick an order">Ambil pesanan</a>
-            <a href="21-pesanan-hub.html" style="font-size:17px" data-id="Kemas &amp; serah ke driver" data-en="Pack &amp; hand over">Kemas &amp; serah ke driver</a>
-            <a href="08-salah-barang.html" style="font-size:17px" data-id="Salah barang" data-en="Wrong item">Salah barang</a>
-            <a href="17-barang-tidak-ada.html" style="font-size:17px" data-id="Barang tidak ada" data-en="Item not there">Barang tidak ada</a>
-            <a href="09-pesanan-selesai.html" style="font-size:17px" data-id="Pesanan selesai" data-en="Order complete">Pesanan selesai</a>
-          </div>
-          <div class="home__card" style="gap:8px">
-            <span class="eyebrow" data-id="Hitung stok" data-en="Stock count">Hitung stok</span>
-            <a href="10-hitung-pilih-keranjang.html" style="font-size:17px" data-id="Pilih keranjang" data-en="Choose a basket">Pilih keranjang</a>
-            <a href="11-hitung-menghitung.html" style="font-size:17px" data-id="Menghitung" data-en="Counting">Menghitung</a>
-            <a href="12-hasil-hitung.html" style="font-size:17px" data-id="Hasil hitung" data-en="Count result">Hasil hitung</a>
-          </div>
-          <div class="home__card" style="gap:8px">
-            <span class="eyebrow" data-id="Kembalikan & hub" data-en="Returns & hub">Kembalikan & hub</span>
-            <a href="18-kembalikan.html" style="font-size:17px" data-id="Daftar kembalikan ke rak" data-en="Return-to-shelf list">Daftar kembalikan ke rak</a>
-            <a href="18-kembalikan-pindai.html" style="font-size:17px" data-id="Pindai di rak" data-en="Scan at the rack">Pindai di rak</a>
-            <a href="19-gudang-kirim.html" style="font-size:17px" data-id="Kirim tote" data-en="Dispatch a tote">Kirim tote</a>
-          </div>
-          <div class="home__card" style="gap:8px">
-            <span class="eyebrow" data-id="Lain-lain" data-en="Other">Lain-lain</span>
-            <a href="13-peta-rak.html" style="font-size:17px" data-id="Peta rak" data-en="Rack map">Peta rak</a>
-            <a href="14-terkunci.html" style="font-size:17px" data-id="Terkunci (tema gelap)" data-en="Blocked (dark theme)">Terkunci (tema gelap)</a>
-          </div>
-        </div>
-      </details>
-    </main>
-</div>
-<script src="js/api.js?v=eb89448"></script>
-<script src="js/scan.js?v=eb89448"></script>
-<script src="js/app.js?v=eb89448"></script>
-<script src="js/wire.js?v=eb89448"></script>
-<script src="js/screens/home.js?v=eb89448"></script>
-
-</body>
+<body><p><a href="app/">Halaman ini sudah pindah. Buka Kilat WMS.</a></p></body>
 </html>

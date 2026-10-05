@@ -4,18 +4,16 @@ and 9, §5.3.8, §4.4.6).
 After the inbound, staff sign the Surat Jalan and the Faktur and hand the Faktur
 to the SPV, who photographs or scans every page and uploads it here. Until then
 a completed brand receipt is "waiting for the Faktur" (flagged to the SPV at
-24 h, to Ops HQ at 48 h). Ops HQ reads the expiry dates off it (routers/
-replenishment.py, *ED dari Faktur*); nobody types a date at the receiving bench.
+24 h, to Ops HQ at 48 h). Nobody types a date at the receiving bench.
 
-A Faktur covers the delivery, not a batch: one AWB can be received in several
-batches (several receipts), and the upload marks every completed batch of the
-same replenishment as done.
+A Faktur covers the delivery: the upload marks every completed receipt of the
+same restock request as done. ED tracking is dropped (5 Oct): nobody reads dates
+off the Faktur any more; stock age counts from the inbound date.
 
-If units differ, the SPV raises it to Ops HQ (*Ajukan selisih ke Ops HQ*):
-extra units are the new path (they are in stock and belong to the brand; Ops HQ
-settles the Faktur with the brand by email and closes the issue with the
-outcome); short and damaged units are recorded here for Ops HQ as well, and
-still go through the variance approval on the replenishment.
+Differences are now recorded by the WMS itself at the end of receiving and
+approved by Ops HQ in routers/replenishment.py (*Selesaikan selisih*,
+inbound_differences). The faktur_issues endpoints below are kept for old data
+and are no longer part of the flow.
 
 Files live in the app's private bucket (storage.py's client), under their own
 `docs/faktur/` prefix, and are streamed back through the API behind the same
@@ -42,7 +40,8 @@ MAX_FILES = 12
 # though not every browser can show it inline.
 TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp",
          "image/heic": "heic", "image/heif": "heif", "application/pdf": "pdf"}
-KEY_RE = re.compile(r"^faktur/\d{1,12}-[0-9a-f]{12}\.(jpg|png|webp|heic|heif|pdf)$")
+# faktur/ for the Faktur pages, inbound/ for the receiving photos (routers/inbound.py).
+KEY_RE = re.compile(r"^(faktur|inbound)/\d{1,12}-[0-9a-f]{12}\.(jpg|png|webp|heic|heif|pdf)$")
 KINDS = ("extra", "short", "damaged", "other")
 KIND_LABEL = {"extra": ("lebih", "extra"), "short": ("kurang", "short"),
               "damaged": ("rusak", "damaged"), "other": ("lainnya", "other")}
@@ -51,6 +50,8 @@ KIND_LABEL = {"extra": ("lebih", "extra"), "short": ("kurang", "short"),
 # --- storage: the same private bucket as the photos, its own prefix ---------------
 
 async def _put(key: str, data: bytes, ctype: str) -> None:
+    if not KEY_RE.match(key or ""):
+        raise HTTPException(400, "Invalid document key")
     bucket = storage._gcs()
     if bucket is not None:
         blob = bucket.blob("docs/" + key)
@@ -74,6 +75,11 @@ async def _load(key: str) -> bytes:
     if not path.is_file():
         raise HTTPException(404, "File tidak ditemukan. / File not found.")
     return path.read_bytes()
+
+
+# Public names for the other inbound modules: same bucket, same rules.
+put_doc = _put
+load_doc = _load
 
 
 def page_out(row: dict) -> dict:

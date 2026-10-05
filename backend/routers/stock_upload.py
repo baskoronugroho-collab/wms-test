@@ -185,7 +185,7 @@ async def upload_stock(
                     basket_id = await db.run(
                         cur,
                         "INSERT INTO baskets (location_id, site_id, basket_size) "
-                        "VALUES (%s,%s,'M')",
+                        "VALUES (%s,%s,'BESAR')",
                         (clean["location_id"], clean["site_id"]),
                     )
                 else:

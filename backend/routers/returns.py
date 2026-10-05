@@ -8,26 +8,87 @@ movement. Every movement already triggers message 3, so Hiryu hears the stock
 come back the moment it is really on the shelf, not before.
 
 Anyone on shift can work this list. The scan is still verified: a unit that is
-not the SKU on the task is refused, exactly like a wrong pick.
+not the SKU on the task is refused, exactly like a wrong pick. From deploy 3
+(board 6k) the phone scans the unit, then the bin's label: the bin is checked
+before the unit counts as back.
+
+Reasons: cancelled (an order cancelled after picking), uji (a test order after
+its handover step), driver_return (fine units from a cancelled parcel the
+driver brought back).
 """
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 
+import assign
 import auth
 import common
 import db
+import floor
 import ledger
 import models
 
 router = APIRouter(prefix="/api", tags=["returns"])
 
 _SELECT = (
-    "SELECT rt.*, s.name_display AS sku_name, s.brand_sku_code, "
-    "       l.code AS location_code "
+    "SELECT rt.*, s.name_display AS sku_name, s.brand_sku_code, s.photo_key, "
+    "       l.code AS location_code, l.position_no, r.code AS rack_code, lv.level_no "
     "FROM return_tasks rt JOIN skus s ON s.id = rt.sku_id "
     "LEFT JOIN locations l ON l.id = rt.location_id "
+    "LEFT JOIN levels lv ON lv.id = l.level_id "
+    "LEFT JOIN racks r ON r.id = lv.rack_id "
 )
+
+
+class ReturnTaskV2(models.ReturnTask):
+    order_id: int | None = None
+    photo_key: str | None = None
+    location_short: str | None = Field(default=None, description="A-3-05")
+    location_words: str | None = Field(default=None, description="Rak A, level 3 dari bawah, bin ke-5")
+
+
+class ReturnTaskListV2(models.ReturnTaskList):
+    tasks: list[ReturnTaskV2]
+
+
+class ReturnScanV2In(models.ReturnScanIn):
+    bin_code: str | None = Field(
+        default=None, description="The bin label scanned after the unit (board 6k); checked "
+                                  "against the task's bin before the unit counts")
+
+
+class ReturnScanV2Result(models.ReturnScanResult):
+    task: ReturnTaskV2
+    basket_freed: str | None = Field(default=None, description="The basket now empty and free")
+
+
+class UnitCheckIn(BaseModel):
+    code: str
+
+
+class UnitCheckResult(BaseModel):
+    ok: bool
+    sku_name: str
+    location_code: str | None = None
+    location_short: str | None = None
+    location_words: str | None = None
+    message: str
+
+
+class ReturnGroup(BaseModel):
+    order_id: int | None
+    label: str | None = Field(description="GM-347, UJI-01, or None for a loose task")
+    reason: str
+    basket_code: str | None = None
+    units: int
+    units_returned: int
+    tasks: list[ReturnTaskV2]
+
+
+class ReturnGroupList(BaseModel):
+    groups: list[ReturnGroup]
+    open_units: int
 
 
 def _out(row: dict) -> dict:
@@ -46,10 +107,33 @@ def _out(row: dict) -> dict:
         "reason": row["reason"], "status": row["status"],
         "created_at": str(created) if created else None,
         "age_seconds": age,
+        "order_id": row.get("order_id"),
+        "photo_key": row.get("photo_key"),
+        "location_short": floor.short_bin(row.get("location_code")),
+        "location_words": floor.bin_words(row.get("rack_code"), row.get("level_no"),
+                                          row.get("position_no")),
     }
 
 
-async def create_for_cancel(cur, *, order: dict, lines: list[dict]) -> int:
+async def create_one(cur, *, order: dict, sku_id: int, location_id: int | None, qty: int,
+                     reason: str) -> int:
+    """One return-to-shelf task. Returns its id. Units go back to `location_id`,
+    or to the SKU's rack when that is unknown."""
+    if not location_id:
+        slot = await common.slot_for(order["site_id"], sku_id)
+        location_id = slot["location_id"] if slot else None
+    return await db.run(
+        cur,
+        "INSERT INTO return_tasks (site_id, sku_id, order_id, external_ref, "
+        "location_id, qty, reason, is_training) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+        (order["site_id"], sku_id, order["id"],
+         order.get("hiryu_short_no") or order["external_ref"],
+         location_id, qty, reason, 1 if order.get("is_training") else 0),
+    )
+
+
+async def create_for_cancel(cur, *, order: dict, lines: list[dict],
+                            reason: str = "cancelled") -> int:
     """Queue every picked unit of a cancelled order for return. Returns units queued.
 
     Called inside the cancel transaction, so the order cannot end up cancelled
@@ -61,24 +145,13 @@ async def create_for_cancel(cur, *, order: dict, lines: list[dict]) -> int:
         picked = int(l.get("qty_picked") or 0)
         if picked <= 0:
             continue
-        location_id = l.get("location_id")
-        if not location_id:
-            slot = await common.slot_for(order["site_id"], l["sku_id"])
-            location_id = slot["location_id"] if slot else None
-        await db.run(
-            cur,
-            "INSERT INTO return_tasks (site_id, sku_id, order_id, external_ref, "
-            "location_id, qty, reason, is_training) "
-            "VALUES (%s,%s,%s,%s,%s,%s,'cancelled',%s)",
-            (order["site_id"], l["sku_id"], order["id"],
-             order.get("hiryu_short_no") or order["external_ref"],
-             location_id, picked, 1 if order.get("is_training") else 0),
-        )
+        await create_one(cur, order=order, sku_id=l["sku_id"],
+                         location_id=l.get("location_id"), qty=picked, reason=reason)
         queued += picked
     return queued
 
 
-@router.get("/returns", response_model=models.ReturnTaskList)
+@router.get("/returns", response_model=ReturnTaskListV2)
 async def list_returns(
     site_id: int,
     status: str = Query(default="open", pattern="^(open|done|all)$"),
@@ -102,13 +175,102 @@ async def list_returns(
     return {"tasks": [_out(r) for r in rows], "open_count": int(open_count["n"])}
 
 
-@router.post("/returns/{task_id}/scan", response_model=models.ReturnScanResult)
+@router.get("/returns/by-order", response_model=ReturnGroupList)
+async def returns_by_order(site_id: int, user: auth.User = Depends(auth.current_user)):
+    """Kembalikan ke rak (boards 6e, 6k): open returns grouped per order, oldest
+    first, with the basket they sit in: "6 unit dari GM-347 yang dibatalkan"."""
+    await auth.assert_site_access(user, site_id)
+    rows = await db.fetch_all(
+        _SELECT + "WHERE rt.site_id = %s AND rt.status = 'open' "
+                  "ORDER BY rt.created_at ASC, rt.order_id, rt.id ASC LIMIT 300", (site_id,))
+    baskets = {}
+    ids = sorted({r["order_id"] for r in rows if r["order_id"]})
+    if ids:
+        for b in await db.fetch_all(
+                f"SELECT order_id, basket_code FROM pick_tasks WHERE order_id IN "
+                f"({db.placeholders(ids)}) AND basket_released_at IS NULL", ids):
+            baskets[b["order_id"]] = b["basket_code"]
+    groups: dict = {}
+    for r in rows:
+        key = r["order_id"] or -r["id"]
+        g = groups.setdefault(key, {
+            "order_id": r["order_id"], "label": r["external_ref"], "reason": r["reason"],
+            "basket_code": baskets.get(r["order_id"]), "units": 0, "units_returned": 0,
+            "tasks": []})
+        g["units"] += int(r["qty"])
+        g["units_returned"] += int(r["qty_returned"])
+        g["tasks"].append(_out(r))
+    out = list(groups.values())
+    return {"groups": out,
+            "open_units": sum(g["units"] - g["units_returned"] for g in out)}
+
+
+async def _unit_sku(code: str) -> tuple[dict | None, dict | None]:
+    plate = None
+    sku = await common.sku_by_barcode(code)
+    if not sku:
+        plate = await common.plate_by_code(code)
+        if plate and plate["sku_id"]:
+            sku = {"id": plate["sku_id"]}
+    return sku, plate
+
+
+@router.post("/returns/{task_id}/check-unit", response_model=UnitCheckResult)
+async def check_unit(task_id: int, body: UnitCheckIn,
+                     user: auth.User = Depends(auth.current_user)):
+    """Step 1 of board 6k: is this unit the one to return? Changes nothing;
+    the unit counts as back when its bin is scanned (`scan` with bin_code)."""
+    task = await db.fetch_one(_SELECT + "WHERE rt.id = %s", (task_id,))
+    if not task:
+        raise HTTPException(404, "Return task not found")
+    await auth.assert_site_access(user, task["site_id"])
+    sku, _ = await _unit_sku(body.code.strip())
+    if not sku:
+        raise HTTPException(422, "Barcode tidak dikenal. / Unknown barcode.")
+    if sku["id"] != task["sku_id"]:
+        raise HTTPException(
+            409, f"Salah barang. Yang dikembalikan: {task['sku_name']}. / "
+                 f"Wrong item. This return is {task['sku_name']}.")
+    return {"ok": True, "sku_name": task["sku_name"], "location_code": task["location_code"],
+            "location_short": floor.short_bin(task["location_code"]),
+            "location_words": floor.bin_words(task["rack_code"], task["level_no"],
+                                              task["position_no"]),
+            "message": "Cocok. Taruh di bin, lalu pindai label bin. / "
+                       "Match. Put it in the bin, then scan the bin label."}
+
+
+async def _free_basket_if_empty(order_id: int | None, site_id: int) -> str | None:
+    """A cancelled order's basket is free once all its units are back."""
+    if not order_id:
+        return None
+    left = await db.fetch_one(
+        "SELECT COUNT(*) AS n FROM return_tasks WHERE order_id = %s AND status = 'open'",
+        (order_id,))
+    if left["n"]:
+        return None
+    task = await db.fetch_one(
+        "SELECT pt.id, pt.basket_code FROM pick_tasks pt JOIN orders o ON o.id = pt.order_id "
+        "WHERE pt.order_id = %s AND o.status = 'cancelled' AND pt.basket_released_at IS NULL",
+        (order_id,))
+    if not task:
+        return None
+    n = await db.execute("UPDATE pick_tasks SET basket_released_at = NOW() "
+                         "WHERE id = %s AND basket_released_at IS NULL", (task["id"],))
+    if n:
+        # The picker who was putting it back gets the next order now (6e).
+        await assign.assign_site(site_id)
+        return task["basket_code"]
+    return None
+
+
+@router.post("/returns/{task_id}/scan", response_model=ReturnScanV2Result)
 async def scan_return(
     task_id: int,
-    body: models.ReturnScanIn,
+    body: ReturnScanV2In,
     user: auth.User = Depends(auth.current_user),
 ):
-    """One unit back on the shelf. Scan-verified, no override."""
+    """One unit back on the shelf. Scan-verified, no override. With bin_code
+    (board 6k) the bin label must be the task's bin."""
     replayed = await ledger.replay(body.idempotency_key, "return_scan")
     if replayed:
         return replayed
@@ -124,13 +286,13 @@ async def scan_return(
             409, "Barang ini belum punya rak. Panggil supervisor. / "
                  "This SKU has no rack yet. Call a supervisor.")
 
+    if body.bin_code is not None and not floor.bin_matches(body.bin_code, task["location_code"]):
+        short = floor.short_bin(task["location_code"])
+        raise HTTPException(409, f"Bin salah. Taruh di {short}, lalu pindai labelnya. / "
+                                 f"Wrong bin. Put it in {short}, then scan its label.")
+
     code = body.code.strip()
-    plate = None
-    sku = await common.sku_by_barcode(code)
-    if not sku:
-        plate = await common.plate_by_code(code)
-        if plate and plate["sku_id"]:
-            sku = {"id": plate["sku_id"]}
+    sku, plate = await _unit_sku(code)
     if not sku:
         raise HTTPException(422, "Barcode tidak dikenal. / Unknown barcode.")
     if sku["id"] != task["sku_id"]:
@@ -181,4 +343,6 @@ async def scan_return(
                         f"{returned} dari {locked['qty']}. / {returned} of {locked['qty']}."),
         }
         await ledger.remember(cur, body.idempotency_key, "return_scan", result)
+    if done:
+        result["basket_freed"] = await _free_basket_if_empty(task.get("order_id"), task["site_id"])
     return result

@@ -1,0 +1,3536 @@
+{
+ "version": 1,
+ "note": "Generated from the review canvas working instructions (S01-wi to S10-wi) plus section 11 from boards 11a/11b. Indonesian for staff, English kept as the EN variant.",
+ "sections": [
+  {
+   "n": 1,
+   "page": "perlu-tindakan.html",
+   "title": {
+    "id": "Satu aplikasi untuk semua peran",
+    "en": "One app for every role"
+   },
+   "intro": {
+    "id": "Stasiun dan konsol menjadi satu aplikasi dengan satu menu. Semua orang melihat menu yang sama dan boleh membuka semua layar untuk melihat. Peran hanya menentukan apa yang boleh Anda ubah.",
+    "en": "The station and the console become one app with one menu. Everyone sees the same menu and may open every screen to look; the role only decides what you may change."
+   },
+   "who": [
+    {
+     "id": "Staf",
+     "en": "Staff"
+    },
+    {
+     "id": "SPV",
+     "en": "SPV"
+    },
+    {
+     "id": "Ops HQ",
+     "en": "Ops HQ"
+    }
+   ],
+   "when": {
+    "id": "Setiap shift, di HP atau laptop",
+    "en": "Every shift, on a phone or a laptop"
+   },
+   "where": [
+    {
+     "id": "WMS",
+     "en": "WMS"
+    }
+   ],
+   "steps": [
+    {
+     "n": 1,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Siapa saja",
+       "en": "Anyone"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "1a",
+      "1b"
+     ],
+     "action": {
+      "id": "Masuk dengan akun Google @ninjavan.co Anda",
+      "en": "Sign in with your @ninjavan.co Google account"
+     },
+     "detail": {
+      "id": "",
+      "en": ""
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Perlu tindakan</em>, halaman awal untuk semua peran.",
+      "en": "You see: <em>Perlu tindakan</em>, the start page for every role."
+     }
+    },
+    {
+     "n": 2,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Siapa saja",
+       "en": "Anyone"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "1a",
+      "1b"
+     ],
+     "action": {
+      "id": "Kerjakan <em>Perlu tindakan</em> mulai dari atas",
+      "en": "Work through <em>Perlu tindakan</em> from the top"
+     },
+     "detail": {
+      "id": "",
+      "en": ""
+     },
+     "result": {
+      "id": "Yang terlihat: angka di menu berkurang.",
+      "en": "You see: the count on the menu go down."
+     }
+    },
+    {
+     "n": 3,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "1c"
+     ],
+     "action": {
+      "id": "Di HP, buka menu di kiri atas",
+      "en": "On the phone, open the menu top left"
+     },
+     "detail": {
+      "id": "",
+      "en": ""
+     },
+     "result": {
+      "id": "Yang terlihat: semua item menu, nama, peran dan hub Anda.",
+      "en": "You see: every menu item, your name, role and hub."
+     }
+    },
+    {
+     "n": 4,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      },
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "1a"
+     ],
+     "action": {
+      "id": "Di laptop, layarnya sama dengan menu di sebelah kiri",
+      "en": "On the laptop, the same screens with the menu on the left"
+     },
+     "detail": {
+      "id": "",
+      "en": ""
+     },
+     "result": {
+      "id": "Yang terlihat: menu yang sama seperti di HP dan status sambungan ke Hiryu.",
+      "en": "You see: the same menu as on the phone and the link status to Hiryu."
+     }
+    },
+    {
+     "n": 5,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Siapa saja",
+       "en": "Anyone"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [],
+     "action": {
+      "id": "Buka item menu mana saja untuk melihat. Ubah hanya yang boleh untuk peran Anda",
+      "en": "Open any menu item to look; change only what your role allows"
+     },
+     "detail": {
+      "id": "",
+      "en": ""
+     },
+     "result": {
+      "id": "Yang terlihat: seluruh layar, dengan gembok pada bagian yang tidak boleh Anda ubah.",
+      "en": "You see: the whole screen, with the lock on what you may not change."
+     }
+    }
+   ],
+   "rules": [
+    {
+     "id": "Satu layar untuk satu pekerjaan, sama untuk semua peran.",
+     "en": "One screen per job, the same for every role."
+    },
+    {
+     "id": "Semua orang melihat semua item menu dan boleh melihat semua layar. Server memeriksa setiap perubahan. Tombol yang tidak boleh dipakai peran Anda berwarna abu-abu dengan gembok dan tulisan <em>Hanya SPV</em> atau <em>Hanya Ops HQ</em>.",
+     "en": "Everyone sees every menu item and may view every screen. The server checks every change; a button your role may not use is grey with a lock and <em>Hanya SPV</em> or <em>Hanya Ops HQ</em>."
+    },
+    {
+     "id": "Alamat lama stasiun dan konsol akan membuka layar yang baru.",
+     "en": "Old addresses of the station and the console open the new screen."
+    },
+    {
+     "id": "Bahasa Indonesia yang mudah di semua layar. Bahasa Inggris dan Indonesia bisa diganti di menu.",
+     "en": "Plain Indonesian on every screen; English and Indonesian switch in the menu."
+    },
+    {
+     "id": "<em>Panduan</em> di menu berisi tutorial untuk setiap bagian: instruksi kerjanya beserta layarnya, supaya siapa saja bisa mencari cara kerja suatu proses.",
+     "en": "<em>Panduan</em> in the menu holds a tutorial for every section: its working instruction with its screens, for anyone to look up a process."
+    },
+    {
+     "id": "Tidak ada data pelanggan di mana pun di aplikasi.",
+     "en": "No customer data anywhere in the app."
+    },
+    {
+     "id": "Menu sama untuk semua peran (pimpinan ops, 5 Okt): semua staf bisa melihat semua item menu, dan perubahan dibatasi sesuai peran.",
+     "en": "The menu is the same for every role (ops lead, 5 Oct): all staff can view every menu item, and editing is blocked by role."
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "page": "pengaturan.html?tab=hub",
+   "title": {
+    "id": "Persiapan awal: membuka hub baru",
+    "en": "Kick-off: opening a new hub"
+   },
+   "intro": {
+    "id": "Semua yang harus dilakukan, berurutan, sebelum hub menerima pesanan Grab pertama. Hiryu dulu: jika satu langkah menyangkut kedua sistem, kerjakan bagian Hiryu sebelum bagian WMS.",
+    "en": "Everything that has to happen, in order, before a hub takes its first Grab order. Hiryu first: when a step touches both systems, do the Hiryu part before the WMS part."
+   },
+   "who": [
+    {
+     "id": "Ops HQ",
+     "en": "Ops HQ"
+    },
+    {
+     "id": "SPV",
+     "en": "SPV"
+    }
+   ],
+   "when": {
+    "id": "Sekali per hub, sebelum pesanan Grab pertama",
+    "en": "Once per hub, before the first Grab order"
+   },
+   "where": [
+    {
+     "id": "Hiryu",
+     "en": "Hiryu"
+    },
+    {
+     "id": "WMS",
+     "en": "WMS"
+    },
+    {
+     "id": "Grab",
+     "en": "Grab"
+    }
+   ],
+   "steps": [
+    {
+     "n": 1,
+     "phase": {
+      "id": "Fase A · Orang dan tempat",
+      "en": "Phase A · People and place"
+     },
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "Hiryu"
+     ],
+     "tags": [
+      {
+       "id": "Di Hiryu",
+       "en": "In Hiryu"
+      }
+     ],
+     "screens": [],
+     "action": {
+      "id": "Buat dark store: nama, alamat, jam buka.",
+      "en": "Create the dark store: name, address, opening hours."
+     },
+     "detail": {
+      "id": "Hiryu, Dark stores. Jam buka yang diisi di sini nanti ditampilkan oleh Grab, jadi isi sekali saja dengan benar.",
+      "en": "Hiryu, Dark stores. The opening hours set here are the ones Grab shows later, so set them once, correctly."
+     },
+     "result": {
+      "id": "Yang terlihat: Cawang (dark store #13) ada di daftar Hiryu.",
+      "en": "You see: Cawang (dark store #13) in the Hiryu list."
+     }
+    },
+    {
+     "n": 2,
+     "phase": {
+      "id": "Fase A · Orang dan tempat",
+      "en": "Phase A · People and place"
+     },
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "2a"
+     ],
+     "action": {
+      "id": "Buka <em>Hub &amp; mulai operasi</em> dan lengkapi hub baru.",
+      "en": "Open <em>Hub &amp; mulai operasi</em> and complete the new hub."
+     },
+     "detail": {
+      "id": "Hub datang dari Hiryu dengan sendirinya. Nama, alamat dan jam hanya bisa dilihat, tidak bisa diubah. Isi hanya yang dibutuhkan WMS: <em>Kode hub</em> MA5, <em>Bin barang masuk sementara</em> 6, <em>Baki karantina</em> 1, <em>Keranjang pesanan</em> 6. Tekan <em>Simpan hub</em>.",
+      "en": "The hub arrives from Hiryu by itself; name, address and hours are read-only. Fill in only what the WMS needs: <em>Kode hub</em> MA5, <em>Bin barang masuk sementara</em> 6, <em>Baki karantina</em> 1, <em>Keranjang pesanan</em> 6. Press <em>Simpan hub</em>."
+     },
+     "result": {
+      "id": "Yang terlihat: banner <em>Baru dari Hiryu</em> sudah hilang, dan kode MA5-IN-01 sampai 06, MA5-QR-01 dan MA5-OUT-01 sampai 06 sudah ada.",
+      "en": "You see: the banner <em>Baru dari Hiryu</em> is gone, and the codes MA5-IN-01 to 06, MA5-QR-01 and MA5-OUT-01 to 06 exist."
+     }
+    },
+    {
+     "n": 3,
+     "phase": {
+      "id": "Fase A · Orang dan tempat",
+      "en": "Phase A · People and place"
+     },
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      },
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "Hiryu",
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "2b"
+     ],
+     "action": {
+      "id": "Tambahkan setiap orang: login Hiryu dulu, lalu <em>Tambah orang</em> di WMS.",
+      "en": "Add each person: Hiryu login first, then <em>Tambah orang</em> in the WMS."
+     },
+     "detail": {
+      "id": "Di Hiryu beri peran MANAGER (SPV) atau STAFF. Di WMS: hanya email @ninjavan.co, <em>Nama</em>, <em>Peran</em>, <em>Hub</em>, centang <em>Login Hiryu sudah dibuat</em>, lalu <em>Simpan</em>. Tidak ada undangan dan tidak ada email yang dikirim (belum ada link email saat peluncuran): orang itu langsung masuk dengan akun Google @ninjavan.co miliknya. SPV hanya bisa menambah Staf, di hub-nya sendiri.",
+      "en": "In Hiryu give MANAGER (SPV) or STAFF. In the WMS: an @ninjavan.co email only, <em>Nama</em>, <em>Peran</em>, <em>Hub</em>, tick <em>Login Hiryu sudah dibuat</em>, then <em>Simpan</em>. No invitation and no email are sent (there is no email link at launch): the person signs in straight away with their @ninjavan.co Google account. An SPV can add Staf only, at their own hub."
+     },
+     "result": {
+      "id": "Yang terlihat: orang itu ada di <em>Orang &amp; akses</em> dengan centang di kolom Login Hiryu.",
+      "en": "You see: the person in <em>Orang &amp; akses</em> with a tick under Login Hiryu."
+     }
+    },
+    {
+     "n": 4,
+     "phase": {
+      "id": "Fase A · Orang dan tempat",
+      "en": "Phase A · People and place"
+     },
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "Hiryu",
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "2c"
+     ],
+     "action": {
+      "id": "Siapkan perangkat dan masuk di setiap perangkat.",
+      "en": "Set up the devices and sign in on each one."
+     },
+     "detail": {
+      "id": "Dua HP hub, scanner, laptop pengemasan dengan Hiryu Live Orders terbuka, printer struk untuk slip kemas, dan printer kantor apa saja yang bisa memakai kertas A4 untuk label bin. Setiap orang masuk dengan login sendiri. Jangan pernah memakai login bersama.",
+      "en": "Two hub phones, the scanner, the packing laptop with Hiryu Live Orders open, the receipt printer for the packing slip, and any office printer that takes A4 paper for the bin labels. Everyone signs in with their own login, never a shared one."
+     },
+     "result": {
+      "id": "Yang terlihat: setiap orang masuk ke <em>Perlu tindakan</em> setelah login. Lalu SPV menekan <em>Tandai selesai</em> untuk langkah ini di <em>Mulai operasi</em>.",
+      "en": "You see: each person lands on <em>Perlu tindakan</em> after signing in. The SPV then presses <em>Tandai selesai</em> for this step in <em>Mulai operasi</em>."
+     }
+    },
+    {
+     "n": 5,
+     "phase": {
+      "id": "Fase A · Orang dan tempat",
+      "en": "Phase A · People and place"
+     },
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "2c"
+     ],
+     "action": {
+      "id": "Pelatihan: latih setiap staf sebelum hub buka.",
+      "en": "Training: train every staff member before the hub opens."
+     },
+     "detail": {
+      "id": "Jumlah orang yang dilatih mengikuti kebutuhan per shift: pengambil, pengemas, serah terima dan penerimaan barang, untuk setiap shift. Setiap orang berlatih di WMS dengan pesanan uji (langkah 14), di HP dan login masing-masing.",
+      "en": "How many people are trained follows the number needed per shift: pickers, the packer, handover and receiving, for every shift. Each person practises on the WMS with test orders (step 14), on their own phone and login."
+     },
+     "result": {
+      "id": "Yang terlihat: setiap peran di setiap shift punya cukup orang yang sudah dilatih. Lalu SPV menekan <em>Tandai selesai</em> di <em>Mulai operasi</em>.",
+      "en": "You see: every role on every shift has enough trained people. The SPV then presses <em>Tandai selesai</em> in <em>Mulai operasi</em>."
+     }
+    },
+    {
+     "n": 6,
+     "phase": {
+      "id": "Fase B · Katalog",
+      "en": "Phase B · Catalogue"
+     },
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "2d"
+     ],
+     "action": {
+      "id": "Tambahkan merek: <em>Produk</em>, <em>Merek</em>, <em>Tambah merek</em>.",
+      "en": "Add the brand: <em>Produk</em>, <em>Merek</em>, <em>Tambah merek</em>."
+     },
+     "detail": {
+      "id": "<em>Nama merek</em>, <em>Perusahaan</em>, <em>Email kontak restock</em>, apakah kemasannya punya barcode, dan <em>Akun merchant Grab</em>: <em>Akun merchant merek sendiri</em>, atau <em>Akun merchant Ninja Van</em> (Nemu Mart, untuk merek dengan kurang dari 10 SKU). Hanya data katalog ini yang diketik di WMS. Kerjakan ini sebelum toko merek itu dibuat di Hiryu.",
+      "en": "<em>Nama merek</em>, <em>Perusahaan</em>, <em>Email kontak restock</em>, whether the packs carry barcodes, and <em>Akun merchant Grab</em>: <em>Akun merchant merek sendiri</em>, or <em>Akun merchant Ninja Van</em> (Nemu Mart, for a brand with fewer than 10 SKUs). This is the only catalogue item typed in the WMS. Do it before the brand's stores are made in Hiryu."
+     },
+     "result": {
+      "id": "Yang terlihat: merek ada di daftar <em>Merek</em>.",
+      "en": "You see: the brand in the <em>Merek</em> list."
+     }
+    },
+    {
+     "n": 7,
+     "phase": {
+      "id": "Fase B · Katalog",
+      "en": "Phase B · Catalogue"
+     },
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "Hiryu"
+     ],
+     "tags": [
+      {
+       "id": "Di Hiryu",
+       "en": "In Hiryu"
+      }
+     ],
+     "screens": [],
+     "action": {
+      "id": "Buat setiap toko di Hiryu dan hubungkan ke hub.",
+      "en": "Create each store in Hiryu and assign it to the hub."
+     },
+     "detail": {
+      "id": "Toko baru selalu untuk satu merek baru: satu merek per toko, satu toko per merek di setiap hub, contohnya <em>Labore - Cawang</em>. Merek memakai akun merchant Grab miliknya sendiri (Grab meminta minimal 10 SKU). Jika kurang dari 10 SKU, merek memakai akun merchant internal Ninja Van, yaitu Nemu Mart. Atur penerimaan pesanan ke MANUAL.",
+      "en": "A new store is always for one new brand: one brand per store, one store per brand at each hub, for example <em>Labore - Cawang</em>. The brand sits on its own Grab merchant account (Grab asks at least 10 SKUs), or, with fewer than 10 SKUs, on Ninja Van's internal merchant account, which acts as Nemu Mart. Set order acceptance to MANUAL."
+     },
+     "result": {
+      "id": "Yang terlihat: toko ada di Hiryu dengan nomornya, contohnya #903.",
+      "en": "You see: the store in Hiryu with its number, for example #903."
+     }
+    },
+    {
+     "n": 8,
+     "phase": {
+      "id": "Fase B · Katalog",
+      "en": "Phase B · Catalogue"
+     },
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "2e"
+     ],
+     "action": {
+      "id": "Di <em>Menu &amp; toko Hiryu</em>, daftarkan merek dan akun merchant setiap toko baru.",
+      "en": "In <em>Menu &amp; toko Hiryu</em>, register the brand and merchant account of each new store."
+     },
+     "detail": {
+      "id": "Toko datang dari Hiryu dengan sendirinya. Di <em>Merek</em> pilih Kahf, Labore atau <em>Merek baru</em>. Di <em>Akun merchant Grab</em> pilih <em>Akun merchant merek sendiri</em> atau <em>Akun merchant Ninja Van</em> (Nemu Mart, untuk merek di bawah 10 SKU). Untuk merek yang sudah ditambahkan, isinya diambil dari data merek. Tekan <em>Simpan</em>. WMS menanyakan ini sekali per toko. Jika ada data dari Hiryu yang sepertinya hilang, siapa saja boleh menekan <em>Sinkron ulang dari Hiryu</em>: Hiryu mengirim seluruh katalog saat WMS memintanya. Untuk menjaga Hiryu dan Grab, tombol ini hanya bisa dipakai sekali setiap 5 menit per hub (tombol lalu menampilkan <em>Bisa lagi 09:45</em>), dan setiap tekanan dicatat dengan nama.",
+      "en": "The store arrives from Hiryu by itself. Under <em>Merek</em> pick Kahf, Labore or <em>Merek baru</em>. Under <em>Akun merchant Grab</em> choose <em>Akun merchant merek sendiri</em> or <em>Akun merchant Ninja Van</em> (Nemu Mart, for a brand under 10 SKUs); for a brand already added it is filled in from the brand. Press <em>Simpan</em>; the WMS asks once per store. If something from Hiryu looks missing, anyone can press <em>Sinkron ulang dari Hiryu</em>: Hiryu sends the full catalogue when the WMS asks. To protect Hiryu and Grab it works once every 5 minutes per hub (the button then shows <em>Bisa lagi 09:45</em>), and every press is logged with the name."
+     },
+     "result": {
+      "id": "Yang terlihat: baris toko menampilkan merek dan akun merchant-nya (<em>Merek sendiri</em> atau <em>Ninja Van</em>). Kartu kuning sudah hilang.",
+      "en": "You see: the store row shows its brand and merchant account (<em>Merek sendiri</em> or <em>Ninja Van</em>). The yellow card is gone."
+     }
+    },
+    {
+     "n": 9,
+     "phase": {
+      "id": "Fase B · Katalog",
+      "en": "Phase B · Catalogue"
+     },
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "Hiryu"
+     ],
+     "tags": [
+      {
+       "id": "Di Hiryu",
+       "en": "In Hiryu"
+      }
+     ],
+     "screens": [],
+     "action": {
+      "id": "Buat menu untuk setiap toko dan hubungkan ke tokonya.",
+      "en": "Build each store's menu and assign it to the store."
+     },
+     "detail": {
+      "id": "Satu menu per toko. Hiryu tidak punya tombol salin untuk memakai ulang menu: Export CSV dari menu pertama, lalu Import CSV ke menu kedua.",
+      "en": "One menu per store. To reuse a menu, Hiryu has no copy button: Export CSV from the first menu, Import CSV into the second."
+     },
+     "result": {
+      "id": "Yang terlihat: di daftar toko WMS, setiap toko menampilkan nama menu dan jumlah itemnya.",
+      "en": "You see: in the WMS store list, each store shows its menu name and item count."
+     }
+    },
+    {
+     "n": 10,
+     "phase": {
+      "id": "Fase B · Katalog",
+      "en": "Phase B · Catalogue"
+     },
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "Hiryu"
+     ],
+     "tags": [
+      {
+       "id": "Di Hiryu",
+       "en": "In Hiryu"
+      }
+     ],
+     "screens": [],
+     "action": {
+      "id": "Buat SKU dan hubungkan setiap item menu ke SKU-nya (Bundles).",
+      "en": "Create the SKUs and connect every menu item to its SKU (Bundles)."
+     },
+     "detail": {
+      "id": "Item menu tanpa SKU tidak bisa diambil, jadi tidak boleh ada item yang tertinggal.",
+      "en": "A menu item without a SKU cannot be picked, so no item may be left over."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Item tanpa SKU</em> bernilai 0 untuk toko itu (layar 2e), dan SKU muncul di <em>Produk</em>.",
+      "en": "You see: <em>Item tanpa SKU</em> is 0 for the store (screen 2e), and the SKUs appear under <em>Produk</em>."
+     }
+    },
+    {
+     "n": 11,
+     "phase": {
+      "id": "Fase B · Katalog",
+      "en": "Phase B · Catalogue"
+     },
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "2f"
+     ],
+     "action": {
+      "id": "Atur ukuran bin setiap SKU: <em>Produk</em>, filter <em>Tanpa ukuran bin</em>.",
+      "en": "Set the bin size of each SKU: <em>Produk</em>, filter <em>Tanpa ukuran bin</em>."
+     },
+     "detail": {
+      "id": "<em>Ukuran bin</em> (<em>Kecil</em> atau <em>Besar</em>) wajib diisi: SKU tidak bisa mendapat bin sebelum ukurannya diisi. Kotak di atas tabel menjelaskannya: <em>Kecil</em> muat di 15 × 10 × 20 cm (sekitar 3 L, contohnya botol atau tube 100 ml). <em>Besar</em> untuk yang lebih besar, atau botol 150 ml ke atas. Batas ini masih usulan dan bisa diubah oleh Ops HQ. Sisanya boleh diisi nanti: <em>Isi sampai</em>, <em>Pesan ulang saat sisa</em>, <em>Cadangan Grab</em> (1 kecuali ada arahan lain), ukuran kemasan P × L × T dalam mm dan berat dalam g. Setiap kolom yang kosong menampilkan <em>Isi nanti</em> dan SKU itu tetap ditandai di <em>Perlu tindakan</em>, tetapi tidak menghalangi kerja. PO membutuhkan <em>Isi sampai</em>: SKU tanpa data ini tidak mendapat usulan jumlah. Ketik di tabel, atau <em>Unduh CSV</em>, isi, lalu <em>Unggah CSV</em>.",
+      "en": "<em>Ukuran bin</em> (<em>Kecil</em> or <em>Besar</em>) is required: a SKU cannot get a bin until it is set. The box above the table explains them: <em>Kecil</em> fits in 15 × 10 × 20 cm (about 3 L, for example a 100 ml bottle or tube); <em>Besar</em> is anything larger, or a bottle of 150 ml or more. The limits are a proposal Ops HQ can change. The rest can be filled later: <em>Isi sampai</em>, <em>Pesan ulang saat sisa</em>, <em>Cadangan Grab</em> (1 unless told otherwise), pack size P × L × T in mm and weight in g. Each empty one shows <em>Isi nanti</em> and the SKU stays flagged on <em>Perlu tindakan</em>, without blocking. A PO needs <em>Isi sampai</em>: a SKU without it gets no suggested quantity. Type in the table, or <em>Unduh CSV</em>, fill it in, <em>Unggah CSV</em>."
+     },
+     "result": {
+      "id": "Yang terlihat: angka <em>Tanpa ukuran bin</em> turun sampai 0. Baris yang datanya masih kurang menampilkan <em>Belum lengkap: 3 data</em> berwarna kuning tua sampai diisi.",
+      "en": "You see: <em>Tanpa ukuran bin</em> counts down to 0. Rows still missing data show <em>Belum lengkap: 3 data</em> in amber until filled."
+     }
+    },
+    {
+     "n": 12,
+     "phase": {
+      "id": "Fase B · Katalog",
+      "en": "Phase B · Catalogue"
+     },
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "2f"
+     ],
+     "action": {
+      "id": "Daftarkan barcode setiap SKU di kolom <em>Barcode</em>.",
+      "en": "Register each SKU's barcode in the <em>Barcode</em> column."
+     },
+     "detail": {
+      "id": "Sebagian besar barcode datang dari Hiryu bersama SKU-nya (<em>dari Hiryu</em>). Jika baris menampilkan <em>Belum ada barcode</em>, ambil satu unit contoh dan tekan <em>Pindai</em> (kamera HP atau scanner), atau tekan <em>Tempel kode</em> dan tempelkan kodenya. Satu barcode hanya untuk satu SKU: kode yang sudah dipakai SKU lain akan ditolak. Nanti staf memindai barcode ini saat penerimaan, pengambilan dan pengemasan.",
+      "en": "Most barcodes come from Hiryu with the SKU (<em>dari Hiryu</em>). Where the row shows <em>Belum ada barcode</em>, take one sample unit and press <em>Pindai</em> (phone camera or scanner), or press <em>Tempel kode</em> and paste the code. One barcode belongs to one SKU only: a code another SKU already uses is refused. Staff scan this barcode later at receiving, picking and packing."
+     },
+     "result": {
+      "id": "Yang terlihat: setiap baris menampilkan kodenya dengan <em>dari Hiryu</em> atau <em>dipindai</em>, dan tidak ada baris yang bertuliskan <em>Belum ada barcode</em>.",
+      "en": "You see: every row shows its code with <em>dari Hiryu</em> or <em>dipindai</em>, and no row says <em>Belum ada barcode</em>."
+     }
+    },
+    {
+     "n": 13,
+     "phase": {
+      "id": "Fase E · Aktifkan",
+      "en": "Phase E · Switch on"
+     },
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Hiryu"
+     ],
+     "tags": [],
+     "screens": [],
+     "action": {
+      "id": "Nyalakan sambungan untuk toko itu.",
+      "en": "Switch on the link for the store."
+     },
+     "detail": {
+      "id": "Pada saat yang sama WMS mengirim seluruh stok dan Hiryu berhenti menghitung stoknya sendiri. Lalu buka tiga SKU di Hiryu dan cek apakah angkanya sama dengan angka WMS (stok tersedia dikurangi <em>Cadangan Grab</em>).",
+      "en": "At the same moment the WMS sends the full stock and Hiryu stops its own count. Then open three SKUs in Hiryu and check each matches the WMS number (available minus <em>Cadangan Grab</em>)."
+     },
+     "result": {
+      "id": "Yang terlihat: ketiga SKU menampilkan angka yang sama di Hiryu dan di WMS. WMS mencentang langkah ini dengan sendirinya.",
+      "en": "You see: the three SKUs show the same number in Hiryu and in the WMS. The WMS ticks this step by itself."
+     }
+    },
+    {
+     "n": 14,
+     "phase": {
+      "id": "Fase E · Aktifkan",
+      "en": "Phase E · Switch on"
+     },
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      },
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [],
+     "action": {
+      "id": "Berlatih dengan pesanan uji WMS: <em>Pesanan</em>, <em>Buat pesanan uji</em>.",
+      "en": "Train with WMS test orders: <em>Pesanan</em>, <em>Buat pesanan uji</em>."
+     },
+     "detail": {
+      "id": "Pesanan uji adalah pesanan palsu yang dibuat hanya di WMS, dari stok hub, dengan tanda <em>UJI</em>. Pesanan ini tidak terhubung ke Hiryu atau Grab, tidak ada yang membayar, dan tidak pernah masuk laporan. Staf mengambil, mengemas dan menyerahkannya untuk berlatih, lalu mengembalikan barangnya dengan <em>Kembalikan ke rak</em>. Ulangi sampai setiap orang yang dilatih sudah mengerjakan setiap tugas sekali.",
+      "en": "A test order is a dummy order made in the WMS only, from the hub's stock, marked <em>UJI</em>. It has no link to Hiryu or Grab, nobody pays for it, and it never appears in reports. Staff pick, pack and hand it over to practise, then put the items back with <em>Kembalikan ke rak</em>. Repeat until every trained person has done each job once."
+     },
+     "result": {
+      "id": "Yang terlihat: pesanan uji ada di <em>Pesanan</em> dengan tanda <em>UJI</em>, dan tidak ada yang baru di Hiryu Live Orders.",
+      "en": "You see: the test orders in <em>Pesanan</em> with the <em>UJI</em> tag, and nothing new in Hiryu Live Orders."
+     }
+    },
+    {
+     "n": 15,
+     "phase": {
+      "id": "Fase E · Aktifkan",
+      "en": "Phase E · Switch on"
+     },
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "Hiryu",
+      "Grab"
+     ],
+     "tags": [
+      {
+       "id": "Di Hiryu",
+       "en": "In Hiryu"
+      }
+     ],
+     "screens": [],
+     "action": {
+      "id": "Aktifkan setiap toko di Grab dengan login manajer Grab milik outlet.",
+      "en": "Activate each store on Grab with the outlet's Grab manager login."
+     },
+     "detail": {
+      "id": "Cek apakah menu menampilkan Synced di Hiryu dan jam buka muncul di Grab.",
+      "en": "Check the menu shows Synced in Hiryu and the opening hours show on Grab."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Aktif</em> di kolom Grab untuk toko itu di <em>Menu &amp; toko Hiryu</em>. WMS mencentang langkah ini dengan sendirinya.",
+      "en": "You see: <em>Aktif</em> under Grab for the store in <em>Menu &amp; toko Hiryu</em>. The WMS ticks this step by itself."
+     }
+    },
+    {
+     "n": 16,
+     "phase": {
+      "id": "Fase E · Aktifkan",
+      "en": "Phase E · Switch on"
+     },
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      },
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "Hiryu",
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [],
+     "action": {
+      "id": "Setelah aktif, awasi pesanan asli pertama setiap toko dengan teliti.",
+      "en": "After activation, watch the first real orders of each store closely."
+     },
+     "detail": {
+      "id": "Dampingi pengambil dan pengemas pada pesanan Grab asli pertama setiap toko: diterima di Hiryu, lalu diambil, dikemas dan diserahkan di WMS. Perbaiki masalah apa pun di hari yang sama.",
+      "en": "Stand with the picker and the packer on each store's first real Grab orders: accepted in Hiryu, then picked, packed and handed over in the WMS. Fix any problem the same day."
+     },
+     "result": {
+      "id": "Yang terlihat: pesanan pertama setiap toko sudah diserahkan di <em>Pesanan</em>. Lalu tekan <em>Tandai selesai</em> di <em>Mulai operasi</em>.",
+      "en": "You see: the first orders of each store handed over in <em>Pesanan</em>. Then press <em>Tandai selesai</em> in <em>Mulai operasi</em>."
+     }
+    }
+   ],
+   "rules": [
+    {
+     "id": "Hiryu dulu. Jika satu langkah menyangkut kedua sistem, kerjakan bagian Hiryu lebih dulu.",
+     "en": "Hiryu first. When a step touches both systems, do the Hiryu part first."
+    },
+    {
+     "id": "Hub, toko dan SKU datang dari Hiryu, jadi tidak ada yang diketik dua kali. Hanya merek yang ditambahkan di WMS.",
+     "en": "The hub, stores and SKUs come from Hiryu, so nothing is typed twice. Brands are the one thing added in the WMS."
+    },
+    {
+     "id": "Satu toko menjual satu merek. Pilot punya dua merek, Kahf dan Labore, masing-masing dengan tokonya sendiri di setiap hub. Merek di bawah 10 SKU memakai akun merchant Ninja Van (Nemu Mart).",
+     "en": "One store sells one brand. The pilot has two brands, Kahf and Labore, each with its own store per hub. A brand under 10 SKUs sits on Ninja Van's merchant account (Nemu Mart)."
+    },
+    {
+     "id": "Toko tanpa stok tidak menampilkan apa pun di Grab.",
+     "en": "A store with no stock shows nothing on Grab."
+    },
+    {
+     "id": "Aktifkan toko di Grab hanya jika semua langkah sebelumnya sudah menampilkan <em>Selesai</em> di <em>Mulai operasi</em>.",
+     "en": "Activate a store on Grab only when every step before it shows <em>Selesai</em> in <em>Mulai operasi</em>."
+    },
+    {
+     "id": "Cara kerja setiap bagian ada di <em>Panduan</em>.",
+     "en": "Every section's how-to is under <em>Panduan</em>."
+    },
+    {
+     "id": "Staf tidak boleh mengerjakan pesanan asli sebelum berlatih dengan pesanan uji WMS. Pesanan uji tidak pernah dibayar dan tidak pernah masuk ke Hiryu atau Grab.",
+     "en": "No staff member works a real order before training with WMS test orders. Test orders are never paid and never reach Hiryu or Grab."
+    },
+    {
+     "id": "Batas <em>Kecil</em> dan <em>Besar</em> (15 × 10 × 20 cm, botol mulai 150 ml) sudah dipastikan.",
+     "en": "The <em>Kecil</em> and <em>Besar</em> limits (15 × 10 × 20 cm, bottles from 150 ml) are confirmed."
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "page": "rak-bin.html",
+   "title": {
+    "id": "Rak dan label",
+    "en": "Racks and labels"
+   },
+   "intro": {
+    "id": "Daftarkan setiap rak persis seperti bentuk aslinya, supaya setiap bin punya label yang dikenal WMS. Lalu siapkan bin khusus dan beri setiap SKU bin sendiri. Ini fase C dari persiapan awal.",
+    "en": "Register every rack exactly as it stands, so each bin carries a label the WMS knows. Then set up the special bins and give every SKU its own bin. This is phase C of the kick-off."
+   },
+   "who": [
+    {
+     "id": "SPV",
+     "en": "SPV"
+    },
+    {
+     "id": "Staf",
+     "en": "Staff"
+    }
+   ],
+   "when": {
+    "id": "Saat persiapan awal, dan setiap kali ada rak baru",
+    "en": "At kick-off, and whenever a rack is added"
+   },
+   "where": [
+    {
+     "id": "WMS",
+     "en": "WMS"
+    },
+    {
+     "id": "Kertas",
+     "en": "Paper"
+    }
+   ],
+   "steps": [
+    {
+     "n": 1,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "3a"
+     ],
+     "action": {
+      "id": "<em>Rak &amp; bin</em>, <em>Tambah rak</em>: masukkan rak sesuai bentuk aslinya.",
+      "en": "<em>Rak &amp; bin</em>, <em>Tambah rak</em>: enter the rack as it physically stands."
+     },
+     "detail": {
+      "id": "<em>Nama rak</em> A, <em>Jumlah level</em> 5, <em>Kolom per level</em> 2 (<em>kolom</em> adalah bagian rak di antara dua tiang). Lalu isi kotak level dan kolom: setiap kotak berisi bin dari satu kolom, dan setiap bin punya ukurannya sendiri, <em>Kecil</em> atau <em>Besar</em>. Ketuk ukuran untuk menggantinya, × untuk menghapus bin, + untuk menambah bin. Atur satu kolom, tekan <em>Salin ke semua kolom</em>, lalu ubah hanya yang berbeda. Rak A: level 1 dan 2 Besar, level 3 dan 4 Kecil, level 5 <em>Kolom 1</em> Kecil, Kecil, Besar dan <em>Kolom 2</em> Kecil. Pratinjau menggambar rak saat Anda mengetik, bin Besar lebar dan berwarna biru. Berdirilah di depan rak asli dan bandingkan. Lalu tekan <em>Simpan rak</em>.",
+      "en": "<em>Nama rak</em> A, <em>Jumlah level</em> 5, <em>Kolom per level</em> 2 (a <em>kolom</em> is the section of the rack between two uprights). Then fill the grid of levels and columns: each cell lists the bins of one column, and each bin has its own size, <em>Kecil</em> or <em>Besar</em>. Tap a size to switch it, × removes a bin, + adds one. Set up one column, press <em>Salin ke semua kolom</em>, then change only the exceptions. Rack A: levels 1 and 2 Besar, levels 3 and 4 Kecil, level 5 <em>Kolom 1</em> Kecil, Kecil, Besar and <em>Kolom 2</em> Kecil. The preview draws the rack as you type, Besar bins wide and blue: stand in front of the real rack and compare. Then <em>Simpan rak</em>."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>30 bin</em>, A-1-01 sampai A-5-06, 17 Kecil dan 13 Besar. Level 1 adalah rak paling bawah.",
+      "en": "You see: <em>30 bin</em>, A-1-01 to A-5-06, 17 Kecil and 13 Besar. Level 1 is the bottom shelf."
+     }
+    },
+    {
+     "n": 2,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Paper"
+     ],
+     "tags": [],
+     "screens": [
+      "3b"
+     ],
+     "action": {
+      "id": "<em>Cetak label</em>: cetak di kertas A4 biasa, gunting, lalu tempel dengan selotip.",
+      "en": "<em>Cetak label</em>: print on plain A4 paper, cut out, and tape on."
+     },
+     "detail": {
+      "id": "Printer kantor apa saja, kertas A4 biasa, bukan kertas stiker. Satu label per bin (kode dengan huruf besar, satu baris kecil <em>Kolom 1</em> atau <em>Kolom 2</em>, dan barcode di bawahnya), satu label kepala rak, dan satu strip per level. Gunting di garis putus-putus. Tempel setiap label bin di depan bin-nya, di kiri bawah, dengan selotip bening yang menutupi seluruh label supaya barcode tetap terbaca dan bisa dilap. Strip level ditempel di balok depan, paling kiri, dengan cara yang sama.",
+      "en": "Any office printer, plain A4 paper, no sticker paper. One label per bin (code in big letters, a small <em>Kolom 1</em> or <em>Kolom 2</em> line, barcode under it), one rack header label and one strip per level. Cut on the dashed lines. Tape each bin label on the front of its bin, bottom left, with clear tape over the whole label so the barcode stays readable and can be wiped. The level strip goes on the front beam, far left, taped the same way."
+     },
+     "result": {
+      "id": "Yang terlihat: 3 halaman untuk rak A: 30 label bin, 1 label rak, 5 strip level.",
+      "en": "You see: 3 pages for rack A: 30 bin labels, 1 rack label, 5 level strips."
+     }
+    },
+    {
+     "n": 3,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      }
+     ],
+     "systems": [],
+     "tags": [
+      {
+       "id": "HP WMS",
+       "en": "WMS phone"
+      }
+     ],
+     "screens": [
+      "3c"
+     ],
+     "action": {
+      "id": "Di HP, <em>Rak &amp; bin</em>, <em>Cek label</em>: pindai semua label secara berurutan.",
+      "en": "On the phone, <em>Rak &amp; bin</em>, <em>Cek label</em>: scan every label in order."
+     },
+     "detail": {
+      "id": "HP menampilkan bin berikutnya dengan huruf besar. Pindai labelnya. Jika label tertempel di bin yang salah, HP menampilkan <em>Label ini milik A-2-04, bukan A-2-03</em>: lepas label itu, tekan <em>Cetak ulang</em>, tempel label baru, lalu pindai lagi.",
+      "en": "The phone shows the next bin in big letters. Scan its label. If a label sits on the wrong bin the phone says <em>Label ini milik A-2-04, bukan A-2-03</em>: tear it off, press <em>Cetak ulang</em>, tape the new label on and scan again."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Cocok</em> di setiap label, sampai <em>30 dari 30</em> untuk rak A.",
+      "en": "You see: <em>Cocok</em> on every label, up to <em>30 dari 30</em> for rack A."
+     }
+    },
+    {
+     "n": 4,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "3d"
+     ],
+     "action": {
+      "id": "<em>Bin khusus</em>: atur jumlahnya, lalu <em>Cetak label</em>.",
+      "en": "<em>Bin khusus</em>: set how many, then <em>Cetak label</em>."
+     },
+     "detail": {
+      "id": "Bin barang masuk sementara MA5-IN-01 sampai 06 di samping meja penerimaan, baki karantina MA5-QR-01, keranjang pesanan keluar MA5-OUT-01 sampai 06 dengan label di sampingnya. Jumlahnya bisa ditambah kapan saja: di kartu barang masuk, SPV menekan <em>Tambah bin sementara</em> dan labelnya langsung tercetak. Jumlahnya hanya bisa dikurangi jika bin terakhir sudah kosong.",
+      "en": "Temporary inbound bins MA5-IN-01 to 06 next to the receiving table, quarantine tray MA5-QR-01, outbound baskets MA5-OUT-01 to 06 with the label on the side. The number can go up any time: on the inbound card the SPV presses <em>Tambah bin sementara</em> and its label prints straight away. It can only go down when the last one is empty."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Label dicetak</em> dengan tanggalnya di ketiga kartu.",
+      "en": "You see: <em>Label dicetak</em> with the date on each of the three cards."
+     }
+    },
+    {
+     "n": 5,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "3e"
+     ],
+     "action": {
+      "id": "<em>Perlu bin</em>: beri setiap SKU yang sudah punya ukuran bin satu bin kosong dengan ukuran itu.",
+      "en": "<em>Perlu bin</em>: give each SKU that has a bin size a free bin of that size."
+     },
+     "detail": {
+      "id": "Pilih SKU di sebelah kiri. Gambar rak menampilkan bin kosong dengan ukuran itu berwarna biru dan menandai satu bin <em>Disarankan</em>: level 3 dulu, lalu 2, 4, 1, 5. Pakai bin itu atau klik bin biru lain, lalu tekan <em>Simpan di A-3-02</em>.",
+      "en": "Pick the SKU on the left. The rack picture shows the free bins of that size in blue and marks one <em>Disarankan</em>: level 3 first, then 2, 4, 1, 5. Keep it or click another blue bin, then <em>Simpan di A-3-02</em>."
+     },
+     "result": {
+      "id": "Yang terlihat: SKU itu hilang dari daftar dan bin menampilkan <em>Dipakai</em>.",
+      "en": "You see: the SKU leaves the list and the bin shows <em>Dipakai</em>."
+     }
+    }
+   ],
+   "rules": [
+    {
+     "id": "Kode bin = rak, level, bin: A-2-03 artinya rak A, level 2, bin 03. Bin diberi nomor per level dari kiri ke kanan di sepanjang rak, tanpa melihat kolom: jika ada dua kolom berisi 3 bin, level 2 rak A adalah A-2-01 sampai A-2-06. Label menampilkan kolomnya dengan satu baris kecil <em>Kolom 1</em> atau <em>Kolom 2</em> supaya staf bisa menemukannya.",
+     "en": "Bin code = rack, level, bin: A-2-03 is rack A, level 2, bin 03. Bins are numbered per level from left to right across the whole rack, ignoring columns: with two columns of 3 bins, level 2 of rack A is A-2-01 to A-2-06. The label shows the column as a small <em>Kolom 1</em> or <em>Kolom 2</em> line so staff can find it."
+    },
+    {
+     "id": "Satu produk per bin. Hanya ada dua ukuran bin: <em>Kecil</em> dan <em>Besar</em>, diatur per bin, jadi satu kolom bisa berisi keduanya.",
+     "en": "One product per bin. Two bin sizes only: <em>Kecil</em> and <em>Besar</em>, set per bin, so one column can mix both."
+    },
+    {
+     "id": "Rak bisa ditambah kapan saja. Bin kosongnya langsung muncul di <em>Perlu bin</em>. Begitu juga bin barang masuk sementara (<em>Tambah bin sementara</em>).",
+     "en": "A rack can be added any time; its free bins are offered in <em>Perlu bin</em> straight away. So can a temporary inbound bin (<em>Tambah bin sementara</em>)."
+    },
+    {
+     "id": "Label dicetak di kertas A4 biasa dari printer kantor apa saja dan ditempel dengan selotip bening yang menutupi seluruh label.",
+     "en": "Labels are printed on plain A4 paper from any office printer and held on with clear tape over the whole label."
+    },
+    {
+     "id": "Label yang hilang atau sobek dicetak ulang dari bin itu di <em>Rak &amp; bin</em>.",
+     "en": "A lost or torn label is reprinted from that bin in <em>Rak &amp; bin</em>."
+    },
+    {
+     "id": "Label dicek sekali, tepat setelah ditempel.",
+     "en": "Labels are checked once, right after taping."
+    }
+   ]
+  },
+  {
+   "n": 4,
+   "page": "restock.html",
+   "title": {
+    "id": "Permintaan restock ke merek",
+    "en": "Restock request to the brand"
+   },
+   "intro": {
+    "id": "Minta stok dari merek sebelum sebuah SKU habis di hub. SPV atau Ops HQ mengajukan kebutuhan. Hanya Ops HQ yang mengirim permintaan restock ke merek dan menyetujui setiap selisih.",
+    "en": "Get stock from the brand before a SKU runs out at the hub. The SPV or Ops HQ raises the need; only Ops HQ sends the restock request to the brand and approves every difference."
+   },
+   "who": [
+    {
+     "id": "SPV",
+     "en": "SPV"
+    },
+    {
+     "id": "Ops HQ",
+     "en": "Ops HQ"
+    },
+    {
+     "id": "Staf",
+     "en": "Staff"
+    },
+    {
+     "id": "Ops Head",
+     "en": "Ops Head"
+    }
+   ],
+   "when": {
+    "id": "Sejak sebuah SKU mencapai angka pesan ulangnya sampai hub selesai menjalankan keputusan Ops HQ tentang selisih.",
+    "en": "From the moment a SKU reaches its reorder number until the hub has carried out Ops HQ's decision on any difference."
+   },
+   "where": [
+    {
+     "id": "WMS",
+     "en": "WMS"
+    },
+    {
+     "id": "Email",
+     "en": "Email"
+    }
+   ],
+   "steps": [
+    {
+     "n": 1,
+     "phase": null,
+     "roles": [],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "1a"
+     ],
+     "action": {
+      "id": "Stok sebuah SKU di hub turun sampai angka <em>pesan ulang saat sisa</em>.",
+      "en": "A SKU at a hub falls to its <em>pesan ulang saat sisa</em> number."
+     },
+     "detail": {
+      "id": "WMS membuka satu draf per merek per hub. Isinya SKU merek itu yang stoknya sama dengan atau di bawah angka tersebut.",
+      "en": "The WMS opens one draft per brand per hub, with that brand's SKUs that are at or under their number."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Draf restock Labore: ajukan ke Ops HQ</em> di <em>Perlu tindakan</em>, untuk SPV dan Ops HQ.",
+      "en": "You see: <em>Draf restock Labore: ajukan ke Ops HQ</em> on <em>Perlu tindakan</em>, for the SPV and for Ops HQ."
+     }
+    },
+    {
+     "n": 2,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      },
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "4a"
+     ],
+     "action": {
+      "id": "<em>Restock ke merek</em>, buka draf atau <em>Buat draf</em>, periksa, lalu <em>Ajukan ke Ops HQ</em>.",
+      "en": "<em>Restock ke merek</em>, open the draft or <em>Buat draf</em>, check it, then <em>Ajukan ke Ops HQ</em>."
+     },
+     "detail": {
+      "id": "SPV atau Ops HQ bisa membuat draf dengan <em>Buat draf</em>, atau memakai draf yang dibuka WMS. Ubah <em>Jumlah diminta</em> bila perlu. Tambah SKU dengan <em>Tambah SKU</em>, atau hapus SKU dengan ikon tempat sampah. Tinggalkan catatan untuk Ops HQ bila ada yang mendesak. Draf yang dibuat Ops HQ bisa langsung ke langkah 3.",
+      "en": "The SPV or Ops HQ can make a draft with <em>Buat draf</em>, or work on the one the WMS opened. Change <em>Jumlah diminta</em> where needed, add a SKU with <em>Tambah SKU</em> or remove one with the bin icon. Leave a note for Ops HQ if something is urgent. A draft made by Ops HQ can go straight to step 3."
+     },
+     "result": {
+      "id": "Yang terlihat: draf pindah dari <em>Draf</em> ke <em>Diajukan</em>. Hanya Ops HQ yang punya tombol untuk mengirim ke merek.",
+      "en": "You see: the draft moves from <em>Draf</em> to <em>Diajukan</em>. Only Ops HQ has a button that reaches the brand."
+     }
+    },
+    {
+     "n": 3,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "4b"
+     ],
+     "action": {
+      "id": "Buka draf yang sudah diajukan, lalu buat permintaan di <em>Buat permintaan restock</em>.",
+      "en": "Open the raised draft and make the request on <em>Buat permintaan restock</em>."
+     },
+     "detail": {
+      "id": "Permintaan ini tidak punya nomor PO. Kuncinya adalah <em>Ninja reference</em> (contoh RPL-MA5-2609-002, dibuat 28 Sep untuk pengiriman 1 Okt): dibuat oleh WMS, untuk internal, dan tidak bisa diubah. Kolom kepala lainnya bernama sama seperti di file Excel dan bisa diubah: <em>PO date</em>, <em>To (brand)</em>, <em>Brand contact</em>, <em>Deliver to</em>, <em>Requested delivery date</em> (penerimaan barang 09:00 sampai 16:00 WIB), <em>Created by (Ops HQ)</em>. Setiap jumlah awalnya diisi <em>isi sampai</em> dikurangi stok, dan bisa diubah.",
+      "en": "The request has no PO number. Its key is the <em>Ninja reference</em> (e.g. RPL-MA5-2609-002, made 28 Sep for delivery 1 Oct): made by the WMS, internal, read-only. The other header fields have the same names as in the Excel file and can be edited: <em>PO date</em>, <em>To (brand)</em>, <em>Brand contact</em>, <em>Deliver to</em>, <em>Requested delivery date</em> (with receiving 09:00 to 16:00 WIB), <em>Created by (Ops HQ)</em>. Each quantity starts at <em>isi sampai</em> minus stock and can be changed."
+     },
+     "result": {
+      "id": "Yang terlihat: setelah <em>Simpan permintaan</em>, jumlahnya terkunci dan permintaan ada di tab <em>Permintaan</em>.",
+      "en": "You see: after <em>Simpan permintaan</em> the quantities are fixed and the request sits in the <em>Permintaan</em> tab."
+     }
+    },
+    {
+     "n": 4,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Email"
+     ],
+     "tags": [],
+     "screens": [
+      "4c"
+     ],
+     "action": {
+      "id": "<em>Unduh permintaan (Excel)</em>, kirim lewat email ke merek, lalu <em>Tandai terkirim</em>.",
+      "en": "<em>Unduh permintaan (Excel)</em>, email it to the brand, then <em>Tandai terkirim</em>."
+     },
+     "detail": {
+      "id": "File mengikuti template yang sudah disepakati, dalam bahasa Inggris. Isinya: kolom kepala dengan <em>Ninja reference</em> dan kolom kuning <em>Brand PO number</em> yang dikosongkan untuk merek, satu baris permintaan berwarna merah (barcode di setiap unit, nomor PO merek dan Ninja reference kita di Faktur dan Surat Jalan), lalu semua baris dengan angka barcode dan gambar garis barcode. SKU tanpa barcode tertulis MISSING warna merah, dan merek menuliskan barcodenya di kolom kuning.",
+      "en": "The file follows the agreed template, in English: the header fields with <em>Ninja reference</em> and a yellow <em>Brand PO number</em> left for the brand, a red request line (barcode on every unit, the brand's PO number and our Ninja reference on the Faktur and Surat Jalan), then every row with the barcode digits and drawn bars. A SKU with no barcode shows MISSING in red, and the brand writes it in the yellow column."
+     },
+     "result": {
+      "id": "Yang terlihat: permintaan ada di <em>Terkirim</em>, dengan jam kirim dan nama pengirimnya.",
+      "en": "You see: the request in <em>Terkirim</em>, with the time and who sent it."
+     }
+    },
+    {
+     "n": 5,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "Email",
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "4d"
+     ],
+     "action": {
+      "id": "Saat merek membalas dengan nomor PO-nya, tekan <em>Catat konfirmasi merek</em>.",
+      "en": "When the brand replies with its PO number, <em>Catat konfirmasi merek</em>."
+     },
+     "detail": {
+      "id": "Ketik <em>No. PO merek</em> (contoh PO/PRG/2610/0457), <em>Perkiraan tiba</em>, dan jumlah yang benar-benar akan dikirim merek per SKU (sudah terisi dengan jumlah yang diminta). Jika merek menulis barcode yang tadinya kosong, ketik di <em>Barcode dari merek</em>. Lalu <em>Simpan</em>. Dua merek bisa memakai nomor PO yang sama, jadi WMS selalu menyimpannya bersama nama merek.",
+      "en": "Type <em>No. PO merek</em> (e.g. PO/PRG/2610/0457), <em>Perkiraan tiba</em>, and the quantity the brand will really send per SKU (prefilled with the requested quantity). If the brand wrote a missing barcode, type it in <em>Barcode dari merek</em>. Then <em>Simpan</em>. Two brands may use the same PO number, so the WMS always stores it with the brand."
+     },
+     "result": {
+      "id": "Yang terlihat: permintaan berstatus <em>Dikonfirmasi</em>. Staf bisa membuka kiriman dengan Ninja reference atau nomor PO merek.",
+      "en": "You see: the request is <em>Dikonfirmasi</em>. Staff can open the delivery with the Ninja reference or the brand PO number."
+     }
+    },
+    {
+     "n": 6,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      },
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [
+      {
+       "id": "Bagian 5",
+       "en": "Section 5"
+      }
+     ],
+     "screens": [],
+     "action": {
+      "id": "Kiriman datang dan diterima.",
+      "en": "The delivery arrives and is received."
+     },
+     "detail": {
+      "id": "Cara memindai, menaruh di rak, dan Faktur yang ditandatangani ada di Bagian 5.",
+      "en": "Scanning, putaway and the signed Faktur are in Section 5."
+     },
+     "result": {
+      "id": "Yang terlihat: jumlah yang diterima per SKU di permintaan, dan foto Faktur.",
+      "en": "You see: the received quantity per SKU on the request, and the Faktur photos."
+     }
+    },
+    {
+     "n": 7,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      },
+      {
+       "id": "Ops Head",
+       "en": "Ops Head"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Email"
+     ],
+     "tags": [],
+     "screens": [
+      "4e"
+     ],
+     "action": {
+      "id": "Setujui setiap selisih kiriman di <em>Selesaikan selisih</em> dalam 24 jam.",
+      "en": "Approve every difference of the delivery on <em>Selesaikan selisih</em> within 24 hours."
+     },
+     "detail": {
+      "id": "Satu daftar menampilkan semua selisih: kurang, lebih, dan unit yang ditolak saat barang masuk (rusak, disimpan di MA5-QR-01 atau dikembalikan ke driver, masing-masing satu foto). Di setiap baris, periksa <em>Ditagih</em> lalu <em>Setujui</em>. Untuk kelebihan, pilih <em>Tolak kelebihan</em> (saran: unit masuk daftar retur merek dan dibawa pada kiriman berikutnya, atau oleh driver yang sama jika masih ada) atau <em>Terima</em> (ditaruh di rak dan ditagih). Sampai saat itu, kelebihan menunggu di bin sementara dan belum bisa dijual. Tambahkan catatan untuk merek, lalu <em>Simpan keputusan</em>. Selama baris belum disetujui, tertulis <em>Menunggu persetujuan Ops HQ</em>, dan stok maupun tagihan tidak berubah. Setelah disetujui, WMS mencatatnya di stok dan tagihan secara otomatis. Label oranye menunjukkan batas waktu, contoh <em>Putuskan sebelum Jum 2 Okt 15:40</em>. Ops Head diberi tahu tentang setiap selisih (<em>Ops Head diberi tahu</em>) dan tidak perlu menyetujui.",
+      "en": "One list shows every difference: short, extra, and units rejected at inbound (damaged, kept in MA5-QR-01 or returned to the driver, one photo each). Per row, check <em>Ditagih</em> and <em>Setujui</em>. For extras choose <em>Tolak kelebihan</em> (the suggestion: the units go on the brand's return list and leave with the next delivery, or the same driver if still there) or <em>Terima</em> (put away and billed). Extras wait in their temporary bin, not sellable, until then. Add a note for the brand, then <em>Simpan keputusan</em>. Until a row is approved it shows <em>Menunggu persetujuan Ops HQ</em> and changes neither stock nor what is billed; once approved, the WMS records it in both by itself. The amber chip shows the deadline, e.g. <em>Putuskan sebelum Jum 2 Okt 15:40</em>. The Ops Head is notified of each difference (<em>Ops Head diberi tahu</em>) and has no approval step."
+     },
+     "result": {
+      "id": "Yang terlihat: setiap baris sudah disetujui, permintaan ditutup dengan jumlah yang ditagih merek (<em>Total ditagih merek</em>), dan ada tugas untuk hub di <em>Perlu tindakan</em>.",
+      "en": "You see: each row approved, the request closes with the number the brand bills (<em>Total ditagih merek</em>), and a task for the hub on <em>Perlu tindakan</em>."
+     }
+    },
+    {
+     "n": 8,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      },
+      {
+       "id": "Staf",
+       "en": "Staff"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "5f",
+      "7d"
+     ],
+     "action": {
+      "id": "SPV atau staf menjalankan keputusan dari <em>Perlu tindakan</em>.",
+      "en": "The SPV or staff carry out the decision from <em>Perlu tindakan</em>."
+     },
+     "detail": {
+      "id": "Kelebihan yang diterima muncul di <em>Taruh di rak</em>: ambil dari bin sementara, taruh di bin rak, lalu pindai labelnya. Kelebihan yang ditolak muncul di <em>Karantina &amp; retur</em>, <em>Retur ke merek</em>, siap dibawa pada kiriman berikutnya atau oleh driver yang sama.",
+      "en": "Accepted extras show on <em>Taruh di rak</em>: take them from the temporary bin to the rack bin and scan its label. Rejected extras show on <em>Karantina &amp; retur</em>, <em>Retur ke merek</em>, ready for the next delivery or the same driver."
+     },
+     "result": {
+      "id": "Yang terlihat: bin sementara kosong lagi. Unit yang diterima bisa dijual sejak dipindai di rak. Unit yang ditolak tidak pernah menjadi stok.",
+      "en": "You see: the temporary bin empty again. Accepted units are sellable from the rack scan; rejected ones never become stock."
+     }
+    }
+   ],
+   "rules": [
+    {
+     "id": "SPV atau Ops HQ bisa membuat atau mengajukan draf. Hanya Ops HQ yang mengirim permintaan ke merek.",
+     "en": "The SPV or Ops HQ can make or raise a draft. Only Ops HQ sends the request to the brand."
+    },
+    {
+     "id": "Permintaan kita tidak punya nomor PO. Kuncinya adalah Ninja reference RPL-&lt;hub&gt;-&lt;yymm&gt;-&lt;n&gt;, dengan yymm adalah bulan saat permintaan dibuat: dibuat 28 Sep untuk pengiriman 1 Okt menjadi RPL-MA5-2609-002. Merek menjawab dengan nomor PO-nya sendiri. Nomor itu selalu disimpan bersama nama merek, karena dua merek bisa memakai nomor yang sama.",
+     "en": "Our request has no PO number. Its key is the Ninja reference RPL-&lt;hub&gt;-&lt;yymm&gt;-&lt;n&gt;, where yymm is the month the request is made: made 28 Sep for delivery 1 Oct is RPL-MA5-2609-002. The brand answers with its own PO number, always stored with the brand, because two brands may use the same number."
+    },
+    {
+     "id": "Satu permintaan per merek per hub per kiriman, dengan barcode setiap SKU (barcode yang MISSING diisi oleh merek di kolom kuning). Jumlah terkunci saat <em>Simpan permintaan</em>.",
+     "en": "One request per brand per hub per delivery, with every SKU's barcode (a MISSING one comes back from the brand in the yellow column). Quantities freeze at <em>Simpan permintaan</em>."
+    },
+    {
+     "id": "Ops HQ menyetujui setiap selisih dalam 24 jam: kurang, lebih, dan unit yang ditolak saat barang masuk. Selisih baru masuk ke stok dan tagihan setelah disetujui. Sebelum itu tertulis <em>Menunggu persetujuan Ops HQ</em>. Ops Head diberi tahu tentang setiap selisih.",
+     "en": "Ops HQ approves every difference within 24 hours: short, extra, and units rejected at inbound. A difference reaches stock and what is billed only after approval; until then it shows <em>Menunggu persetujuan Ops HQ</em>. The Ops Head is notified of each one."
+    },
+    {
+     "id": "Jika Ops HQ melewati batas 24 jam, tidak ada yang diputuskan otomatis: baris berubah oranye di <em>Perlu tindakan</em> dan Ops Head mendapat peringatan.",
+     "en": "If Ops HQ misses the 24 hours, nothing is decided automatically: the row turns amber on <em>Perlu tindakan</em> and the Ops Head gets an alert."
+    },
+    {
+     "id": "Kapan menerima atau menolak mengikuti SOP Ops HQ. WMS mencatat keputusannya. Umur stok dihitung dari tanggal barang masuk (ED tidak diambil dari Faktur). Batch yang lebih tua dari jumlah hari tertentu ditandai <em>Stok lama</em>.",
+     "en": "When to accept or refuse follows Ops HQ's SOP; the WMS records the decision. Stock age counts from the inbound date (no ED is taken from the Faktur); a batch older than a set number of days is flagged <em>Stok lama</em>."
+    }
+   ]
+  },
+  {
+   "n": 5,
+   "page": "barang-masuk.html",
+   "title": {
+    "id": "Barang masuk",
+    "en": "Inbound"
+   },
+   "intro": {
+    "id": "Terima kiriman dari merek, taruh setiap unit di rak, dan catat Faktur yang sudah ditandatangani. Setiap unit dipindai satu per satu dan dihitung per pcs. Tidak ada yang mengetik tanggal.",
+    "en": "Receive the brand's delivery, put every unit on the rack and record the signed Faktur. Every unit is scanned one by one and counted in pieces, and nobody types a date."
+   },
+   "who": [
+    {
+     "id": "Staf",
+     "en": "Staff"
+    },
+    {
+     "id": "SPV",
+     "en": "SPV"
+    },
+    {
+     "id": "Ops HQ",
+     "en": "Ops HQ"
+    }
+   ],
+   "when": {
+    "id": "Kiriman merek datang ke hub, antara 09:00 dan 16:00.",
+    "en": "A brand delivery arrives at the hub, between 09:00 and 16:00."
+   },
+   "where": [
+    {
+     "id": "WMS",
+     "en": "WMS"
+    },
+    {
+     "id": "Kertas",
+     "en": "Paper"
+    },
+    {
+     "id": "Hiryu",
+     "en": "Hiryu"
+    }
+   ],
+   "steps": [
+    {
+     "n": 1,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      },
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "Paper",
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "5b"
+     ],
+     "action": {
+      "id": "Di pintu, periksa Surat Jalan.",
+      "en": "At the door, check the Surat Jalan."
+     },
+     "detail": {
+      "id": "Surat Jalan harus menyebut hub ini, merek, dan Ninja reference kita atau nomor PO merek. Hitung kartonnya saja dan cocokkan dengan Surat Jalan. Barang dihitung per pcs saat dipindai. Jika jumlah karton berbeda, panggil SPV. SPV memutuskan saat itu juga: terima dan tulis ulang Surat Jalan (<em>Terima &amp; tulis ulang</em>) atau tolak kiriman (<em>Tolak</em>). SPV langsung melaporkan Surat Jalan yang ditulis ulang ke Ops HQ. WMS mengirim laporannya saat <em>Terima &amp; tulis ulang</em> ditekan. Jangan tanda tangan dulu.",
+      "en": "It must name this hub, the brand, and our Ninja reference or the brand's PO number. Count only the cartons and compare with the Surat Jalan; the goods are counted in pieces (pcs) when scanned. If the carton count differs, call the SPV, who decides on the spot: accept and rewrite the Surat Jalan (<em>Terima &amp; tulis ulang</em>) or refuse the delivery (<em>Tolak</em>). The SPV raises a rewrite to Ops HQ at once; the WMS sends it when <em>Terima &amp; tulis ulang</em> is tapped. Do not sign yet."
+     },
+     "result": {
+      "id": "Yang terlihat: nomor untuk dicari dan jumlah karton untuk langkah 2. Jumlah yang berbeda tampil oranye (<em>Surat Jalan: 5 karton, dihitung: 4</em>) dengan dua tombol bertanda <em>Keputusan SPV</em>.",
+      "en": "You see: the number to look up and the carton count for step 2. A different count shows in amber (<em>Surat Jalan: 5 karton, dihitung: 4</em>) with the two buttons marked <em>Keputusan SPV</em>."
+     }
+    },
+    {
+     "n": 2,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "5a",
+      "5b"
+     ],
+     "action": {
+      "id": "<em>Barang masuk</em>: ketik atau pindai Ninja reference atau nomor PO merek.",
+      "en": "<em>Barang masuk</em>: type or scan the Ninja reference or the brand PO number."
+     },
+     "detail": {
+      "id": "Atau tekan kiriman di <em>Kiriman hari ini</em>. Isi jumlah karton yang dihitung di <em>Karton dihitung</em>: ini hanya cek di pintu, bukan stok. Jika berbeda dengan Surat Jalan, kartu menunggu SPV (langkah 1).",
+      "en": "Or tap the delivery under <em>Kiriman hari ini</em>. Enter the cartons counted in <em>Karton dihitung</em>: a door check only, never stock. If it differs from the Surat Jalan, the card waits for the SPV (step 1)."
+     },
+     "result": {
+      "id": "Yang terlihat: jumlah yang diharapkan per SKU dalam pcs (<em>124 pcs</em>), lalu <em>Mulai pindai</em>.",
+      "en": "You see: what is expected per SKU in pieces (<em>124 pcs</em>), then <em>Mulai pindai</em>."
+     }
+    },
+    {
+     "n": 3,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      },
+      {
+       "id": "Staf",
+       "en": "Staff"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "5c",
+      "5c2"
+     ],
+     "action": {
+      "id": "Buka karton pertama dan pindai setiap unit, satu per satu.",
+      "en": "Open the first carton and scan each unit, one by one."
+     },
+     "detail": {
+      "id": "Setiap produk punya bin sementara sendiri. Pada unit pertama sebuah produk, layar menulis <em>Produk baru: ambil bin kosong, pindai labelnya</em> dan menyebut binnya (<em>MA5-IN-03 untuk GentleBiome Mild Cleanser</em>): ambil bin kosong, pindai labelnya, masukkan unitnya. Semua unit berikutnya dari produk itu masuk ke bin yang sama. Jika bin penuh, tekan <em>Bin penuh</em> dan WMS memberi bin kosong berikutnya. Unit yang melebihi jumlah yang diminta masuk ke bin sendiri (MA5-IN-04) dan menunggu Ops HQ, tidak pernah ke rak. Tekan produk yang Anda pegang di daftar kiriman ini, lalu <em>+1</em> untuk setiap unit (<em>−1</em> untuk membatalkan). Cara ini hanya untuk produk yang memang tidak punya barcode.",
+      "en": "Each product gets its own temporary bin. At the first unit of a product the screen says <em>Produk baru: ambil bin kosong, pindai labelnya</em> and names the bin (<em>MA5-IN-03 untuk GentleBiome Mild Cleanser</em>): take an empty bin, scan its label, put the unit in. Every later unit of that product goes to the same bin. When the bin is full, tap <em>Bin penuh</em> and the WMS gives the next empty one. A unit above the requested quantity gets its own bin (MA5-IN-04) and waits for Ops HQ, never on the rack. Tap the product you are holding in the list of this delivery, then <em>+1</em> for each unit (<em>−1</em> to undo). Only for products that really have no barcode."
+     },
+     "result": {
+      "id": "Yang terlihat: setiap produk dengan binnya dan hitungan dalam pcs (<em>1/24</em>) yang berakhir <em>cocok</em>, <em>kurang 2</em> atau <em>lebih 1</em>.",
+      "en": "You see: each product with its bin and a count in pieces (<em>1/24</em>) that ends as <em>cocok</em>, <em>kurang 2</em> or <em>lebih 1</em>."
+     }
+    },
+    {
+     "n": 4,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "5d"
+     ],
+     "action": {
+      "id": "Unit rusak: nyalakan <em>Rusak</em>, pindai unitnya, lalu pilih ke mana unit itu dibawa.",
+      "en": "A damaged unit: switch <em>Rusak</em> on, scan it, then choose where it goes."
+     },
+     "detail": {
+      "id": "Layar berubah merah. Pilih <em>Masukkan ke karantina</em> (taruh di nampan MA5-QR-01) atau <em>Kembalikan ke driver sekarang</em> (unit dibawa pulang oleh driver pengirim, tulis di Surat Jalan sebagai ditolak). Untuk keduanya, tekan <em>Ambil foto</em> satu kali. Tombolnya mati sendiri setelah produk itu selesai.",
+      "en": "The screen turns red. Choose <em>Masukkan ke karantina</em> (put it in the tray MA5-QR-01) or <em>Kembalikan ke driver sekarang</em> (it leaves with the delivery driver; write it on the Surat Jalan as rejected). Either way, <em>Ambil foto</em> once. The switch turns itself off after that product."
+     },
+     "result": {
+      "id": "Yang terlihat: unit dihitung sebagai <em>rusak</em>. Unit ini tidak pernah menjadi stok dan dikirim ke Ops HQ untuk disetujui (Bagian 4, langkah 7).",
+      "en": "You see: the unit counted as <em>rusak</em>. It never becomes stock and goes to Ops HQ for approval (Section 4, step 7)."
+     }
+    },
+    {
+     "n": 5,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      },
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "5e"
+     ],
+     "action": {
+      "id": "Bin sementara penuh: <em>Selesai batch ini</em>, lalu <em>Mulai taruh</em>.",
+      "en": "Temporary bins full: <em>Selesai batch ini</em>, then <em>Mulai taruh</em>."
+     },
+     "detail": {
+      "id": "Jika tidak ada bin sementara yang kosong, WMS menghentikan produk baru: <em>Semua bin sementara terisi: selesaikan batch ini dulu (taruh di rak)</em>. <em>Taruh di rak</em> menampilkan setiap bin sementara dengan produknya, jumlah unit, dan bin rak tujuannya, sesuai urutan jalan. Bin berisi unit lebih tertulis <em>Tunggu Ops HQ</em>, tanpa bin rak: biarkan di tempatnya. Bin yang sudah kosong bisa dipakai lagi untuk batch berikutnya. SPV juga bisa menambah bin sementara kapan saja dengan <em>Tambah bin sementara</em>, tanpa harus menyelesaikan batch.",
+      "en": "When no temporary bin is free, the WMS stops new products: <em>Semua bin sementara terisi: selesaikan batch ini dulu (taruh di rak)</em>. <em>Taruh di rak</em> lists each temporary bin with its product, units and the rack bin it goes to, in walking order. The bin with extra units is listed as <em>Tunggu Ops HQ</em>, with no rack bin: leave it where it is. Emptied bins are free again for the next batch. The SPV can also add a temporary bin at any time with <em>Tambah bin sementara</em>, instead of finishing the batch."
+     },
+     "result": {
+      "id": "Yang terlihat: bin pertama yang harus dikosongkan, diberi tanda.",
+      "en": "You see: the first bin to empty, highlighted."
+     }
+    },
+    {
+     "n": 6,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Hiryu"
+     ],
+     "tags": [],
+     "screens": [
+      "5f"
+     ],
+     "action": {
+      "id": "Pergi ke bin rak yang ditunjukkan (A-2-03), masukkan unitnya, lalu pindai label bin.",
+      "en": "Go to the rack bin shown (A-2-03), put the units in, scan the bin label."
+     },
+     "detail": {
+      "id": "Taruh sekat berwarna baru di belakang stok yang sudah ada, tulis tanggal hari ini di sekat putih (umur stok dihitung dari tanggal ini), taruh unit di belakangnya, lalu <em>Pindai label bin</em>. Jika bin penuh, <em>Bin penuh</em> memberi bin berikutnya.",
+      "en": "Put a new coloured divider behind the stock already there, write today's date on the white divider (the stock's age counts from this date), put the units behind it, then <em>Pindai label bin</em>. If the bin is full, <em>Bin penuh</em> gives the next bin."
+     },
+     "result": {
+      "id": "Yang terlihat: unit bisa dijual sejak pindai ini, dan stok baru dikirim ke Hiryu.",
+      "en": "You see: the units are sellable from this scan, and the new stock goes to Hiryu."
+     }
+    },
+    {
+     "n": 7,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Paper"
+     ],
+     "tags": [],
+     "screens": [
+      "5j"
+     ],
+     "action": {
+      "id": "<em>Cetak slip putaway</em>, cocokkan dengan rak, lalu tanda tangani.",
+      "en": "<em>Cetak slip putaway</em>, check it against the racks and sign it."
+     },
+     "detail": {
+      "id": "Tombolnya ada di tanda terima di laptop (Layar 5h). Slip A4 menampilkan Ninja reference dan nomor PO merek, lalu per baris: produk, jumlah unit, dari bin sementara, ke bin rak, dan warna sekat hari ini (contoh Biru, minggu B). Slip juga menampilkan selisih yang menunggu Ops HQ, batas klaim 24 jam, dan kotak tanda tangan untuk staf yang menaruh barang dan untuk SPV.",
+      "en": "The button is on the receipt on the laptop (Screen 5h). The A4 slip shows the Ninja reference and the brand PO number, then per line: product, units, from temporary bin, to rack bin and today's divider colour (e.g. Biru, minggu B), the differences waiting for Ops HQ, the 24-hour claim deadline, and boxes for the staff who put away and the SPV."
+     },
+     "result": {
+      "id": "Yang terlihat: slip sudah ditandatangani SPV dan disimpan bersama Surat Jalan dan Faktur. Slip ini adalah bukti resmi penaruhan barang di rak.",
+      "en": "You see: the slip signed by the SPV, kept with the Surat Jalan and the Faktur. It is the compliance record of the putaway."
+     }
+    },
+    {
+     "n": 8,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Paper"
+     ],
+     "tags": [],
+     "screens": [
+      "5g"
+     ],
+     "action": {
+      "id": "Karton terakhir selesai: <em>Semua barang sudah diterima</em>.",
+      "en": "Last carton done: <em>Semua barang sudah diterima</em>."
+     },
+     "detail": {
+      "id": "Tulis selisihnya di Surat Jalan dan Faktur (unit yang dikembalikan ke driver ditulis sebagai ditolak). Tanda tangani keduanya (sebaiknya SPV, tetapi siapa pun yang menerima boleh tanda tangan), lalu berikan salinan Surat Jalan ke driver. Setelah itu ambil tiga foto wajib: <em>Foto Surat Jalan dan Faktur yang sudah ditandatangani</em>, <em>Swafoto penerima</em>, <em>Foto Surat Jalan dan Faktur bersama driver</em>.",
+      "en": "Write the differences on the Surat Jalan and the Faktur (a unit returned to the driver as rejected), sign both (ideally the SPV; anyone receiving may sign), and give the driver a copy of the Surat Jalan. Then take the three required photos: <em>Foto Surat Jalan dan Faktur yang sudah ditandatangani</em>, <em>Swafoto penerima</em>, <em>Foto Surat Jalan dan Faktur bersama driver</em>."
+     },
+     "result": {
+      "id": "Yang terlihat: ringkasan (<em>Cocok</em>, <em>Kurang</em>, <em>Lebih</em>, <em>Rusak</em>) dan tanda centang di setiap foto. <em>Selesai</em> tetap abu-abu sampai ketiga foto selesai.",
+      "en": "You see: the summary (<em>Cocok</em>, <em>Kurang</em>, <em>Lebih</em>, <em>Rusak</em>) and a check on each photo. <em>Selesai</em> stays grey until all three are done."
+     }
+    },
+    {
+     "n": 9,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      },
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "5g"
+     ],
+     "action": {
+      "id": "Unit lebih menunggu keputusan Ops HQ di bin sementaranya.",
+      "en": "Extra units wait in their temporary bin for Ops HQ."
+     },
+     "detail": {
+      "id": "Biarkan di MA5-IN-04: tidak di rak, tidak bisa dijual. Ops HQ menyetujui setiap selisih dalam 24 jam dan menindaklanjuti dengan merek (Bagian 4, langkah 7). Kelebihan biasanya ditolak. Sampai saat itu tidak ada yang dicatat di stok atau ditagih. Setelah itu tugasnya muncul di <em>Perlu tindakan</em>: <em>Taruh di rak</em> jika diterima, <em>Karantina &amp; retur</em>, <em>Retur ke merek</em> jika ditolak.",
+      "en": "Leave them in MA5-IN-04: not on the rack, not sellable. Ops HQ approves every difference within 24 hours and follows up with the brand (Section 4, step 7); extras are usually rejected. Until then nothing is recorded in stock or billed. Then the task comes to <em>Perlu tindakan</em>: <em>Taruh di rak</em> if accepted, <em>Karantina &amp; retur</em>, <em>Retur ke merek</em> if rejected."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Menunggu persetujuan Ops HQ, belum masuk stok. Lebih 1 tetap di MA5-IN-04.</em> di ringkasan.",
+      "en": "You see: <em>Menunggu persetujuan Ops HQ, belum masuk stok. Lebih 1 tetap di MA5-IN-04.</em> on the summary."
+     }
+    },
+    {
+     "n": 10,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "5h"
+     ],
+     "action": {
+      "id": "<em>Unggah Faktur</em>: foto setiap halaman Faktur yang sudah ditandatangani.",
+      "en": "<em>Unggah Faktur</em>: photograph every page of the signed Faktur."
+     },
+     "detail": {
+      "id": "Dari laptop, atau langsung dari kamera ponsel.",
+      "en": "From the laptop, or straight from the phone camera."
+     },
+     "result": {
+      "id": "Yang terlihat: tanda terima ditutup, dan setiap selisih tertulis <em>Menunggu persetujuan Ops HQ</em> (Bagian 4, langkah 7). Setelah Ops HQ menyetujui, WMS mencatatnya di stok dan tagihan secara otomatis.",
+      "en": "You see: the receipt closes, and each difference shows <em>Menunggu persetujuan Ops HQ</em> (Section 4, step 7). Once Ops HQ approves, the WMS records it in stock and in what is billed by itself."
+     }
+    },
+    {
+     "n": 11,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "5i"
+     ],
+     "action": {
+      "id": "Nomor yang tidak dikenal WMS: <em>PO tidak ditemukan</em>.",
+      "en": "A number the WMS does not know: <em>PO tidak ditemukan</em>."
+     },
+     "detail": {
+      "id": "<em>Foto Surat Jalan</em>, pilih merek, hitung kartonnya, lalu <em>Kirim ke Ops HQ, lalu hitung</em>. Pindai unit ke bin sementara seperti biasa. Ops HQ harus segera menjawab: kiriman ini muncul paling atas di <em>Perlu tindakan</em> Ops HQ dengan label <em>Segera</em>, dan Ops Head mendapat peringatan jika tidak ada jawaban dalam 30 menit.",
+      "en": "<em>Foto Surat Jalan</em>, choose the brand, count the cartons, then <em>Kirim ke Ops HQ, lalu hitung</em>. Scan the units into temporary bins as usual. Ops HQ must answer at once: the delivery tops Ops HQ's <em>Perlu tindakan</em> with the label <em>Segera</em>, and the Ops Head is alerted if there is no answer within 30 minutes."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Ops HQ diberi tahu sekarang, harus menjawab segera.</em> Unit sudah dihitung tetapi belum menjadi stok sampai Ops HQ menghubungkan kiriman ini dengan permintaan restock.",
+      "en": "You see: <em>Ops HQ diberi tahu sekarang, harus menjawab segera.</em> The units are counted but not stock until Ops HQ links the delivery to a restock request."
+     }
+    }
+   ],
+   "rules": [
+    {
+     "id": "Pindai setiap unit, satu per satu, dan hitung per pcs. Karton hanya dicocokkan dengan Surat Jalan di pintu. Jika jumlahnya berbeda, SPV memutuskan saat itu juga. Pilih dari daftar hanya untuk produk tanpa barcode. SPV melihat setiap pilihan manual.",
+     "en": "Scan every unit, one by one, and count in pieces (pcs). Cartons are only checked against the Surat Jalan at the door; if the count differs, the SPV decides on the spot. Pick from the list only for a product with no barcode; the SPV sees every manual pick."
+    },
+    {
+     "id": "Jangan pernah mengetik tanggal saat barang masuk. Umur stok dihitung dari tanggal barang masuk: sekat berwarna hari itu dan tanggal tanda terima. Batch yang lebih tua dari jumlah hari tertentu ditandai <em>Stok lama</em>.",
+     "en": "Never type a date during inbound. Stock age counts from the inbound date: the day's coloured divider and the receipt date. A batch older than a set number of days is flagged <em>Stok lama</em>."
+    },
+    {
+     "id": "Satu produk per bin sementara. WMS memberi setiap produk baru satu bin kosong dan menyimpan produk itu di bin tersebut. Jika bin penuh, WMS memberi bin kosong berikutnya. Jika tidak ada bin kosong, WMS menghentikan produk baru. SPV bisa menambah bin sementara kapan saja (<em>Tambah bin sementara</em>).",
+     "en": "One product per temporary bin. The WMS gives each new product an empty bin, keeps that product in it, gives the next empty bin when one is full, and stops new products when none is free. The SPV can add a temporary bin at any time (<em>Tambah bin sementara</em>)."
+    },
+    {
+     "id": "Setiap selisih (kurang, lebih, rusak) dikirim ke Ops HQ. Ops HQ menyetujuinya dan menindaklanjuti dengan merek dalam 24 jam. Selisih baru masuk ke stok dan tagihan setelah disetujui (sebelum itu tertulis <em>Menunggu persetujuan Ops HQ</em>). Setelah itu WMS mencatatnya secara otomatis. Unit lebih dan unit rusak tidak pernah ke rak. Stok bisa dijual sejak dipindai di rak, tidak sebelumnya.",
+     "en": "Every difference (short, extra, damaged) goes to Ops HQ, who approves it and follows up with the brand within 24 hours. It reaches stock and what is billed only after approval (<em>Menunggu persetujuan Ops HQ</em> until then); the WMS then records it by itself. Extra and damaged units never go to the rack; stock is sellable from the rack scan, not before."
+    },
+    {
+     "id": "Kapan menerima atau menolak (jumlah karton, unit rusak, selisih) mengikuti SOP Ops HQ. WMS mencatat keputusannya.",
+     "en": "When to accept or refuse (a carton count, a damaged unit, a difference) follows Ops HQ's SOP; the WMS records the decision."
+    },
+    {
+     "id": "Slip putaway yang sudah ditandatangani dan tiga foto penerimaan disimpan bersama tanda terima, untuk masa klaim 24 jam dan jika ada sengketa. Hanya SPV dan Ops HQ yang bisa melihat foto-fotonya.",
+     "en": "The signed putaway slip and the three receiving photos are kept with the receipt for the 24-hour claim window and any dispute. Only the SPV and Ops HQ can see the photos."
+    }
+   ]
+  },
+  {
+   "n": 6,
+   "page": "pesanan.html",
+   "title": {
+    "id": "Pesanan: ambil, kemas, dan serahkan",
+    "en": "Orders: pick, pack and hand over"
+   },
+   "intro": {
+    "id": "Cara pesanan Grab berjalan dari Hiryu ke satu pengambil, ke meja kemas, lalu ke driver. Pesanan harus sudah dikemas dalam 10 menit sejak jam pesanan Grab. Bagian ini juga membahas barang yang tidak ada dan pesanan yang dibatalkan.",
+    "en": "How a Grab order goes from Hiryu to one picker, to the pack bench and to the driver, packed within 10 minutes of Grab's order time. It also covers a missing item and a cancelled order."
+   },
+   "who": [
+    {
+     "id": "Staf: pengambil, pengemas, serah terima",
+     "en": "Staff: picker, packer, handover"
+    },
+    {
+     "id": "SPV",
+     "en": "SPV"
+    }
+   ],
+   "when": {
+    "id": "Setiap pesanan Grab, dari <em>Accept</em> sampai diambil driver",
+    "en": "Every Grab order, from <em>Accept</em> to driver pickup"
+   },
+   "where": [
+    {
+     "id": "Hiryu",
+     "en": "Hiryu"
+    },
+    {
+     "id": "WMS",
+     "en": "WMS"
+    },
+    {
+     "id": "Grab",
+     "en": "Grab"
+    }
+   ],
+   "steps": [
+    {
+     "n": 1,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengemas",
+       "en": "Staff · packer"
+      }
+     ],
+     "systems": [
+      "Hiryu"
+     ],
+     "tags": [
+      {
+       "id": "Di Hiryu",
+       "en": "In Hiryu"
+      }
+     ],
+     "screens": [],
+     "action": {
+      "id": "Di Hiryu, tekan <em>Accept</em> dalam satu menit setelah bunyi pesanan baru.",
+      "en": "In Hiryu, press <em>Accept</em> within a minute of the new-order sound."
+     },
+     "detail": {
+      "id": "Di laptop meja kemas. Slip pesanan tercetak dan Hiryu mengirim pesanan ke WMS. Data pelanggan tetap di Hiryu.",
+      "en": "At the packing laptop. The packing slip prints and Hiryu sends the order to the WMS. Customer data stays in Hiryu."
+     },
+     "result": {
+      "id": "Yang terlihat: slip di printer, dan pesanan di antrean WMS.",
+      "en": "You see: the slip in the printer, and the order in the WMS queue."
+     }
+    },
+    {
+     "n": 2,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengambil",
+       "en": "Staff · picker"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "6a"
+     ],
+     "action": {
+      "id": "Di ponsel, buka <em>Pesanan</em> dan nyalakan <em>Siap ambil</em>.",
+      "en": "On the phone, open <em>Pesanan</em> and switch on <em>Siap ambil</em>."
+     },
+     "detail": {
+      "id": "Biarkan aplikasi tetap terbuka. Untuk istirahat, tekan <em>Istirahat</em>: tidak ada pesanan yang masuk ke Anda sampai Anda menyalakannya lagi.",
+      "en": "Keep the app open. For a break press <em>Istirahat</em>: no order comes to you until you switch back."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Menunggu pesanan. Ponsel akan berbunyi.</em>",
+      "en": "You see: <em>Menunggu pesanan. Ponsel akan berbunyi.</em>"
+     }
+    },
+    {
+     "n": 3,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengambil",
+       "en": "Staff · picker"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "6b"
+     ],
+     "action": {
+      "id": "Pesanan masuk ke Anda. Ambil keranjang kosong dan pindai labelnya.",
+      "en": "The order comes to you. Take an empty basket and scan its label."
+     },
+     "detail": {
+      "id": "WMS memberi setiap pesanan ke pengambil yang paling lama siap, satu pesanan per pengambil. Ponsel berbunyi dan menampilkan GM-358, <em>4 produk · 12 unit</em>. Pesanan dimulai saat Anda memindai keranjang MA5-OUT-02. Jika tidak dimulai dalam 2 menit, pesanan kembali ke antrean.",
+      "en": "The WMS gives each order to the picker who has been ready longest, one order per picker. The phone rings and shows GM-358, <em>4 produk · 12 unit</em>. Scanning basket MA5-OUT-02 starts the order. Not started within 2 minutes: the order goes back to the queue."
+     },
+     "result": {
+      "id": "Yang terlihat: bin pertama, dan stopwatch mulai berjalan.",
+      "en": "You see: the first bin, and the stopwatch running."
+     }
+    },
+    {
+     "n": 4,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengambil",
+       "en": "Staff · picker"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "6c"
+     ],
+     "action": {
+      "id": "Pergi ke bin yang ditunjukkan, ambil unit dari depan, dan pindai satu per satu.",
+      "en": "Go to the bin shown, take the units from the front and scan each one."
+     },
+     "detail": {
+      "id": "Bin (A-3-01) ditandai di gambar rak kecil. Sekat paling depan berisi stok paling lama. Jika produknya salah, layar berhenti dan menampilkan kedua produk berdampingan.",
+      "en": "The bin (A-3-01) is marked on a small rack picture. The front divider holds the oldest stock. A wrong product stops you and shows both products side by side."
+     },
+     "result": {
+      "id": "Yang terlihat: satu titik terisi untuk setiap unit, lalu produk berikutnya.",
+      "en": "You see: one dot fills per unit, then the next product."
+     }
+    },
+    {
+     "n": 5,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengambil",
+       "en": "Staff · picker"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Grab",
+      "Hiryu"
+     ],
+     "tags": [],
+     "screens": [
+      "6d"
+     ],
+     "action": {
+      "id": "Barang tidak ada: tekan <em>Barang tidak ada</em>.",
+      "en": "Not there: press <em>Barang tidak ada</em>."
+     },
+     "detail": {
+      "id": "Isi berapa yang Anda temukan, lalu cek tempat lain yang ditunjukkan WMS. Di contoh ini, A-2-03 menjadi 0 pada 08:55 (GM-347), tetapi WMS masih mencatat 3 di C-1-02, jadi GM-358 bisa memesannya. Pengambil menemukan 0 di kedua tempat, jadi kedua bin menjadi 0 dan masuk hitung stok berikutnya. Jika masih tidak ada, WMS menampilkan instruksi pelanggan dari Grab: <em>Ganti dengan</em> produk tertentu, <em>Hapus dari pesanan</em>, <em>Batalkan pesanan</em> atau <em>Hubungi pelanggan</em> (dianggap batal). Untuk <em>Ganti dengan: Labore GentleBiome Mild Cleanser 225 ml (1 unit)</em>, pergi ke bin B-1-04, tekan <em>Ambil pengganti</em> lalu pindai. Saat Anda mengambil pengganti atau satu baris dihapus, WMS mengirimnya ke Hiryu (pesan 5) dan Hiryu mengubah pesanan di Grab secara otomatis. Tidak ada yang perlu dilakukan di Hiryu atau Grab.",
+      "en": "Say how many you found, then check the other places the WMS lists. Here A-2-03 went to 0 at 08:55 (GM-347) but the WMS still had 3 at C-1-02, so GM-358 could order it; the picker finds 0 at both, and both bins go to 0 and on the next count. Still missing: the WMS shows the customer's instruction from Grab: <em>Ganti dengan</em> a named product, <em>Hapus dari pesanan</em>, <em>Batalkan pesanan</em> or <em>Hubungi pelanggan</em> (handled as cancel). For <em>Ganti dengan: Labore GentleBiome Mild Cleanser 225 ml (1 unit)</em>, go to bin B-1-04, press <em>Ambil pengganti</em> and scan. When you take the replacement or a line is removed, the WMS sends it to Hiryu (message 5) and Hiryu edits the order on Grab by itself. Nobody does anything in Hiryu or Grab."
+     },
+     "result": {
+      "id": "Yang terlihat: pengganti ada di daftar ambil dan <em>Perubahan dikirim otomatis ke Hiryu dan Grab</em>. Kekurangannya dikirim ke SPV di <em>Perlu tindakan</em>.",
+      "en": "You see: the replacement on the pick list and <em>Perubahan dikirim otomatis ke Hiryu dan Grab</em>. The gap goes to the SPV in <em>Perlu tindakan</em>."
+     }
+    },
+    {
+     "n": 6,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengambil",
+       "en": "Staff · picker"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Hiryu"
+     ],
+     "tags": [],
+     "screens": [
+      "6e"
+     ],
+     "action": {
+      "id": "Pengganti juga tidak ada, atau instruksinya batal: <em>Pesanan dibatalkan</em>.",
+      "en": "Replacement also missing, or the instruction is cancel: <em>Pesanan dibatalkan</em>."
+     },
+     "detail": {
+      "id": "Contohnya GM-347 pada 08:55: Mild Cleanser 100 ml tidak ada di A-2-03 dan pelanggan memilih <em>Batalkan pesanan</em>. Hal yang sama terjadi setelah <em>Pengganti juga tidak ada</em>. WMS membatalkan seluruh pesanan dan mengirim pembatalan ke Hiryu. Tekan <em>Kembalikan sekarang</em> dan kembalikan 6 unit yang sudah ada di keranjang MA5-OUT-01, seperti di langkah 13.",
+      "en": "Here GM-347 at 08:55: Mild Cleanser 100 ml was not at A-2-03 and the customer had chosen <em>Batalkan pesanan</em>. The same happens after <em>Pengganti juga tidak ada</em>. The WMS cancels the whole order and sends the cancel to Hiryu. Press <em>Kembalikan sekarang</em> and put back the 6 units already in basket MA5-OUT-01, as in step 13."
+     },
+     "result": {
+      "id": "Yang terlihat: pesanan berikutnya setelah keranjang kosong.",
+      "en": "You see: the next order once the basket is empty."
+     }
+    },
+    {
+     "n": 7,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengambil",
+       "en": "Staff · picker"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "6f"
+     ],
+     "action": {
+      "id": "Setelah unit terakhir, taruh keranjang MA5-OUT-02 di meja kemas dan tekan <em>Serahkan ke meja packing</em>.",
+      "en": "After the last unit, put basket MA5-OUT-02 on the pack bench and press <em>Serahkan ke meja packing</em>."
+     },
+     "detail": {
+      "id": "Stopwatch berhenti (di sini 04:20, 10 unit dengan satu pengganti). Tidak ada lagi yang perlu ditekan: pesanan berikutnya datang sendiri.",
+      "en": "The stopwatch stops (04:20 here, 10 units with one replacement). Nothing else to press: the next order comes by itself."
+     },
+     "result": {
+      "id": "Yang terlihat: keranjang ada di daftar <em>Kemas</em> milik pengemas.",
+      "en": "You see: the basket in the packer's <em>Kemas</em> list."
+     }
+    },
+    {
+     "n": 8,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengemas",
+       "en": "Staff · packer"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "6g"
+     ],
+     "action": {
+      "id": "Di laptop, buka <em>Pesanan</em>, tab <em>Kemas</em>, lalu ambil keranjang paling atas.",
+      "en": "On the laptop, open <em>Pesanan</em>, tab <em>Kemas</em>, and take the top basket."
+     },
+     "detail": {
+      "id": "Setiap keranjang menampilkan nomor GM dan berapa lama sudah menunggu. Yang paling lama ada di atas. Yang sudah menunggu lama berubah oranye.",
+      "en": "Each basket shows its GM number and how long it has waited. The oldest is on top; one that has waited long turns amber."
+     },
+     "result": {
+      "id": "Yang terlihat: MA5-OUT-02 = GM-358 di paling atas, menunggu 1 menit.",
+      "en": "You see: MA5-OUT-02 = GM-358 on top, waiting 1 minute."
+     }
+    },
+    {
+     "n": 9,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengemas",
+       "en": "Staff · packer"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Hiryu"
+     ],
+     "tags": [],
+     "screens": [
+      "6h"
+     ],
+     "action": {
+      "id": "Kemas dengan kemasan yang disebut WMS, lalu ketik nomor GM dan tekan <em>Selesai dikemas</em>.",
+      "en": "Pack in the pack the WMS names, then type the GM number and press <em>Selesai dikemas</em>."
+     },
+     "detail": {
+      "id": "WMS memilih kemasan dari ukuran dan berat produk: di sini <em>Karton</em>, karena pesanan berisi botol besar (yang 225 ml; total 1,3 L, 1,0 kg). Pesanan tanpa botol besar masuk <em>Kantong kertas</em>. Pesanan yang sangat besar dapat dua kemasan. Centang setiap barang. Masukkan slip Hiryu dengan nomor GM terlihat. Jika tidak muat, tekan <em>Ganti kemasan</em> dan isi alasannya. Slip tidak punya barcode, jadi ketik nomornya di <em>Ketik nomor GM</em> (358). Pesanan di WMS sama dengan pesanan di Hiryu (ID pesanan Grab dan barisnya sama, dikirim saat <em>Accept</em>). Setiap unit sudah dicek dengan pindai saat diambil, dan nomor GM yang diketik dicocokkan dengan keranjang. Jadi pengemas cukup mencocokkan nomor GM di slip dengan layar.",
+      "en": "The WMS names the pack from the products' size and weight: here <em>Karton</em>, because the order holds a large bottle (the 225 ml; 1,3 L, 1,0 kg in all). An order with no large bottle goes in a <em>Kantong kertas</em>; a very big one gets two packs. Tick each item. Put the Hiryu slip in with the GM number showing. If it does not fit, press <em>Ganti kemasan</em> and give a reason. The slip has no barcode, so type the number in <em>Ketik nomor GM</em> (358). The WMS order is Hiryu's order (same Grab order ID and lines, sent at <em>Accept</em>), every unit was checked by scan at picking, and the typed GM number is checked against the basket: the packer only compares the slip's GM number with the screen."
+     },
+     "result": {
+      "id": "Yang terlihat: Hiryu menandai pesanan siap di Grab, dan satu karton berkurang dari stok bahan kemas.",
+      "en": "You see: Hiryu marks the order ready on Grab, and one carton comes off the consumables stock."
+     }
+    },
+    {
+     "n": 10,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengemas",
+       "en": "Staff · packer"
+      }
+     ],
+     "systems": [],
+     "tags": [
+      {
+       "id": "Tanpa layar",
+       "en": "No screen"
+      }
+     ],
+     "screens": [],
+     "action": {
+      "id": "Bawa paket ke rak siap ambil di lantai bawah.",
+      "en": "Take the parcel to the ready shelf downstairs."
+     },
+     "detail": {
+      "id": "Taruh dengan nomor GM menghadap ke luar.",
+      "en": "Put it with the GM number facing out."
+     },
+     "result": {
+      "id": "Yang terlihat: paket ada di <em>Serah ke driver</em>, dengan waktu tunggunya.",
+      "en": "You see: the parcel in <em>Serah ke driver</em>, with its waiting time."
+     }
+    },
+    {
+     "n": 11,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · serah terima",
+       "en": "Staff · handover"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "6i"
+     ],
+     "action": {
+      "id": "Di ponsel, buka <em>Pesanan</em>, tab <em>Serah ke driver</em>, lalu cocokkan nomor pesanan driver.",
+      "en": "On the phone, open <em>Pesanan</em>, tab <em>Serah ke driver</em>, and match the driver's order number."
+     },
+     "detail": {
+      "id": "Setiap paket menampilkan waktu tunggunya. Setelah 20 menit, paket berubah oranye (di sini GM-352, 24 menit). Tanyakan nomor pesanan ke driver, cari paket dengan nomor GM yang sama, tekan <em>Sudah diambil driver</em>, lalu <em>Ya, sudah diambil driver</em>. Paket bertanda <em>Dibatalkan</em> (merah): jangan diserahkan, bawa kembali ke atas.",
+      "en": "Every parcel shows its waiting time; after 20 minutes it turns amber (GM-352 here, 24 minutes). Ask the driver for the order number, find the parcel with the same GM number, press <em>Sudah diambil driver</em>, then <em>Ya, sudah diambil driver</em>. A parcel marked <em>Dibatalkan</em> (red): do not hand it over, take it back upstairs."
+     },
+     "result": {
+      "id": "Yang terlihat: paket hilang dari daftar. Tidak ada yang dikirim ke Hiryu.",
+      "en": "You see: the parcel leaves the list. Nothing is sent to Hiryu."
+     }
+    },
+    {
+     "n": 12,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "6j"
+     ],
+     "action": {
+      "id": "Di laptop, pantau <em>Pesanan</em>, tab <em>Papan antrean</em>. Pindahkan pesanan yang macet dengan <em>Pindahkan</em>.",
+      "en": "On the laptop, watch <em>Pesanan</em>, tab <em>Papan antrean</em>. Move a stuck order with <em>Pindahkan</em>."
+     },
+     "detail": {
+      "id": "Kolom: <em>Menunggu</em> (dengan <em>Terjadwal</em>), <em>Sedang diambil</em> (pengambil dan waktunya), <em>Menunggu dikemas</em>, <em>Menunggu driver</em>, <em>Selesai hari ini</em>. Panel <em>Di shift</em> menampilkan setiap pengambil sebagai <em>Siap</em>, <em>Istirahat</em> atau <em>Mengambil</em>, dan juga pengemas. <em>Pindahkan</em> meminta pengambil baru dan alasannya. Keranjang ikut pindah bersama pesanan.",
+      "en": "Lanes: <em>Menunggu</em> (with <em>Terjadwal</em>), <em>Sedang diambil</em> (picker and time), <em>Menunggu dikemas</em>, <em>Menunggu driver</em>, <em>Selesai hari ini</em>. The panel <em>Di shift</em> shows each picker as <em>Siap</em>, <em>Istirahat</em> or <em>Mengambil</em>, and the packer. <em>Pindahkan</em> asks for the new picker and a reason; the basket goes with the order."
+     },
+     "result": {
+      "id": "Yang terlihat: pesanan muncul di ponsel pengambil baru.",
+      "en": "You see: the order on the new picker's phone."
+     }
+    },
+    {
+     "n": 13,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · siapa saja",
+       "en": "Staff · anyone"
+      }
+     ],
+     "systems": [
+      "Hiryu",
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "6k"
+     ],
+     "action": {
+      "id": "Pembatalan dari Hiryu: kembalikan unit yang sudah diambil dengan <em>Kembalikan ke rak</em>.",
+      "en": "A cancel from Hiryu: put the picked units back with <em>Kembalikan ke rak</em>."
+     },
+     "detail": {
+      "id": "Pelanggan, Grab, atau merchant bisa membatalkan kapan saja. Pembatalan juga bisa terjadi karena barang tidak ada (langkah 6: di sini 6 unit yang sudah diambil untuk GM-347). Pesanan berubah merah di semua layar. Pindai setiap unit, lalu pindai bin yang disebut WMS.",
+      "en": "The customer, Grab or the merchant can cancel at any moment, and so can a missing item (step 6: here the 6 units already picked for GM-347). The order turns red on every screen. Scan each unit, then scan the bin the WMS names."
+     },
+     "result": {
+      "id": "Yang terlihat: unit kembali ke stok dan keranjang kosong lagi.",
+      "en": "You see: the units back in stock and the basket free again."
+     }
+    }
+   ],
+   "rules": [
+    {
+     "id": "Satu pesanan per pengambil. WMS memberikannya ke pengambil yang paling lama siap.",
+     "en": "One order per picker. The WMS gives it to the picker who has been ready longest."
+    },
+    {
+     "id": "Ada 2 menit untuk mulai (pindai keranjang). Jika lewat, pesanan kembali ke antrean.",
+     "en": "2 minutes to start (scan the basket), or the order goes back to the queue."
+    },
+    {
+     "id": "Target 10 menit dihitung dari jam pesanan Grab, bukan dari <em>Accept</em>, dan berakhir saat selesai dikemas. Ini target, bukan hitung mundur. Stopwatch menghitung naik, supaya Anda bisa melihat kecepatan kerja Anda sendiri.",
+     "en": "The 10-minute target starts at Grab's order time, not at <em>Accept</em>, and ends at packed: a target, not a countdown. The stopwatch counts up, for the worker's own pace."
+    },
+    {
+     "id": "Pengemas mengetik nomor GM, karena slip Hiryu tidak punya barcode.",
+     "en": "The packer types the GM number: the Hiryu slip has no barcode."
+    },
+    {
+     "id": "Serah terima hanya dicentang di WMS. Tidak ada yang dikirim ke Hiryu. Data pelanggan tidak pernah masuk ke WMS.",
+     "en": "Handover is a check in the WMS only; nothing goes to Hiryu. Customer data never reaches the WMS."
+    },
+    {
+     "id": "Pesanan uji (UJI) dibuat di WMS untuk latihan (<em>Buat pesanan uji</em> di papan antrean). Pesanan ini tidak pernah masuk ke Hiryu atau Grab dan tidak dihitung di laporan.",
+     "en": "Test orders (UJI) are made in the WMS for training (<em>Buat pesanan uji</em> on the queue board); they never reach Hiryu or Grab and never count in reports."
+    }
+   ]
+  },
+  {
+   "n": 7,
+   "page": "karantina-retur.html",
+   "title": {
+    "id": "Karantina, hapus stok dan retur ke merek",
+    "en": "Quarantine, write-off and returns to the brand"
+   },
+   "intro": {
+    "id": "Satu jalur untuk setiap unit yang tidak bisa dijual, dan satu cara untuk mengirim stok kembali ke merek. Paragon menerima kembali stok yang masa kedaluwarsanya kurang dari 6 bulan, dan kerusakan yang dinilai dari kardus luar (rapat 30 Sep). WMS tidak menyimpan tanggal kedaluwarsa: WMS menghitung umur stok dari tanggal masuk, dan SPV mengecek tanggal di kemasan.",
+    "en": "One path for every unit that cannot be sold, and one way to send stock back to the brand. Paragon takes back stock with less than 6 months to expiry, and damage judged on the outer box (meeting of 30 Sep). The WMS keeps no expiry dates: it counts age from the inbound date, and the SPV checks the date on the pack."
+   },
+   "who": [
+    {
+     "id": "Staf",
+     "en": "Staff"
+    },
+    {
+     "id": "SPV",
+     "en": "SPV"
+    },
+    {
+     "id": "Ops HQ",
+     "en": "Ops HQ"
+    }
+   ],
+   "when": {
+    "id": "Setiap kali ada unit yang bermasalah. SPV memutuskan dalam 24 jam. Retur dikirim bersama pengiriman merek berikutnya.",
+    "en": "Whenever a bad unit turns up. The SPV decides within 24 hours. Returns leave with the brand's next delivery."
+   },
+   "where": [
+    {
+     "id": "WMS",
+     "en": "WMS"
+    },
+    {
+     "id": "Hiryu",
+     "en": "Hiryu"
+    },
+    {
+     "id": "Kertas",
+     "en": "Paper"
+    }
+   ],
+   "steps": [
+    {
+     "n": 1,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Siapa saja",
+       "en": "Anyone"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Hiryu"
+     ],
+     "tags": [],
+     "screens": [
+      "7a"
+     ],
+     "action": {
+      "id": "HP: <em>Karantina &amp; retur</em> → <em>Laporkan masalah</em>",
+      "en": "Phone: <em>Karantina &amp; retur</em> → <em>Laporkan masalah</em>"
+     },
+     "detail": {
+      "id": "Untuk produk yang rusak, bocor, kedaluwarsa atau salah yang ditemukan di bin. Pindai unitnya, pilih alasannya (<em>Rusak</em>, <em>Bocor</em>, <em>Kedaluwarsa</em>, <em>Produk salah</em>), ambil foto, taruh unit di baki karantina, lalu tekan <em>Pindai label baki</em> untuk memindai MA5-QR-01. Unit yang rusak saat barang masuk langsung dibawa ke sini (Bagian 5).",
+      "en": "For a damaged, leaking, expired or wrong product found in a bin. Scan the unit, choose the reason (<em>Rusak</em>, <em>Bocor</em>, <em>Kedaluwarsa</em>, <em>Produk salah</em>), take a photo, put it in the quarantine tray and press <em>Pindai label baki</em> to scan MA5-QR-01. Units damaged at inbound come here directly (Section 5)."
+     },
+     "result": {
+      "id": "Yang terlihat: unit langsung tidak bisa dijual lagi, dan Hiryu menerima angka yang lebih kecil.",
+      "en": "You see: the unit stops being sellable at once, and Hiryu gets the lower number."
+     }
+    },
+    {
+     "n": 2,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "7b"
+     ],
+     "action": {
+      "id": "Laptop: <em>Karantina &amp; retur</em> → <em>Karantina</em>. Putuskan setiap unit dalam 24 jam.",
+      "en": "Laptop: <em>Karantina &amp; retur</em> → <em>Karantina</em>. Decide each unit within 24 hours."
+     },
+     "detail": {
+      "id": "Pilih <em>Kembali ke rak</em> jika ternyata unit masih bagus: staf mendapat tugas, dan unit bisa dijual lagi setelah staf memindai bin. <em>Retur ke merek</em> memasukkan unit ke daftar retur merek. <em>Hapus</em> menghapus unit dari stok. <em>Beban biaya</em> diisi oleh WMS, bukan dipilih: <em>Ninja</em> untuk semua yang rusak di hub setelah ditaruh di rak, merek untuk unit yang ditolak saat barang masuk. Lalu tekan <em>Simpan keputusan</em>.",
+      "en": "<em>Kembali ke rak</em> if it is fine after all: staff get a task, and the unit is sellable again when they scan the bin. <em>Retur ke merek</em> puts it on the brand's return list. <em>Hapus</em> writes it off. <em>Beban biaya</em> is filled in by the WMS, not chosen: <em>Ninja</em> for anything damaged in the hub after putaway, the brand for units rejected at inbound. Then <em>Simpan keputusan</em>."
+     },
+     "result": {
+      "id": "Yang terlihat: unit yang sudah lebih dari 24 jam berwarna oranye dengan <em>Lewat 2 jam</em>; unit ini juga muncul di <em>Perlu tindakan</em>.",
+      "en": "You see: units older than 24 hours in amber with <em>Lewat 2 jam</em>; they also show on <em>Perlu tindakan</em>."
+     }
+    },
+    {
+     "n": 3,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Hiryu"
+     ],
+     "tags": [],
+     "screens": [
+      "7c"
+     ],
+     "action": {
+      "id": "<em>Persetujuan hapus</em>: <em>Setujui</em> atau <em>Tolak</em> setiap penghapusan stok.",
+      "en": "<em>Persetujuan hapus</em>: <em>Setujui</em> or <em>Tolak</em> each write-off."
+     },
+     "detail": {
+      "id": "Satu daftar untuk semua hub, dikelompokkan per merek, dengan jumlah unit per penanggung biaya. Cek alasan dan fotonya; penanggung biaya sudah terisi. <em>Tolak</em> membuat unit tetap di baki dan mengirimnya kembali ke SPV dengan catatan.",
+      "en": "One list for every hub, grouped by brand with the units per cost bearer. Check the reason and the photo; the cost bearer is already filled in. <em>Tolak</em> keeps the unit in the tray and sends it back to the SPV with a note."
+     },
+     "result": {
+      "id": "Yang terlihat: unit yang disetujui keluar dari stok dan muncul di laporan bulanan merek, dengan alasan dan penanggung biayanya.",
+      "en": "You see: approved units leave the stock and appear in the brand's monthly report, with reason and cost bearer."
+     }
+    },
+    {
+     "n": 4,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      },
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "7d"
+     ],
+     "action": {
+      "id": "<em>Retur ke merek</em>: pilih merek, centang unitnya, lalu <em>Buat nota retur</em>.",
+      "en": "<em>Retur ke merek</em>: choose the brand, tick the units, <em>Buat nota retur</em>."
+     },
+     "detail": {
+      "id": "Daftar ini berisi tiga kelompok untuk satu merek: <em>Dari karantina</em> (unit yang ditandai SPV untuk diretur), <em>Stok lama (umur lebih dari 90 hari sejak masuk)</em> (batch yang masih di rak, menurut tanggal masuk dan umur dalam hari; cek ED di kemasan sebelum mencentang) dan <em>Kiriman ditolak</em> (ditolak saat barang masuk, tidak pernah jadi stok). Unit di rak berhenti dijual saat nota dibuat.",
+      "en": "The list collects three groups for one brand: <em>Dari karantina</em> (units the SPV marked for return), <em>Stok lama (umur lebih dari 90 hari sejak masuk)</em> (batches still on the shelf, by inbound date and age in days; check the ED on the pack before ticking) and <em>Kiriman ditolak</em> (refused at inbound, never stock). Shelf units stop selling when the note is made."
+     },
+     "result": {
+      "id": "Yang terlihat: nomor nota, RTR-MA5-2610-001, yang terhubung ke pengiriman merek berikutnya.",
+      "en": "You see: a note number, RTR-MA5-2610-001, linked to the brand's next delivery."
+     }
+    },
+    {
+     "n": 5,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Paper"
+     ],
+     "tags": [],
+     "screens": [
+      "7e"
+     ],
+     "action": {
+      "id": "<em>Cetak nota retur</em> di kertas A4, dua lembar.",
+      "en": "<em>Cetak nota retur</em> on A4, two copies."
+     },
+     "detail": {
+      "id": "Nota berisi barang yang dikembalikan, jumlahnya dan alasannya. Setiap baris punya kotak centang untuk sopir, dan ada kotak tanda tangan untuk Ninja dan sopir merek.",
+      "en": "The note lists what goes back, the quantities and the reasons, with a tick box per line for the driver and signature boxes for Ninja and the brand's driver."
+     },
+     "result": {
+      "id": "Yang terlihat: nota tercetak, disimpan bersama unit retur sampai sopir datang.",
+      "en": "You see: the printed note, kept with the return units until the driver comes."
+     }
+    },
+    {
+     "n": 6,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Paper"
+     ],
+     "tags": [],
+     "screens": [
+      "7f"
+     ],
+     "action": {
+      "id": "Saat sopir merek datang: di HP buka <em>Serahkan retur</em>.",
+      "en": "When the brand's driver comes: phone <em>Serahkan retur</em>."
+     },
+     "detail": {
+      "id": "Biasanya bersamaan dengan pengiriman berikutnya. Pindai setiap unit yang keluar sesuai nota. Setelah semua unit dipindai, sopir mengecek setiap baris dan menandatangani kedua lembar; lalu tekan <em>Driver sudah tanda tangan</em>.",
+      "en": "Usually with the next delivery. Scan each unit out against the note. When all units are scanned, the driver checks the lines and signs both copies; tap <em>Driver sudah tanda tangan</em>."
+     },
+     "result": {
+      "id": "Yang terlihat: unit keluar dari stok; satu lembar yang sudah ditandatangani dibawa sopir, satu lembar disimpan SPV.",
+      "en": "You see: the units leave the stock; one signed copy goes with the driver, one stays with the SPV."
+     }
+    }
+   ],
+   "rules": [
+    {
+     "id": "Unit yang tidak bisa dijual selalu masuk ke baki karantina, tidak pernah dibiarkan di bin, dan baru bisa dijual lagi setelah staf memindainya ke bin.",
+     "en": "An unsellable unit always goes to the quarantine tray, never stays in a bin, and is sellable again only when staff scan it into a bin."
+    },
+    {
+     "id": "Tidak ada barang yang keluar dari stok tanpa persetujuan Ops HQ (hapus stok) atau nota retur yang ditandatangani sopir merek (retur). Retur dikirim bersama pengiriman merek berikutnya, bukan dengan perjalanan terpisah.",
+     "en": "Nothing leaves the stock without an Ops HQ approval (write-off) or a return note signed by the brand's driver (return). Returns go back with the brand's next delivery, not on a separate trip."
+    },
+    {
+     "id": "Kerusakan setelah stok masuk ke persediaan kita menjadi biaya Ninja. Unit yang ditolak saat barang masuk menjadi biaya merek. WMS yang menunjukkan ini; tidak ada yang memilihnya.",
+     "en": "Damage after the stock has entered our inventory is Ninja's cost. Units rejected at inbound are the brand's. The WMS shows this; nobody chooses it."
+    },
+    {
+     "id": "Pesanan batal yang dibawa kembali oleh sopir dicek saat tiba, sama seperti retur lainnya: unit yang bagus kembali ke rak, unit yang rusak masuk karantina sebagai kerusakan di hub.",
+     "en": "A cancelled order the driver brings back is checked on arrival like any return: fine units go back to the rack, damaged units go to quarantine as damage in the hub."
+    },
+    {
+     "id": "Kerusakan yang dilaporkan pelanggan setelah serah terima adalah klaim Grab, diurus di Hiryu atau Grab, bukan di WMS.",
+     "en": "Damage reported by a customer after handover is a Grab claim, handled in Hiryu or Grab, not in the WMS."
+    },
+    {
+     "id": "Tidak ada tanggal kedaluwarsa di WMS. Unit <em>Stok lama</em> baru boleh masuk nota retur setelah SPV mengecek ED di kemasan (aturan merek: sisa kurang dari 6 bulan).",
+     "en": "No expiry dates in the WMS. A <em>Stok lama</em> unit goes on a return note only after the SPV has checked the ED on the pack (brand rule: less than 6 months left)."
+    }
+   ]
+  },
+  {
+   "n": 8,
+   "page": "hitung-stok.html",
+   "title": {
+    "id": "Hitung stok",
+    "en": "Stock count"
+   },
+   "intro": {
+    "id": "Menjaga angka di WMS sama dengan barang di rak, supaya Grab tidak pernah menjual unit yang tidak ada.",
+    "en": "Keeps the WMS number equal to what is on the shelf, so Grab never sells a unit that is not there."
+   },
+   "who": [
+    {
+     "id": "Staf",
+     "en": "Staff"
+    },
+    {
+     "id": "SPV",
+     "en": "SPV"
+    },
+    {
+     "id": "Ops HQ",
+     "en": "Ops HQ"
+    }
+   ],
+   "when": {
+    "id": "Setiap hari: bin siklus wajib dan bin dengan barang hilang, sekitar 5 dari 105 bin di MA5. Semua bin sebulan sekali.",
+    "en": "Mandatory-cycle and missing-item bins every day, about 5 of the 105 bins at MA5. Every bin once a month."
+   },
+   "where": [
+    {
+     "id": "WMS",
+     "en": "WMS"
+    },
+    {
+     "id": "Hiryu",
+     "en": "Hiryu"
+    }
+   ],
+   "steps": [
+    {
+     "n": 1,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "8a"
+     ],
+     "action": {
+      "id": "WMS membuat rencana hitung setiap pagi; SPV mengecek <em>Hitung stok</em> → <em>Rencana hari ini</em>.",
+      "en": "The WMS makes the count plan each morning; the SPV checks <em>Hitung stok</em> → <em>Rencana hari ini</em>."
+     },
+     "detail": {
+      "id": "Setiap hari: bin yang jatuh jadwal siklus wajib (<em>Siklus wajib</em>) dan setiap bin yang kemarin dilaporkan ada barang yang tidak ada (<em>Barang tidak ada kemarin</em>). Sebulan sekali: hitung penuh semua bin (<em>Hitung penuh bulanan</em>). SPV bisa menambah bin dengan <em>Tambah bin</em>; bin itu ditandai <em>Ditambah SPV</em>.",
+      "en": "Daily: bins due under a mandatory cycle (<em>Siklus wajib</em>) and every bin where a missing item was declared yesterday (<em>Barang tidak ada kemarin</em>). Once a month: a full count of every bin (<em>Hitung penuh bulanan</em>). The SPV can add a bin with <em>Tambah bin</em>; it shows <em>Ditambah SPV</em>."
+     },
+     "result": {
+      "id": "Yang terlihat: bin hari ini dengan alasan, penghitung dan statusnya, serta pengingat untuk hitung penuh bulanan.",
+      "en": "You see: today's bins with the reason, the counter and the status, and the banner for the monthly full count."
+     }
+    },
+    {
+     "n": 2,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "8a"
+     ],
+     "action": {
+      "id": "Atur siklus wajib untuk SKU tertentu: <em>Siklus hitung wajib</em> → <em>Tambah siklus</em>.",
+      "en": "Set a mandatory cycle for specific SKUs: <em>Siklus hitung wajib</em> → <em>Tambah siklus</em>."
+     },
+     "detail": {
+      "id": "Pilih satu SKU atau semua SKU dari satu merek, lalu pilih setiap x hari atau setiap x minggu. Contoh di layar: <em>Kahf Revered Oud Eau de Toilette 35 ml: setiap 7 hari</em>, <em>Semua SKU Labore: setiap 2 minggu</em> (37 bin, dibagi rata: 2 atau 3 sehari). Ubah siklus dengan ikon pensil. Hanya Ops HQ yang bisa menambah atau mengubah siklus.",
+      "en": "Choose one SKU or all SKUs of a brand, then every x days or every x weeks. Examples on the screen: <em>Kahf Revered Oud Eau de Toilette 35 ml: setiap 7 hari</em>, <em>Semua SKU Labore: setiap 2 minggu</em> (37 bins, spread evenly: 2 or 3 a day). Change a cycle with the pencil icon. Only Ops HQ can add or change cycles."
+     },
+     "result": {
+      "id": "Yang terlihat: aturan muncul di panel dengan tanggal berikutnya; bin-binnya otomatis masuk ke rencana harian.",
+      "en": "You see: the rule in the panel with its next date; its bins join the daily plan by themselves."
+     }
+    },
+    {
+     "n": 3,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "8b"
+     ],
+     "action": {
+      "id": "HP <em>Hitung stok</em>: pindai label bin, lalu pindai setiap unit di bin, lalu <em>Selesai hitung</em>.",
+      "en": "Phone <em>Hitung stok</em>: scan the bin label, then scan every unit in the bin, then <em>Selesai hitung</em>."
+     },
+     "detail": {
+      "id": "Cara utama adalah hitung dengan memindai. Keluarkan semua unit, termasuk yang di belakang, dan pindai satu per satu; angka besar di layar akan bertambah. Pindaian yang salah dibatalkan dengan <em>Batalkan pindaian terakhir</em>. Dengan <em>Hitung tanpa pindai (blind)</em> Anda bisa mengetik angkanya; hasil hitung blind selalu menunggu <em>Setujui SPV</em>, walaupun angkanya cocok. Layar tidak pernah menampilkan angka yang seharusnya. Sejak label dipindai sampai <em>Selesai hitung</em>, tidak ada yang boleh mengambil barang dari bin itu.",
+      "en": "Count by scan is the default. Take out every unit, including the ones at the back, and scan each one; the big number counts up. A wrong scan is undone with <em>Batalkan pindaian terakhir</em>. <em>Hitung tanpa pindai (blind)</em> lets you type the number instead; a blind result always waits for <em>Setujui SPV</em>, even when it matches. The screen never shows the expected number. From the label scan until <em>Selesai hitung</em>, nobody picks from that bin."
+     },
+     "result": {
+      "id": "Yang terlihat: bin berikutnya di daftar Anda.",
+      "en": "You see: the next bin on your list."
+     }
+    },
+    {
+     "n": 4,
+     "phase": null,
+     "roles": [],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "8c"
+     ],
+     "action": {
+      "id": "Angka yang berbeda otomatis diberikan ke orang lain untuk dihitung ulang.",
+      "en": "A number that differs goes to another person for a recount, by itself."
+     },
+     "detail": {
+      "id": "WMS memberikan bin yang sama ke staf kedua. Staf kedua juga menghitung di layar yang sama tanpa melihat angka yang seharusnya.",
+      "en": "The WMS gives the same bin to a second staff member, who also counts on the same screen without seeing the expected number."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Hitung ulang otomatis</em> pada bin di <em>Hasil</em>, dengan nama penghitung kedua.",
+      "en": "You see: <em>Hitung ulang otomatis</em> on the bin in <em>Hasil</em>, with the second counter's name."
+     }
+    },
+    {
+     "n": 5,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Hiryu"
+     ],
+     "tags": [],
+     "screens": [
+      "8c"
+     ],
+     "action": {
+      "id": "Laptop <em>Hitung stok</em> → <em>Hasil</em>: bin yang ada selisihnya, atau setiap hitung blind, diberi <em>Setujui SPV</em> atau <em>Hitung ulang</em>.",
+      "en": "Laptop <em>Hitung stok</em> → <em>Hasil</em>: a bin with a difference, or any blind count, gets <em>Setujui SPV</em> or <em>Hitung ulang</em>."
+     },
+     "detail": {
+      "id": "Setiap bin menampilkan angka yang seharusnya (<em>Sistem</em>), hasil hitung, hasil hitung ulang dan selisihnya (<em>Selisih</em>). <em>Setujui SPV</em> langsung mengubah stok dan mengirim angka baru ke Hiryu. Hitung dengan memindai yang angkanya cocok selesai sendiri (<em>Selesai sendiri</em>).",
+      "en": "Each bin shows the expected number (<em>Sistem</em>), the count, the recount and the difference (<em>Selisih</em>). <em>Setujui SPV</em> changes the stock at once and sends the new number to Hiryu. A count by scan that matches closes by itself (<em>Selesai sendiri</em>)."
+     },
+     "result": {
+      "id": "Yang terlihat: langkah 1 berubah menjadi <em>Disetujui SPV</em> dengan nama Anda dan angka baru; langkah 2 menampilkan <em>Tinjau Ops HQ</em> <em>Belum ditinjau</em>.",
+      "en": "You see: step 1 turns to <em>Disetujui SPV</em> with your name and the new number; step 2 shows <em>Tinjau Ops HQ</em> <em>Belum ditinjau</em>."
+     }
+    },
+    {
+     "n": 6,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "8c"
+     ],
+     "action": {
+      "id": "Ops HQ meninjau setiap selisih yang sudah disetujui, sesudahnya: <em>Tinjau Ops HQ</em>.",
+      "en": "Ops HQ reviews every approved difference afterwards: <em>Tinjau Ops HQ</em>."
+     },
+     "detail": {
+      "id": "Untuk kedua hub, setelah stok sudah berubah. Tinjauan ini tidak menahan apa pun; hasilnya masuk ke laporan selisih bulanan (Bagian 10). Hitung penuh akhir bulan memberi angka stok hasil hitung untuk laporan merek.",
+      "en": "For both hubs, after the stock has already changed. The review does not hold anything back; it feeds the monthly variance report (Section 10). The month-end full count gives the brand report its counted stock."
+     },
+     "result": {
+      "id": "Yang terlihat: setiap selisih yang disetujui menampilkan <em>Belum ditinjau</em> sampai Ops HQ memeriksanya.",
+      "en": "You see: each approved difference shows <em>Belum ditinjau</em> until Ops HQ has looked at it."
+     }
+    }
+   ],
+   "rules": [
+    {
+     "id": "Cara utama adalah hitung dengan memindai. Hitung blind (mengetik angka) boleh, tetapi selalu perlu <em>Setujui SPV</em>, walaupun tidak ada selisih. Orang yang menghitung tidak pernah melihat angka yang seharusnya.",
+     "en": "Count by scan by default. Blind count (typing the number) is allowed, but always needs <em>Setujui SPV</em>, even with no difference. Nobody who counts sees the expected number."
+    },
+    {
+     "id": "Barang tidak boleh diambil dari bin yang sedang dihitung.",
+     "en": "A bin being counted is not picked from."
+    },
+    {
+     "id": "Hitung ulang selalu dilakukan oleh orang yang berbeda.",
+     "en": "A recount is always done by a different person."
+    },
+    {
+     "id": "Persetujuan SPV mengubah stok dan Hiryu. Ops HQ meninjau setiap selisih yang disetujui sesudahnya; tinjauan ini tidak menahan perubahan. Hitung dengan memindai yang angkanya cocok selesai sendiri.",
+     "en": "The SPV approval changes the stock and Hiryu. Ops HQ reviews every approved difference afterwards; it does not hold the change. A count by scan that matches closes by itself."
+    },
+    {
+     "id": "Hitung penuh semua bin sebulan sekali. Ops HQ mengatur siklus wajib per SKU atau per merek, setiap x hari atau x minggu. Tidak ada bin bergilir.",
+     "en": "A full count of every bin once a month. Ops HQ sets mandatory cycles per SKU or brand, every x days or x weeks. No rotation bins."
+    },
+    {
+     "id": "SPV menyetujui hitung akhir bulan sebelum laporan bulanan merek, yang harus selesai pada hari kerja ke-3.",
+     "en": "The SPV approves the month-end count before the monthly brand report, due on the 3rd working day."
+    }
+   ]
+  },
+  {
+   "n": 9,
+   "page": "bahan-kemas.html",
+   "title": {
+    "id": "Bahan kemas",
+    "en": "Consumables"
+   },
+   "intro": {
+    "id": "Jangan sampai kehabisan tas kertas, kardus dan label. Ini stok milik Ninja sendiri, bukan PO ke merek. WMS mengurangi setiap barang dari pesanan yang dikemas. SPV mengajukan kebutuhan, Ops HQ mengajukan PR di luar sistem, dan SPV mencatat barang yang datang dengan persetujuan Ops HQ.",
+    "en": "Never run out of paper bags, cartons and labels. This is Ninja's own stock, not a PO to a brand. The WMS deducts every item from the orders packed. The SPV raises a need, Ops HQ submits the PR outside the system, and the SPV records what arrives under Ops HQ approval."
+   },
+   "who": [
+    {
+     "id": "SPV",
+     "en": "SPV"
+    },
+    {
+     "id": "Ops HQ",
+     "en": "Ops HQ"
+    }
+   ],
+   "when": {
+    "id": "Otomatis untuk setiap pesanan yang dikemas dan setiap kiriman yang diterima. SPV menghitung seminggu sekali. Pengajuan ke Ops HQ setiap kali ada barang yang turun di bawah minimum.",
+    "en": "Every packed order and every delivery received, automatically. A count by the SPV once a week. A request to Ops HQ whenever an item drops below its minimum."
+   },
+   "where": [
+    {
+     "id": "WMS",
+     "en": "WMS"
+    }
+   ],
+   "steps": [
+    {
+     "n": 1,
+     "phase": null,
+     "roles": [],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "9a"
+     ],
+     "action": {
+      "id": "Setiap <em>Selesai dikemas</em> mengurangi setiap bahan kemas sesuai <em>Pemakaian per pesanan</em>.",
+      "en": "Each <em>Selesai dikemas</em> deducts every consumable at its <em>Pemakaian per pesanan</em>."
+     },
+     "detail": {
+      "id": "Tas kertas: 1 per pesanan yang dikemas dalam tas. Kardus: 1 per pesanan yang dikemas dalam kardus. Lakban: 0,6 m per kardus. Label bin: 1 per pesanan. Sekat dan stiker hari dikurangi per pengiriman yang diterima (2 per minggu per hub, satu per merek). Pesanan yang dikemas sebagai <em>2 kemasan</em> memakai satu tas dan satu kardus. Ops HQ mengatur logika pemakaian ini di sistem. Tidak ada yang perlu mengetik apa pun.",
+      "en": "Paper bag: 1 per order packed in a bag. Carton: 1 per order packed in a carton. Tape: 0,6 m per carton. Bin label: 1 per order. Dividers and day stickers come off per delivery received (2 a week per hub, one per brand). An order packed as <em>2 kemasan</em> takes a bag and a carton. Ops HQ sets this usage logic in the system. Nobody types anything."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Dihitung otomatis dari 49 pesanan dikemas 7 hari terakhir</em> (7 sehari), dan setiap angka stok di <em>Bahan kemas</em> berkurang sesuai pesanan.",
+      "en": "You see: <em>Dihitung otomatis dari 49 pesanan dikemas 7 hari terakhir</em> (7 a day), and every stock number in <em>Bahan kemas</em> goes down with the orders."
+     }
+    },
+    {
+     "n": 2,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "9a"
+     ],
+     "action": {
+      "id": "Laptop <em>Bahan kemas</em>: jika di bawah minimum, <em>Ajukan ke Ops HQ</em>.",
+      "en": "Laptop <em>Bahan kemas</em>: below the minimum, <em>Ajukan ke Ops HQ</em>."
+     },
+     "detail": {
+      "id": "Untuk setiap barang: pemakaian per pesanan, stok, pemakaian per hari, sisa hari dan minimum (garis kecil di batang). Barang di bawah minimum berubah oranye dengan <em>di bawah minimum</em> dan muncul di <em>Perlu tindakan</em>. Minimum adalah pemakaian 14 hari dengan target Grab 200 pesanan per hub per bulan (sekitar 7 sehari, 10 sampai 15 unit per pesanan). SPV hanya mengajukan kebutuhan; SPV tidak bisa membeli.",
+      "en": "Per item: usage per order, stock, use per day, days left and the minimum (the tick on the bar). An item below the minimum turns amber with <em>di bawah minimum</em> and appears on <em>Perlu tindakan</em>. The minimum is 14 days of use at the Grab target of 200 orders per hub per month (about 7 a day, 10 to 15 units each). The SPV only raises the need; the SPV cannot buy."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Diajukan ke Ops HQ</em> pada barang itu dengan nama Anda dan waktunya.",
+      "en": "You see: <em>Diajukan ke Ops HQ</em> on the item with your name and time."
+     }
+    },
+    {
+     "n": 3,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "9a"
+     ],
+     "action": {
+      "id": "Ajukan PR di luar WMS, lalu catat: <em>Permintaan SPV</em> → <em>Nomor PR</em> → <em>Ajukan PR</em>.",
+      "en": "Submit the PR outside the WMS, then record it: <em>Permintaan SPV</em> → <em>Nomor PR</em> → <em>Ajukan PR</em>."
+     },
+     "detail": {
+      "id": "Hanya Ops HQ yang bisa mengajukan PR secara resmi. Pembeliannya (pemasok, pembayaran) dilakukan di luar sistem. Di WMS, Ops HQ mengonfirmasi jumlahnya dan mengetik nomor PR, misalnya <em>PR-2610-003</em>.",
+      "en": "Only Ops HQ can officially submit the PR. The purchase itself (supplier, payment) happens outside the system. In the WMS, Ops HQ confirms the amount and types the PR number, for example <em>PR-2610-003</em>."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>PR diajukan</em> dengan nomor PR pada barang itu, jadi SPV tahu barangnya akan datang.",
+      "en": "You see: <em>PR diajukan</em> with the PR number on the item, so the SPV knows it is coming."
+     }
+    },
+    {
+     "n": 4,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "9a"
+     ],
+     "action": {
+      "id": "Ubah minimum, pemakaian per pesanan atau logika pemakaian dengan ikon pensil. Barang baru: <em>Tambah bahan kemas</em>.",
+      "en": "Change a minimum, a usage per order or the usage logic with the pencil icon. New item: <em>Tambah bahan kemas</em>."
+     },
+     "detail": {
+      "id": "Minimum bisa diubah kapan saja, sesuai pemakaian nyata di hub. Barang baru perlu <em>Nama</em>, <em>Satuan</em>, <em>Isi per pak</em>, <em>Pemakaian per pesanan</em> dan <em>Minimum</em>. Hanya Ops HQ yang melihat ikon pensil dan tombol itu.",
+      "en": "Minimums can be changed at any time as the hub learns its real use. A new item needs <em>Nama</em>, <em>Satuan</em>, <em>Isi per pak</em>, <em>Pemakaian per pesanan</em> and <em>Minimum</em>. Only Ops HQ sees the pencil icons and the button."
+     },
+     "result": {
+      "id": "Yang terlihat: angka baru di baris itu, dipakai mulai pesanan berikutnya yang dikemas.",
+      "en": "You see: the new figure in the row, used from the next packed order on."
+     }
+    },
+    {
+     "n": 5,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "9b"
+     ],
+     "action": {
+      "id": "Saat kiriman sampai di hub, buka HP <em>Bahan kemas</em>, tab <em>Terima</em>: pilih barangnya, isi jumlah pak dan isi per pak, lalu <em>Kirim ke Ops HQ</em>.",
+      "en": "When the delivery reaches the hub, phone <em>Bahan kemas</em>, tab <em>Terima</em>: choose the item, enter packs and pieces per pack, <em>Kirim ke Ops HQ</em>."
+     },
+     "detail": {
+      "id": "Hitung pak yang datang. Isi per pak sudah terisi dari kiriman terakhir; ubah jika paknya berbeda. Stok belum berubah.",
+      "en": "Count the packs that arrived. Pieces per pack is filled in from the last delivery; change it if the pack is different. The stock does not change yet."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Total diterima</em> dan <em>Menunggu persetujuan Ops HQ</em> pada kiriman itu.",
+      "en": "You see: <em>Total diterima</em> and <em>Menunggu persetujuan Ops HQ</em> on the delivery."
+     }
+    },
+    {
+     "n": 6,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "9b"
+     ],
+     "action": {
+      "id": "Ops HQ mengecek jumlah yang diterima dengan PR, lalu menyetujuinya.",
+      "en": "Ops HQ checks the amount received against the PR and approves it."
+     },
+     "detail": {
+      "id": "SPV memperbarui jumlahnya; Ops HQ mengawasi. Jika jumlahnya salah, Ops HQ mengembalikannya ke SPV.",
+      "en": "The SPV updates the amount; Ops HQ supervises. If the amount is wrong, Ops HQ sends it back to the SPV."
+     },
+     "result": {
+      "id": "Yang terlihat: stok bertambah (12 + 50 = 62 pcs) dan <em>PR diajukan</em> hilang.",
+      "en": "You see: the stock goes up (12 + 50 = 62 pcs) and <em>PR diajukan</em> clears."
+     }
+    },
+    {
+     "n": 7,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      },
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "9b"
+     ],
+     "action": {
+      "id": "Seminggu sekali, tab <em>Hitung mingguan</em>: hitung setiap barang di rak, ketik angkanya dan kirim ke Ops HQ.",
+      "en": "Once a week, tab <em>Hitung mingguan</em>: count every item on the shelf, type the number and send it to Ops HQ."
+     },
+     "detail": {
+      "id": "WMS sudah mengurangi semuanya; hitungan ini menangkap yang terlewat dari pemakaian per pesanan (terbuang, rusak, angka pemakaian yang salah). Bisa juga di laptop, tombol <em>Hitung mingguan</em> di <em>Bahan kemas</em>. Hanya beberapa menit.",
+      "en": "The WMS already deducts everything; the count catches what the usage per order misses (waste, damage, a wrong rate). Also on the laptop, button <em>Hitung mingguan</em> on <em>Bahan kemas</em>. A few minutes."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Menunggu persetujuan Ops HQ</em> di tab. Setelah Ops HQ menyetujui, angka hasil hitung menggantikan angka hitungan sistem dan selisihnya ditampilkan per barang.",
+      "en": "You see: <em>Menunggu persetujuan Ops HQ</em> on the tab. When Ops HQ approves, the counted numbers replace the computed ones and the difference is shown per item."
+     }
+    }
+   ],
+   "rules": [
+    {
+     "id": "Setiap bahan kemas dikurangi oleh sistem sesuai pemakaian per pesanan, saat <em>Selesai dikemas</em> (sekat dan stiker hari per pengiriman yang diterima).",
+     "en": "Every consumable is deducted by the system at its usage per order, at <em>Selesai dikemas</em> (dividers and day stickers per delivery received)."
+    },
+    {
+     "id": "SPV mengajukan kebutuhan ke Ops HQ. Hanya Ops HQ yang mengajukan PR. Pembelian dilakukan di luar WMS.",
+     "en": "The SPV raises a need to Ops HQ. Only Ops HQ submits the PR. The purchase happens outside the WMS."
+    },
+    {
+     "id": "SPV mencatat barang yang datang dan menghitung seminggu sekali; stok baru berubah setelah Ops HQ menyetujui.",
+     "en": "The SPV enters what arrives and counts once a week; the stock changes only after Ops HQ approves."
+    },
+    {
+     "id": "Minimum per barang = pemakaian 14 hari dengan target Grab (200 pesanan per hub per bulan): tas kertas 90 pcs, kardus 15 pcs, label 100, lakban 10 m, sekat dan stiker hari untuk 4 pengiriman. Ini usulan; Ops HQ bisa mengubahnya.",
+     "en": "Minimum per item = 14 days of use at the Grab target (200 orders per hub per month): paper bag 90 pcs, carton 15 pcs, labels 100, tape 10 m, dividers and day stickers for 4 deliveries. A proposal; Ops HQ can change it."
+    },
+    {
+     "id": "Hanya Ops HQ yang menambah bahan kemas atau mengubah minimum, pemakaian per pesanan atau logika pemakaian.",
+     "en": "Only Ops HQ adds a consumable or changes a minimum, a usage per order or the usage logic."
+    },
+    {
+     "id": "Bahan kemas adalah biaya Ninja dan tidak pernah muncul di laporan merek.",
+     "en": "Consumables are Ninja's cost and never appear in the brand reports."
+    }
+   ]
+  },
+  {
+   "n": 10,
+   "page": "laporan.html",
+   "title": {
+    "id": "Laporan",
+    "en": "Reports"
+   },
+   "intro": {
+    "id": "Angka-angka yang diterima hub, merek, Grab dan manajemen. Laporan dibuat mingguan dan bulanan, untuk semua hub, satu hub atau beberapa hub. Setiap laporan dibuat dari angka WMS; Ops HQ mengunduhnya dan mengirimnya lewat email secara manual.",
+    "en": "The figures the hubs, the brands, Grab and management get. Reports are weekly and monthly, for all hubs, one hub or several. Every report is built from WMS numbers; Ops HQ downloads it and sends it by email by hand."
+   },
+   "who": [
+    {
+     "id": "SPV",
+     "en": "SPV"
+    },
+    {
+     "id": "Ops HQ",
+     "en": "Ops HQ"
+    }
+   ],
+   "when": {
+    "id": "Akhir setiap hari, mingguan (Senin 10:00), bulanan",
+    "en": "End of each day, weekly (Monday 10:00), monthly"
+   },
+   "where": [
+    {
+     "id": "WMS",
+     "en": "WMS"
+    },
+    {
+     "id": "Email",
+     "en": "Email"
+    },
+    {
+     "id": "Hiryu",
+     "en": "Hiryu"
+    }
+   ],
+   "steps": [
+    {
+     "n": 1,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "10a"
+     ],
+     "action": {
+      "id": "<em>Laporan</em> → <em>Akhir hari</em>",
+      "en": "<em>Laporan</em> → <em>Akhir hari</em>"
+     },
+     "detail": {
+      "id": "Periksa ketiga tab: <em>Pesanan hari ini</em> (pesanan menurut status), <em>Masalah hari ini</em> (barang hilang, karantina, paket terlambat) dan <em>Penjualan</em> (unit per SKU). Tulis catatan untuk besok di <em>Catatan untuk besok</em> lalu tekan <em>Simpan catatan</em>. Tekan <em>Unduh CSV</em> jika Anda perlu filenya.",
+      "en": "Go through the three tabs: <em>Pesanan hari ini</em> (orders by state), <em>Masalah hari ini</em> (missing items, quarantine, late parcels) and <em>Penjualan</em> (units per SKU). Write a note for tomorrow under <em>Catatan untuk besok</em> and press <em>Simpan catatan</em>. <em>Unduh CSV</em> if you need the file."
+     },
+     "result": {
+      "id": "Yang terlihat: jumlah hari ini menurut status, dan catatan Anda tersimpan dengan nama dan waktu Anda.",
+      "en": "You see: today's counts by state, and your note saved with your name and time."
+     }
+    },
+    {
+     "n": 2,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Email"
+     ],
+     "tags": [],
+     "screens": [
+      "10b"
+     ],
+     "action": {
+      "id": "<em>Laporan</em> → <em>Penjualan merek</em> → Kahf → <em>Mingguan</em> → minggu lalu → <em>Unduh Excel</em>",
+      "en": "<em>Laporan</em> → <em>Penjualan merek</em> → Kahf → <em>Mingguan</em> → last week → <em>Unduh Excel</em>"
+     },
+     "detail": {
+      "id": "Di <em>Pilih hub</em>, <em>Semua hub</em> sudah terpilih dari awal; tekan <em>MA5</em> atau <em>KJ5</em> untuk satu hub saja. Lakukan hal yang sama untuk Labore. Kirim setiap file lewat email ke kontak merek itu.",
+      "en": "Under <em>Pilih hub</em>, <em>Semua hub</em> is selected first; tap <em>MA5</em> or <em>KJ5</em> for one hub only. Do the same for Labore. Email each file to that brand's contacts."
+     },
+     "result": {
+      "id": "Yang terlihat: file Excel berbahasa Inggris dengan satu sheet, Sales by SKU.",
+      "en": "You see: an English Excel file with one sheet, Sales by SKU."
+     }
+    },
+    {
+     "n": 3,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Email"
+     ],
+     "tags": [],
+     "screens": [
+      "10c"
+     ],
+     "action": {
+      "id": "Halaman yang sama: <em>Bulanan</em> → bulan lalu → <em>Unduh Excel</em>",
+      "en": "Same page: <em>Bulanan</em> → last month → <em>Unduh Excel</em>"
+     },
+     "detail": {
+      "id": "File ini punya sheet tambahan, Stock and deliveries: stok awal, diterima, terjual, dikembalikan ke merek, dihapus, seharusnya, hasil hitung akhir bulan dan selisihnya, lalu pengiriman, retur dan penghapusan stok bulan itu. Kirim lewat email ke merek.",
+      "en": "The file adds a Stock and deliveries sheet: opening, received, sold, returned to brand, written off, expected, counted at month end and the difference, then the month's deliveries, returns and write-offs. Email it to the brand."
+     },
+     "result": {
+      "id": "Yang terlihat: dua sheet, Sales by SKU dan Stock and deliveries.",
+      "en": "You see: two sheets, Sales by SKU and Stock and deliveries."
+     }
+    },
+    {
+     "n": 4,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Email"
+     ],
+     "tags": [],
+     "screens": [
+      "10d"
+     ],
+     "action": {
+      "id": "<em>Laporan</em> → <em>Laporan operasional</em> → <em>Mingguan</em> atau <em>Bulanan</em> → periode → hub → <em>Unduh</em>",
+      "en": "<em>Laporan</em> → <em>Laporan operasional</em> → <em>Mingguan</em> or <em>Bulanan</em> → period → hubs → <em>Unduh</em>"
+     },
+     "detail": {
+      "id": "Di <em>Pilih hub</em>, biarkan <em>Semua hub</em> atau tekan <em>MA5</em> atau <em>KJ5</em>. Kirim lewat email ke Grab dan ke manajemen. Laporan ini berisi jumlah pesanan, persentase yang siap dalam 10 menit, rata-rata waktu ambil dan kemas, pembatalan karena barang hilang dan persentasenya, ketepatan stok dari hasil hitung, pengiriman tepat waktu, dan berapa minggu stok cukup per merek.",
+      "en": "Under <em>Pilih hub</em>, keep <em>Semua hub</em> or tap <em>MA5</em> or <em>KJ5</em>. Email it to Grab and to management. It shows orders, the share ready within 10 minutes, average pick and pack time, missing-item cancels and their share, stock accuracy from counts, deliveries on time and weeks of stock cover per brand."
+     },
+     "result": {
+      "id": "Yang terlihat: setiap angka untuk periode itu di samping angka periode sebelumnya.",
+      "en": "You see: each figure for the period next to the one before."
+     }
+    },
+    {
+     "n": 5,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [
+      "10e"
+     ],
+     "action": {
+      "id": "<em>Laporan</em> → <em>Laporan selisih bulanan</em> → bulan lalu → <em>Unduh Excel</em>",
+      "en": "<em>Laporan</em> → <em>Laporan selisih bulanan</em> → last month → <em>Unduh Excel</em>"
+     },
+     "detail": {
+      "id": "Laporan selisih untuk klaim, yang diproses di luar WMS. Isinya hanya selisih yang sudah final: disetujui SPV, lalu ditinjau Ops HQ. Sheet Summary menampilkan setiap jenis selisih per hub dan merek, dengan jumlah unit, nilai menurut harga menu dan siapa yang menanggung biaya (merek untuk selisih saat barang masuk dan unit yang ditolak saat itu, Ninja untuk semua yang rusak di hub setelah ditaruh di rak). Rinciannya ada di satu sheet per jenis.",
+      "en": "The variance report for claims, which are processed outside the WMS. Only finalised differences are in it: approved by the SPV, then reviewed by Ops HQ. The Summary sheet shows each type of difference per hub and brand, with units, value at menu price and who bears the cost (the brand for differences at inbound and units rejected there, Ninja for anything damaged in the hub after putaway); one sheet per type holds the detail."
+     },
+     "result": {
+      "id": "Yang terlihat: file Excel berbahasa Inggris, setiap baris <em>Final</em>, dan \"Finalised by Ops HQ\" dengan tanggalnya.",
+      "en": "You see: an English Excel file, every row <em>Final</em>, and \"Finalised by Ops HQ\" with the date."
+     }
+    },
+    {
+     "n": 6,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Ops HQ",
+       "en": "Ops HQ"
+      }
+     ],
+     "systems": [
+      "Hiryu"
+     ],
+     "tags": [],
+     "screens": [
+      "11a"
+     ],
+     "action": {
+      "id": "Cek komisi Grab ke Ninja dengan laporan pesanan mentah dari Hiryu",
+      "en": "Check Grab's commission to Ninja against Hiryu's raw order report"
+     },
+     "detail": {
+      "id": "Ini dilakukan di luar WMS. Hiryu membuat laporannya (item H11, nanti, bukan untuk pilot): ID pesanan, toko, barang, harga, promo dan komisi Grab. Selama pilot, setiap merek punya akun merchant sendiri dan Grab membayar langsung ke merek. Bandingkan totalnya dengan laporan tagihan dari Grab.",
+      "en": "This happens outside the WMS. Hiryu builds the report (item H11, later, not for the pilot): order ID, store, items, prices, promotions and Grab commission. For the pilot each brand has its own merchant account and Grab pays the brand directly. Compare its totals with Grab's statement."
+     },
+     "result": {
+      "id": "Yang terlihat: total bulan itu cocok, atau daftar pesanan yang perlu ditanyakan ke Grab.",
+      "en": "You see: the month's totals match, or the orders to raise with Grab."
+     }
+    }
+   ],
+   "rules": [
+    {
+     "id": "Pakai angka WMS, jangan angka Hiryu. Stok di Hiryu lebih kecil karena ada cadangan untuk Grab.",
+     "en": "Use WMS numbers, never Hiryu's. Hiryu's stock is lower by the Grab buffer."
+    },
+    {
+     "id": "Laporan dikirim secara manual. WMS tidak mengirim email.",
+     "en": "Reports are sent by hand. The WMS sends no email."
+    },
+    {
+     "id": "Pesanan uji coba dan pesanan batal tidak dihitung dalam penjualan.",
+     "en": "Test orders and cancelled orders are left out of sales."
+    },
+    {
+     "id": "Siap dalam 10 menit dihitung dari waktu pesanan Grab sampai <em>Selesai dikemas</em>, bukan dari <em>Accept</em> (diputuskan oleh pimpinan ops).",
+     "en": "Ready within 10 minutes counts from Grab's order time to <em>Selesai dikemas</em>, not from <em>Accept</em> (decided by the ops lead)."
+    },
+    {
+     "id": "File untuk merek berupa Excel dalam bahasa Inggris. Layar tetap dalam bahasa Indonesia.",
+     "en": "Files for the brands are Excel in English. The screens stay in Indonesian."
+    },
+    {
+     "id": "File bulanan menunggu hitung akhir bulan yang sudah disetujui.",
+     "en": "The monthly files wait for the approved month-end count."
+    },
+    {
+     "id": "Hanya selisih yang sudah final (disetujui SPV, ditinjau Ops HQ) yang masuk laporan selisih.",
+     "en": "Only finalised differences (approved by the SPV, reviewed by Ops HQ) go into the variance report."
+    },
+    {
+     "id": "Kerusakan setelah stok masuk ke hub menjadi biaya Ninja. Kerusakan yang dilaporkan pelanggan setelah serah terima adalah klaim Grab, diurus di Hiryu atau Grab, dan tidak masuk laporan WMS mana pun. Paket batal yang dibawa kembali sopir dalam keadaan rusak dicatat sebagai biaya Ninja di WMS; Ops HQ mengklaimnya ke Grab di luar WMS. Tidak ada tanggal kedaluwarsa di laporan mana pun.",
+     "en": "Damage after the stock has entered the hub is Ninja's cost. Damage a customer reports after handover is a Grab claim, handled in Hiryu or Grab, and is in no WMS report. A cancelled parcel the driver brings back damaged is booked as Ninja in the WMS; Ops HQ claims it from Grab outside the WMS. No expiry dates in any report."
+    }
+   ]
+  },
+  {
+   "n": 11,
+   "page": "pengaturan.html?tab=integrasi",
+   "title": {
+    "id": "Sambungan Hiryu",
+    "en": "The Hiryu link"
+   },
+   "intro": {
+    "id": "Bagaimana satu pesanan Grab berjalan antara Grab, Hiryu, WMS dan hub. Hiryu mengerjakan langkahnya dulu, lalu WMS. Staf tidak lagi menekan <em>Mark ready</em>.",
+    "en": "How one Grab order moves between Grab, Hiryu, the WMS and the hub. Hiryu does its step first, then the WMS. Staff no longer press <em>Mark ready</em>."
+   },
+   "who": [
+    {
+     "id": "Staf",
+     "en": "Staff"
+    },
+    {
+     "id": "SPV",
+     "en": "SPV"
+    },
+    {
+     "id": "Ops HQ",
+     "en": "Ops HQ"
+    }
+   ],
+   "when": {
+    "id": "Setiap pesanan Grab",
+    "en": "Every Grab order"
+   },
+   "where": [
+    {
+     "id": "Grab",
+     "en": "Grab"
+    },
+    {
+     "id": "Hiryu",
+     "en": "Hiryu"
+    },
+    {
+     "id": "WMS",
+     "en": "WMS"
+    }
+   ],
+   "steps": [
+    {
+     "n": 1,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengemas",
+       "en": "Staff · packer"
+      }
+     ],
+     "systems": [
+      "Hiryu"
+     ],
+     "tags": [],
+     "screens": [],
+     "action": {
+      "id": "Pelanggan memesan di Grab. Saat bunyi pesanan baru, tekan <em>Accept</em> di Hiryu.",
+      "en": "The customer orders on Grab. At the new-order sound, press <em>Accept</em> in Hiryu."
+     },
+     "detail": {
+      "id": "Hiryu mencetak slip packing dan mengirim pesanan ke WMS.",
+      "en": "Hiryu prints the packing slip and sends the order to the WMS."
+     },
+     "result": {
+      "id": "Yang terlihat: pesanan masuk antrean WMS dalam beberapa detik (pesan 1).",
+      "en": "You see: the order in the WMS queue within seconds (message 1)."
+     }
+    },
+    {
+     "n": 2,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Siapa saja",
+       "en": "Anyone"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Hiryu"
+     ],
+     "tags": [],
+     "screens": [],
+     "action": {
+      "id": "WMS menahan stok pesanan itu dan mengirim angka stok baru ke Hiryu.",
+      "en": "The WMS holds the stock for the order and sends the new stock level to Hiryu."
+     },
+     "detail": {
+      "id": "Hiryu meneruskan angka itu ke Grab. Tidak ada yang mengetik stok di Hiryu.",
+      "en": "Hiryu passes the number on to Grab. Nobody types stock into Hiryu."
+     },
+     "result": {
+      "id": "Yang terlihat: stok di Hiryu sama dengan di WMS (pesan 3).",
+      "en": "You see: the same stock in Hiryu as in the WMS (message 3)."
+     }
+    },
+    {
+     "n": 3,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengambil",
+       "en": "Staff · picker"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [],
+     "action": {
+      "id": "Pengambil menerima pesanan di HP, mengambil dan memindai setiap unit.",
+      "en": "The picker gets the order on the phone, picks and scans each unit."
+     },
+     "detail": {
+      "id": "Lihat Panduan bagian 6 untuk langkah lengkapnya.",
+      "en": "See Guide section 6 for every step."
+     },
+     "result": {
+      "id": "Yang terlihat: keranjang ada di meja packing.",
+      "en": "You see: the basket on the pack bench."
+     }
+    },
+    {
+     "n": 4,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengemas",
+       "en": "Staff · packer"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Hiryu",
+      "Grab"
+     ],
+     "tags": [],
+     "screens": [],
+     "action": {
+      "id": "Kemas pesanan lalu tekan <em>Selesai dikemas</em>.",
+      "en": "Pack the order and press <em>Selesai dikemas</em>."
+     },
+     "detail": {
+      "id": "WMS memberi tahu Hiryu bahwa pesanan siap, lalu Hiryu menandainya siap di Grab. Jangan tekan <em>Mark ready</em> di Hiryu.",
+      "en": "The WMS tells Hiryu the order is ready, and Hiryu marks it ready on Grab. Do not press <em>Mark ready</em> in Hiryu."
+     },
+     "result": {
+      "id": "Yang terlihat: Grab menampilkan pesanan siap (pesan 4).",
+      "en": "You see: Grab shows the order ready (message 4)."
+     }
+    },
+    {
+     "n": 5,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · serah terima",
+       "en": "Staff · handover"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [],
+     "action": {
+      "id": "Driver mengambil kantong. Cocokkan nomor GM saat serah terima.",
+      "en": "The driver collects the bag. Match the GM number at handover."
+     },
+     "detail": {
+      "id": "Grab memberi tahu Hiryu. WMS tidak mengirim apa pun.",
+      "en": "Grab tells Hiryu. The WMS sends nothing."
+     },
+     "result": {
+      "id": "Yang terlihat: pesanan hilang dari daftar rak siap ambil.",
+      "en": "You see: the order leaves the ready shelf list."
+     }
+    },
+    {
+     "n": 6,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengambil",
+       "en": "Staff · picker"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Hiryu",
+      "Grab"
+     ],
+     "tags": [],
+     "screens": [],
+     "action": {
+      "id": "Ada barang yang tidak ada: tekan <em>Barang tidak ada</em>.",
+      "en": "An item is missing: press <em>Barang tidak ada</em>."
+     },
+     "detail": {
+      "id": "WMS memberi tahu Hiryu apa yang terjadi pada baris itu (pesan 5). Hiryu mengubah pesanan di Grab atau membatalkannya. Kalau pesanan batal, Hiryu memberi tahu WMS (pesan 2).",
+      "en": "The WMS tells Hiryu what happened to the line (message 5). Hiryu edits the order on Grab or cancels it. If the order is cancelled, Hiryu tells the WMS (message 2)."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Perubahan dikirim otomatis ke Hiryu dan Grab</em>.",
+      "en": "You see: <em>Perubahan dikirim otomatis ke Hiryu dan Grab</em>."
+     }
+    },
+    {
+     "n": 7,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf",
+       "en": "Staff"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [],
+     "action": {
+      "id": "Pesanan batal: kembalikan unit ke rak.",
+      "en": "Cancelled order: put the units back to the rack."
+     },
+     "detail": {
+      "id": "Buka <em>Kembalikan ke rak</em> dan pindai setiap unit kembali ke bin-nya.",
+      "en": "Open <em>Kembalikan ke rak</em> and scan each unit back into its bin."
+     },
+     "result": {
+      "id": "Yang terlihat: keranjang kosong dan stok kembali di rak.",
+      "en": "You see: the basket empty and the stock back on the rack."
+     }
+    },
+    {
+     "n": 8,
+     "phase": null,
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [],
+     "action": {
+      "id": "Cek sambungan saat hub buka.",
+      "en": "Check the link when the hub opens."
+     },
+     "detail": {
+      "id": "<em>Pengaturan</em>, <em>Integrasi Hiryu</em>: pesan terakhir terkirim, 0 menunggu, 0 gagal. Yang menunggu lebih dari 5 menit tampil merah.",
+      "en": "<em>Pengaturan</em>, <em>Integrasi Hiryu</em>: last message sent, 0 waiting, 0 failed. Anything waiting more than 5 minutes shows red."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>Tersambung ke Hiryu</em> di atas layar laptop.",
+      "en": "You see: <em>Tersambung ke Hiryu</em> at the top of the laptop screen."
+     }
+    }
+   ],
+   "rules": [
+    {
+     "id": "Hiryu dulu: kalau satu langkah menyentuh dua sistem, kerjakan bagian Hiryu dulu, lalu bagian WMS.",
+     "en": "Hiryu first: when a step touches both systems, do the Hiryu part first, then the WMS part."
+    },
+    {
+     "id": "Staf tidak lagi menekan <em>Mark ready</em> di Hiryu. <em>Selesai dikemas</em> di WMS yang mengerjakannya.",
+     "en": "Staff no longer press <em>Mark ready</em> in Hiryu. <em>Selesai dikemas</em> in the WMS does it."
+    },
+    {
+     "id": "Nama, nomor HP dan alamat pelanggan tetap di Hiryu dan tidak pernah masuk ke WMS.",
+     "en": "Customer name, phone and address stay in Hiryu and never reach the WMS."
+    },
+    {
+     "id": "Pesanan uji WMS (UJI) tetap di WMS dan tidak pernah masuk ke Hiryu.",
+     "en": "WMS test orders (UJI) stay in the WMS and never reach Hiryu."
+    },
+    {
+     "id": "Tidak ada cara manual: kalau sambungan berhenti, panggil SPV.",
+     "en": "There is no manual fallback: if the link stops, call the SPV."
+    }
+   ]
+  }
+ ]
+}

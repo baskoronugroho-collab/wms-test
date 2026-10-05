@@ -19,7 +19,6 @@ on the Reminders page, so the consignment terms still being agreed (safety
 stock, replenishment frequency, slow-mover returns) become settings, not code.
 """
 import logging
-from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -132,9 +131,9 @@ async def default_restock(full: int | None) -> int | None:
 # --- automatic replenishment draft ------------------------------------------------
 
 async def next_reference(cur, site_id: int, site_code: str) -> str:
-    seq = await db.one(cur, "SELECT COUNT(*) AS n FROM replenishments WHERE site_id = %s",
-                       (site_id,))
-    return f"RPL-{site_code.split('-')[-1]}-{date.today():%y%m}-{int(seq['n']) + 1:03d}"
+    # A draft carries a placeholder; the Ninja reference (RPL-<hub>-<yymm>-<nnn>,
+    # month of the request) is minted when Ops HQ makes the request.
+    return replenishment.draft_reference(site_code)
 
 
 async def auto_replenish(site_ids: list[int] | None = None,

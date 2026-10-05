@@ -1,77 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hasil hitung — Ninja Kilat WMS</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1B3A5C">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=eb89448">
-<link rel="stylesheet" href="css/app.css?v=eb89448">
+<title>Kilat WMS</title>
+<!-- This address moved to the one app (frontend/app/). legacy.js keeps the
+     query string and hash; the refresh below is the no-JavaScript fallback.
+     The old page: git show d925210:frontend/12-hasil-hitung.html -->
+<script src="app/legacy.js?v=d925210"></script>
+<meta http-equiv="refresh" content="0; url=app/hitung-stok.html">
 </head>
-<body>
-<div class="app" data-screen="variance">
-    <header class="chrome">
-      <span class="chrome__mark">NINJA</span>
-      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
-      <span class="chrome__sep"></span>
-      <span class="chrome__mode" data-id="Hitung stok" data-en="Stock count">Hitung stok</span>
-      <span class="spacer"></span>
-      <span class="conn" role="status">
-        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
-      </span>
-      <span class="lang" role="group" aria-label="Bahasa">
-        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
-        <button class="lang__opt" data-lang="en" type="button">EN</button>
-      </span>
-      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
-      <span class="chrome__user">Siti N. · UT5</span>
-    </header>
-    <div class="banner banner--caution" role="status" data-region="result">
-      <span class="banner__icon" aria-hidden="true">!</span>
-      <span data-field="result-title" data-id="Tercatat" data-en="Recorded">Tercatat</span>
-    </div>
-    <main class="main">
-      <div class="instr" style="gap:20px">
-        <span class="code" style="font-size:28px" data-field="location">—</span>
-        <span class="chrome__sep"></span>
-        <span style="font-size:22px" data-field="sku-name">—</span>
-      </div>
-      <!-- Revealed only after the count is saved (POST /opname/sessions/{id}/finish). -->
-      <div class="reveal">
-        <div class="reveal__cell">
-          <span class="eyebrow" data-id="Catatan sistem" data-en="System record">Catatan sistem</span>
-          <span class="reveal__num reveal__num--system" data-field="expected">—</span>
-        </div>
-        <div class="reveal__cell">
-          <span class="eyebrow" data-id="Hitungan kamu" data-en="Your count">Hitungan kamu</span>
-          <span class="reveal__num" data-field="counted">—</span>
-        </div>
-        <div class="reveal__cell reveal__cell--delta" data-field="delta-cell">
-          <span class="eyebrow" style="color:inherit" data-id="Selisih" data-en="Difference">Selisih</span>
-          <span class="reveal__num" data-field="delta">—</span>
-          <span style="font-size:17px" data-field="delta-text"></span>
-        </div>
-      </div>
-      <p style="font-size:26px;line-height:1.4;max-width:900px;margin:0;text-wrap:pretty" data-field="next-step"></p>
-      <p class="note" data-field="extras" style="margin:0"></p>
-      <span class="spacer"></span>
-      <div class="stats">
-        <a class="btn btn--primary btn--lg btn--grow" href="10-hitung-pilih-keranjang.html" data-action="next" data-id="Lanjut ke keranjang berikutnya" data-en="Go to the next basket">Lanjut ke keranjang berikutnya</a>
-      </div>
-    </main>
-</div>
-<script src="js/api.js?v=eb89448"></script>
-<script src="js/scan.js?v=eb89448"></script>
-<script src="js/app.js?v=eb89448"></script>
-<script src="js/wire.js?v=eb89448"></script>
-<script src="js/screens/variance.js?v=eb89448"></script>
-
-</body>
+<body><p><a href="app/hitung-stok.html">Halaman ini sudah pindah. Buka Kilat WMS.</a></p></body>
 </html>

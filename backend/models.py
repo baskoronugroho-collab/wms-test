@@ -208,7 +208,7 @@ class GenerateRacksIn(BaseModel):
     rack_codes: list[str] = ["A", "B", "C", "D", "E", "F", "G"]
     level_count: int = 5
     positions_per_level: int = 3
-    basket_size: str = "M"
+    basket_size: str = "BESAR"
     bin_rows: int = Field(default=1, description="1, or 2 stacked bins at every position (Bottom ...B, Top ...T)")
     open_shelf_levels: list[str] = []
 
@@ -1410,7 +1410,7 @@ class AddRackIn(BaseModel):
     code: str
     level_count: int = 5
     positions_per_level: int = 5
-    basket_size: str = "M"
+    basket_size: str = "BESAR"
     bin_rows: int = Field(default=1, description="1, or 2 stacked bins at every position (Bottom ...B, Top ...T)")
 
 
@@ -1516,7 +1516,7 @@ class RackDetail(BaseModel):
 
 class AddLevelIn(BaseModel):
     bins: int = Field(default=5, description="Positions on the level")
-    basket_size: str = "M"
+    basket_size: str = "BESAR"
     open_shelf: bool = False
     bin_rows: int = Field(default=1, description="1, or 2 stacked bins at every position (Bottom ...B, Top ...T)")
 
@@ -1527,7 +1527,7 @@ class BinRowsIn(BaseModel):
 
 class AddBinsIn(BaseModel):
     count: int = 1
-    basket_size: str = "M"
+    basket_size: str = "BESAR"
 
 
 class BasketPatch(BaseModel):

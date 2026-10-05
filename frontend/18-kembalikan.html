@@ -1,66 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kembalikan ke rak — Ninja Kilat WMS</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1B3A5C">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=eb89448">
-<link rel="stylesheet" href="css/app.css?v=eb89448">
+<title>Kilat WMS</title>
+<!-- This address moved to the one app (frontend/app/). legacy.js keeps the
+     query string and hash; the refresh below is the no-JavaScript fallback.
+     The old page: git show d925210:frontend/18-kembalikan.html -->
+<script src="app/legacy.js?v=d925210"></script>
+<meta http-equiv="refresh" content="0; url=app/pesanan.html?tab=kembalikan">
 </head>
-<body>
-<div class="app" data-screen="returns" data-screen-label="18">
-    <header class="chrome">
-      <span class="chrome__mark">NINJA</span>
-      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
-      <span class="chrome__sep"></span>
-      <span class="chrome__mode" data-keep="1" data-id="Kembalikan ke rak" data-en="Return to shelf">Kembalikan ke rak</span>
-      <span class="spacer"></span>
-      <span class="conn" role="status">
-        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
-      </span>
-      <span class="lang" role="group" aria-label="Bahasa">
-        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
-        <button class="lang__opt" data-lang="en" type="button">EN</button>
-      </span>
-      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
-      <span class="chrome__user">Dwi L. · UT5</span>
-    </header>
-    <div class="progress">
-      <span class="progress__count" data-field="task-count">0</span>
-      <span class="note" data-id="barang perlu dikembalikan ke rak" data-en="items to put back on the rack">barang perlu dikembalikan ke rak</span>
-      <span class="spacer"></span>
-      <span class="tasktag tasktag--low"><span data-field="unit-count">0</span> <span data-id="unit" data-en="units">unit</span></span>
-    </div>
-    <main class="main main--tight">
-      <p class="lede" data-id="Barang dari pesanan yang dibatalkan. Barang ini sudah keluar dari stok, jadi tidak bisa dijual sampai kamu memindainya kembali di rak. Yang paling lama di atas." data-en="Units from cancelled orders. They left stock when they were picked, so nobody can sell them until you scan them back at the rack. Oldest first.">Barang dari pesanan yang dibatalkan. Barang ini sudah keluar dari stok, jadi tidak bisa dijual sampai kamu memindainya kembali di rak. Yang paling lama di atas.</p>
-
-      <div class="list" data-region="tasks">
-        <!-- Rendered from GET /api/returns. -->
-      </div>
-
-      <!-- Most days this list is empty. An empty state that looks broken gets
-           ignored on the day it matters, so it is calm and states the fact. -->
-      <div class="emptystate" data-region="empty" hidden>
-        <span class="emptystate__mark" aria-hidden="true">✓</span>
-        <span class="emptystate__title" data-id="Tidak ada yang perlu dikembalikan" data-en="Nothing to put back">Tidak ada yang perlu dikembalikan</span>
-        <span class="emptystate__body" data-id="Layar ini terisi sendiri kalau ada pesanan dibatalkan setelah barangnya diambil." data-en="This screen fills itself when an order is cancelled after its items were picked.">Layar ini terisi sendiri kalau ada pesanan dibatalkan setelah barangnya diambil.</span>
-        <a class="btn" href="index.html" data-id="Kembali ke menu" data-en="Back to the menu">Kembali ke menu</a>
-      </div>
-    </main>
-</div>
-<script src="js/api.js?v=eb89448"></script>
-<script src="js/scan.js?v=eb89448"></script>
-<script src="js/app.js?v=eb89448"></script>
-<script src="js/wire.js?v=eb89448"></script>
-<script src="js/screens/returns.js?v=eb89448"></script>
-
-</body>
+<body><p><a href="app/pesanan.html?tab=kembalikan">Halaman ini sudah pindah. Buka Kilat WMS.</a></p></body>
 </html>

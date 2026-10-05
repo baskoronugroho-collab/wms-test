@@ -4,6 +4,7 @@ import io
 import re
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from pydantic import BaseModel, Field
 
 import auth
 import common
@@ -360,3 +361,169 @@ async def unbind_barcode(
             action="unbind", before=dict(row), after={"reason": reason},
         )
     return {"ok": True, "message": f"{barcode} unbound."}
+
+
+# --- Produk, tab Merek (canvas 2d) -----------------------------------------------------
+#
+# The brand is the one catalogue item typed in the WMS; stores, menus and SKUs come
+# from Hiryu. One store sells one brand. Each brand sits on a Grab merchant account:
+# its own (Grab asks at least 10 SKUs), or Ninja Van's acting as Nemu Mart (for a
+# brand with fewer than 10 SKUs). Every role may look; Ops HQ adds and edits.
+
+GRAB_ACCOUNTS = {"own": "Merek sendiri", "ninja": "Ninja Van (Nemu Mart)"}
+_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+class CatalogBrandIn(BaseModel):
+    name: str = Field(description="Nama merek, the same as in Hiryu and Grab")
+    company: str | None = Field(default=None, description="Perusahaan")
+    restock_email: str | None = Field(default=None, description="Email kontak restock")
+    has_barcodes: bool | None = Field(default=None, description="Kemasan punya barcode")
+    grab_account: str | None = Field(default=None, description="own | ninja")
+
+
+class CatalogBrandPatch(BaseModel):
+    name: str | None = None
+    company: str | None = None
+    restock_email: str | None = None
+    has_barcodes: bool | None = None
+    grab_account: str | None = None
+    active: bool | None = None
+
+
+class CatalogBrand(BaseModel):
+    id: int
+    code: str
+    name: str
+    company: str | None = None
+    restock_email: str | None = None
+    has_barcodes: bool | None = None
+    grab_account: str | None = Field(default=None, description="own | ninja | null")
+    grab_account_text: str | None = None
+    active: bool
+    stores: int = Field(description="Hiryu stores selling this brand")
+    store_names: list[str] = Field(default_factory=list)
+    skus: int
+
+
+class CatalogBrandList(BaseModel):
+    brands: list[CatalogBrand]
+    grab_accounts: dict[str, str]
+    can_edit: bool
+    note: str
+
+
+async def _brand_rows(where: str = "1=1", params: tuple = ()) -> list[dict]:
+    rows = await db.fetch_all(
+        "SELECT b.id, b.code, b.name, b.company, b.restock_email, b.has_barcodes, "
+        "       b.grab_account, b.active, "
+        "       (SELECT COUNT(*) FROM skus s WHERE s.brand_id = b.id AND s.active = 1) AS skus "
+        f"FROM brands b WHERE {where} ORDER BY b.active DESC, b.name", params)
+    stores = await db.fetch_all(
+        "SELECT brand_id, store_name FROM hiryu_stores WHERE active = 1 ORDER BY store_name")
+    by_brand: dict[int, list[str]] = {}
+    for st in stores:
+        by_brand.setdefault(st["brand_id"], []).append(st["store_name"])
+    out = []
+    for r in rows:
+        names = by_brand.get(r["id"], [])
+        out.append({
+            "id": r["id"], "code": r["code"], "name": r["name"], "company": r["company"],
+            "restock_email": r["restock_email"],
+            "has_barcodes": None if r["has_barcodes"] is None else bool(r["has_barcodes"]),
+            "grab_account": r["grab_account"],
+            "grab_account_text": GRAB_ACCOUNTS.get(r["grab_account"] or ""),
+            "active": bool(r["active"]), "stores": len(names), "store_names": names,
+            "skus": int(r["skus"] or 0),
+        })
+    return out
+
+
+def _check_brand_fields(body) -> None:
+    if body.grab_account is not None and body.grab_account not in GRAB_ACCOUNTS:
+        raise HTTPException(422, "Akun merchant Grab: own (merek sendiri) atau ninja (Ninja "
+                                 "Van, Nemu Mart). / Grab account must be own or ninja.")
+    if body.restock_email and not _EMAIL.match(body.restock_email.strip()):
+        raise HTTPException(422, "Email kontak restock tidak benar. / The restock e-mail is "
+                                 "not valid.")
+
+
+async def _new_brand_code(name: str) -> str:
+    base = re.sub(r"[^A-Z0-9]", "", name.upper())[:8] or "MEREK"
+    code, n = base, 1
+    while await db.fetch_one("SELECT id FROM brands WHERE code = %s", (code,)):
+        n += 1
+        code = f"{base[:6]}{n}"
+    return code
+
+
+@router.get("/catalog/brands", response_model=CatalogBrandList, tags=["produk"])
+async def catalog_brands(user: auth.User = Depends(auth.current_user)):
+    """Merek list: Grab account, barcodes, stores and SKUs per brand."""
+    return {"brands": await _brand_rows(), "grab_accounts": GRAB_ACCOUNTS,
+            "can_edit": user.at_least("hq"),
+            "note": "Tambah merek sebelum tokonya dibuat di Hiryu. Satu toko untuk satu merek. "
+                    "Saat toko baru masuk dari Hiryu, WMS bertanya sekali mereknya; akun "
+                    "merchant Grab terisi dari merek."}
+
+
+@router.post("/catalog/brands", response_model=CatalogBrand, status_code=201, tags=["produk"])
+async def catalog_add_brand(body: CatalogBrandIn, user: auth.User = Depends(auth.require("hq"))):
+    """Tambah merek. Name and Grab merchant account are required."""
+    name = (body.name or "").strip()
+    if not name or len(name) > 160:
+        raise HTTPException(422, "Nama merek wajib diisi. / The brand name is required.")
+    if not body.grab_account:
+        raise HTTPException(422, "Pilih akun merchant Grab. / Choose the Grab merchant account.")
+    _check_brand_fields(body)
+    if await db.fetch_one("SELECT id FROM brands WHERE LOWER(name) = LOWER(%s)", (name,)):
+        raise HTTPException(409, f"Merek {name} sudah ada. / Brand {name} already exists.")
+    code = await _new_brand_code(name)
+    async with db.tx() as cur:
+        bid = await db.run(
+            cur, "INSERT INTO brands (code, name, identity_mode, default_stock_owner, company, "
+                 "restock_email, has_barcodes, grab_account) "
+                 "VALUES (%s,%s,'sku_barcode','brand',%s,%s,%s,%s)",
+            (code, name, (body.company or "").strip() or None,
+             (body.restock_email or "").strip() or None,
+             None if body.has_barcodes is None else (1 if body.has_barcodes else 0),
+             body.grab_account))
+        await ledger.audit(cur, actor_email=user.email, entity="brand", entity_id=bid,
+                           action="create", after=body.model_dump())
+    return (await _brand_rows("b.id = %s", (bid,)))[0]
+
+
+@router.patch("/catalog/brands/{brand_id}", response_model=CatalogBrand, tags=["produk"])
+async def catalog_edit_brand(brand_id: int, body: CatalogBrandPatch,
+                             user: auth.User = Depends(auth.require("hq"))):
+    """Change a brand. A new Grab account applies to every store of the brand."""
+    before = await db.fetch_one("SELECT * FROM brands WHERE id = %s", (brand_id,))
+    if not before:
+        raise HTTPException(404, "Merek tidak ditemukan. / Brand not found.")
+    _check_brand_fields(body)
+    sets, params = [], []
+    data = body.model_dump(exclude_unset=True)
+    if "name" in data:
+        name = (data["name"] or "").strip()
+        if not name:
+            raise HTTPException(422, "Nama merek wajib diisi. / The brand name is required.")
+        if await db.fetch_one("SELECT id FROM brands WHERE LOWER(name) = LOWER(%s) AND id <> %s",
+                              (name, brand_id)):
+            raise HTTPException(409, f"Merek {name} sudah ada. / Brand {name} already exists.")
+        data["name"] = name
+    for col in ("name", "company", "restock_email", "grab_account"):
+        if col in data:
+            sets.append(f"{col} = %s")
+            v = data[col]
+            params.append(v.strip() or None if isinstance(v, str) else v)
+    for col in ("has_barcodes", "active"):
+        if col in data:
+            sets.append(f"{col} = %s")
+            params.append(None if data[col] is None else (1 if data[col] else 0))
+    if sets:
+        async with db.tx() as cur:
+            await db.run(cur, "UPDATE brands SET " + ", ".join(sets) + " WHERE id = %s",
+                         (*params, brand_id))
+            await ledger.audit(cur, actor_email=user.email, entity="brand", entity_id=brand_id,
+                               action="update", after=data)
+    return (await _brand_rows("b.id = %s", (brand_id,)))[0]

@@ -23,14 +23,175 @@ import re
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from pydantic import BaseModel, Field
 
 import auth
 import db
+import floor
 import ledger
 import models
-from routers import outbound
+from routers import outbound, returns
 
 router = APIRouter(prefix="/api/hiryu", tags=["hiryu"])
+
+
+# --- models of deploy 3 (boards 6g, 6h, 6i; driver returns) --------------------
+
+class HandoverOrderV2(models.HandoverOrder):
+    basket_code: str | None = None
+    pack_type: str | None = Field(default=None, description="bag | carton | two")
+    pack_name: str | None = Field(default=None, description="Kantong kertas | Karton | 2 kemasan")
+    pack_count: int | None = Field(default=None, description="Parcels: 2 for two packs")
+    is_uji: bool = False
+    is_demo: bool = Field(default=False, description="Demo order from Buat pesanan dummy: DEMO chip")
+    over_limit: bool = Field(default=False, description="Waiting longer than the amber limit")
+    driver_return_checked: bool = False
+
+
+class HandoverListV2(models.HandoverList):
+    orders: list[HandoverOrderV2]
+
+
+class PackQueueRow(BaseModel):
+    order_id: int
+    short_no: str
+    basket_code: str | None
+    store_name: str | None
+    products: int
+    units: int
+    waiting_seconds: int | None
+    amber: bool
+    is_uji: bool = False
+    is_demo: bool = Field(default=False, description="Demo order from Buat pesanan dummy: DEMO chip")
+    picker: str | None = None
+
+
+class BenchItem(BaseModel):
+    name: str
+    qty: float | int | None = None
+    unit: str | None = None
+
+
+class PackQueue(BaseModel):
+    site_id: int
+    server_time: str
+    baskets: list[PackQueueRow] = Field(description="Oldest first: take the top one")
+    amber_after_seconds: int
+    to_driver_count: int
+    bench_stock: list[BenchItem] = Field(
+        default_factory=list, description="Bahan kemas di meja (agent C); empty until it exists")
+
+
+class PackLine(BaseModel):
+    order_line_id: int
+    sku_id: int
+    sku_name: str
+    photo_key: str | None = None
+    unit_size: str | None = None
+    units: int
+    unit_weight_g: int | None = None
+    large_bottle: bool = False
+    estimated: bool = False
+    is_replacement: bool = False
+    replaces_sku_name: str | None = None
+    replaces_units: int | None = None
+
+
+class PackSuggestion(BaseModel):
+    pack_type: str = Field(description="bag | carton | two")
+    name: str
+    name_en: str
+    reason: str = Field(description="Kenapa: ada botol besar (225 ml) · 1,3 L · 1,0 kg")
+    reason_en: str
+    volume_ml: int
+    weight_g: int
+    longest_mm: int | None = None
+    large_bottles: int
+    estimated: bool = Field(description="Some pack data missing: show 'perkiraan'")
+    split: dict | None = Field(default=None, description="two: {carton: [...], bag: [...]}")
+
+
+class PackDetail(BaseModel):
+    order_id: int
+    short_no: str
+    grab_order_id: str
+    store_name: str | None
+    basket_code: str | None
+    status: str
+    is_uji: bool
+    is_demo: bool = Field(default=False, description="Demo order from Buat pesanan dummy: DEMO chip")
+    lines: list[PackLine]
+    products: int
+    units: int
+    replaced: int = Field(description="Lines replaced by the customer's choice")
+    suggestion: PackSuggestion
+    chosen: str = Field(description="The pack in use: the suggestion unless changed")
+    change_reason: str | None = None
+    pack_started_at: str | None = None
+    work_seconds: int | None = Field(default=None, description="Packer's stopwatch")
+    packed_at: str | None = None
+    change_reasons: list[str]
+    server_time: str
+
+
+class PackChangeIn(BaseModel):
+    pack_type: str = Field(pattern="^(bag|carton|two)$")
+    reason: str = Field(min_length=3, max_length=200)
+
+
+class PackedV2In(models.PackedIn):
+    basket_code: str | None = Field(
+        default=None, description="The basket on the bench; checked against the order")
+
+
+class DriverReturnOrderLine(BaseModel):
+    sku_id: int
+    sku_name: str
+    units: int
+
+
+class DriverReturnOrder(BaseModel):
+    order_id: int
+    short_no: str
+    store_name: str | None
+    handed_over_at: str | None
+    cancelled_at: str | None
+    cancel_reason: str | None
+    lines: list[DriverReturnOrderLine]
+
+
+class DriverReturnList(BaseModel):
+    orders: list[DriverReturnOrder]
+
+
+class DriverReturnLineIn(BaseModel):
+    sku_id: int
+    qty_ok: int = Field(default=0, ge=0)
+    qty_damaged: int = Field(default=0, ge=0)
+
+
+class DriverReturnIn(BaseModel):
+    lines: list[DriverReturnLineIn] = Field(
+        default_factory=list, description="What came back; empty = nothing came back")
+    note: str | None = Field(default=None, max_length=255)
+
+
+class DriverReturnResult(BaseModel):
+    ok: bool
+    units_to_rack: int
+    units_to_quarantine: int
+    quarantine_booked: bool = Field(
+        description="False while agent C's quarantine helper is not there yet")
+    message: str
+
+
+PACK_CHANGE_REASONS = [
+    "Barang tidak muat",
+    "Terlalu berat",
+    "Kemasan habis",
+    "Kemasan rusak",
+    "Lainnya",
+]
 
 OPEN_STATUSES = {"RECEIVED", "ACCEPTED", "PREPARING"}
 CANCEL_STATUSES = {"CANCELLED", "REJECTED", "FAILED", "REFUNDED"}
@@ -250,7 +411,7 @@ async def paste_order(body: models.HiryuPasteIn,
 
 async def _order_for(order_id: int, user: auth.User) -> dict:
     order = await db.fetch_one(
-        "SELECT o.*, pt.id AS task_id, pt.status AS task_status FROM orders o "
+        "SELECT o.*, pt.id AS task_id, pt.status AS task_status, pt.basket_code FROM orders o "
         "LEFT JOIN pick_tasks pt ON pt.order_id = o.id WHERE o.id = %s", (order_id,))
     if not order:
         raise HTTPException(404, "Pesanan tidak ditemukan. / Order not found.")
@@ -259,26 +420,220 @@ async def _order_for(order_id: int, user: auth.User) -> dict:
 
 
 def _gm_key(value: str | None) -> str:
-    """GM-358, gm 358 and 358 are the same number to a packer reading a slip."""
+    """GM-358, gm 358 and 358 are the same number to a packer reading a slip;
+    so are UJI-01, uji 1 and 01 for a test order."""
     v = re.sub(r"[^A-Z0-9]", "", (value or "").upper())
-    return v[2:] if v.startswith("GM") else v
+    for prefix in ("GM", "UJI"):
+        if v.startswith(prefix):
+            v = v[len(prefix):]
+            break
+    return v.lstrip("0") or v
 
 
-@router.post("/orders/{order_id}/packed", response_model=models.HandoverOrder)
-async def packed(order_id: int, body: models.PackedIn,
+def _is_uji(order: dict) -> bool:
+    return (order.get("source") or "") == "uji"
+
+
+# --------------------------------------------------------------------------
+# Kemas: the pack bench (boards 6g, 6h)
+# --------------------------------------------------------------------------
+
+async def _pack_lines(order_id: int) -> list[dict]:
+    """What is in the basket, per order line: units picked and pack data."""
+    return await db.fetch_all(
+        "SELECT ol.id AS order_line_id, ol.sku_id, ol.qty_picked AS units, "
+        "       ol.replacement_for_line_id, s.id, s.name_display, s.photo_key, s.unit_size, "
+        "       s.pack_length_mm, s.pack_width_mm, s.pack_height_mm, s.pack_weight_g, "
+        "       s.is_liquid, s.is_large_bottle, s.unit_cube_cm3, "
+        "       rs.name_display AS replaces_sku_name, rol.qty_ordered AS replaces_units "
+        "FROM order_lines ol JOIN skus s ON s.id = ol.sku_id "
+        "LEFT JOIN order_lines rol ON rol.id = ol.replacement_for_line_id "
+        "LEFT JOIN skus rs ON rs.id = rol.sku_id "
+        "WHERE ol.order_id = %s AND ol.qty_picked > 0 ORDER BY ol.id", (order_id,))
+
+
+async def _suggest(order: dict) -> tuple[dict, list[dict], dict]:
+    """The WMS names the pack (PRD §6.10) and keeps it on order_packs. The
+    suggestion follows the basket until the order is packed; a packer's change
+    (chosen) is kept."""
+    lines = await _pack_lines(order["id"])
+    rules = await floor.pack_rules()
+    sug = floor.suggest(lines, rules)
+    row = await db.fetch_one("SELECT * FROM order_packs WHERE order_id = %s", (order["id"],))
+    if not row or not row["packed_at"]:
+        await db.execute(
+            "INSERT INTO order_packs (order_id, site_id, suggested, suggested_reason, estimated, "
+            "volume_ml, weight_g, longest_mm, large_bottles) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+            "ON DUPLICATE KEY UPDATE suggested = VALUES(suggested), "
+            "suggested_reason = VALUES(suggested_reason), estimated = VALUES(estimated), "
+            "volume_ml = VALUES(volume_ml), weight_g = VALUES(weight_g), "
+            "longest_mm = VALUES(longest_mm), large_bottles = VALUES(large_bottles)",
+            (order["id"], order["site_id"], sug["pack_type"], sug["reason"][:255],
+             1 if sug["estimated"] else 0, sug["volume_ml"], sug["weight_g"],
+             sug["longest_mm"], sug["large_bottles"]))
+        row = await db.fetch_one("SELECT * FROM order_packs WHERE order_id = %s", (order["id"],))
+    return sug, lines, row
+
+
+async def _mark_packer(site_id: int, email: str) -> None:
+    """Whoever works the pack bench shows as Packer on the queue board (6j),
+    unless they are picking or on a break."""
+    await db.execute(
+        "INSERT INTO picker_presence (site_id, user_email, state, since, last_seen_at) "
+        "VALUES (%s,%s,'pack',NOW(),NOW()) ON DUPLICATE KEY UPDATE "
+        # Left to right: `since` still sees the old state.
+        "since = IF(state = 'off', NOW(), since), "
+        "state = IF(state = 'off', 'pack', state), last_seen_at = NOW()",
+        (site_id, email))
+
+
+@router.get("/pack-queue", response_model=PackQueue)
+async def pack_queue(site_id: int, user: auth.User = Depends(auth.current_user)):
+    """Kemas (board 6g): baskets the pickers handed to the bench, oldest on
+    top; one that waited longer than `pack_wait_minutes` turns amber."""
+    await auth.assert_site_access(user, site_id)
+    amber = 60 * await rule("pack_wait_minutes", 3)
+    rows = await db.fetch_all(
+        "SELECT o.id, o.external_ref, o.hiryu_short_no, o.source, o.is_demo, pt.basket_code, "
+        "       hs.store_name, "
+        "       COALESCE(u.name, pt.claimed_by) AS picker, "
+        "       TIMESTAMPDIFF(SECOND, COALESCE(pt.handed_to_pack_at, pt.completed_at), NOW()) AS waited, "
+        "       (SELECT COUNT(*) FROM order_lines ol WHERE ol.order_id = o.id AND ol.qty_picked > 0) AS products, "
+        "       (SELECT COALESCE(SUM(ol.qty_picked),0) FROM order_lines ol WHERE ol.order_id = o.id) AS units "
+        "FROM orders o JOIN pick_tasks pt ON pt.order_id = o.id "
+        "LEFT JOIN hiryu_stores hs ON hs.hiryu_store_no = o.hiryu_store_no "
+        "LEFT JOIN users u ON u.email = pt.claimed_by "
+        "WHERE o.site_id = %s AND pt.status = 'completed' AND o.status <> 'cancelled' "
+        "  AND o.marked_ready_at IS NULL AND pt.completed_at >= UTC_TIMESTAMP() - INTERVAL 2 DAY "
+        "ORDER BY COALESCE(pt.handed_to_pack_at, pt.completed_at), o.id", (site_id,))
+    drv = await db.fetch_one(
+        "SELECT COUNT(*) AS n FROM orders WHERE site_id = %s AND status <> 'cancelled' "
+        "AND marked_ready_at IS NOT NULL AND handed_over_at IS NULL "
+        "AND created_at >= UTC_TIMESTAMP() - INTERVAL 2 DAY", (site_id,))
+    return {
+        "site_id": site_id, "server_time": str(datetime.now(timezone.utc)),
+        "baskets": [{
+            "order_id": r["id"], "short_no": r["hiryu_short_no"] or r["external_ref"],
+            "basket_code": r["basket_code"], "store_name": r["store_name"],
+            "products": int(r["products"] or 0), "units": int(r["units"] or 0),
+            "waiting_seconds": int(r["waited"]) if r["waited"] is not None else None,
+            "amber": r["waited"] is not None and int(r["waited"]) >= amber,
+            "is_uji": _is_uji(r), "is_demo": bool(r["is_demo"]), "picker": r["picker"],
+        } for r in rows],
+        "amber_after_seconds": amber,
+        "to_driver_count": int(drv["n"] or 0),
+        "bench_stock": await floor.bench_stock(site_id),
+    }
+
+
+async def _pack_detail(order_id: int) -> dict:
+    order = await db.fetch_one(
+        "SELECT o.*, pt.basket_code, hs.store_name FROM orders o "
+        "LEFT JOIN pick_tasks pt ON pt.order_id = o.id "
+        "LEFT JOIN hiryu_stores hs ON hs.hiryu_store_no = o.hiryu_store_no WHERE o.id = %s",
+        (order_id,))
+    sug, lines, row = await _suggest(order)
+    r = await floor.pack_rules()
+    out_lines = []
+    for ln in lines:
+        u = floor.unit_pack(ln, r["large_ml"])
+        out_lines.append({
+            "order_line_id": ln["order_line_id"], "sku_id": ln["sku_id"],
+            "sku_name": ln["name_display"], "photo_key": ln["photo_key"],
+            "unit_size": ln["unit_size"], "units": int(ln["units"]),
+            "unit_weight_g": int(round(u["weight_g"])), "large_bottle": u["large"],
+            "estimated": u["estimated"],
+            "is_replacement": bool(ln["replacement_for_line_id"]),
+            "replaces_sku_name": ln["replaces_sku_name"],
+            "replaces_units": ln["replaces_units"],
+        })
+    started = row.get("pack_started_at")
+    packed_at = row.get("packed_at")
+    return {
+        "order_id": order["id"], "short_no": order["hiryu_short_no"] or order["external_ref"],
+        "grab_order_id": order["external_ref"], "store_name": order.get("store_name"),
+        "basket_code": order.get("basket_code"), "status": order["status"],
+        "is_uji": _is_uji(order),
+        "is_demo": bool(order.get("is_demo")),
+        "lines": out_lines,
+        "products": len(out_lines), "units": sum(l["units"] for l in out_lines),
+        "replaced": sum(1 for l in out_lines if l["is_replacement"]),
+        "suggestion": sug,
+        "chosen": row.get("chosen") or sug["pack_type"],
+        "change_reason": row.get("change_reason"),
+        "pack_started_at": str(started) if started else None,
+        "work_seconds": (int(((packed_at or _now()) - started).total_seconds())
+                         if started else None),
+        "packed_at": str(packed_at) if packed_at else None,
+        "change_reasons": PACK_CHANGE_REASONS,
+        "server_time": str(datetime.now(timezone.utc)),
+    }
+
+
+@router.get("/orders/{order_id}/pack", response_model=PackDetail)
+async def pack_detail(order_id: int, user: auth.User = Depends(auth.current_user)):
+    """Kemas GM-358 (board 6h): what is in the basket, the pack the WMS names
+    and why, the packer's stopwatch."""
+    await _order_for(order_id, user)
+    return await _pack_detail(order_id)
+
+
+@router.post("/orders/{order_id}/pack-start", response_model=PackDetail)
+async def pack_start(order_id: int, user: auth.User = Depends(auth.current_user)):
+    """The packer took this basket: their stopwatch starts (once)."""
+    order = await _order_for(order_id, user)
+    if order["status"] == "cancelled":
+        raise HTTPException(409, "Pesanan ini dibatalkan: jangan dikemas. / Cancelled: do not pack it.")
+    await _suggest(order)
+    await db.execute(
+        "UPDATE order_packs SET pack_started_at = COALESCE(pack_started_at, UTC_TIMESTAMP()), "
+        "pack_started_by = COALESCE(pack_started_by, %s) WHERE order_id = %s",
+        (user.email, order_id))
+    await _mark_packer(order["site_id"], user.email)
+    return await _pack_detail(order_id)
+
+
+@router.post("/orders/{order_id}/pack-change", response_model=PackDetail)
+async def pack_change(order_id: int, body: PackChangeIn,
+                      user: auth.User = Depends(auth.current_user)):
+    """Ganti kemasan: the packer uses another pack, with a reason. Counted
+    weekly, so a limit that is wrong shows up (§6.10.3)."""
+    order = await _order_for(order_id, user)
+    if order["marked_ready_at"]:
+        raise HTTPException(409, "Sudah dikemas. / Already packed.")
+    sug, _, _ = await _suggest(order)
+    await db.execute(
+        "UPDATE order_packs SET chosen = %s, change_reason = %s, changed_by = %s, "
+        "changed_at = UTC_TIMESTAMP() WHERE order_id = %s",
+        (None if body.pack_type == sug["pack_type"] else body.pack_type,
+         None if body.pack_type == sug["pack_type"] else body.reason.strip(),
+         user.email, order_id))
+    await _audit(user.email, "order", order_id, "order.pack_changed",
+                 {"from": sug["pack_type"], "to": body.pack_type, "reason": body.reason})
+    return await _pack_detail(order_id)
+
+
+@router.post("/orders/{order_id}/packed", response_model=HandoverOrderV2)
+async def packed(order_id: int, body: PackedV2In,
                  user: auth.User = Depends(auth.current_user)):
-    """Selesai dikemas (§6.4 step 3): the bag is packed and the packer read the
-    GM number off the slip. The WMS tells Hiryu the order is ready (message 4,
-    order_ready), in the same transaction, so a packed order and its message
-    exist together or not at all. Nobody presses Mark ready in Hiryu.
+    """Selesai dikemas (board 6h): the packer typed the GM number off the slip.
+    The WMS checks it against the basket's order, then in one transaction:
+    the order is packed, message 4 (order_ready) is queued, the basket is free,
+    the pack is recorded and its consumables come off the hub's stock.
 
     orders.marked_ready_at / marked_ready_by (named in V22 after Hiryu's button)
     now mean exactly this: packed, and ready sent.
 
     Once only: a second tap answers with the same row and sends nothing. A
-    cancelled order is refused: its bag goes back to be unpacked.
+    cancelled order is refused: its basket goes back to the rack. A UJI order
+    never sends message 4.
     """
-    await _order_for(order_id, user)
+    head = await _order_for(order_id, user)
+    if body.basket_code and head.get("basket_code") and \
+            body.basket_code.strip().upper() != head["basket_code"].upper():
+        raise HTTPException(422, f"Keranjang ini bukan untuk pesanan ini ({head['basket_code']}). / "
+                                 f"This basket is not this order's ({head['basket_code']}).")
+    sug, _, _ = await _suggest(head)
     async with db.tx() as cur:
         # Locked: a cancel from Hiryu landing now waits for this, or wins first.
         order = await db.one(
@@ -288,7 +643,7 @@ async def packed(order_id: int, body: models.PackedIn,
             raise HTTPException(409, "Pesanan ini dibatalkan: jangan dikemas, kembalikan barangnya ke rak. / "
                                      "Cancelled: do not pack it, return the units to the shelf.")
         if not order["marked_ready_at"]:
-            task = await db.one(cur, "SELECT status FROM pick_tasks WHERE order_id = %s",
+            task = await db.one(cur, "SELECT id, status FROM pick_tasks WHERE order_id = %s",
                                 (order_id,))
             if not task or task["status"] != "completed":
                 raise HTTPException(409, "Pesanan ini belum selesai diambil. / "
@@ -305,37 +660,68 @@ async def packed(order_id: int, body: models.PackedIn,
             await ledger.enqueue_pos_message(
                 cur, message_type="order_ready", site_id=order["site_id"],
                 order_ref=order["external_ref"],
-                is_training=bool(order["is_training"]),
+                is_training=outbound._suppressed(order, bool(order["is_training"])),
                 payload={"order_ref": order["external_ref"],
                          "gm_number": order["hiryu_short_no"],
                          "is_test": bool(order["is_test"])},
             )
+            # The basket is empty and free for the next order.
+            await db.run(cur, "UPDATE pick_tasks SET basket_released_at = NOW() "
+                              "WHERE id = %s AND basket_released_at IS NULL", (task["id"],))
+            pack = await db.one(cur, "SELECT chosen, suggested FROM order_packs "
+                                     "WHERE order_id = %s FOR UPDATE", (order_id,))
+            used = (pack and (pack["chosen"] or pack["suggested"])) or sug["pack_type"]
+            booked = await floor.book_consumables(cur, site_id=order["site_id"],
+                                                  order_id=order_id, pack_type=used,
+                                                  actor=user.email)
+            await db.run(
+                cur, "UPDATE order_packs SET packed_at = UTC_TIMESTAMP(), packed_by = %s, "
+                     "chosen = COALESCE(chosen, suggested), consumables_booked = %s, "
+                     "pack_started_at = COALESCE(pack_started_at, UTC_TIMESTAMP()) "
+                     "WHERE order_id = %s", (user.email, 1 if booked else 0, order_id))
             await ledger.audit(cur, actor_email=user.email, entity="order", entity_id=order_id,
-                               action="order.packed", after={"gm_number": body.gm_number})
+                               action="order.packed",
+                               after={"gm_number": body.gm_number, "pack": used})
+    await _mark_packer(head["site_id"], user.email)
     return await _handover_row(order_id)
 
 
-@router.post("/orders/{order_id}/handed-over", response_model=models.HandoverOrder)
+@router.post("/orders/{order_id}/handed-over", response_model=HandoverOrderV2)
 async def handed_over(order_id: int, user: auth.User = Depends(auth.current_user)):
     """Ya, sudah diambil driver (§7.1): staff matched the GM number the driver
     gave with the slip. The WMS records who and when; nothing goes to Hiryu
-    (Grab tracks the pickup itself). The order is done."""
+    (Grab tracks the pickup itself). The order is done.
+
+    A UJI order has no driver: its units go on Kembalikan ke rak instead."""
     order = await _order_for(order_id, user)
     if order["status"] == "cancelled":
         raise HTTPException(409, "Pesanan ini dibatalkan: jangan diserahkan. / Cancelled: do not hand over.")
     if not order["marked_ready_at"]:
         raise HTTPException(409, "Belum dikemas. Tekan Selesai dikemas dulu. / "
                                  "Not packed yet. Tap Selesai dikemas first.")
-    n = await db.execute(
-        "UPDATE orders SET handed_over_by = %s, handed_over_at = UTC_TIMESTAMP(), "
-        "status = 'handed_over' WHERE id = %s AND handed_over_at IS NULL "
-        "AND status <> 'cancelled'", (user.email, order_id))
-    if n:
-        await _audit(user.email, "order", order_id, "order.handed_over", {})
+    async with db.tx() as cur:
+        n = await db.run(
+            cur,
+            "UPDATE orders SET handed_over_by = %s, handed_over_at = UTC_TIMESTAMP(), "
+            "status = 'handed_over' WHERE id = %s AND handed_over_at IS NULL "
+            "AND status <> 'cancelled'", (user.email, order_id))
+        if n and _is_uji(order):
+            full = await db.one(cur, "SELECT o.*, s.is_training FROM orders o "
+                                     "JOIN sites s ON s.id = o.site_id WHERE o.id = %s",
+                                (order_id,))
+            lines = await db.many(
+                cur, "SELECT pl.id, pl.sku_id, pl.location_id, pl.qty_picked FROM pick_lines pl "
+                     "JOIN order_lines ol ON ol.id = pl.order_line_id WHERE ol.order_id = %s",
+                (order_id,))
+            await returns.create_for_cancel(cur, order=full, lines=lines, reason="uji")
+        if n:
+            await ledger.audit(cur, actor_email=user.email, entity="order", entity_id=order_id,
+                               action="order.handed_over", after={})
+    await _mark_packer(order["site_id"], user.email)
     return await _handover_row(order_id)
 
 
-@router.post("/orders/{order_id}/back-to-bench", response_model=models.HandoverOrder)
+@router.post("/orders/{order_id}/back-to-bench", response_model=HandoverOrderV2)
 async def back_to_bench(order_id: int, user: auth.User = Depends(auth.current_user)):
     """Sudah dibawa kembali ke meja packing (§7.2.4, §8.2 step 3): a bag (or a
     basket at the bench) whose order was cancelled is back at the pack bench to
@@ -385,20 +771,25 @@ async def reopen(order_id: int, user: auth.User = Depends(auth.require("supervis
 _HANDOVER_SELECT = (
     "SELECT o.id, o.external_ref, o.hiryu_short_no, o.status, o.site_id, o.promised_at, "
     "       o.marked_ready_at, o.handed_over_at, o.created_at, o.cancelled_at, "
-    "       o.back_to_bench_at, hs.store_name, "
+    "       o.back_to_bench_at, o.source, o.is_demo, hs.store_name, "
     "       pt.status AS task_status, pt.handed_to_pack_at, pt.completed_at, pt.claimed_by, "
+    "       pt.basket_code, COALESCE(op.chosen, op.suggested) AS pack_type, "
     "       COALESCE(u.name, pt.claimed_by) AS picker, "
+    "       (SELECT COUNT(*) FROM driver_returns dr WHERE dr.order_id = o.id) AS dr_rows, "
     "       (SELECT COALESCE(SUM(qty_picked),0) FROM order_lines WHERE order_id=o.id) AS units, "
-    "       (SELECT COALESCE(SUM(qty_ordered),0) FROM order_lines WHERE order_id=o.id) AS units_ordered "
+    "       (SELECT COALESCE(SUM(qty_ordered),0) FROM order_lines WHERE order_id=o.id "
+    "         AND replacement_for_line_id IS NULL) AS units_ordered "
     "FROM orders o LEFT JOIN pick_tasks pt ON pt.order_id = o.id "
     "LEFT JOIN hiryu_stores hs ON hs.hiryu_store_no = o.hiryu_store_no "
+    "LEFT JOIN order_packs op ON op.order_id = o.id "
     "LEFT JOIN users u ON u.email = pt.claimed_by "
 )
 
 
 async def _handover_row(order_id: int) -> dict:
     o = await db.fetch_one(_HANDOVER_SELECT + "WHERE o.id = %s", (order_id,))
-    return _handover_dict(o)
+    limit = 60 * await rule("handover_wait_minutes", 20)
+    return _handover_dict(o, limit)
 
 
 def _stage(o: dict) -> str:
@@ -415,7 +806,7 @@ def _stage(o: dict) -> str:
     return "waiting"
 
 
-def _handover_dict(o: dict) -> dict:
+def _handover_dict(o: dict, wait_limit: int | None = None) -> dict:
     now = _now()
     wait = pack = None
     if o.get("marked_ready_at") and not o.get("handed_over_at"):
@@ -425,6 +816,7 @@ def _handover_dict(o: dict) -> dict:
         pack = int((now - to_pack_since).total_seconds())
     ts = lambda v: str(v) if v else None
     stage = _stage(o)
+    ptype = o.get("pack_type")
     return {
         "order_id": o["id"], "grab_order_id": o["external_ref"],
         "short_no": o.get("hiryu_short_no") or o["external_ref"],
@@ -441,16 +833,25 @@ def _handover_dict(o: dict) -> dict:
         "handed_to_pack_at": ts(o.get("handed_to_pack_at")),
         "picker": o.get("picker"),
         "pack_seconds": pack,
+        "basket_code": o.get("basket_code"),
+        "pack_type": ptype,
+        "pack_name": floor.PACK_NAMES.get(ptype) if ptype else None,
+        "pack_count": (2 if ptype == "two" else 1) if ptype else None,
+        "is_uji": _is_uji(o),
+        "is_demo": bool(o.get("is_demo")),
+        "over_limit": bool(wait is not None and wait_limit and wait >= wait_limit),
+        "driver_return_checked": bool(o.get("dr_rows")),
     }
 
 
-@router.get("/active-orders", response_model=models.HandoverList)
+@router.get("/active-orders", response_model=HandoverListV2)
 async def active_orders(site_id: int, user: auth.User = Depends(auth.current_user)):
     """Everything at this hub the pack bench and the handover table must act on:
 
       * stage waiting / picking: not yet at the bench (shown for context);
       * to_pack (Siap dikemas): handed to the pack bench, not packed;
-      * to_driver (Menunggu driver): packed, not handed over, with its wait;
+      * to_driver (Menunggu driver, board 6i): packed, not handed over, with
+        its wait, its pack (1 kantong kertas) and amber past the limit;
       * cancelled: a basket at the bench or a packed bag whose order was
         cancelled before it left. Red, until someone taps
         Sudah dibawa kembali ke meja packing (`back-to-bench`).
@@ -469,9 +870,116 @@ async def active_orders(site_id: int, user: auth.User = Depends(auth.current_use
         "ORDER BY o.status = 'cancelled' DESC, o.marked_ready_at IS NULL, o.marked_ready_at, "
         "         pt.completed_at IS NULL, pt.completed_at, o.promised_at, o.created_at",
         (site_id,))
-    return {"orders": [_handover_dict(r) for r in rows],
-            "wait_limit_seconds": 60 * await rule("handover_wait_minutes", 20),
+    limit = 60 * await rule("handover_wait_minutes", 20)
+    return {"orders": [_handover_dict(r, limit) for r in rows],
+            "wait_limit_seconds": limit,
             "link_live": await link_live()}
+
+
+# --------------------------------------------------------------------------
+# A cancelled parcel the driver brings back (decided 5 Oct, round 5)
+# --------------------------------------------------------------------------
+
+@router.get("/driver-returns", response_model=DriverReturnList)
+async def driver_returns(site_id: int, user: auth.User = Depends(auth.current_user)):
+    """Orders cancelled after the driver took them, not checked yet. If the
+    driver brings the parcel back, staff check it here on arrival. Two days
+    back at most: a parcel that never comes back is a Grab claim (outside the
+    WMS)."""
+    await auth.assert_site_access(user, site_id)
+    orders = await db.fetch_all(
+        "SELECT o.id, o.external_ref, o.hiryu_short_no, o.handed_over_at, o.cancelled_at, "
+        "       o.cancel_reason, hs.store_name FROM orders o "
+        "LEFT JOIN hiryu_stores hs ON hs.hiryu_store_no = o.hiryu_store_no "
+        "WHERE o.site_id = %s AND o.status = 'cancelled' AND o.handed_over_at IS NOT NULL "
+        "  AND o.cancelled_at >= UTC_TIMESTAMP() - INTERVAL 2 DAY "
+        "  AND NOT EXISTS (SELECT 1 FROM driver_returns dr WHERE dr.order_id = o.id) "
+        "ORDER BY o.cancelled_at DESC", (site_id,))
+    out = []
+    for o in orders:
+        lines = await db.fetch_all(
+            "SELECT ol.sku_id, s.name_display, SUM(ol.qty_picked) AS units FROM order_lines ol "
+            "JOIN skus s ON s.id = ol.sku_id WHERE ol.order_id = %s AND ol.qty_picked > 0 "
+            "GROUP BY ol.sku_id, s.name_display", (o["id"],))
+        out.append({
+            "order_id": o["id"], "short_no": o["hiryu_short_no"] or o["external_ref"],
+            "store_name": o["store_name"],
+            "handed_over_at": str(o["handed_over_at"]) if o["handed_over_at"] else None,
+            "cancelled_at": str(o["cancelled_at"]) if o["cancelled_at"] else None,
+            "cancel_reason": o["cancel_reason"],
+            "lines": [{"sku_id": l["sku_id"], "sku_name": l["name_display"],
+                       "units": int(l["units"] or 0)} for l in lines],
+        })
+    return {"orders": out}
+
+
+@router.post("/orders/{order_id}/driver-return", response_model=DriverReturnResult)
+async def driver_return(order_id: int, body: DriverReturnIn,
+                        user: auth.User = Depends(auth.current_user)):
+    """Checked on arrival: fine units go back to the rack (a Kembalikan ke rak
+    task, scanned in), damaged units go to quarantine with the reason "Kembali
+    dari driver, rusak", cost Ninja. Ops HQ claims it from Grab outside the
+    WMS. Once per order; an empty list records that nothing came back."""
+    order = await _order_for(order_id, user)
+    if order["status"] != "cancelled" or not order["handed_over_at"]:
+        raise HTTPException(409, "Hanya pesanan batal yang sudah dibawa driver. / "
+                                 "Only a cancelled order the driver had taken.")
+    picked = {r["sku_id"]: int(r["units"] or 0) for r in await db.fetch_all(
+        "SELECT sku_id, SUM(qty_picked) AS units FROM order_lines WHERE order_id = %s "
+        "GROUP BY sku_id", (order_id,))}
+    for ln in body.lines:
+        if ln.sku_id not in picked:
+            raise HTTPException(422, "Produk itu tidak ada di pesanan ini. / "
+                                     "That product is not in this order.")
+        if ln.qty_ok + ln.qty_damaged > picked[ln.sku_id]:
+            raise HTTPException(422, "Lebih banyak dari yang dikirim. / More than was sent.")
+    to_rack = to_q = 0
+    booked_all = True
+    async with db.tx() as cur:
+        locked = await db.one(cur, "SELECT o.*, s.is_training FROM orders o "
+                                   "JOIN sites s ON s.id = o.site_id WHERE o.id = %s FOR UPDATE",
+                              (order_id,))
+        done = await db.one(cur, "SELECT COUNT(*) AS n FROM driver_returns WHERE order_id = %s",
+                            (order_id,))
+        if done["n"]:
+            raise HTTPException(409, "Sudah dicek. / Already checked.")
+        rows = body.lines or [DriverReturnLineIn(sku_id=sid) for sid in picked]
+        for ln in rows:
+            task_id = None
+            q_ref = None
+            if ln.qty_ok:
+                where = await db.one(
+                    cur, "SELECT pl.location_id FROM pick_lines pl "
+                         "JOIN order_lines ol ON ol.id = pl.order_line_id "
+                         "WHERE ol.order_id = %s AND pl.sku_id = %s AND pl.qty_picked > 0 "
+                         "ORDER BY pl.qty_picked DESC LIMIT 1", (order_id, ln.sku_id))
+                task_id = await returns.create_one(
+                    cur, order=locked, sku_id=ln.sku_id,
+                    location_id=where["location_id"] if where else None,
+                    qty=ln.qty_ok, reason="driver_return")
+                to_rack += ln.qty_ok
+            if ln.qty_damaged:
+                q_ref = await floor.to_quarantine(cur, site_id=locked["site_id"],
+                                                  sku_id=ln.sku_id, qty=ln.qty_damaged,
+                                                  order=locked, actor=user.email)
+                booked_all = booked_all and q_ref is not None
+                to_q += ln.qty_damaged
+            await db.run(
+                cur,
+                "INSERT INTO driver_returns (order_id, site_id, sku_id, qty_back, qty_ok, "
+                "qty_damaged, return_task_id, quarantine_ref, note, checked_by) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                (order_id, locked["site_id"], ln.sku_id, ln.qty_ok + ln.qty_damaged, ln.qty_ok,
+                 ln.qty_damaged, task_id, q_ref, (body.note or "")[:255] or None, user.email))
+        await ledger.audit(cur, actor_email=user.email, entity="order", entity_id=order_id,
+                           action="order.driver_return",
+                           after={"to_rack": to_rack, "to_quarantine": to_q})
+    return {
+        "ok": True, "units_to_rack": to_rack, "units_to_quarantine": to_q,
+        "quarantine_booked": booked_all or not to_q,
+        "message": (f"{to_rack} unit ke Kembalikan ke rak, {to_q} unit ke karantina. / "
+                    f"{to_rack} unit(s) to Kembalikan ke rak, {to_q} to quarantine."),
+    }
 
 
 # --------------------------------------------------------------------------

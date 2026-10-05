@@ -1,76 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Peta rak — Ninja Kilat WMS</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1B3A5C">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=eb89448">
-<link rel="stylesheet" href="css/app.css?v=eb89448">
+<title>Kilat WMS</title>
+<!-- This address moved to the one app (frontend/app/). legacy.js keeps the
+     query string and hash; the refresh below is the no-JavaScript fallback.
+     The old page: git show d925210:frontend/13-peta-rak.html -->
+<script src="app/legacy.js?v=d925210"></script>
+<meta http-equiv="refresh" content="0; url=app/rak-bin.html">
 </head>
-<body>
-<div class="app" data-screen="rack-map">
-    <header class="chrome">
-      <span class="chrome__mark">NINJA</span>
-      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
-      <span class="chrome__sep"></span>
-      <span class="chrome__mode" data-id="Peta rak" data-en="Rack map">Peta rak</span>
-      <span class="spacer"></span>
-      <span class="conn" role="status">
-        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
-      </span>
-      <span class="lang" role="group" aria-label="Bahasa">
-        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
-        <button class="lang__opt" data-lang="en" type="button">EN</button>
-      </span>
-      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
-      <span class="chrome__user">Budi H. · Supervisor</span>
-    </header>
-    <main class="main main--tight">
-      <div class="row-split">
-        <div class="col" style="flex:1 1 auto;min-width:0">
-          <div class="legend">
-            <h1 class="h2" data-field="map-title" data-id="Peta rak" data-en="Rack map">Peta rak</h1>
-            <span class="spacer"></span>
-            <span class="legend__item"><span class="legend__swatch cell is-free"></span><span data-id="Kosong" data-en="Free">Kosong</span></span>
-            <span class="legend__item"><span class="legend__swatch cell is-occ"></span><span data-id="Terisi" data-en="Occupied">Terisi</span></span>
-            <span class="legend__item"><span class="legend__swatch cell is-over"></span><span data-id="Lewah kapasitas" data-en="Over capacity">Lewah kapasitas</span></span>
-            <span class="legend__item"><span class="legend__swatch cell is-count"></span><span data-id="Belum dihitung 30 hari" data-en="Not counted in 30 days">Belum dihitung 30 hari</span></span>
-            <span class="legend__item"><span class="legend__swatch legend__swatch--hatch"></span><span data-id="Cadangan (overflow)" data-en="Overflow">Cadangan (overflow)</span></span>
-          </div>
-          <div class="rackmap" data-region="rackmap" aria-label="Peta rak"></div>
-          <span class="note" data-id="Kotak bergaris adalah keranjang cadangan: stok yang tidak muat lagi di rak. Pemetik dikirim ke stok yang lebih lama — di rak atau di cadangan — jadi tidak ada tugas isi ulang. Posisi terpakai di kanan hanya menghitung rak, bukan cadangan." data-en="Hatched boxes are overflow baskets: stock that no longer fit on the rack. The picker is sent to the older stock — rack or overflow — so there is no refill task. The positions-in-use figure counts rack positions only, not overflow.">Kotak bergaris adalah keranjang cadangan: stok yang tidak muat lagi di rak. Pemetik dikirim ke stok yang lebih lama — di rak atau di cadangan — jadi tidak ada tugas isi ulang. Posisi terpakai di kanan hanya menghitung rak, bukan cadangan.</span>
-        </div>
-        <div class="col" style="flex:0 0 340px">
-          <div class="panel">
-            <div class="panel__body">
-              <span class="eyebrow" data-id="Hari ini" data-en="Today">Hari ini</span>
-              <span class="kpi"><span data-id="Posisi terpakai" data-en="Positions in use">Posisi terpakai</span><span class="kpi__num" data-field="used">—</span></span>
-              <span class="kpi" style="color:var(--caution)"><span data-id="Lewah kapasitas" data-en="Over capacity">Lewah kapasitas</span><span class="kpi__num" data-field="over">—</span></span>
-              <span class="kpi" style="color:var(--action)"><span data-id="Belum dihitung 30 hari" data-en="Not counted in 30 days">Belum dihitung 30 hari</span><span class="kpi__num" data-field="tocount">—</span></span>
-            </div>
-          </div>
-          <div class="panel" style="flex:1 1 auto" data-region="variances">
-            <div class="panel__head" style="color:var(--caution)" data-id="Selisih menunggu tanda tangan" data-en="Variance awaiting sign-off">Selisih menunggu tanda tangan</div>
-            <div class="varrow"><span class="note" data-id="Memuat…" data-en="Loading…">Memuat…</span></div>
-          </div>
-          <a class="btn btn--primary btn--lg btn--block" href="console/hitung-stok.html" data-action="review" data-id="Buka hitung stok" data-en="Open stock count">Buka hitung stok</a>
-        </div>
-      </div>
-    </main>
-</div>
-<script src="js/api.js?v=eb89448"></script>
-<script src="js/scan.js?v=eb89448"></script>
-<script src="js/app.js?v=eb89448"></script>
-<script src="js/rack-map.js?v=eb89448"></script>
-<script src="js/wire.js?v=eb89448"></script>
-<script src="js/screens/rack-map.js?v=eb89448"></script>
-</body>
+<body><p><a href="app/rak-bin.html">Halaman ini sudah pindah. Buka Kilat WMS.</a></p></body>
 </html>

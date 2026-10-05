@@ -1,113 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Barang masuk — scan — Ninja Kilat WMS</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1B3A5C">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=eb89448">
-<link rel="stylesheet" href="css/app.css?v=eb89448">
+<title>Kilat WMS</title>
+<!-- This address moved to the one app (frontend/app/). legacy.js keeps the
+     query string and hash; the refresh below is the no-JavaScript fallback.
+     The old page: git show d925210:frontend/02-barang-masuk-scan.html -->
+<script src="app/legacy.js?v=d925210"></script>
+<meta http-equiv="refresh" content="0; url=app/barang-masuk.html">
 </head>
-<body>
-<div class="app" data-screen="inbound-scan">
-    <header class="chrome">
-      <span class="chrome__mark">NINJA</span>
-      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
-      <span class="chrome__sep"></span>
-      <span class="chrome__mode" data-id="Barang masuk · WRD-2609-02" data-en="Inbound · WRD-2609-02">Barang masuk · WRD-2609-02</span>
-      <span class="spacer"></span>
-      <span class="conn" role="status">
-        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
-      </span>
-      <span class="lang" role="group" aria-label="Bahasa">
-        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
-        <button class="lang__opt" data-lang="en" type="button">EN</button>
-      </span>
-      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
-      <span class="chrome__user">Rina P. · UT5</span>
-    </header>
-    <div class="banner banner--accept" role="status" data-region="result">
-      <span class="banner__icon banner__icon--round" aria-hidden="true">✓</span>
-      <span data-id="Diterima" data-en="Accepted">Diterima</span>
-      <span class="chrome__sep"></span>
-      <span class="banner__detail" data-field="product">Glasting Liquid Lip 07 Rouge Flare</span>
-    </div>
-    <main class="main">
-      <div class="daystrip" data-region="day-color">
-        <span class="daystrip__block" data-field="day-block" style="background:#1A73C8;color:#FFFFFF">
-          <span class="daystrip__parity" data-field="day-parity">B</span>
-          <span class="daystrip__wk" data-field="day-wk">W37</span>
-        </span>
-        <span class="daystrip__text">
-          <span class="daystrip__label" data-id="Warna label hari ini" data-en="Today's label colour">Warna label hari ini</span>
-          <span class="daystrip__day" data-field="day-name">Rabu</span>
-          <span class="daystrip__date" data-field="day-date">9 Sep 2026</span>
-        </span>
-        <span class="daystrip__hint" data-id="Tempel stiker warna ini di setiap kardus, dan tulis tanggalnya. Warna berulang tiap 7 hari — tanggal yang membedakan batch lama dari yang baru." data-en="Put this colour sticker on every carton, and write the date. Colours repeat weekly — the date is what separates an old batch from a new one.">Tempel stiker warna ini di setiap kardus, dan tulis tanggalnya. Warna berulang tiap 7 hari — tanggal yang membedakan batch lama dari yang baru.</span>
-      </div>
-      <div class="refstrip">
-        <label class="refstrip__label" for="refInput" data-id="Nomor referensi / AWB (opsional)" data-en="Reference / AWB number (optional)">Nomor referensi / AWB (opsional)</label>
-        <input class="refstrip__input" id="refInput" type="text" maxlength="64" autocomplete="off" placeholder="mis. WRD-2609-02" aria-label="Nomor referensi atau AWB, opsional">
-        <span class="refstrip__hint" data-id="Isi kalau brand kasih nomor AWB/referensi. Kalau tidak ada, lewati saja." data-en="Fill in if the brand gives an AWB/reference number. Skip it if there isn't one.">Isi kalau brand kasih nomor AWB/referensi. Kalau tidak ada, lewati saja.</span>
-      </div>
-      <div class="row-split">
-        <div class="col" style="flex:0 0 380px">
-          <img class="product__photo product__photo--lg" src="assets/products/placeholder.svg" data-photo-key="wdh-gll-07" alt="Glasting Liquid Lip 07 Rouge Flare">
-          <div class="col" style="gap:6px">
-            <span class="product__meta">Wardah · 3,5 g · WDH-GLL-07</span>
-            <span class="product__name">Glasting Liquid Lip <span class="product__shade">07</span> Rouge Flare</span>
-          </div>
-        </div>
-        <div class="col col--grow">
-          <div class="col">
-            <span class="eyebrow" data-id="Simpan di" data-en="Put away at">Simpan di</span>
-            <div class="instr">
-              <span class="instr__arrow" aria-hidden="true">→</span>
-              <span class="code code--xl">UT5-<span class="code__hl">A</span>-<span class="code__hl">3</span>-02</span>
-            </div>
-            <p class="lede" data-id="Rak A, tingkat 3 — posisi kedua dari kiri." data-en="Rack A, level 3 — second position from the left.">Rak A, tingkat 3 — posisi kedua dari kiri.</p>
-            <div class="stats">
-              <div class="stat">
-                <span class="stat__label" data-id="Isi keranjang sekarang" data-en="In this basket now">Isi keranjang sekarang</span>
-                <span class="stat__num" data-field="basket-qty">14</span>
-                <span class="stat__foot" data-id="Kapasitas 40" data-en="Capacity 40">Kapasitas 40</span>
-              </div>
-              <div class="stat stat--highlight">
-                <span class="stat__label" data-id="Sesi ini" data-en="This session">Sesi ini</span>
-                <span class="stat__num" data-field="session-qty">37</span>
-                <span class="stat__foot" id="sessionTargetFoot" data-id="barang discan sesi ini" data-en="items scanned this session">barang discan sesi ini</span>
-              </div>
-            </div>
-          </div>
-          <div class="col">
-      <button class="btn btn--primary btn--lg btn--block" type="button" id="startScanBtn" data-id="Mulai pindai barcode" data-en="Start barcode scanning">Mulai pindai barcode</button>
-      <div class="scanzone" data-scan-label="Pindai barang berikutnya" data-offline-msg="Tunggu koneksi kembali" hidden>
-        <span class="scanzone__state" data-id="Menunggu pindaian" data-en="Waiting for scan">Menunggu pindaian</span>
-        <span class="scanzone__prompt" data-id="Pindai barang berikutnya" data-en="Scan the next item">Pindai barang berikutnya</span>
-        <input class="scanzone__input" aria-label="Pindai barang berikutnya">
-      </div>
-            <div class="stats">
-              <button class="btn btn--outline btn--lg" type="button" data-action="undo"><span aria-hidden="true">↺</span><span data-id="Batalkan scan terakhir" data-en="Undo last scan">Batalkan scan terakhir</span></button>
-              <a class="btn btn--primary btn--lg btn--grow" id="finishDeliveryBtn" href="15-penerimaan-selesai.html" data-id="Selesai Upload Stok" data-en="Finish Upload Stock">Selesai Upload Stok</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-</div>
-<script src="js/api.js?v=eb89448"></script>
-<script src="js/scan.js?v=eb89448"></script>
-<script src="js/app.js?v=eb89448"></script>
-<script src="js/wire.js?v=eb89448"></script>
-<script src="js/sku-answers.js?v=eb89448"></script>
-<script src="js/screens/inbound-scan.js?v=eb89448"></script>
-
-</body>
+<body><p><a href="app/barang-masuk.html">Halaman ini sudah pindah. Buka Kilat WMS.</a></p></body>
 </html>

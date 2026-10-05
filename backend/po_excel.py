@@ -1,4 +1,4 @@
-"""The PO to the brand as an Excel file (PRD §4.1 step 4, §4.4.5).
+"""The restock request to the brand as an Excel file (canvas board 4c).
 
 The layout is the one the user approved, `docs/templates/PO Restock - Kahf -
 MA5.xlsx`, made by `tools/gen_excel_templates.py`. This module is that
@@ -8,12 +8,17 @@ widths. If the approved template changes, change both.
 It is pure: header and lines in, bytes out, no database. That keeps it testable
 without one, and keeps the router free of spreadsheet detail.
 
+The request has no PO number of ours: its key is the Ninja reference
+(RPL-<hub>-<yymm>-<nnn>), and a yellow "Brand PO number" row is left for the brand
+to fill (printed once Ops HQ has recorded it). The request line asks for the
+barcode on every unit and for both numbers on the Faktur and the Surat Jalan; it
+no longer asks for an ED (ED tracking dropped 5 Oct).
+
 Differences from the template, all deliberate:
   * "Quantity requested" is the number Ops HQ saved, not the template's
     =MAX(0, fill up to - stock) formula: the PO quantities are frozen at
     *Simpan PO* and may have been changed by hand.
-  * An optional "Note" header row (row 11) when Ops HQ wrote one; row 11 is
-    blank in the template, so the rest of the sheet does not move.
+  * An optional "Note" header row (row 13) when Ops HQ wrote one.
   * A barcode is drawn only when it is a valid EAN-13 (or a UPC-A, which is an
     EAN-13 with a leading 0). Other codes are printed as digits only, because a
     drawn barcode that does not scan is worse than none.
@@ -38,10 +43,11 @@ BOX = Border(left=thin, right=thin, top=thin, bottom=thin)
 QTY = '#,##0;(#,##0);"-"'
 
 REQUESTS = ("Please: (1) make sure every unit carries the barcode in the Barcode column; if it "
-            "differs or is missing, write the right barcode in the yellow column. (2) List the "
-            "expiry date (ED) of each SKU on the Faktur. (3) Put this PO number on the Faktur "
-            "and the Surat Jalan.")
-HEADERS = ["No", "Brand SKU code", "Hiryu SKU code", "Barcode (EAN-13)", "Barcode", "Product",
+            "differs or is missing, write the right barcode in the yellow column. (2) Put your "
+            "PO number and our Ninja reference on the Faktur and the Surat Jalan.")
+BRAND_PO_PLACEHOLDER = "(filled by the brand)"
+HEADERS = ["No", "Brand SKU code", "Hiryu SKU code", "Barcode (EAN-13)", "Barcode (drawn bars)",
+           "Product",
            "Size", "Current stock", "Fill up to", "Quantity requested (pcs)",
            "Brand's barcode (fill if different or missing)", "Notes"]
 WIDTHS = [5, 14, 14, 17, 26, 46, 9, 10, 10, 13, 24, 22]
@@ -65,14 +71,25 @@ def _cell(ws, r, c, v, fmt=None, bold=False, fill=None, color=INK, align=None):
 
 
 def _title_block(ws, title, rows):
+    """rows: (label, value) or (label, value, True) for a yellow cell the brand fills."""
     ws["A1"] = "NINJA VAN"
     ws["A1"].font = _font(bold=True, size=9, color=RED)
     ws["A2"] = title
     ws["A2"].font = _font(bold=True, size=16)
     r = 4
-    for label, value in rows:
+    for row in rows:
+        label, value = row[0], row[1]
+        brand_fills = len(row) > 2 and row[2]
         ws.cell(r, 1, label).font = _font(size=9, color=MUTED)
-        ws.cell(r, 2, value).font = _font(size=10, bold=True)
+        c = ws.cell(r, 2, value)
+        if brand_fills:
+            c.fill = INPUT_FILL
+            c.border = BOX
+            placeholder = value == BRAND_PO_PLACEHOLDER
+            c.font = _font(size=10, bold=not placeholder, italic=placeholder,
+                           color=MUTED if placeholder else INK)
+        else:
+            c.font = _font(size=10, bold=True)
         r += 1
     return r + 1
 
@@ -153,7 +170,8 @@ def ean13_png(code: str) -> io.BytesIO:
 def build_po_xlsx(header: dict, lines: list[dict]) -> bytes:
     """Build the PO workbook.
 
-    header: reference, po_date, po_to, po_brand_contact, po_deliver_to,
+    header: reference (the Ninja reference), brand_po_number (None until the
+            brand confirms), po_date, po_to, po_brand_contact, po_deliver_to,
             po_requested_date, po_receiving_hours, po_created_by_name, po_note
     lines:  brand_sku_code, hiryu_sku_code, barcode (None = MISSING), name,
             size, current_stock, fill_to, qty, note
@@ -165,8 +183,10 @@ def build_po_xlsx(header: dict, lines: list[dict]) -> bytes:
     hours = (header.get("po_receiving_hours") or "").strip()
     if hours:
         requested = f"{requested}, receiving {hours}" if requested else f"Receiving {hours}"
+    brand_po = (header.get("brand_po_number") or "").strip() or BRAND_PO_PLACEHOLDER
     _title_block(ws, "Purchase Order · Restock", [
-        ("PO number", header.get("reference") or ""),
+        ("Ninja reference", header.get("reference") or ""),
+        ("Brand PO number", brand_po, True),
         ("PO date", _dmy(header.get("po_date"))),
         ("To (brand)", header.get("po_to") or ""),
         ("Brand contact", header.get("po_brand_contact") or ""),
@@ -175,15 +195,15 @@ def build_po_xlsx(header: dict, lines: list[dict]) -> bytes:
         ("Created by (Ops HQ)", header.get("po_created_by_name") or ""),
     ])
     if (header.get("po_note") or "").strip():
-        ws.cell(11, 1, "Note").font = _font(size=9, color=MUTED)
-        ws.cell(11, 2, header["po_note"].strip()).font = _font(size=10, bold=True)
-    ws["A12"] = REQUESTS
-    ws["A12"].font = _font(size=10, bold=True, color=RED)
-    ws["A12"].alignment = Alignment(wrap_text=True, vertical="top")
-    ws.merge_cells("A12:L12")
-    ws.row_dimensions[12].height = 44
+        ws.cell(13, 1, "Note").font = _font(size=9, color=MUTED)
+        ws.cell(13, 2, header["po_note"].strip()).font = _font(size=10, bold=True)
+    ws["A14"] = REQUESTS
+    ws["A14"].font = _font(size=10, bold=True, color=RED)
+    ws["A14"].alignment = Alignment(wrap_text=True, vertical="top")
+    ws.merge_cells("A14:L14")
+    ws.row_dimensions[14].height = 44
 
-    start = 14
+    start = 16
     _header_row(ws, start, HEADERS, WIDTHS)
     r = start + 1
     first = r

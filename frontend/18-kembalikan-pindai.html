@@ -1,82 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pindai di rak — Ninja Kilat WMS</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1B3A5C">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=eb89448">
-<link rel="stylesheet" href="css/app.css?v=eb89448">
+<title>Kilat WMS</title>
+<!-- This address moved to the one app (frontend/app/). legacy.js keeps the
+     query string and hash; the refresh below is the no-JavaScript fallback.
+     The old page: git show d925210:frontend/18-kembalikan-pindai.html -->
+<script src="app/legacy.js?v=d925210"></script>
+<meta http-equiv="refresh" content="0; url=app/pesanan.html?tab=kembalikan">
 </head>
-<body>
-<div class="app" data-screen="return-scan" data-screen-label="18b">
-    <header class="chrome">
-      <span class="chrome__mark">NINJA</span>
-      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
-      <span class="chrome__sep"></span>
-      <span class="chrome__mode" data-keep="1" data-id="Kembalikan ke rak" data-en="Return to shelf">Kembalikan ke rak</span>
-      <span class="spacer"></span>
-      <span class="conn" role="status">
-        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
-      </span>
-      <span class="lang" role="group" aria-label="Bahasa">
-        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
-        <button class="lang__opt" data-lang="en" type="button">EN</button>
-      </span>
-      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
-      <span class="chrome__user">Dwi L. · UT5</span>
-    </header>
-    <main class="main">
-      <div class="row-split">
-        <div class="col col--grow">
-          <div class="col">
-            <span class="eyebrow" data-id="Dari pesanan yang dibatalkan" data-en="From the cancelled order">Dari pesanan yang dibatalkan</span>
-            <div class="instr">
-              <span class="instr__arrow" aria-hidden="true">→</span>
-              <span class="code code--lg" data-field="order-ref">—</span>
-            </div>
-            <span class="eyebrow" style="margin-top:8px" data-id="Kembalikan ke rak" data-en="Put it back on the rack">Kembalikan ke rak</span>
-            <div class="instr">
-              <span class="instr__arrow" aria-hidden="true">→</span>
-              <span class="code code--xl" data-field="location-code">—</span>
-            </div>
-          </div>
-          <div class="counter">
-            <div class="col" style="gap:6px">
-              <span class="eyebrow" data-id="Masih perlu dipindai" data-en="Still to scan">Masih perlu dipindai</span>
-              <span class="lede" data-id="Pindai setiap barang saat menaruhnya di rak" data-en="Scan each item as you put it on the rack">Pindai setiap barang saat menaruhnya di rak</span>
-            </div>
-            <span class="counter__num" data-field="remaining">0</span>
-          </div>
-          <div class="scanzone" data-scan-label="Pindai satu barang di rak" data-offline-msg="Tunggu koneksi kembali">
-            <span class="scanzone__state" data-id="Menunggu pindaian" data-en="Waiting for scan">Menunggu pindaian</span>
-            <span class="scanzone__prompt" data-id="Pindai satu barang di rak" data-en="Scan one item at the rack">Pindai satu barang di rak</span>
-            <input class="scanzone__input" aria-label="Pindai satu barang di rak">
-          </div>
-          <a class="btn btn--lg btn--block" href="18-kembalikan.html" data-id="Kembali ke daftar" data-en="Back to the list">Kembali ke daftar</a>
-        </div>
-        <div class="col" style="flex:0 0 380px">
-          <img class="product__photo product__photo--fill" src="assets/products/placeholder.svg" data-field="photo" alt="">
-          <div class="col" style="gap:6px">
-            <span class="product__meta" data-field="sku-meta">—</span>
-            <span class="product__name" data-field="sku-name">—</span>
-          </div>
-        </div>
-      </div>
-    </main>
-</div>
-<script src="js/api.js?v=eb89448"></script>
-<script src="js/scan.js?v=eb89448"></script>
-<script src="js/app.js?v=eb89448"></script>
-<script src="js/wire.js?v=eb89448"></script>
-<script src="js/screens/return-scan.js?v=eb89448"></script>
-
-</body>
+<body><p><a href="app/pesanan.html?tab=kembalikan">Halaman ini sudah pindah. Buka Kilat WMS.</a></p></body>
 </html>

@@ -17,7 +17,8 @@ an Ops Head, and an SPV sees and edits only the staff of their own hubs. Only
 stay Ops HQ, with one deliberate exception noted on the read of sites, which
 supervisors also need.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 
 import auth
 import db
@@ -26,20 +27,115 @@ import models
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
-# --- staff accounts ---------------------------------------------------------
+# --- staff accounts (Pengaturan, Orang & akses; canvas 2b) -------------------------
+#
+# A person is added by their @ninjavan.co e-mail: no invitation and no e-mail is
+# sent, they sign in straight away with Google. Hiryu first: the Hiryu login
+# (MANAGER for an SPV, STAFF for staff) is made before the WMS account, and the
+# WMS records that it was ("Login Hiryu sudah dibuat", required). Everyone may
+# look at the list; who may change whom is the ladder above.
 
-async def _user_payload(row: dict) -> dict:
-    codes = await db.fetch_all(
-        "SELECT s.code FROM user_sites us JOIN sites s ON s.id = us.site_id "
+ROLE_TEXT = {"staff": "Staf", "hub_operator": "Operator hub", "supervisor": "SPV",
+             "hq": "Ops HQ", "ops_head": "Ops Head", "superadmin": "Superadmin"}
+
+
+class PersonIn(BaseModel):
+    email: str = Field(description="@ninjavan.co only")
+    name: str | None = None
+    role: str = "staff"
+    site_ids: list[int] = Field(default_factory=list, description="Hub(s)")
+    hiryu_login: bool = Field(default=False, description="Login Hiryu sudah dibuat (required)")
+    default_site_id: int | None = None
+    locale: str = "id"
+
+
+class PersonPatch(BaseModel):
+    name: str | None = None
+    role: str | None = None
+    default_site_id: int | None = None
+    locale: str | None = None
+    active: bool | None = Field(default=None, description="false = tutup akun")
+    site_ids: list[int] | None = None
+    hiryu_login: bool | None = None
+
+
+class Person(BaseModel):
+    id: int
+    email: str
+    name: str | None
+    role: str
+    role_text: str
+    default_site_id: int | None
+    locale: str
+    active: bool
+    site_ids: list[int]
+    site_codes: list[str]
+    all_hubs: bool = Field(description="Ops HQ and above work at every hub (Semua)")
+    hiryu_login: bool
+    hiryu_text: str = Field(description="Ya, MANAGER | Ya, STAFF | Ya, Google | Belum | "
+                                        "Tidak, dicabut")
+    first_login_at: str | None = None
+    never_signed_in: bool
+    deactivated_at: str | None = None
+    created_at: str | None = None
+    can_edit: bool = Field(default=False, description="The caller may change this account")
+
+
+class PersonList(BaseModel):
+    users: list[Person]
+    roles: list[str] = Field(description="Roles the caller may give")
+    role_text: dict[str, str]
+    all_roles: list[str]
+    can_add: bool
+    note: str
+
+
+def _iso(v) -> str | None:
+    return v.isoformat() + "Z" if hasattr(v, "isoformat") else (str(v) if v else None)
+
+
+def _hiryu_text(role: str, active: bool, hiryu_login: bool) -> str:
+    if not active:
+        return "Tidak, dicabut"
+    if not hiryu_login:
+        return "Belum"
+    if role == "supervisor":
+        return "Ya, MANAGER"
+    if role in ("staff", "hub_operator"):
+        return "Ya, STAFF"
+    return "Ya, Google"
+
+
+async def _user_payload(row: dict, viewer: auth.User | None = None) -> dict:
+    sites = await db.fetch_all(
+        "SELECT s.id, s.code FROM user_sites us JOIN sites s ON s.id = us.site_id "
         "WHERE us.user_id = %s ORDER BY s.code",
         (row["id"],),
     )
+    active = bool(row["active"])
+    hiryu = bool(row.get("hiryu_login"))
+    can_edit = False
+    if viewer is not None:
+        try:
+            if row["id"] != viewer.id and viewer.real_role == viewer.role:
+                await _check_manage(viewer, row)
+                can_edit = True
+        except HTTPException:
+            can_edit = False
     return {
         "id": row["id"], "email": row["email"], "name": row["name"],
-        "role": row["role"], "default_site_id": row["default_site_id"],
-        "locale": row["locale"], "active": bool(row["active"]),
-        "site_codes": [c["code"] for c in codes],
+        "role": row["role"], "role_text": ROLE_TEXT.get(row["role"], row["role"]),
+        "default_site_id": row["default_site_id"],
+        "locale": row["locale"], "active": active,
+        "site_ids": [c["id"] for c in sites],
+        "site_codes": [c["code"] for c in sites],
+        "all_hubs": auth.rank(row["role"]) >= auth.rank("hq"),
+        "hiryu_login": hiryu, "hiryu_text": _hiryu_text(row["role"], active, hiryu),
+        "first_login_at": _iso(row.get("first_login_at")),
+        "never_signed_in": row.get("first_login_at") is None,
+        "deactivated_at": _iso(row.get("deactivated_at")),
         "created_at": str(row["created_at"]) if row.get("created_at") else None,
+        "can_edit": can_edit,
     }
 
 
@@ -99,30 +195,40 @@ async def _allowed_sites(user: auth.User, site_ids) -> None:
                  "to their own hubs.")
 
 
-@router.get("/users", response_model=models.AdminUserList)
-async def list_users(user: auth.User = Depends(auth.require("supervisor"))):
-    """Accounts this person may manage.
+_USER_COLS = ("id, email, name, role, default_site_id, locale, active, created_at, "
+              "hiryu_login, first_login_at, deactivated_at")
 
-    Ops HQ and above see everyone; an SPV sees the staff at their own hubs, which
-    is all they may register or deactivate. `roles` is what this person may
-    give, so the console's role picker never offers a role the server refuses;
-    `all_roles` is the whole ladder, for the filter.
+
+@router.get("/users", response_model=PersonList)
+async def list_users(site_id: int | None = Query(default=None, description="One hub only"),
+                     user: auth.User = Depends(auth.current_user)):
+    """Orang & akses: the people of the hub(s). Every role may look.
+
+    Ops HQ and above see everyone. Below that, the people who share one of the
+    caller's hubs, plus Ops HQ and above (they work at every hub). `can_edit` per
+    row and `roles` (what the caller may give) follow the same ladder as the writes.
     """
     rows = await db.fetch_all(
-        "SELECT id, email, name, role, default_site_id, locale, active, created_at "
-        "FROM users ORDER BY active DESC, role, email"
-    )
+        f"SELECT {_USER_COLS} FROM users ORDER BY active DESC, role, name, email")
+    pairs = await db.fetch_all("SELECT user_id, site_id FROM user_sites")
+    sites_of: dict[int, set[int]] = {}
+    for p in pairs:
+        sites_of.setdefault(int(p["user_id"]), set()).add(int(p["site_id"]))
     if _hub_scoped(user):
-        mine = await _site_ids_of(user.id)
-        scoped = []
-        for r in rows:
-            if r["role"] == "staff" and (await _site_ids_of(r["id"])) & mine:
-                scoped.append(r)
-        rows = scoped
+        mine = sites_of.get(user.id, set())
+        rows = [r for r in rows if auth.rank(r["role"]) >= auth.rank("hq")
+                or sites_of.get(int(r["id"]), set()) & mine]
+    if site_id is not None:
+        rows = [r for r in rows if auth.rank(r["role"]) >= auth.rank("hq")
+                or site_id in sites_of.get(int(r["id"]), set())]
     return {
-        "users": [await _user_payload(r) for r in rows],
+        "users": [await _user_payload(r, user) for r in rows],
         "roles": list(auth.grantable_roles(user.role)),
+        "role_text": ROLE_TEXT,
         "all_roles": list(auth.ROLES),
+        "can_add": bool(auth.grantable_roles(user.role)) and user.real_role == user.role,
+        "note": ("Orang yang keluar: tutup akun WMS dan cabut login Hiryu di hari yang sama. "
+                 "Pengganti ditambahkan sebagai akun baru."),
     }
 
 
@@ -136,11 +242,12 @@ async def _set_sites(user_id: int, site_ids: list[int]) -> None:
         )
 
 
-@router.post("/users", response_model=models.AdminUser, status_code=201)
+@router.post("/users", response_model=Person, status_code=201)
 async def create_user(
-    body: models.AdminUserIn, user: auth.User = Depends(auth.require("supervisor"))
+    body: PersonIn, user: auth.User = Depends(auth.require("supervisor"))
 ):
-    """Register a Ninja Van email against a role and the sites they may work at."""
+    """Tambah orang: a Ninja Van e-mail, name, role and hub(s), after the Hiryu
+    login was made. No invitation and no e-mail are sent."""
     email = body.email.strip().lower()
     if "@" not in email:
         raise HTTPException(422, "Masukkan alamat email yang benar. / Enter a valid email.")
@@ -150,6 +257,10 @@ async def create_user(
                  f"masuk dengan akun Google Ninja Van. / Only @{auth.ALLOWED_EMAIL_DOMAIN} "
                  "accounts can be registered: everyone signs in with a Ninja Van Google account.")
     _check_grant(user, body.role)
+    if not body.hiryu_login:
+        raise HTTPException(
+            422, "Buat login Hiryu dulu (STAFF atau MANAGER), lalu centang Login Hiryu sudah "
+                 "dibuat. / Make the Hiryu login first, then tick it.")
 
     site_ids = list(dict.fromkeys(body.site_ids or []))
     default_site_id = body.default_site_id
@@ -168,10 +279,12 @@ async def create_user(
     if existing:
         raise HTTPException(409, f"{email} sudah terdaftar. / {email} is already registered.")
 
+    if auth.rank(body.role) < auth.rank("hq") and not site_ids:
+        raise HTTPException(422, "Pilih hub orang ini. / Choose this person's hub.")
     await db.execute(
-        "INSERT INTO users (email, name, role, default_site_id, locale, active) "
-        "VALUES (%s,%s,%s,%s,%s,1)",
-        (email, body.name or email.split("@")[0].replace(".", " ").title(),
+        "INSERT INTO users (email, name, role, default_site_id, locale, active, hiryu_login) "
+        "VALUES (%s,%s,%s,%s,%s,1,1)",
+        (email, (body.name or "").strip() or email.split("@")[0].replace(".", " ").title(),
          body.role, default_site_id, body.locale),
     )
     row = await db.fetch_one("SELECT * FROM users WHERE email = %s", (email,))
@@ -183,16 +296,17 @@ async def create_user(
         (user.email, row["id"], f"{email} as {body.role}"),
     )
     return await _user_payload(await db.fetch_one(
-        "SELECT * FROM users WHERE id = %s", (row["id"],)))
+        "SELECT * FROM users WHERE id = %s", (row["id"],)), user)
 
 
-@router.patch("/users/{user_id}", response_model=models.AdminUser)
+@router.patch("/users/{user_id}", response_model=Person)
 async def update_user(
     user_id: int,
-    body: models.AdminUserPatch,
+    body: PersonPatch,
     user: auth.User = Depends(auth.require("supervisor")),
 ):
-    """Change a role, the sites someone may work at, or switch them off."""
+    """Change a role, the hubs someone works at, the Hiryu login tick, or close
+    the account (active false; the Hiryu login is revoked the same day)."""
     row = await db.fetch_one("SELECT * FROM users WHERE id = %s", (user_id,))
     if not row:
         raise HTTPException(404, "User not found")
@@ -235,6 +349,13 @@ async def update_user(
     if body.active is not None:
         sets.append("active = %s")
         params.append(1 if body.active else 0)
+        if not body.active and row["active"]:
+            sets.append("deactivated_at = NOW()")
+        elif body.active and not row["active"]:
+            sets.append("deactivated_at = NULL")
+    if body.hiryu_login is not None:
+        sets.append("hiryu_login = %s")
+        params.append(1 if body.hiryu_login else 0)
     if sets:
         params.append(user_id)
         await db.execute(f"UPDATE users SET {', '.join(sets)} WHERE id = %s", params)
@@ -248,13 +369,13 @@ async def update_user(
         (user.email, user_id, str(body.model_dump(exclude_none=True))),
     )
     return await _user_payload(await db.fetch_one(
-        "SELECT * FROM users WHERE id = %s", (user_id,)))
+        "SELECT * FROM users WHERE id = %s", (user_id,)), user)
 
 
 # --- hubs and rack settings -------------------------------------------------
 
 @router.get("/sites", response_model=models.SiteAdminList)
-async def list_sites(user: auth.User = Depends(auth.require("supervisor"))):
+async def list_sites(user: auth.User = Depends(auth.current_user)):
     """Hubs with their rack layout and how full each one is.
 
     Supervisor rather than admin: a station supervisor needs to see their own

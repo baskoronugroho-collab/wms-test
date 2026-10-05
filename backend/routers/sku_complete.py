@@ -4,9 +4,11 @@ SKUs now arrive from Hiryu with a code, a name and maybe a barcode. Before a hub
 can give one a bin and the WMS can ask the brand for it, Ops HQ adds the bin
 size, the stock numbers, the Grab buffer and whatever pack data the brand sent.
 
-A SKU is **complete** when its bin size and *isi sampai* are set (§2.6.2). The
-condition lives in one place, `INCOMPLETE_SQL`, so the Perlu tindakan list and
-this page can never disagree about what is left to do.
+Deploy 3 (canvas 2f, decided 1 Oct): the bin size, Kecil or Besar, is the one
+required field. A SKU without it cannot get a bin; that condition lives in one
+place, `INCOMPLETE_SQL`. The rest (isi sampai, pesan ulang saat sisa, pack size,
+weight, a barcode) may be filled later: each empty one shows *Isi nanti* and the
+row says *Belum lengkap: N data*, without blocking anything (`missing_data`).
 
 Where each number lives (nothing new for the stock numbers; V26 adds the rest):
 
@@ -33,9 +35,9 @@ import re
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
+from pydantic import BaseModel, Field
 
 import auth
-import common
 import db
 import ledger
 import models
@@ -43,8 +45,20 @@ from routers import master, racks, registry
 
 router = APIRouter(prefix="/api/sku-complete", tags=["sku complete"])
 
-# The one definition of "still to complete" (§2.6.2). Aliases: s = skus, b = brands.
-INCOMPLETE_SQL = "(s.bin_size IS NULL OR s.default_full_threshold IS NULL)"
+# The one definition of "still to complete": no bin size (canvas 2f, the only
+# required field). Aliases: s = skus, b = brands.
+INCOMPLETE_SQL = "(s.bin_size IS NULL)"
+# Optional data still empty (Isi nanti); shown, never blocking. The barcode part
+# is checked separately because it lives in its own table.
+MISSING_DATA_SQL = (
+    "(s.default_full_threshold IS NULL OR s.default_restock_point IS NULL "
+    " OR s.pack_length_mm IS NULL OR s.pack_width_mm IS NULL OR s.pack_height_mm IS NULL "
+    " OR s.pack_weight_g IS NULL "
+    " OR NOT EXISTS (SELECT 1 FROM barcodes bcx WHERE bcx.sku_id = s.id))"
+)
+# barcodes.source: hiryu (message 6), scanned (Pindai), pasted (Tempel kode);
+# older rows say manufacturer.
+BARCODE_SOURCES = ("hiryu", "scanned", "pasted")
 _BASE_WHERE = "s.active = 1 AND b.active = 1"
 
 _COLS = (
@@ -113,6 +127,53 @@ async def _buffer_default() -> int:
     return int(r["value_num"]) if r and r["value_num"] is not None else 1
 
 
+# The bin size guide (canvas 2f): Kecil fits a 15 x 10 x 20 cm box (about 3 L);
+# Besar is anything larger, or a bottle of 150 ml or more. Ops HQ may change the
+# numbers; they are alert_rules rows so they sit with every other setting.
+GUIDE_KEYS = {"length_cm": ("bin_kecil_length_cm", 15), "width_cm": ("bin_kecil_width_cm", 10),
+              "height_cm": ("bin_kecil_height_cm", 20), "bottle_ml": ("bin_besar_bottle_ml", 150)}
+
+
+async def size_guide() -> dict:
+    rows = await db.fetch_all(
+        "SELECT rule_key, value_num, updated_by, updated_at FROM alert_rules WHERE rule_key IN "
+        f"({db.placeholders(GUIDE_KEYS)})", [k for k, _ in GUIDE_KEYS.values()])
+    have = {r["rule_key"]: r for r in rows}
+    g = {name: int(have[k]["value_num"]) if k in have and have[k]["value_num"] else d
+         for name, (k, d) in GUIDE_KEYS.items()}
+    litres = round(g["length_cm"] * g["width_cm"] * g["height_cm"] / 1000)
+    g["kecil_text"] = (f"Kecil: kemasan muat di {g['length_cm']} × {g['width_cm']} × "
+                       f"{g['height_cm']} cm (sekitar {litres} L), misalnya botol atau tube 100 ml.")
+    g["besar_text"] = f"Besar: lebih besar dari itu, atau botol {g['bottle_ml']} ml ke atas."
+    g["note"] = "Usulan, bisa diubah Ops HQ"
+    upd = [have[k] for k, _ in GUIDE_KEYS.values() if k in have and have[k]["updated_by"]]
+    g["updated_by"] = upd[-1]["updated_by"] if upd else None
+    return g
+
+
+_ML = re.compile(r"(\d+(?:[.,]\d+)?)\s*ml\b", re.I)
+
+
+def suggest_size(r: dict, guide: dict) -> str | None:
+    """A starting bin size from what is known about the pack (canvas 2f guide).
+
+    A bottle at or above the guide's ml is Besar; a pack whose three sizes fit the
+    Kecil box in some orientation is Kecil, otherwise Besar. Nothing known,
+    nothing suggested: a guess shown as a suggestion is worse than an empty box.
+    """
+    if r.get("is_large_bottle"):
+        return "BESAR"
+    dims = [r.get("pack_length_mm"), r.get("pack_width_mm"), r.get("pack_height_mm")]
+    if all(dims):
+        box = sorted([guide["length_cm"] * 10, guide["width_cm"] * 10, guide["height_cm"] * 10])
+        return "KECIL" if all(a <= b for a, b in zip(sorted(dims), box)) else "BESAR"
+    m = _ML.search(f"{r.get('unit_size') or ''} {r.get('name_display') or ''}")
+    if m:
+        ml = float(m.group(1).replace(",", "."))
+        return "BESAR" if ml >= guide["bottle_ml"] else "KECIL"
+    return None
+
+
 # --- reading -----------------------------------------------------------------
 
 def _chunks(items: list, n: int = 500):
@@ -120,41 +181,40 @@ def _chunks(items: list, n: int = 500):
         yield items[i:i + n]
 
 
-def _suggest_size(r: dict) -> str | None:
-    """A starting bin size from what is known about the pack (§2.6: suggested).
-
-    A large bottle goes in a large bin. Otherwise the space model's volume check,
-    sized for what one bin must hold. Nothing known, nothing suggested: a guess
-    presented as a suggestion is worse than an empty box.
-    """
-    if r.get("is_large_bottle"):
-        return "L"
-    if not r.get("unit_cube_cm3"):
-        return None
-    hold = r.get("bin_max") or r.get("default_full_threshold") or 15
-    size, _ = common.recommend_basket(r["unit_cube_cm3"], max(1, int(hold)))
-    return size
-
-
 def _bool(v):
     return None if v is None else bool(v)
 
 
-def _row(r: dict, barcodes: list[str], hubs: list[dict]) -> dict:
-    missing = []
-    if not r.get("bin_size"):
-        missing.append("bin_size")
+def _row(r: dict, barcodes: list[dict], hubs: list[dict], guide: dict) -> dict:
+    missing = [] if r.get("bin_size") else ["bin_size"]
+    # Isi nanti: optional data still empty, in the order of the table's columns.
+    missing_data = []
+    if not barcodes:
+        missing_data.append("barcode")
     if r.get("default_full_threshold") is None:
-        missing.append("fill_to")
+        missing_data.append("fill_to")
+    if r.get("default_restock_point") is None:
+        missing_data.append("reorder_at")
+    if not (r.get("pack_length_mm") and r.get("pack_width_mm") and r.get("pack_height_mm")):
+        missing_data.append("pack_size")
+    if r.get("pack_weight_g") is None:
+        missing_data.append("weight")
     own = (r.get("default_full_threshold"), r.get("default_restock_point"),
            r.get("default_safety_stock"))
+    if missing:
+        state = "no_size"
+    elif missing_data:
+        state = "missing_data"
+    else:
+        state = "complete"
     return {
         "id": r["id"], "brand_id": r["brand_id"], "brand_code": r.get("brand_code"),
         "brand_name": r.get("brand_name"), "brand_sku_code": r["brand_sku_code"],
         "hiryu_sku_code": r.get("hiryu_sku_code"), "name_display": r["name_display"],
         "unit_size": r.get("unit_size"), "category": r.get("category"),
         "photo_key": r.get("photo_key"), "barcodes": barcodes,
-        "bin_size": r.get("bin_size"), "suggested_bin_size": _suggest_size(r),
+        "bin_size": racks.norm_size(r.get("bin_size")),
+        "suggested_bin_size": suggest_size(r, guide),
         "bin_max": r.get("bin_max"),
         "fill_to": r.get("default_full_threshold"),
         "reorder_at": r.get("default_restock_point"),
@@ -167,6 +227,9 @@ def _row(r: dict, barcodes: list[str], hubs: list[dict]) -> dict:
         "is_liquid": _bool(r.get("is_liquid")),
         "is_large_bottle": _bool(r.get("is_large_bottle")),
         "complete": not missing, "missing": missing,
+        "missing_data": missing_data, "state": state,
+        "state_text": ("Tanpa ukuran bin" if missing else
+                       f"Belum lengkap: {len(missing_data)} data" if missing_data else "Lengkap"),
         "hubs": [dict(h, follows_default=(h["fill_to"], h["reorder_at"], h["critical_at"]) == own)
                  for h in hubs],
     }
@@ -180,14 +243,18 @@ async def _rows(where: list[str], params: list, limit: int = 2000) -> list[dict]
         params + [limit],
     )
     ids = [r["id"] for r in rows]
-    codes: dict[int, list[str]] = {}
+    codes: dict[int, list[dict]] = {}
     hubs: dict[int, list[dict]] = {}
     for part in _chunks(ids):
         ph = db.placeholders(part)
         for bc in await db.fetch_all(
-                f"SELECT sku_id, barcode FROM barcodes WHERE sku_id IN ({ph}) "
-                "ORDER BY registered_at, id", part):
-            codes.setdefault(bc["sku_id"], []).append(bc["barcode"])
+                f"SELECT sku_id, barcode, source, registered_by, registered_at FROM barcodes "
+                f"WHERE sku_id IN ({ph}) ORDER BY registered_at, id", part):
+            codes.setdefault(bc["sku_id"], []).append({
+                "barcode": bc["barcode"], "source": bc["source"],
+                "source_text": _SOURCE_TEXT.get(bc["source"], "terdaftar"),
+                "registered_by": bc["registered_by"],
+                "registered_at": racks.iso(bc["registered_at"])})
         for h in await db.fetch_all(
                 "SELECT sa.sku_id, sa.site_id, st.code AS site_code, l.code AS location_code, "
                 "       sa.full_threshold AS fill_to, sa.restock_point AS reorder_at, "
@@ -199,7 +266,8 @@ async def _rows(where: list[str], params: list, limit: int = 2000) -> list[dict]
                 "ORDER BY st.is_training, st.code", part):
             sku_id = h.pop("sku_id")
             hubs.setdefault(sku_id, []).append(h)
-    return [_row(r, codes.get(r["id"], []), hubs.get(r["id"], [])) for r in rows]
+    guide = await size_guide()
+    return [_row(r, codes.get(r["id"], []), hubs.get(r["id"], []), guide) for r in rows]
 
 
 async def _one(sku_id: int) -> dict:
@@ -215,15 +283,29 @@ async def _raw(sku_id: int) -> dict | None:
         "WHERE s.id = %s", (sku_id,))
 
 
-def _filters(brand_id: int | None, status: str, q: str | None) -> tuple[list[str], list]:
+_SOURCE_TEXT = {"hiryu": "dari Hiryu", "scanned": "dipindai", "pasted": "ditempel"}
+STATUSES = "^(all|no_size|missing_data|needs_bin|complete|incomplete)$"
+
+
+def _filters(brand_id: int | None, status: str, q: str | None,
+             site_id: int | None = None) -> tuple[list[str], list]:
+    """Filters of the Produk table: Semua, Tanpa ukuran bin, Data belum lengkap,
+    Perlu bin (needs site_id). `incomplete` is the old name of no_size."""
     where, params = [_BASE_WHERE], []
     if brand_id:
         where.append("s.brand_id = %s")
         params.append(brand_id)
-    if status == "incomplete":
+    if status in ("incomplete", "no_size"):
         where.append(INCOMPLETE_SQL)
+    elif status == "missing_data":
+        where.append("NOT " + INCOMPLETE_SQL + " AND " + MISSING_DATA_SQL)
     elif status == "complete":
-        where.append("NOT " + INCOMPLETE_SQL)
+        where.append("NOT " + INCOMPLETE_SQL + " AND NOT " + MISSING_DATA_SQL)
+    elif status == "needs_bin":
+        if not site_id:
+            raise HTTPException(422, "Pilih hub untuk Perlu bin. / Choose a hub for Perlu bin.")
+        where.append("s.id IN (SELECT s.id " + racks.needs_bin_from() + ")")
+        params.append(site_id)
     if q:
         like = f"%{q.strip()}%"
         where.append(
@@ -233,32 +315,165 @@ def _filters(brand_id: int | None, status: str, q: str | None) -> tuple[list[str
     return where, params
 
 
-@router.get("", response_model=models.SkuCompleteList)
+# --- response models (kept here, not in models.py) ---------------------------------
+
+class BarcodeOut(BaseModel):
+    barcode: str
+    source: str | None = Field(default=None, description="hiryu | scanned | pasted | manufacturer")
+    source_text: str = Field(description="dari Hiryu | dipindai | ditempel | terdaftar")
+    registered_by: str | None = None
+    registered_at: str | None = None
+
+
+class SkuRowOut(BaseModel):
+    id: int
+    brand_id: int
+    brand_code: str | None = None
+    brand_name: str | None = None
+    brand_sku_code: str
+    hiryu_sku_code: str | None = None
+    name_display: str
+    unit_size: str | None = None
+    category: str | None = None
+    photo_key: str | None = None
+    barcodes: list[BarcodeOut] = Field(default_factory=list)
+    bin_size: str | None = Field(default=None, description="KECIL | BESAR | null (required)")
+    suggested_bin_size: str | None = None
+    bin_max: int | None = None
+    fill_to: int | None = Field(default=None, description="Isi sampai")
+    reorder_at: int | None = Field(default=None, description="Pesan ulang saat sisa, units")
+    reorder_pct: int | None = None
+    critical_at: int | None = None
+    critical_pct: int | None = None
+    grab_buffer: int | None = Field(default=None, description="Cadangan Grab; null = the default")
+    pack_length_mm: int | None = None
+    pack_width_mm: int | None = None
+    pack_height_mm: int | None = None
+    pack_weight_g: int | None = None
+    is_liquid: bool | None = None
+    is_large_bottle: bool | None = None
+    complete: bool = Field(description="The bin size is set (the one required field)")
+    missing: list[str] = Field(default_factory=list, description="bin_size when empty")
+    missing_data: list[str] = Field(
+        default_factory=list,
+        description="Isi nanti: barcode | fill_to | reorder_at | pack_size | weight")
+    state: str = Field(description="no_size | missing_data | complete")
+    state_text: str
+    hubs: list[models.SkuHubNumbers] = Field(default_factory=list)
+
+
+class SkuCounts(BaseModel):
+    all: int
+    no_size: int
+    missing_data: int
+    needs_bin: int | None = Field(default=None, description="Only with site_id")
+
+
+class SizeGuideOut(BaseModel):
+    length_cm: int
+    width_cm: int
+    height_cm: int
+    bottle_ml: int
+    kecil_text: str
+    besar_text: str
+    note: str
+    updated_by: str | None = None
+
+
+class SkuListOut(BaseModel):
+    rows: list[SkuRowOut]
+    total: int
+    counts: SkuCounts
+    bin_sizes: list[str]
+    size_labels: dict[str, str]
+    grab_buffer_default: int
+    restock_default_pct: int | None = None
+    guide: SizeGuideOut
+    can_edit: bool = Field(description="Ops HQ and above may change SKU data")
+
+
+class SkuSavedOut(BaseModel):
+    row: SkuRowOut
+    hubs_updated: int = 0
+    barcodes_added: int = 0
+    message: str
+
+
+class SizeGuideIn(BaseModel):
+    length_cm: int | None = None
+    width_cm: int | None = None
+    height_cm: int | None = None
+    bottle_ml: int | None = None
+
+
+class BarcodeAddIn(BaseModel):
+    barcode: str
+    source: str = Field(default="scanned", description="scanned (Pindai) | pasted (Tempel kode)")
+
+
+async def _counts(brand_id: int | None, q: str | None, site_id: int | None) -> dict:
+    where, params = _filters(brand_id, "all", q)
+    row = await db.fetch_one(
+        f"SELECT COUNT(*) AS n, SUM(CASE WHEN {INCOMPLETE_SQL} THEN 1 ELSE 0 END) AS no_size, "
+        f"SUM(CASE WHEN NOT {INCOMPLETE_SQL} AND {MISSING_DATA_SQL} THEN 1 ELSE 0 END) AS md "
+        f"FROM skus s JOIN brands b ON b.id = s.brand_id WHERE {' AND '.join(where)}", params)
+    return {"all": int(row["n"] or 0), "no_size": int(row["no_size"] or 0),
+            "missing_data": int(row["md"] or 0),
+            "needs_bin": (await racks._needs_rack(site_id, count_only=True)) if site_id else None}
+
+
+@router.get("", response_model=SkuListOut)
 async def list_skus(
     brand_id: int | None = None,
-    status: str = Query(default="incomplete", pattern="^(incomplete|complete|all)$"),
+    status: str = Query(default="all", pattern=STATUSES),
     q: str | None = None,
-    user: auth.User = Depends(auth.require("hq")),
+    site_id: int | None = Query(default=None, description="The hub, for Perlu bin"),
+    user: auth.User = Depends(auth.current_user),
 ):
-    """SKUs with what Ops HQ fills in; *belum lengkap* first (the default filter)."""
-    where, params = _filters(brand_id, status, q)
+    """Produk, tab SKU (canvas 2f): every SKU with its warehouse data. Filters:
+    all, no_size (Tanpa ukuran bin), missing_data (Data belum lengkap), needs_bin
+    (Perlu bin at `site_id`). Every role may look; Ops HQ edits."""
+    if site_id:
+        await auth.assert_site_access(user, site_id)
+    where, params = _filters(brand_id, status, q, site_id)
     rows = await _rows(where, params)
     return {
         "rows": rows, "total": len(rows),
-        "incomplete": sum(1 for r in rows if not r["complete"]),
-        "bin_sizes": list(racks.SIZES),
+        "counts": await _counts(brand_id, q, site_id),
+        "bin_sizes": list(racks.SIZES), "size_labels": racks.SIZE_LABEL,
         "grab_buffer_default": await _buffer_default(),
         "restock_default_pct": await _restock_default_pct(),
+        "guide": await size_guide(),
+        "can_edit": user.at_least("hq"),
     }
 
 
 @router.get("/summary", response_model=models.SkuCompleteSummary)
-async def summary(user: auth.User = Depends(auth.require("hq"))):
-    """How many SKUs are still to complete, for a badge or the to-do list."""
+async def summary(user: auth.User = Depends(auth.current_user)):
+    """How many SKUs still have no bin size, for a badge or the to-do list."""
     row = await db.fetch_one(
         f"SELECT COUNT(*) AS total, SUM(CASE WHEN {INCOMPLETE_SQL} THEN 1 ELSE 0 END) AS n "
         f"FROM skus s JOIN brands b ON b.id = s.brand_id WHERE {_BASE_WHERE}")
     return {"incomplete": int(row["n"] or 0), "total": int(row["total"] or 0)}
+
+
+@router.get("/size-guide", response_model=SizeGuideOut)
+async def get_size_guide(user: auth.User = Depends(auth.current_user)):
+    """The box above the Produk table: what Kecil and Besar mean."""
+    return await size_guide()
+
+
+@router.put("/size-guide", response_model=SizeGuideOut)
+async def set_size_guide(body: SizeGuideIn, user: auth.User = Depends(auth.require("hq"))):
+    """Ops HQ changes the Kecil box or the Besar bottle size."""
+    for name, val in body.model_dump(exclude_none=True).items():
+        if not 1 <= val <= 5000:
+            raise HTTPException(422, "Isi angka 1 sampai 5000. / Enter 1 to 5000.")
+        await db.execute(
+            "INSERT INTO alert_rules (rule_key, enabled, value_num, updated_by) "
+            "VALUES (%s,1,%s,%s) ON DUPLICATE KEY UPDATE value_num = VALUES(value_num), "
+            "updated_by = VALUES(updated_by)", (GUIDE_KEYS[name][0], val, user.email))
+    return await size_guide()
 
 
 # --- planning a change --------------------------------------------------------
@@ -302,10 +517,10 @@ def _plan(row: dict, ch: dict, default_pct: int | None) -> tuple[dict, list[str]
                 continue
         elif key == "bin_size":
             if v is not None:
-                v = str(v).strip().upper()
-                if v not in racks.SIZES:
-                    errs.append(f"Ukuran bin harus {', '.join(racks.SIZES)}. / "
-                                f"Bin size must be {', '.join(racks.SIZES)}.")
+                v = racks.norm_size(v)
+                if v is None:
+                    errs.append("Ukuran bin harus Kecil atau Besar. / "
+                                "Bin size must be Kecil or Besar.")
                     continue
         elif key in ("is_liquid", "is_large_bottle"):
             v = None if v is None else (1 if v else 0)
@@ -453,17 +668,24 @@ async def _apply(cur, row: dict, changed: dict, user: auth.User) -> int:
     return moved
 
 
-async def _add_barcodes(sku_id: int, codes: list[str], user: auth.User) -> int:
+async def _add_barcodes(sku_id: int, codes: list[str], user: auth.User,
+                        source: str = "pasted") -> int:
+    """Register new barcodes on one SKU with how they were entered. One barcode
+    belongs to one SKU only: the unique key refuses a code taken meanwhile."""
     if not codes:
         return 0
-    res = await master.register_barcodes(
-        models.BarcodeRegisterIn(sku_id=sku_id, barcodes=codes), user)
-    return int(res["registered"])
+    async with db.tx() as cur:
+        for code in codes:
+            await db.run(cur, "INSERT INTO barcodes (barcode, sku_id, source, registered_by) "
+                              "VALUES (%s,%s,%s,%s)", (code, sku_id, source, user.email))
+        await ledger.audit(cur, actor_email=user.email, entity="barcode", entity_id=sku_id,
+                           action="register", after={"barcodes": codes, "source": source})
+    return len(codes)
 
 
 # --- saving one SKU -------------------------------------------------------------
 
-@router.patch("/{sku_id}", response_model=models.SkuCompleteSaved)
+@router.patch("/{sku_id}", response_model=SkuSavedOut)
 async def update_sku(
     sku_id: int, body: models.SkuCompleteIn,
     user: auth.User = Depends(auth.require("hq")),
@@ -486,12 +708,36 @@ async def update_sku(
     msg = "Tersimpan." if changed or added else "Tidak ada perubahan."
     if moved:
         msg += f" {moved} hub ikut angka baru."
-    if fresh["complete"]:
-        msg += " SKU lengkap."
     return {"row": fresh, "hubs_updated": moved, "barcodes_added": added, "message": msg}
 
 
-@router.put("/{sku_id}/hubs/{site_id}", response_model=models.SkuCompleteSaved)
+@router.post("/{sku_id}/barcodes", response_model=SkuSavedOut)
+async def add_barcode(sku_id: int, body: BarcodeAddIn,
+                      user: auth.User = Depends(auth.require("hq"))):
+    """Register a barcode on one SKU (canvas 2f): Pindai (scanned) or Tempel kode
+    (pasted). A code another SKU already uses is refused."""
+    if not await _raw(sku_id):
+        raise HTTPException(404, "SKU tidak ditemukan. / SKU not found.")
+    source = (body.source or "").strip().lower()
+    if source not in ("scanned", "pasted"):
+        raise HTTPException(422, "Sumber barcode: scanned atau pasted. / Source must be "
+                                 "scanned or pasted.")
+    add, errs = await _check_barcodes(sku_id, [body.barcode], user)
+    if errs:
+        raise HTTPException(409, " ".join(errs))
+    if not add:
+        return {"row": await _one(sku_id), "message": "Barcode ini sudah terdaftar di SKU ini. / "
+                                                      "Already registered on this SKU."}
+    try:
+        n = await _add_barcodes(sku_id, add, user, source)
+    except Exception:
+        raise HTTPException(409, f"Barcode {add[0]} baru saja dipakai SKU lain. / Barcode "
+                                 f"{add[0]} was just taken by another SKU.")
+    return {"row": await _one(sku_id), "barcodes_added": n,
+            "message": f"Barcode {add[0]} terdaftar."}
+
+
+@router.put("/{sku_id}/hubs/{site_id}", response_model=SkuSavedOut)
 async def update_hub(
     sku_id: int, site_id: int, body: models.SkuHubNumbersIn,
     user: auth.User = Depends(auth.require("hq")),
@@ -579,13 +825,16 @@ def _fmt(v, pct=None) -> str:
 @router.get("/export.csv")
 async def export_csv(
     brand_id: int | None = None,
-    status: str = Query(default="incomplete", pattern="^(incomplete|complete|all)$"),
+    status: str = Query(default="all", pattern=STATUSES),
     q: str | None = None,
-    user: auth.User = Depends(auth.require("hq")),
+    site_id: int | None = None,
+    user: auth.User = Depends(auth.current_user),
 ):
     """The rows on screen as a CSV to fill in. Read-only columns are there so a
     person can tell the rows apart; the upload ignores them."""
-    where, params = _filters(brand_id, status, q)
+    if site_id:
+        await auth.assert_site_access(user, site_id)
+    where, params = _filters(brand_id, status, q, site_id)
     rows = await _rows(where, params, limit=5000)
     buf = io.StringIO()
     w = csv.writer(buf)
@@ -594,12 +843,14 @@ async def export_csv(
         w.writerow([
             r["id"], r["brand_name"] or r["brand_code"], r["hiryu_sku_code"] or "",
             r["brand_sku_code"], r["name_display"], r["unit_size"] or "",
-            " ".join(r["barcodes"]), r["bin_size"] or "", _fmt(r["bin_max"]),
+            " ".join(b["barcode"] for b in r["barcodes"]),
+            racks.SIZE_LABEL.get(r["bin_size"], "") if r["bin_size"] else "",
+            _fmt(r["bin_max"]),
             _fmt(r["fill_to"]), _fmt(r["reorder_at"], r["reorder_pct"]),
             _fmt(r["critical_at"], r["critical_pct"]), _fmt(r["grab_buffer"]),
             _fmt(r["pack_length_mm"]), _fmt(r["pack_width_mm"]), _fmt(r["pack_height_mm"]),
             _fmt(r["pack_weight_g"]), _fmt(r["is_liquid"]), _fmt(r["is_large_bottle"]),
-            "lengkap" if r["complete"] else "belum lengkap",
+            r["state_text"].lower(),
         ])
     # A byte-order mark so Excel opens the file as UTF-8.
     return Response(

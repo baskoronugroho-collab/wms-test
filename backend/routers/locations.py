@@ -444,3 +444,200 @@ async def add_rack(
                            after={"code": code, **made})
     return {"ok": True,
             "message": f"Rack {code} added with {made['baskets']} baskets."}
+
+
+# --- special bins (canvas 3d): <HUB>-IN-NN, <HUB>-QR-NN, <HUB>-OUT-NN ---------------
+#
+# Shared with other agents: inbound (IN, temporary bins), orders (OUT, baskets)
+# and quarantine (QR, trays) read the same `special_bins` table (V30). Each bin
+# also has its own locations row (level_id 0, so no rack query sees it) with the
+# same code, so stock can be booked into it through ledger.apply when a flow
+# needs that. The counts on `sites` (inbound_bins, quarantine_trays,
+# outbound_baskets) always equal the number of active bins of each kind.
+
+SPECIAL_KINDS = ("IN", "QR", "OUT")
+SPECIAL_COUNT_COLUMN = {"IN": "inbound_bins", "QR": "quarantine_trays", "OUT": "outbound_baskets"}
+SPECIAL_MIN = {"IN": 0, "QR": 1, "OUT": 0}
+SPECIAL_MAX = 99
+
+# Extra "is this bin busy?" checks, by kind. Each is SQL taking (site_id, code)
+# and returning a row when the bin may not be taken away. A query that fails
+# (its table not deployed yet) counts as "not busy". Agents O and C may add
+# their own here; agent I's is the first.
+SPECIAL_BUSY_CHECKS: dict[str, list[str]] = {
+    "IN": ["SELECT 1 AS busy FROM inbound_bin_loads WHERE site_id = %s AND bin_code = %s "
+           "AND status IN ('filling','full','held') LIMIT 1"],
+    "QR": ["SELECT 1 AS busy FROM quarantine_items WHERE site_id = %s AND tray_code = %s "
+           "AND status IN ('open','return_pending','write_off_pending','on_note') LIMIT 1"],
+    "OUT": [],
+}
+
+
+def special_bin_code(site_code: str, kind: str, seq: int) -> str:
+    """MA5-IN-03. The hub part is the last segment of the site code (as for rack bins)."""
+    return f"{racks._prefix(site_code)}-{kind}-{seq:02d}"
+
+
+def _special_kind(kind: str) -> str:
+    k = (kind or "").strip().upper()
+    if k not in SPECIAL_KINDS:
+        raise HTTPException(422, "Jenis bin khusus harus IN, QR atau OUT. / "
+                                 "A special bin kind must be IN, QR or OUT.")
+    return k
+
+
+async def _special_location(cur, site_id: int, bin_id: int, code: str) -> int:
+    """The bin's own locations row, made when missing (rows seeded without one)."""
+    loc = await db.one(cur, "SELECT id FROM locations WHERE code = %s", (code,))
+    if loc:
+        lid = loc["id"]
+    else:
+        # level_id 0 = not on a rack; position_no = the special bin's own id, so
+        # the (level, position, row) key never clashes.
+        lid = await db.run(
+            cur, "INSERT INTO locations (level_id, site_id, position_no, bin_row, code) "
+                 "VALUES (0, %s, %s, 1, %s)", (site_id, bin_id, code))
+    await db.run(cur, "UPDATE special_bins SET location_id = %s WHERE id = %s", (lid, bin_id))
+    return lid
+
+
+async def special_bin_location(cur, bin_id: int) -> int:
+    """The locations row of a special bin, for ledger.apply. Made when missing."""
+    b = await db.one(cur, "SELECT id, site_id, code, location_id FROM special_bins "
+                          "WHERE id = %s", (bin_id,))
+    if not b:
+        raise HTTPException(404, "Bin khusus tidak ditemukan. / Special bin not found.")
+    if b["location_id"]:
+        return int(b["location_id"])
+    return await _special_location(cur, b["site_id"], b["id"], b["code"])
+
+
+async def _sync_special_count(cur, site_id: int, kind: str) -> int:
+    row = await db.one(cur, "SELECT COUNT(*) AS n FROM special_bins "
+                            "WHERE site_id = %s AND kind = %s AND active = 1", (site_id, kind))
+    n = int(row["n"])
+    await db.run(cur, f"UPDATE sites SET {SPECIAL_COUNT_COLUMN[kind]} = %s WHERE id = %s",
+                 (n, site_id))
+    return n
+
+
+async def add_special_bin(cur, site_id: int, kind: str, actor_email: str) -> dict:
+    """Add the next special bin of `kind` at a hub, inside the caller's transaction.
+
+    Returns {id, code, seq, kind, location_id}. A bin taken away earlier comes
+    back first (same code), so the numbers stay without gaps. Refused (409) while
+    the hub has no real code yet (Baru dari Hiryu, not completed).
+    """
+    kind = _special_kind(kind)
+    site = await db.one(cur, "SELECT id, code, hiryu_dark_store_id, setup_completed_at "
+                             "FROM sites WHERE id = %s FOR UPDATE", (site_id,))
+    if not site:
+        raise HTTPException(404, "Hub tidak ditemukan. / Hub not found.")
+    if site["hiryu_dark_store_id"] is not None and site["setup_completed_at"] is None:
+        raise HTTPException(409, "Lengkapi hub dulu (kode hub) di Hub & mulai operasi. / "
+                                 "Complete the hub (hub code) first.")
+    count = await db.one(cur, "SELECT COUNT(*) AS n FROM special_bins "
+                              "WHERE site_id = %s AND kind = %s AND active = 1", (site_id, kind))
+    if int(count["n"]) >= SPECIAL_MAX:
+        raise HTTPException(422, f"Paling banyak {SPECIAL_MAX}. / At most {SPECIAL_MAX}.")
+    back = await db.one(cur, "SELECT id, seq, code FROM special_bins WHERE site_id = %s "
+                             "AND kind = %s AND active = 0 ORDER BY seq LIMIT 1", (site_id, kind))
+    if back:
+        bin_id, seq, code = back["id"], back["seq"], back["code"]
+        await db.run(cur, "UPDATE special_bins SET active = 1, label_printed_at = NULL, "
+                          "created_by = %s WHERE id = %s", (actor_email, bin_id))
+    else:
+        top = await db.one(cur, "SELECT COALESCE(MAX(seq), 0) AS n FROM special_bins "
+                                "WHERE site_id = %s AND kind = %s", (site_id, kind))
+        seq = int(top["n"]) + 1
+        code = special_bin_code(site["code"], kind, seq)
+        if await db.one(cur, "SELECT id FROM special_bins WHERE code = %s", (code,)):
+            raise HTTPException(409, f"Kode {code} sudah dipakai. / Code {code} is taken.")
+        bin_id = await db.run(
+            cur, "INSERT INTO special_bins (site_id, kind, seq, code, created_by) "
+                 "VALUES (%s,%s,%s,%s,%s)", (site_id, kind, seq, code, actor_email))
+    location_id = await _special_location(cur, site_id, bin_id, code)
+    await _sync_special_count(cur, site_id, kind)
+    await ledger.audit(cur, actor_email=actor_email, entity="special_bin", entity_id=bin_id,
+                       action="add", after={"code": code, "kind": kind})
+    return {"id": bin_id, "code": code, "seq": seq, "kind": kind, "location_id": location_id}
+
+
+async def special_bin_busy(site_id: int, kind: str, code: str,
+                           location_id: int | None) -> str | None:
+    """Why this bin may not be taken away, or None when it is empty."""
+    if location_id:
+        held = await db.fetch_one(
+            "SELECT COALESCE(SUM(qty_on_hand), 0) AS n FROM inventory_balances "
+            "WHERE location_id = %s", (location_id,))
+        if int(held["n"] or 0) > 0:
+            return f"{code} masih berisi {int(held['n'])} unit. / {code} still holds stock."
+    for sql in SPECIAL_BUSY_CHECKS.get(kind, []):
+        try:
+            if await db.fetch_one(sql, (site_id, code)):
+                return f"{code} sedang dipakai. / {code} is in use."
+        except Exception:
+            continue
+    return None
+
+
+async def remove_last_special_bin(site_id: int, kind: str, actor_email: str) -> dict:
+    """Take the highest-numbered bin of `kind` away, only when it is empty.
+
+    The row stays (active = 0) so its history keeps its code; adding a bin again
+    brings this one back.
+    """
+    kind = _special_kind(kind)
+    last = await db.fetch_one(
+        "SELECT id, code, location_id FROM special_bins WHERE site_id = %s AND kind = %s "
+        "AND active = 1 ORDER BY seq DESC LIMIT 1", (site_id, kind))
+    count = await db.fetch_one("SELECT COUNT(*) AS n FROM special_bins WHERE site_id = %s "
+                               "AND kind = %s AND active = 1", (site_id, kind))
+    if not last or int(count["n"]) <= SPECIAL_MIN[kind]:
+        raise HTTPException(409, ("Minimal 1. Setiap hub punya baki karantina. / At least 1: "
+                                  "every hub has a quarantine tray.") if kind == "QR"
+                            else "Tidak ada bin untuk dikurangi. / Nothing to take away.")
+    why = await special_bin_busy(site_id, kind, last["code"], last["location_id"])
+    if why:
+        raise HTTPException(409, "Mengurangi hanya bisa bila yang terakhir kosong. "
+                                 "/ Only an empty last bin can be taken away. " + why)
+    async with db.tx() as cur:
+        await db.run(cur, "UPDATE special_bins SET active = 0 WHERE id = %s", (last["id"],))
+        await _sync_special_count(cur, site_id, kind)
+        await ledger.audit(cur, actor_email=actor_email, entity="special_bin",
+                           entity_id=last["id"], action="remove", before={"code": last["code"]})
+    return {"id": last["id"], "code": last["code"], "kind": kind}
+
+
+async def special_bins_of(site_id: int, kind: str | None = None,
+                          active_only: bool = True) -> list[dict]:
+    """The hub's special bins, by kind then number."""
+    sql = ("SELECT id, site_id, kind, seq, code, location_id, active, label_printed_at, "
+           "created_by, created_at FROM special_bins WHERE site_id = %s")
+    params: list = [site_id]
+    if kind:
+        sql += " AND kind = %s"
+        params.append(_special_kind(kind))
+    if active_only:
+        sql += " AND active = 1"
+    return await db.fetch_all(sql + " ORDER BY FIELD(kind,'IN','QR','OUT'), seq", params)
+
+
+async def special_bin_by_code(code: str, site_id: int | None = None) -> dict | None:
+    """Find a special bin by its scanned or typed code, ignoring case and spaces."""
+    c = "".join((code or "").split()).upper()
+    if not c:
+        return None
+    sql = ("SELECT id, site_id, kind, seq, code, location_id, active, label_printed_at "
+           "FROM special_bins WHERE code = %s")
+    params: list = [c]
+    if site_id is not None:
+        sql += " AND site_id = %s"
+        params.append(site_id)
+    return await db.fetch_one(sql, params)
+
+
+async def first_special_bin(site_id: int, kind: str) -> dict | None:
+    """The lowest-numbered active bin of a kind, e.g. the hub's quarantine tray QR-01."""
+    rows = await special_bins_of(site_id, kind)
+    return rows[0] if rows else None

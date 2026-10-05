@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Laporan · Kilat WMS</title>
+<meta name="theme-color" content="#13233A">
+<link rel="manifest" href="../manifest.json">
+<link rel="apple-touch-icon" href="../assets/app/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="kilat.css?v=d925210">
+</head>
+<body>
+<script src="../js/api.js?v=d925210"></script>
+<script src="../js/scan.js?v=d925210"></script>
+<script src="shell.js?v=d925210"></script>
+<script>
+NJW.shell.init({
+  page: 'laporan',
+  title: ['Laporan', 'Reports'],
+  allSites: true,
+  tabs: [
+    {id: 'akhir', label: ['Akhir hari', 'End of day']},
+    {id: 'penjualan', label: ['Penjualan merek', 'Brand sales']},
+    {id: 'operasional', label: ['Laporan operasional', 'Operational report']},
+    {id: 'selisih', label: ['Laporan selisih bulanan', 'Monthly variance']}
+  ]
+});
+</script>
+</body>
+</html>

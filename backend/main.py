@@ -26,6 +26,8 @@ import models
 import pos_sender
 from routers import (
     admin,
+    consumables,
+    demo,
     faktur,
     flow,
     hiryu,
@@ -36,9 +38,11 @@ from routers import (
     master,
     opname,
     outbound,
+    pengaturan,
     pickers,
     plates,
     product_master,
+    quarantine,
     racks,
     registry,
     reminders,
@@ -50,6 +54,7 @@ from routers import (
     slips,
     todo,
     sku_complete,
+    stok,
     stock_upload,
     training,
 )
@@ -202,7 +207,7 @@ for module in (
     master, locations, scan, inbound, plates, outbound, opname, inventory,
     stock_upload, product_master, slips, admin, registry, flow, training,
     returns, racks, requests, replenishment, reminders, hiryu, faktur,
-    sku_complete, reports, todo, pickers,
+    sku_complete, reports, todo, pickers, demo, pengaturan, stok, quarantine, consumables,
 ):
     app.include_router(module.router)
 app.include_router(hiryu_link.router)      # /api/hiryu/v1, Hiryu only (shared secret)

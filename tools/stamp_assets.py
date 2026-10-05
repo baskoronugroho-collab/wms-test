@@ -30,7 +30,10 @@ FRONTEND = ROOT / "frontend"
 PATTERN = re.compile(
     # js/screens/<name>.js included: a per-screen handler served stale is the
     # same bug as a stale stylesheet.
-    r'((?:href|src)=")((?:\.\./)?(?:css|js)/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\.(?:css|js))(\?v=[^"]*)?(")'
+    # The one app (frontend/app/) keeps its shared files at its root:
+    # kilat.css, shell.js and legacy.js (the old pages load ../app/legacy.js).
+    r'((?:href|src)=")((?:\.\./)?(?:(?:css|js)/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\.(?:css|js)'
+    r'|(?:app/)?(?:kilat\.css|shell\.js|legacy\.js)))(\?v=[^"]*)?(")'
 )
 
 

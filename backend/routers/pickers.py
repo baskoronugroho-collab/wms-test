@@ -8,13 +8,44 @@ polling is not given new orders.
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 
 import assign
 import auth
 import db
+import floor
 import models
+from routers import outbound
 
 router = APIRouter(prefix="/api/pickers", tags=["pickers"])
+
+
+class ReturnDuty(BaseModel):
+    order_id: int
+    order_label: str
+    basket_code: str | None = None
+    units_left: int
+    cancel_reason: str | None = None
+    cancelled_at: str | None = None
+
+
+class PickerMeV2(models.PickerMe):
+    """The phone's poll (boards 6a, 6b, 6e)."""
+    assigned_at: str | None = Field(default=None, description="When the order was given to me")
+    started_at: str | None = None
+    basket_code: str | None = None
+    ready_by: str | None = Field(default=None, description="Grab order time + 10 min")
+    work_seconds: int | None = Field(default=None, description="Stopwatch since assigned")
+    products: int | None = None
+    units: int | None = None
+    store_name: str | None = None
+    is_uji: bool = False
+    is_demo: bool = Field(default=False, description="Demo order from Buat pesanan dummy: DEMO chip")
+    suggested_basket: str | None = Field(default=None, description="A free basket for the example")
+    today_count: int = Field(default=0, description="Hari ini: orders I handed to the bench today")
+    pick_start_seconds: int = 120
+    return_duty: ReturnDuty | None = Field(
+        default=None, description="My cancelled order whose basket I am emptying (board 6e)")
 
 
 async def _me(site_id: int, email: str) -> dict:
@@ -22,10 +53,20 @@ async def _me(site_id: int, email: str) -> dict:
         "SELECT state, since, note FROM picker_presence WHERE site_id = %s AND user_email = %s",
         (site_id, email))
     task = await db.fetch_one(
-        "SELECT pt.id, pt.started_at, o.hiryu_short_no, o.external_ref "
+        "SELECT pt.id, pt.started_at, pt.claimed_at, pt.basket_code, o.hiryu_short_no, "
+        "       o.external_ref, o.promised_at, o.source, o.is_demo, hs.store_name, "
+        "       (SELECT COUNT(DISTINCT pl.order_line_id) FROM pick_lines pl "
+        "         WHERE pl.pick_task_id = pt.id AND pl.qty_required > 0) AS products, "
+        "       (SELECT COALESCE(SUM(pl.qty_required),0) FROM pick_lines pl "
+        "         WHERE pl.pick_task_id = pt.id) AS units "
         "FROM pick_tasks pt JOIN orders o ON o.id = pt.order_id "
+        "LEFT JOIN hiryu_stores hs ON hs.hiryu_store_no = o.hiryu_store_no "
         "WHERE pt.site_id = %s AND pt.status = 'claimed' AND pt.claimed_by = %s "
         "ORDER BY pt.claimed_at LIMIT 1", (site_id, email))
+    today = await db.fetch_one(
+        "SELECT COUNT(*) AS n FROM pick_tasks WHERE site_id = %s AND claimed_by = %s "
+        "AND handed_to_pack_at >= %s", (site_id, email, outbound._jakarta_day_start_utc()))
+    duty = await assign.return_duty(site_id, email)
     counts = await db.fetch_one(
         "SELECT "
         " (SELECT COUNT(*) FROM pick_tasks WHERE site_id = %s AND status = 'ready') AS waiting, "
@@ -42,10 +83,31 @@ async def _me(site_id: int, email: str) -> dict:
         "waiting_orders": int(counts["waiting"] or 0),
         "ready_pickers": int(counts["ready"] or 0),
         "server_time": str(datetime.now(timezone.utc)),
+        "assigned_at": str(task["claimed_at"]) if task and task["claimed_at"] else None,
+        "started_at": str(task["started_at"]) if task and task["started_at"] else None,
+        "basket_code": task["basket_code"] if task else None,
+        "ready_by": str(task["promised_at"]) if task and task["promised_at"] else None,
+        "work_seconds": outbound._secs(task["claimed_at"]) if task and task["claimed_at"] else None,
+        "products": int(task["products"] or 0) if task else None,
+        "units": int(task["units"] or 0) if task else None,
+        "store_name": task["store_name"] if task else None,
+        "is_uji": bool(task and (task["source"] or "") == "uji"),
+        "is_demo": bool(task and task["is_demo"]),
+        "suggested_basket": (await floor.free_basket(site_id)
+                             if task and not task["basket_code"] else None),
+        "today_count": int(today["n"] or 0),
+        "pick_start_seconds": 60 * await assign.rule("pick_start_minutes", 2),
+        "return_duty": ({
+            "order_id": duty["order_id"],
+            "order_label": duty["hiryu_short_no"] or duty["external_ref"],
+            "basket_code": duty["basket_code"], "units_left": int(duty["units_left"] or 0),
+            "cancel_reason": duty["cancel_reason"],
+            "cancelled_at": str(duty["cancelled_at"]) if duty["cancelled_at"] else None,
+        } if duty else None),
     }
 
 
-@router.get("/me", response_model=models.PickerMe)
+@router.get("/me", response_model=PickerMeV2)
 async def me(site_id: int = Query(...), user: auth.User = Depends(auth.current_user)):
     """The phone's poll, every 3 s: my state and the order the WMS gave me.
 
@@ -63,7 +125,7 @@ async def me(site_id: int = Query(...), user: auth.User = Depends(auth.current_u
     return await _me(site_id, user.email)
 
 
-@router.post("/ready", response_model=models.PickerMe)
+@router.post("/ready", response_model=PickerMeV2)
 async def ready(body: models.PickerStateIn, user: auth.User = Depends(auth.current_user)):
     """Siap ambil: at the start of the shift and after each break."""
     await auth.assert_site_access(user, body.site_id)
@@ -95,16 +157,24 @@ async def _step_away(site_id: int, user: auth.User, state: str) -> dict:
     return await _me(site_id, user.email)
 
 
-@router.post("/break", response_model=models.PickerMe)
+@router.post("/break", response_model=PickerMeV2)
 async def take_break(body: models.PickerStateIn, user: auth.User = Depends(auth.current_user)):
     """Istirahat: new orders go to other pickers, or wait."""
     return await _step_away(body.site_id, user, "break")
 
 
-@router.post("/off", response_model=models.PickerMe)
+@router.post("/off", response_model=PickerMeV2)
 async def go_off(body: models.PickerStateIn, user: auth.User = Depends(auth.current_user)):
     """End of shift: out of the line until the next Siap ambil."""
     return await _step_away(body.site_id, user, "off")
+
+
+@router.post("/pack", response_model=PickerMeV2)
+async def at_pack_bench(body: models.PickerStateIn, user: auth.User = Depends(auth.current_user)):
+    """Saya di meja packing: shown as Packer on the queue board (6j) and never
+    given an order. Opening a pack or tapping Selesai dikemas also sets it
+    for someone who was off."""
+    return await _step_away(body.site_id, user, "pack")
 
 
 @router.get("", response_model=models.PickerList)

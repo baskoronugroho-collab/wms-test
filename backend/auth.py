@@ -179,8 +179,8 @@ async def current_user(
     # is deactivated rather than silently falling through to provisioning and
     # being recreated. That distinction is the whole point of the flag.
     row = await db.fetch_one(
-        "SELECT id, email, name, role, default_site_id, locale, active FROM users "
-        "WHERE email = %s",
+        "SELECT id, email, name, role, default_site_id, locale, active, first_login_at "
+        "FROM users WHERE email = %s",
         (email,),
     )
     if row and not row["active"]:
@@ -199,6 +199,10 @@ async def current_user(
             detail=f"{email} is not registered in the WMS. Ask an admin to add you.",
         )
     user = User(row)
+    if row.get("first_login_at") is None and "first_login_at" in row:
+        # Orang & akses shows "belum pernah masuk" until the first sign-in.
+        await db.execute("UPDATE users SET first_login_at = NOW() "
+                         "WHERE id = %s AND first_login_at IS NULL", (row["id"],))
 
     # A superadmin can look at the app exactly as another role sees it: the
     # same screens, the same refusals. It is a preview, so nothing is written

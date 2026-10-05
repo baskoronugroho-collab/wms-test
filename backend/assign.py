@@ -34,7 +34,9 @@ log = logging.getLogger("wms.assign")
 # screen that dozed off for a moment without handing orders to a dead device.
 SEEN_SECONDS = 90
 
-STATES = ("ready", "break", "off")
+# "pack": at the pack bench and the handover table (board 6j, Di shift). Never
+# given an order; set by Saya di meja packing or by opening the pack screen.
+STATES = ("ready", "break", "off", "pack")
 
 
 class _Lost(Exception):
@@ -168,8 +170,37 @@ async def _next_task(site_id: int, lead_minutes: int) -> dict | None:
         (site_id, lead_minutes))
 
 
+# A picker whose order was cancelled with units in the basket puts them back
+# first (board 6e: "Setelah semua kembali, pesanan berikutnya datang sendiri").
+# Bounded by `return_block_minutes`, so a basket nobody empties never strands
+# a picker for the rest of the shift.
+_RETURN_DUTY = (
+    "EXISTS (SELECT 1 FROM pick_tasks r JOIN orders ro ON ro.id = r.order_id "
+    "        WHERE r.site_id = pp.site_id AND r.return_by = pp.user_email "
+    "          AND r.status = 'cancelled' AND r.basket_released_at IS NULL "
+    "          AND ro.cancelled_at >= NOW() - INTERVAL %s MINUTE)"
+)
+
+
+async def return_duty(site_id: int, email: str) -> dict | None:
+    """The cancelled order whose basket this picker is emptying, if any."""
+    minutes = await rule("return_block_minutes", 30)
+    return await db.fetch_one(
+        "SELECT r.id AS task_id, r.order_id, r.basket_code, ro.hiryu_short_no, ro.external_ref, "
+        "       ro.cancel_reason, ro.cancelled_at, "
+        "       (SELECT COALESCE(SUM(rt.qty - rt.qty_returned),0) FROM return_tasks rt "
+        "         WHERE rt.order_id = r.order_id AND rt.status = 'open') AS units_left "
+        "FROM pick_tasks r JOIN orders ro ON ro.id = r.order_id "
+        "WHERE r.site_id = %s AND r.return_by = %s AND r.status = 'cancelled' "
+        "  AND r.basket_released_at IS NULL "
+        "  AND ro.cancelled_at >= NOW() - INTERVAL %s MINUTE "
+        "ORDER BY ro.cancelled_at DESC LIMIT 1", (site_id, email, minutes))
+
+
 async def _next_picker(site_id: int, exclude: str | None = None) -> dict | None:
-    """The free picker who has been free longest, whose phone is still polling."""
+    """The free picker who has been free longest, whose phone is still polling,
+    and who is not putting a cancelled basket back."""
+    minutes = await rule("return_block_minutes", 30)
     return await db.fetch_one(
         "SELECT pp.user_email FROM picker_presence pp "
         "WHERE pp.site_id = %s AND pp.state = 'ready' AND pp.current_task_id IS NULL "
@@ -177,8 +208,9 @@ async def _next_picker(site_id: int, exclude: str | None = None) -> dict | None:
         "  AND pp.user_email <> %s "
         "  AND NOT EXISTS (SELECT 1 FROM pick_tasks x WHERE x.site_id = pp.site_id "
         "                  AND x.status = 'claimed' AND x.claimed_by = pp.user_email) "
+        f"  AND NOT {_RETURN_DUTY} "
         "ORDER BY pp.idle_since IS NULL, pp.idle_since, pp.user_email LIMIT 1",
-        (site_id, SEEN_SECONDS, exclude or ""))
+        (site_id, SEEN_SECONDS, exclude or "", minutes))
 
 
 async def give(task_id: int, site_id: int, email: str, *, actor: str = "wms",
@@ -405,7 +437,7 @@ async def picker_rows(site_id: int) -> list[dict]:
     rows = await db.fetch_all(
         "SELECT pp.user_email, pp.state, pp.since, pp.idle_since, pp.note, "
         "       (pp.last_seen_at >= NOW() - INTERVAL %s SECOND) AS online, "
-        "       u.name, pt.id AS task_id, pt.claimed_at, pt.started_at, "
+        "       u.name, pt.id AS task_id, pt.claimed_at, pt.started_at, pt.basket_code, "
         "       o.hiryu_short_no, o.external_ref, "
         "       TIMESTAMPDIFF(SECOND, pt.claimed_at, NOW()) AS held_seconds "
         "FROM picker_presence pp "
@@ -416,7 +448,8 @@ async def picker_rows(site_id: int) -> list[dict]:
         "WHERE pp.site_id = %s "
         "  AND (pp.state <> 'off' OR pt.id IS NOT NULL "
         "       OR pp.updated_at >= NOW() - INTERVAL 12 HOUR) "
-        "ORDER BY CASE pp.state WHEN 'ready' THEN 0 WHEN 'break' THEN 1 ELSE 2 END, "
+        "ORDER BY CASE pp.state WHEN 'ready' THEN 0 WHEN 'break' THEN 1 "
+        "         WHEN 'pack' THEN 2 ELSE 3 END, "
         "         pp.idle_since, pp.user_email",
         (SEEN_SECONDS, site_id))
     out, seen_emails = [], set()
@@ -434,6 +467,7 @@ async def picker_rows(site_id: int) -> list[dict]:
             "order_ref": (r["hiryu_short_no"] or r["external_ref"]) if r["task_id"] else None,
             "held_seconds": int(r["held_seconds"]) if r["held_seconds"] is not None else None,
             "started": bool(r["started_at"]),
+            "basket_code": r["basket_code"] if r["task_id"] else None,
             "note": r["note"],
         })
     return out

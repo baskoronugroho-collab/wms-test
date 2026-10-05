@@ -1,84 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kemas &amp; serah ke driver — Ninja Kilat WMS</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1B3A5C">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="css/tokens.css?v=eb89448">
-<link rel="stylesheet" href="css/app.css?v=eb89448">
-<style>
-  .ho { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 16px 20px;
-    border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-1); }
-  .ho--late { box-shadow: inset 5px 0 0 var(--caution), var(--shadow-1); background: var(--caution-bg); }
-  /* A cancelled bag or basket: red, because handing it over is the mistake to stop. */
-  .ho--cancel { box-shadow: inset 6px 0 0 var(--stop), var(--shadow-1); background: var(--stop-bg); }
-  .ho--cancel .ho__no { color: var(--stop); text-decoration: line-through; }
-  .ho__flag { font-weight: 700; color: var(--stop); }
-  .ho__no { font-family: var(--font-code); font-size: 30px; font-weight: 700; min-width: 140px; }
-  .ho__meta { display: flex; flex-direction: column; gap: 2px; flex: 1 1 200px; min-width: 0; }
-  .ho__acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .ho__steps { font-size: 14px; color: var(--muted); }
-  .ho__gm { font-family: var(--font-code); font-size: 22px; width: 9ch; min-height: 48px; padding: 0 10px;
-    border: 2px solid var(--action); border-radius: var(--radius-btn, 8px); background: var(--surface); color: var(--ink); }
-  [hidden] { display: none !important; }
-</style>
+<title>Kilat WMS</title>
+<!-- This address moved to the one app (frontend/app/). legacy.js keeps the
+     query string and hash; the refresh below is the no-JavaScript fallback.
+     The old page: git show d925210:frontend/21-pesanan-hub.html -->
+<script src="app/legacy.js?v=d925210"></script>
+<meta http-equiv="refresh" content="0; url=app/pesanan.html?tab=kemas">
 </head>
-<body>
-<div class="app" data-screen="hub-orders" data-screen-label="21">
-    <header class="chrome">
-      <span class="chrome__mark">NINJA</span>
-      <a class="chrome__home" href="index.html" data-id="Menu" data-en="Menu">Menu</a>
-      <span class="chrome__sep"></span>
-      <span class="chrome__mode" data-keep="1" data-id="Kemas &amp; serah ke driver" data-en="Pack &amp; hand over">Kemas &amp; serah ke driver</span>
-      <span class="spacer"></span>
-      <span class="conn" role="status">
-        <span class="conn__dot"></span><span class="conn__label" data-online="Terhubung" data-offline="Tidak terhubung">Terhubung</span>
-      </span>
-      <span class="lang" role="group" aria-label="Bahasa">
-        <button class="lang__opt is-on" data-lang="id" type="button">ID</button>
-        <button class="lang__opt" data-lang="en" type="button">EN</button>
-      </span>
-      <button class="theme-toggle" data-action="toggle-theme" type="button" data-id="Gelap" data-en="Dark">Gelap</button>
-      <span class="chrome__user"></span>
-    </header>
-    <main class="main">
-      <div class="col" style="gap:10px">
-        <span class="eyebrow" data-id="Siap dikemas" data-en="Ready to pack">Siap dikemas</span>
-        <span class="note" data-id="Ambil yang paling lama dulu. Kemas, taruh slip Hiryu dengan nomor GM terlihat, lalu tekan Selesai dikemas dan ketik nomor GM dari slip. WMS memberi tahu Hiryu bahwa pesanan siap." data-en="Take the oldest first. Pack it with the Hiryu slip and its GM number showing, then tap Selesai dikemas and type the GM number from the slip. The WMS tells Hiryu the order is ready.">Ambil yang paling lama dulu. Kemas, taruh slip Hiryu dengan nomor GM terlihat, lalu tekan Selesai dikemas dan ketik nomor GM dari slip. WMS memberi tahu Hiryu bahwa pesanan siap.</span>
-        <div class="list" data-region="pack"></div>
-      </div>
-      <div class="col" style="gap:10px">
-        <span class="eyebrow" data-id="Menunggu driver" data-en="Waiting for the driver">Menunggu driver</span>
-        <span class="note" data-id="Tanya nomor pesanan ke driver. Kalau sama dengan nomor GM di slip, tekan Ya, sudah diambil driver. Baris merah Dibatalkan: jangan diserahkan, bawa kembali ke meja packing." data-en="Ask the driver for the order number. When it matches the GM number on the slip, tap Ya, sudah diambil driver. A red Dibatalkan row: do not hand it over, take it back to the pack bench.">Tanya nomor pesanan ke driver. Kalau sama dengan nomor GM di slip, tekan Ya, sudah diambil driver. Baris merah Dibatalkan: jangan diserahkan, bawa kembali ke meja packing.</span>
-        <div class="list" data-region="wait"></div>
-      </div>
-      <div class="col" style="gap:10px">
-        <span class="eyebrow" data-id="Belum sampai di meja packing" data-en="Not at the pack bench yet">Belum sampai di meja packing</span>
-        <div class="list" data-region="picking"></div>
-      </div>
-      <div class="notice notice--action" data-paste-only hidden>
-        <span class="code code--sm" aria-hidden="true">i</span>
-        <div class="col" style="gap:4px">
-          <span class="notice__title" data-id="Hiryu menunjukkan CANCELLED?" data-en="Hiryu shows CANCELLED?">Hiryu menunjukkan CANCELLED?</span>
-          <span class="notice__body" data-id="Jangan diserahkan. Tekan Dibatalkan di Hiryu pada pesanan itu, bongkar kemasannya, lalu kembalikan barangnya ke rak." data-en="Do not hand it over. Tap Dibatalkan di Hiryu on that order, unpack it, and put the units back on the rack.">Jangan diserahkan. Tekan Dibatalkan di Hiryu pada pesanan itu, bongkar kemasannya, lalu kembalikan barangnya ke rak.</span>
-        </div>
-      </div>
-      <a class="btn btn--outline btn--lg" href="20-tempel-pesanan.html" data-paste-only hidden data-id="Tempel pesanan Grab" data-en="Paste a Grab order">Tempel pesanan Grab</a>
-    </main>
-</div>
-<script src="js/api.js?v=eb89448"></script>
-<script src="js/scan.js?v=eb89448"></script>
-<script src="js/app.js?v=eb89448"></script>
-<script src="js/wire.js?v=eb89448"></script>
-<script src="js/screens/hub-orders.js?v=eb89448"></script>
-
-</body>
+<body><p><a href="app/pesanan.html?tab=kemas">Halaman ini sudah pindah. Buka Kilat WMS.</a></p></body>
 </html>

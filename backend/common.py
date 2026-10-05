@@ -154,28 +154,25 @@ async def qty_at(site_id: int, sku_id: int, location_id: int) -> int:
 
 # Basket capacity in units is a physical question the model only estimates.
 # Used to warn, never to block: physical reality beats the model (PRD M3.3.6).
-BASKET_CBM = {"S": 0.0158, "M": 0.0261, "L": 0.0396, "OPEN": 0.5}
+# Two bin sizes since V30 (KECIL, BESAR); the old S/M/L/OPEN keys stay for old rows.
+BASKET_CBM = {"KECIL": 0.0158, "BESAR": 0.0396, "S": 0.0158, "M": 0.0261, "L": 0.0396, "OPEN": 0.5}
 
 
 def capacity_units(basket_size: str, unit_cube_cm3: int | None) -> int | None:
     if not unit_cube_cm3:
         return None
-    cbm = BASKET_CBM.get(basket_size or "M", 0.0261)
+    cbm = BASKET_CBM.get((basket_size or "BESAR").upper(), 0.0396)
     return int((cbm * 1_000_000) / max(unit_cube_cm3, 1))
 
 
 def recommend_basket(unit_cube_cm3: int | None, units_to_hold: int = 55) -> tuple[str, str]:
-    """Advisory basket size, from the space model's three standard widths.
+    """Advisory bin size, Kecil or Besar (two sizes since V30).
 
     An admin may override it, because the physical answer wins.
     """
     if not unit_cube_cm3:
-        return "M", "Ukuran unit belum diketahui — pakai Medium."
+        return "BESAR", "Ukuran unit belum diketahui, pakai Besar."
     need_cbm = (unit_cube_cm3 * units_to_hold) / 1_000_000
-    for size in ("S", "M", "L"):
-        if need_cbm <= BASKET_CBM[size]:
-            return size, f"{units_to_hold} unit = {need_cbm:.4f} cbm, muat di {size}."
-    return "OPEN", (
-        f"{units_to_hold} unit = {need_cbm:.4f} cbm — lebih besar dari keranjang "
-        "Large. Taruh di rak terbuka."
-    )
+    if need_cbm <= BASKET_CBM["KECIL"]:
+        return "KECIL", f"{units_to_hold} unit = {need_cbm:.4f} cbm, muat di bin Kecil."
+    return "BESAR", f"{units_to_hold} unit = {need_cbm:.4f} cbm, pakai bin Besar."
