@@ -624,7 +624,7 @@
     function listView() {
       const ready = P.items, held = P.held;
       host.innerHTML = '<div class="k-stack k-stack--tight"><h2 class="k-h2" ' + biAttr('Taruh di rak', 'Put on the rack') + '></h2>' +
-        '<span class="k-caption">' + p2('Batch ' + (P.batch_no || 1) + ' · ' + ready.length + ' bin ditaruh, ' + held.filter((h) => h.waiting_ops_hq).length + ' tunggu Ops HQ',
+        '<span class="k-caption">' + p2('Batch ' + (P.batch_no || 1) + ' · ' + ready.length + ' bin untuk ditaruh, ' + held.filter((h) => h.waiting_ops_hq).length + ' tunggu Ops HQ',
           'Batch ' + (P.batch_no || 1) + ' · ' + ready.length + ' bins to put away, ' + held.filter((h) => h.waiting_ops_hq).length + ' wait for Ops HQ') + '</span></div>' +
         (ready.length ? '<p class="k-p" ' + biAttr('Taruh dari atas ke bawah, sesuai jalan di rak.', 'Put away from top to bottom, in walking order.') + '></p>' : '') +
         ready.map((it, i) => i === 0

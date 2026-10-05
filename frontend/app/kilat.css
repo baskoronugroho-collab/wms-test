@@ -401,7 +401,7 @@ button.k-row { font: inherit; }
 .k-stepper { display: inline-flex; align-items: stretch; border-radius: 12px; overflow: hidden; border: 1px solid var(--rule); background: var(--surface); }
 .k-stepper__btn { width: 48px; min-height: 48px; border: 0; background: var(--sunk); color: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; }
 .k-stepper__btn:disabled { color: var(--muted); opacity: .5; cursor: not-allowed; }
-.k-stepper__val { width: 72px; border: 0; text-align: center; font-family: var(--mono); font-size: 22px; font-weight: 700; background: var(--surface); -moz-appearance: textfield; }
+.k-stepper__val { width: 72px; flex: 1 1 auto; min-width: 0; border: 0; text-align: center; font-family: var(--mono); font-size: 22px; font-weight: 700; background: var(--surface); -moz-appearance: textfield; }
 .k-stepper__val::-webkit-outer-spin-button, .k-stepper__val::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .k-stepper--sm .k-stepper__btn { width: 40px; min-height: 40px; font-size: 20px; }
 .k-stepper--sm .k-stepper__val { width: 56px; font-size: 17px; }
