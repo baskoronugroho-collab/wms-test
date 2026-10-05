@@ -983,6 +983,14 @@ def emit_week(sql, sims, orders, delivery, counts, flags, quarantine, skus, flag
                     "'2026-09-28'", esc(COMPANY), esc(RESTOCK_EMAIL), esc(deliver_to), "'09:00 to 16:00 WIB'",
                     "'2026-10-01'", "'Andi Pratama'", "NULL",
                     "'Stok gudang Paragon baru masuk, kirim minggu depan.'")
+    # Deploy 2's auto-restock left untouched September drafts at MA5 and KJ5 (RPL-MA5-2609-001/002,
+    # RPL-KJR-2609-001/002) that would hold the demo's numbers. Clear only those: made by the
+    # system, still drafts, before October. New system drafts are numbered 2610 and later.
+    stale = ("r.site_id IN (2, 4) AND r.created_by = 'system' AND r.status = 'draft' "
+             "AND r.created_at < '2026-10-01'")
+    sql.stmt("DELETE l FROM replenishment_lines l JOIN replenishments r ON r.id = l.replenishment_id\n"
+             f" WHERE {stale}")
+    sql.stmt(f"DELETE r FROM replenishments r WHERE {stale}")
     sql.stmt(f"INSERT IGNORE INTO replenishments ({hdr}) VALUES\n{kahf_rows},\n{lab_rows}")
     mine = lambda ref: f"r.reference = '{ref}' AND r.created_by = {esc(HQ)}"  # noqa: E731
     for l in delivery["lines"]:

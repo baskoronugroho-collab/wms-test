@@ -181,12 +181,19 @@ async def todo(site_id: int | None = None, user: auth.User = Depends(auth.curren
             log.exception("todo provider %s failed", name)
 
     mine = SEES.get(user.role, {"staff"})
-    items = []
+    # One row per task: a late SPV row passed up to Ops HQ must not repeat Ops HQ's own row.
+    picked: dict[tuple, dict] = {}
     for i in R.items:
         if i["role"] in mine:
-            items.append(i)
+            row = i
         elif i["then"] and i["then"] in mine:
-            items.append(dict(i, escalated=True))
+            row = dict(i, escalated=True)
+        else:
+            continue
+        key = (i["site_id"], i["title_id"], i["link"])
+        if key not in picked or (picked[key]["escalated"] and not row["escalated"]):
+            picked[key] = row
+    items = list(picked.values())
     items.sort(key=lambda i: (not i["urgent"], not i["overdue"], i["due_at"] or "9999", i["since"] or "9999"))
     for i in items:
         i.pop("then", None)

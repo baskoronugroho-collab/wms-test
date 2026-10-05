@@ -300,6 +300,17 @@ async def _build_stock(row: dict) -> tuple[list[tuple[str, dict]], int, dict]:
     grab_buffer = sku["grab_buffer"]
     avail = await available_now(row["site_id"], row["sku_id"],
                                 None if grab_buffer is None else int(grab_buffer))
+    # Hiryu already has this number (a pick of reserved stock changes nothing it
+    # sells): skip the repeat. A snapshot always sends.
+    if not snapshot:
+        last = await db.fetch_one(
+            "SELECT available FROM pos_outbox WHERE site_id = %s AND sku_id = %s "
+            "AND message_type = 'stock_level' AND status = 'sent' AND merged_into IS NULL "
+            "AND available IS NOT NULL AND id <> %s ORDER BY sent_at DESC, id DESC LIMIT 1",
+            (row["site_id"], row["sku_id"], row["id"]))
+        if last and int(last["available"]) == avail:
+            raise Suppress(f"Angka sama dengan pesan terakhir ({avail}) / "
+                           f"Same number as the last message ({avail})")
     as_of = _iso(_utcnow())
     code = sku["hiryu_sku_code"].strip().upper()
     # One hub has one Hiryu store per brand, so this is one message; should a
@@ -490,10 +501,88 @@ async def _standin(row: dict, body: dict) -> tuple[str, str | None, int | None, 
     return "ok", None, 200, dumps({"ok": True, "standin": True})
 
 
+def _plain(text, fallback: str = "-") -> str:
+    """One plain line the contract accepts (no <>{}\\, tabs or line breaks)."""
+    s = " ".join(str(text or "").replace("\\", "/").translate(
+        {ord(c): None for c in "<>{}"}).split())
+    return s[:255] or fallback
+
+
+async def _standin_catalogue(row: dict, data: dict) -> None:
+    """Sinkron ulang in Mode demo: the stand-in answers like Hiryu, with a full
+    message 6 carrying the same request_id. It sends back what the WMS already
+    holds (dark stores, stores, SKUs, menus), so nothing changes but the request
+    is answered and the exact JSON shows in Pesan Hiryu."""
+    from routers import hiryu_link   # here, not at the top: hiryu_link imports this module
+    closed = {d: [] for d in ("mon", "tue", "wed", "thu", "fri", "sat", "sun")}
+    sites = await db.fetch_all(
+        "SELECT hiryu_dark_store_id, name, address, opening_hours_json FROM sites "
+        "WHERE hiryu_dark_store_id IS NOT NULL AND hiryu_active = 1 ORDER BY hiryu_dark_store_id")
+    dark_stores = []
+    for s in sites:
+        try:
+            hours = json.loads(s["opening_hours_json"]) if s["opening_hours_json"] else closed
+        except ValueError:
+            hours = closed
+        dark_stores.append({"hiryu_dark_store_id": int(s["hiryu_dark_store_id"]),
+                            "name": _plain(s["name"]), "address": _plain(s["address"]),
+                            "opening_hours": hours})
+    listed = {d["hiryu_dark_store_id"] for d in dark_stores}
+    stores = [{"hiryu_store_id": int(r["hiryu_store_no"]), "name": _plain(r["store_name"]),
+               "hiryu_dark_store_id": int(r["hiryu_dark_store_id"]),
+               "status": "active" if r["hiryu_active"] else "inactive",
+               "order_acceptance": r["order_acceptance"] or "MANUAL"}
+              for r in await db.fetch_all(
+                  "SELECT hiryu_store_no, store_name, hiryu_dark_store_id, hiryu_active, "
+                  "order_acceptance FROM hiryu_stores WHERE hiryu_dark_store_id IS NOT NULL "
+                  "ORDER BY hiryu_store_no")
+              if int(r["hiryu_dark_store_id"]) in listed]
+    menus = {s["hiryu_store_id"]: [] for s in stores}
+    codes: dict[str, int | None] = {}
+    for it in await db.fetch_all(
+            "SELECT i.hiryu_store_no, i.hiryu_item_id, i.item_name, i.sku_code, i.sku_id, "
+            "i.units_per_sale, i.price_idr, i.available_status FROM hiryu_items i "
+            "WHERE i.active = 1 ORDER BY i.hiryu_store_no, i.hiryu_item_id"):
+        if it["hiryu_store_no"] not in menus:
+            continue
+        code = (it["sku_code"] or "").strip().upper() or None
+        if code:
+            codes.setdefault(code, it["sku_id"])
+        menus[it["hiryu_store_no"]].append({
+            "item_id": it["hiryu_item_id"], "name": _plain(it["item_name"]), "sku_code": code,
+            "units_per_sale": int(it["units_per_sale"] or 1),
+            "price": None if it["price_idr"] is None else int(it["price_idr"]),
+            "available": (it["available_status"] or "AVAILABLE").upper() == "AVAILABLE"})
+    skus = []
+    for code, sku_id in sorted(codes.items()):
+        sku = await db.fetch_one(
+            "SELECT id, name_display FROM skus WHERE id = %s", (sku_id,)) if sku_id else None
+        if not sku:
+            sku = await db.fetch_one(
+                "SELECT id, name_display FROM skus WHERE hiryu_sku_code = %s LIMIT 1", (code,))
+        if not sku:
+            continue
+        bars = [r["barcode"] for r in await db.fetch_all(
+            "SELECT barcode FROM barcodes WHERE sku_id = %s ORDER BY barcode LIMIT 10", (sku["id"],))]
+        skus.append({"sku_code": code, "name": _plain(sku["name_display"]), "barcodes": bars})
+    try:
+        msg = hiryu_link.CatalogueMessage(
+            message_id=f"demo-cat-{row['id']}", full=True, request_id=data["request_id"],
+            dark_stores=dark_stores, stores=stores, skus=skus,
+            menus=[{"hiryu_store_id": k, "items": v} for k, v in menus.items()])
+        await hiryu_link.handle_catalogue(msg, "demo:hiryu-standin", via="demo")
+    except Exception:
+        log.exception("stand-in message 6 for outbox row %s failed", row["id"])
+
+
 async def _standin_reacts(row: dict, mtype: str, data: dict) -> None:
     """What Hiryu does next, played by the stand-in: after item_short with
     cancel_order it cancels on Grab with 2001 and sends message 2 back
-    (cancelled_by merchant). Through the very same handler Hiryu's call runs."""
+    (cancelled_by merchant); after a catalogue_request it answers with a full
+    message 6. Through the very same handlers Hiryu's calls run."""
+    if mtype == "catalogue_request":
+        await _standin_catalogue(row, data)
+        return
     if mtype != "order_short" or data.get("action") != "cancel_order":
         return
     from routers import hiryu_link   # here, not at the top: hiryu_link imports this module

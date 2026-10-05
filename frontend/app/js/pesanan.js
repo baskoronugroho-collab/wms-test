@@ -536,7 +536,7 @@
     el.innerHTML =
       '<div style="display:flex;gap:12px;align-items:center">' + photo(line.photo_key) +
         '<div class="k-stack k-stack--tight">' +
-        (line.is_replacement ? '<span class="k-tag">' + esc(t('Pengganti', 'Replacement')) + (line.replaces_sku_name ? ' · ' + esc(line.replaces_sku_name) : '') + '</span>' : '') +
+        (line.is_replacement ? '<span class="k-tag k-tag--wrap">' + esc(t('Pengganti', 'Replacement')) + (line.replaces_sku_name ? ' · ' + esc(line.replaces_sku_name) : '') + '</span>' : '') +
         '<span class="k-strong" style="font-size:17px;line-height:1.3">' + esc(line.sku_name) + '</span></div></div>' +
       '<div class="ps-take">' + bis('Ambil', 'Take') + '<b>' + need + '</b>' + bis('unit dari depan', need === 1 ? 'unit from the front' : 'units from the front') + '</div>' +
       bis('Depan: sekat paling depan, barang paling lama.', 'Front: the front divider, the oldest stock.', 'k-muted') +
@@ -929,7 +929,7 @@
               '<span class="k-stack k-stack--tight"><span class="k-strong">' + esc(l.sku_name) + '</span>' +
               '<span class="k-caption" ' + biAttr((l.large_bottle ? 'Botol besar · ' : '') + kg + ' kg per unit' + (l.estimated ? ' (perkiraan)' : ''),
                 (l.large_bottle ? 'Large bottle · ' : '') + kgEn + ' kg per unit' + (l.estimated ? ' (estimate)' : '')) + '></span>' +
-              (l.is_replacement ? '<span class="k-tag" ' + biAttr('Pengganti ' + (l.replaces_sku_name || '') + (l.replaces_units ? ' · ' + l.replaces_units : ''),
+              (l.is_replacement ? '<span class="k-tag k-tag--wrap" ' + biAttr('Pengganti ' + (l.replaces_sku_name || '') + (l.replaces_units ? ' · ' + l.replaces_units : ''),
                 'Replaces ' + (l.replaces_sku_name || '') + (l.replaces_units ? ' · ' + l.replaces_units : '')) + '></span>' : '') + '</span>' +
               '<span class="k-strong"><span class="ps-mono" style="font-size:20px">' + l.units + '</span> unit</span>' +
               '<input type="checkbox" ' + biAttrAria(l.sku_name + ' cocok', l.sku_name + ' matches') + '></label>';

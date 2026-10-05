@@ -278,6 +278,7 @@ body.is-full .k-phead { display: flex; }
 .k-sys--grab { color: var(--ink-2); background: var(--sunk); }
 .k-sys--email { color: var(--caution); background: var(--caution-bg); }
 .k-tag { display: inline-flex; align-items: center; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 6px; color: var(--action); background: var(--action-bg); white-space: nowrap; }
+.k-tag--wrap { white-space: normal; max-width: 100%; line-height: 1.35; }
 .k-pill {
   display: inline-flex; align-items: center; gap: 8px; width: fit-content; min-height: 28px; padding: 0 10px; border-radius: 999px;
   font-size: 13px; font-weight: 700; white-space: nowrap; background: var(--sunk); color: var(--ink-2);
