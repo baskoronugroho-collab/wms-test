@@ -35,7 +35,7 @@
 
   const STEPS = [
     [['Nyalakan Mode demo untuk dark store ini.', 'Switch Mode demo on for this dark store.'], null],
-    [['Tekan Buat pesanan dummy (di sini, atau di Pesanan: Papan antrean dan Ambil).', 'Press Buat pesanan dummy (here, or in Orders: Queue board and Pick).'], 'H1'],
+    [['Tekan Buat pesanan dummy (di sini, atau di Pesanan: Papan antrean dan Ambil).', 'Press Make a dummy order (here, or in Orders: Queue board and Pick).'], 'H1'],
     [['Pesanan masuk seperti pesan 1 dari Hiryu, dengan instruksi pelanggan bila ada barang yang tidak ada.', 'The order comes in like Hiryu\'s message 1, with the customer\'s instruction when an item is missing.'], 'H9'],
     [['Ambil, kemas dan serahkan seperti biasa. Pesan 3, 4 dan 5 dikirim ke stand-in Hiryu.', 'Pick, pack and hand over as usual. Messages 3, 4 and 5 go to the Hiryu stand-in.'], 'H3 H4 H5'],
     [['Lihat semuanya di Integrasi Hiryu, Pesan Hiryu: pemicu, nomor H dan JSON persis.', 'Watch it all under Hiryu integration, Hiryu messages: trigger, H number and exact JSON.'], null],
@@ -72,7 +72,7 @@
       STEPS.map((x) => '<li>' + span(x[0]) + (x[1] ? ' ' + x[1].split(' ').map((h) => '<span class="k-tag">' + esc(h) + '</span>').join(' ') : '') + '</li>').join('') +
       '</ol></div>' +
       '<div class="k-note">' + icon('info') + span(['Beda dengan Buat pesanan uji (UJI): pesanan uji hanya untuk latihan, tidak pernah ke Hiryu, juga tidak ke stand-in. Pesanan dummy ditandai demo.',
-        'Not the same as Buat pesanan uji (UJI): a test order is for training only and never reaches Hiryu, not even the stand-in. Dummy orders are marked demo.']) + '</div>' +
+        'Not the same as Create a test order (UJI): a test order is for training only and never reaches Hiryu, not even the stand-in. Dummy orders are marked demo.']) + '</div>' +
       '</div>';
   }
 

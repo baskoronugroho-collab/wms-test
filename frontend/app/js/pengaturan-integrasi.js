@@ -353,13 +353,13 @@
         means: ['Biasanya toko atau kode SKU belum dikenal WMS. Pesanan di pesan itu tidak masuk antrean ambil.',
           'Usually a store or SKU code the WMS does not know yet. An order in such a message does not reach the pick queue.'],
         todo: ['Ops HQ: cek Perlu tindakan, lengkapi toko atau SKU di Menu & toko Hiryu, lalu minta Hiryu mengirim pesan itu lagi.',
-          'Ops HQ: check Perlu tindakan, complete the store or SKU on Menu & toko Hiryu, then ask Hiryu to send the message again.'] });
+          'Ops HQ: check To do, complete the store or SKU on Hiryu menu & stores, then ask Hiryu to send the message again.'] });
     }
     if (h.partial) {
       issues.push({ kind: 'caution', what: [S.fmt.n(h.partial) + ' katalog dari Hiryu hanya sebagian diterima dalam 1 jam terakhir.', S.fmt.n(h.partial) + ' catalogues from Hiryu were only partly taken in the last hour.'],
         means: ['Sebagian toko, menu atau SKU tidak bisa dipakai WMS.', 'Some stores, menus or SKUs could not be used by the WMS.'],
         todo: ['Ops HQ: cek Perlu tindakan, minta Hiryu memperbaikinya, lalu tekan Sinkron ulang dari Hiryu di Menu & toko Hiryu.',
-          'Ops HQ: check Perlu tindakan, ask Hiryu to fix it, then press Sinkron ulang dari Hiryu on Menu & toko Hiryu.'] });
+          'Ops HQ: check To do, ask Hiryu to fix it, then press Resync from Hiryu on Hiryu menu & stores.'] });
     }
     if (s.demo_mode) {
       issues.push({ kind: 'info', what: ['Mode demo menyala di dark store ini.', 'Mode demo is on at this dark store.'],

@@ -415,7 +415,7 @@
       '<div class="k-stack k-stack--tight"><div class="k-line">' + '<span class="k-pill k-pill--caution k-pill--lg">' + p2('Selisih · ' + nSku + ' SKU', 'Differences · ' + nSku + ' SKU') + '</span>' +
         (due && D.rows.some((x) => x.status === 'pending') ? '<span class="rs-chip-due' + (D.overdue ? ' is-late' : '') + '">' + icon('clock', 16) + p2('Putuskan sebelum ' + due, 'Decide before ' + due) + '</span>' : '') +
         '<span class="k-chip k-chip--head">' + icon('bell', 14) + p2('Ops Head diberi tahu', 'Ops Head notified') + '</span></div>' +
-        (D.rows.some((x) => x.status === 'pending') ? '<span class="k-caption" ' + biAttr('Lewat 24 jam: baris kuning di Perlu tindakan, Ops Head diberi peringatan. Tidak diputuskan otomatis.', 'After 24 hours: an amber row on Perlu tindakan and an alert to the Ops Head. Nothing is decided automatically.') + '></span>' : '') +
+        (D.rows.some((x) => x.status === 'pending') ? '<span class="k-caption" ' + biAttr('Lewat 24 jam: baris kuning di Perlu tindakan, Ops Head diberi peringatan. Tidak diputuskan otomatis.', 'After 24 hours: an amber row on To do and an alert to the Ops Head. Nothing is decided automatically.') + '></span>' : '') +
         '<span>' + '<span class="k-mono k-strong">' + esc(D.reference) + '</span> · ' + esc(D.brand_name) + (D.brand_po_number ? ' · ' + p2('No. PO merek', 'Brand PO') + ' <span class="k-mono">' + esc(D.brand_po_number) + '</span>' : '') + ' · ' +
           p2('Ops HQ menyetujui tiap selisih dalam 24 jam setelah barang diterima.', 'Ops HQ approves each difference within 24 hours of receiving.') + '</span>' +
         '<span class="k-caption">' + p2('Diterima ' + (D.received_by || '-') + (D.sj_signed_by ? ', ditandatangani ' + D.sj_signed_by : '') + (D.faktur_uploaded_at ? ', Faktur diunggah ' + S.fmt.dt(D.faktur_uploaded_at) : ', Faktur belum diunggah'),
@@ -434,7 +434,7 @@
         '<label class="k-field"><span class="k-field__label" ' + biAttr('Catatan untuk merek (dikirim lewat email)', 'Note for the brand (sent by email)') + '></span>' +
           '<textarea class="k-textarea" id="rs-bnote" rows="3"' + (hq ? '' : ' disabled') + '>' + esc(D.brand_claim_note || '') + '</textarea></label>' +
         note('info', 'Setelah disetujui, WMS mencatat selisih ke stok dan tagihan secara otomatis. Lalu SPV dan staf dapat tugas di Perlu tindakan: Retur ke merek, atau Taruh di rak.',
-          'Once approved, the WMS records the difference in stock and billing by itself. Then the SPV and staff get a task on Perlu tindakan: Return to the brand, or Put on the rack.') +
+          'Once approved, the WMS records the difference in stock and billing by itself. Then the SPV and staff get a task on To do: Return to the brand, or Put on the rack.') +
         '<div class="rs-foot"><div class="k-stack k-stack--tight"><span>' + p2('Total ditagih merek', 'Total billed by the brand') + ' <span class="rs-total" id="rs-btot"></span></span>' +
           '<span class="k-caption">' + p2('Diminta ' + n(D.total_requested) + ' · datang ' + n(D.total_received) + ' · ditolak ' + (nExtra + nDmg) + ' (' + nExtra + ' lebih, ' + nDmg + ' rusak)',
             'Requested ' + n(D.total_requested) + ' · arrived ' + n(D.total_received) + ' · rejected ' + (nExtra + nDmg) + ' (' + nExtra + ' extra, ' + nDmg + ' damaged)') + '</span></div>' +

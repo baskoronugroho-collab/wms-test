@@ -583,7 +583,7 @@
         : '<div class="k-card k-empty"><span class="k-empty__icon k-empty__icon--muted">' + icon('bag', 28) + '</span>' +
           span(['Belum ada toko dari Hiryu', 'No stores from Hiryu yet'], 'k-empty__title') +
           span(['Toko dibuat di Hiryu dan masuk ke sini sendiri. Jika ada yang kurang, tekan Sinkron ulang dari Hiryu.',
-            'Stores are made in Hiryu and arrive here by themselves. If something is missing, press Sinkron ulang dari Hiryu.'], 'k-empty__text') + '</div>') +
+            'Stores are made in Hiryu and arrive here by themselves. If something is missing, press Resync from Hiryu.'], 'k-empty__text') + '</div>') +
       (stores.length ? itemsCardHtml() : '') +
       '<div class="k-note">' + icon('info') + '<div class="k-stack k-stack--tight">' +
       span(['Stok dikirim ke Hiryu untuk setiap toko aktif: aktif di Hiryu, merek sudah dipilih, dan dark store ada di katalog Hiryu. Tidak ada sakelar per toko.',

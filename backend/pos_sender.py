@@ -889,7 +889,9 @@ async def queue_full_snapshot(site_id: int | None = None, store_no: int | None =
     site_where = ""
     if site_id is not None:
         site_where = " AND st.id = %s"
-    return await db.execute(
+    # db.execute returns lastrowid for an INSERT; the count is the cursor's rowcount.
+    async with db.cursor() as cur:
+        await cur.execute(
         "INSERT INTO pos_outbox (site_id, sku_id, available, status, message_type, "
         "                        send_priority, payload_json) "
         "SELECT x.site_id, x.sku_id, NULL, 'pending', 'stock_level', 5, '{\"snapshot\": true}' "
@@ -905,6 +907,7 @@ async def queue_full_snapshot(site_id: int | None = None, store_no: int | None =
         ") x JOIN sites st ON st.id = x.site_id "
         "WHERE st.site_type = 'darkstore' AND st.is_training = 0 AND st.active = 1" + site_where,
         (*params, *params, *([site_id] if site_id is not None else [])))
+        return int(cur.rowcount or 0)
 
 
 async def nightly_snapshot_due(now: datetime | None = None) -> bool:

@@ -419,7 +419,7 @@
           bis('Menunggu pesanan.', 'Waiting for an order.', 'ps-big') + bis('Ponsel akan berbunyi.', 'The phone will ring.', 'ps-big') +
           bis('Saat berbunyi, mulai dalam 2 menit.', 'When it rings, start within 2 minutes.', 'k-muted') + '</div>'
         : '<div class="k-card ps-wait"><span class="ps-wait__icon">' + icon('bag', 34) + '</span>' +
-          bis('Nyalakan Siap ambil. Pesanan datang sendiri ke ponsel ini.', 'Switch on Siap ambil. Orders come to this phone by themselves.', 'ps-big') + '</div>') +
+          bis('Nyalakan Siap ambil. Pesanan datang sendiri ke ponsel ini.', 'Switch on Ready to pick. Orders come to this phone by themselves.', 'ps-big') + '</div>') +
       '<div class="k-card k-card--pad"><div class="k-line k-line--between"><span class="k-strong">' + bis('Hari ini', 'Today') + '</span>' +
         '<span class="ps-big" data-today></span></div>' +
         '<div class="k-caption" data-queue></div></div>' +
