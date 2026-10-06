@@ -42,6 +42,9 @@ class PickerMeV2(models.PickerMe):
     is_uji: bool = False
     is_demo: bool = Field(default=False, description="Demo order from Buat pesanan dummy: DEMO chip")
     suggested_basket: str | None = Field(default=None, description="A free basket for the example")
+    free_baskets: list[str] | None = Field(
+        default=None, description="Every free basket now (any of them is right); null when "
+                                  "no order is waiting for a basket")
     today_count: int = Field(default=0, description="Hari ini: orders I handed to the bench today")
     pick_start_seconds: int = 120
     return_duty: ReturnDuty | None = Field(
@@ -67,6 +70,7 @@ async def _me(site_id: int, email: str) -> dict:
         "SELECT COUNT(*) AS n FROM pick_tasks WHERE site_id = %s AND claimed_by = %s "
         "AND handed_to_pack_at >= %s", (site_id, email, outbound._jakarta_day_start_utc()))
     duty = await assign.return_duty(site_id, email)
+    free = (await floor.free_baskets(site_id)) if task and not task["basket_code"] else None
     counts = await db.fetch_one(
         "SELECT "
         " (SELECT COUNT(*) FROM pick_tasks WHERE site_id = %s AND status = 'ready') AS waiting, "
@@ -93,8 +97,8 @@ async def _me(site_id: int, email: str) -> dict:
         "store_name": task["store_name"] if task else None,
         "is_uji": bool(task and (task["source"] or "") == "uji"),
         "is_demo": bool(task and task["is_demo"]),
-        "suggested_basket": (await floor.free_basket(site_id)
-                             if task and not task["basket_code"] else None),
+        "suggested_basket": free[0] if free else None,
+        "free_baskets": free,
         "today_count": int(today["n"] or 0),
         "pick_start_seconds": 60 * await assign.rule("pick_start_minutes", 2),
         "return_duty": ({

@@ -207,18 +207,19 @@ async def stock_owner(cur, *, site_id: int, sku_id: int) -> str:
 async def available_to_sell(cur, *, site_id: int, sku_id: int) -> int:
     """What the POS may publish to Grab: on hand, minus what is already promised.
 
-    NOTE: this is the raw figure. §9.1 is unresolved and the research pass flagged
-    that publishing it unbuffered, against a ±2-unit counting tolerance, is an
-    oversell waiting to happen. A confidence buffer belongs here once the policy
-    is agreed — deliberately not invented in this commit.
+    Nothing is kept back for Grab (decided 6 Oct). Rack bins only, like
+    pos_sender.available_now and Stok's "Bisa dijual": temporary inbound bins,
+    the quarantine tray and outbound baskets are not for sale.
     """
     row = await db.one(
         cur,
-        "SELECT COALESCE(SUM(GREATEST(0, qty_on_hand - qty_allocated)), 0) AS avail "
-        "FROM inventory_balances WHERE site_id = %s AND sku_id = %s",
+        "SELECT COALESCE(SUM(ib.qty_on_hand), 0) - COALESCE(SUM(ib.qty_allocated), 0) AS avail "
+        "FROM inventory_balances ib JOIN locations l ON l.id = ib.location_id "
+        "LEFT JOIN special_bins sb ON sb.location_id = l.id "
+        "WHERE ib.site_id = %s AND ib.sku_id = %s AND l.is_virtual = 0 AND sb.location_id IS NULL",
         (site_id, sku_id),
     )
-    return int(row["avail"]) if row else 0
+    return max(0, int(row["avail"] or 0)) if row else 0
 
 
 async def enqueue_pos_push(cur, *, site_id: int, sku_id: int, is_training: bool) -> None:

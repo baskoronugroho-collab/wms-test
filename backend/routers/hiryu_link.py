@@ -1,4 +1,4 @@
-"""The Hiryu link, WMS side (PRD §0.6, §2.12, §6.6, §9.4; docs/hiryu-link-v1.md v1.1).
+"""The Hiryu link, WMS side (PRD §0.6, §2.12, §6.6, §9.4; docs/hiryu-link-v1.md v1.2).
 
 Two routers live here:
 
@@ -11,9 +11,10 @@ Two routers live here:
                                link's status, the Ops HQ switch, snapshots,
                                retrying failures, the stores and menus Hiryu
                                sent (Menu & toko Hiryu), a new store's brand and
-                               Grab merchant account, each store's link (H8),
-                               Sinkron ulang dari Hiryu, the Pesan Hiryu log,
-                               and test messages for the simulator.
+                               Grab merchant account, Sinkron ulang dari Hiryu
+                               (the catalogue pull), the Pesan Hiryu log (and
+                               its CSV or JSON download), and test messages for
+                               the simulator.
 
 The test endpoints, and the demo ones in routers/demo.py, exist because the SSO
 proxy strips X-Forwarded-Email on a public path: once /api/hiryu/v1 is public, a
@@ -28,6 +29,8 @@ customer name, phone, address, note or payment can ride along (§6.6.1).
 Every message in is kept with its exact JSON and the answer in the Pesan Hiryu
 log (pos_sender.log_message); the sender does the same for every message out.
 """
+import csv
+import io
 import json
 import re
 import time
@@ -752,6 +755,26 @@ async def _connect_store_items(store_no: int, brand_id: int, problems: list[str]
     return done
 
 
+async def _active_stores(store_nos: list[int]) -> set[int]:
+    if not store_nos:
+        return set()
+    rows = await db.fetch_all(
+        f"SELECT hiryu_store_no FROM hiryu_stores WHERE active = 1 "
+        f"AND hiryu_store_no IN ({db.placeholders(store_nos)})", list(store_nos))
+    return {int(r["hiryu_store_no"]) for r in rows}
+
+
+async def _snapshot_new_active(store_nos: list[int], before: set[int]) -> int:
+    """H8 without a switch: every active store gets stock messages, so a store
+    that has just become active (Hiryu says active, brand picked, dark store
+    in the catalogue) gets its full stock queued once, and Hiryu starts from
+    the WMS number. Returns the rows queued."""
+    queued = 0
+    for no in sorted(await _active_stores(store_nos) - before):
+        queued += await pos_sender.queue_full_snapshot(store_no=no)
+    return queued
+
+
 async def _recompute_store_active(store_nos: list[int]) -> None:
     """`active` = Hiryu says active, a brand is picked, and the dark store is in
     Hiryu's catalogue. Stores at a hub Hiryu dropped stop too."""
@@ -835,7 +858,9 @@ async def _handle_catalogue(body: CatalogueMessage, caller: str) -> tuple[int, d
         await db.execute(
             "UPDATE hiryu_stores SET hiryu_active = 0, active = 0, updated_by = 'hiryu' "
             f"WHERE hiryu_store_no NOT IN ({db.placeholders(in_msg)})", in_msg)
+    was_active = await _active_stores(touched)
     await _recompute_store_active(touched)
+    await _snapshot_new_active(touched, was_active)
 
     # Each menu's store and its brand (NULL while Ops HQ has not picked one).
     store_brand: dict[int, int | None] = {}
@@ -940,7 +965,7 @@ async def _handle_catalogue(body: CatalogueMessage, caller: str) -> tuple[int, d
             f"UPDATE hiryu_items SET active = 0 WHERE hiryu_store_no > 0 "
             f"AND hiryu_store_no NOT IN ({db.placeholders(stores_in)})", stores_in)
 
-    # 4. The answer to a Sinkron ulang.
+    # 4. The answer to a Sinkron ulang (the catalogue pull fills request_id).
     if body.request_id:
         await db.execute(
             "UPDATE hiryu_catalogue_requests SET answered_at = UTC_TIMESTAMP(), "
@@ -1000,7 +1025,8 @@ async def handle_catalogue(body: CatalogueMessage, caller: str, *, via: str = "h
 @router.post("/catalogue", response_model=CatalogueAnswer)
 async def post_catalogue(body: CatalogueMessage, caller: str = Depends(outbound.hiryu_or_admin)):
     """Message 6: dark stores, stores, SKUs and menus, sent by Hiryu when any of
-    them change, and in full when the WMS asks (request_id)."""
+    them change. The same body is what Hiryu answers to the catalogue pull
+    (GET POS_CATALOGUE_URL, Sinkron ulang dari Hiryu)."""
     return (await handle_catalogue(body, caller))[1]
 
 
@@ -1047,6 +1073,17 @@ class InboundRow(BaseModel):
     received_at: str
 
 
+class LinkHour(BaseModel):
+    """The Pesan Hiryu log of the last hour, counted for the plain summary at
+    the top of Integrasi Hiryu."""
+    taken_in: int = Field(description="Messages from Hiryu the WMS took (any 2xx answer)")
+    sent_out: int = Field(description="Messages to Hiryu that Hiryu took")
+    retrying: int = Field(description="Messages to Hiryu still being retried")
+    failed: int = Field(description="Messages to Hiryu that failed and stopped")
+    refused: int = Field(description="Messages from Hiryu the WMS refused (422)")
+    partial: int = Field(description="Catalogue messages only partly taken")
+
+
 class LinkStatus(BaseModel):
     live: bool = Field(description="Sambungan Hiryu aktif (Ops HQ switch)")
     push_enabled: bool = Field(description="POS_PUSH_ENABLED")
@@ -1062,6 +1099,7 @@ class LinkStatus(BaseModel):
     failures: list[LinkFailure]
     refused_24h: int
     inbound: list[InboundRow]
+    last_hour: LinkHour
 
 
 class LiveIn(BaseModel):
@@ -1093,18 +1131,18 @@ class LinkStore(BaseModel):
     store_name: str
     site_id: int
     site_code: str
+    site_name: str | None = None
     hiryu_dark_store_id: int | None
     brand_id: int | None
     brand_name: str | None
     grab_account: str | None = Field(description="own | ninja | null (not chosen)")
     needs_brand: bool = Field(description="Waiting for Ops HQ: brand or Grab merchant account "
                                           "not chosen yet (board 2e)")
-    order_acceptance: str | None
+    order_acceptance: str | None = Field(description="From message 6; MANUAL expected")
     acceptance_warning: bool = Field(description="Hiryu's order acceptance is not MANUAL")
-    hiryu_active: bool
-    active: bool
-    link_on: bool
-    grab_active: bool
+    hiryu_active: bool = Field(description="Status di Hiryu: active or inactive, from message 6")
+    active: bool = Field(description="Gets stock messages: active in Hiryu, brand picked, dark "
+                                     "store in Hiryu's catalogue (no switch per store)")
     hiryu_received_at: str | None
     updated_by: str | None
     items: int
@@ -1177,6 +1215,22 @@ async def status(site_id: int | None = None,
     refused = await db.fetch_one(
         "SELECT COUNT(*) AS n FROM hiryu_inbound_log WHERE outcome IN ('refused','problem') "
         "AND received_at >= UTC_TIMESTAMP() - INTERVAL 1 DAY")
+    log_where, log_params = "", []
+    if site_id:
+        log_where, log_params = " AND (site_id = %s OR site_id IS NULL)", [site_id]
+    hour_rows = await db.fetch_all(
+        "SELECT direction, status, COUNT(*) AS n FROM hiryu_message_log "
+        "WHERE created_at >= UTC_TIMESTAMP() - INTERVAL 1 HOUR" + log_where +
+        " GROUP BY direction, status", log_params)
+    hour = {"taken_in": 0, "sent_out": 0, "retrying": 0, "failed": 0, "refused": 0, "partial": 0}
+    for r in hour_rows:
+        st, n = r["status"], int(r["n"])
+        if st in ("retrying", "failed", "refused", "partial"):
+            hour[st] += n
+        elif r["direction"] == "out":
+            hour["sent_out"] += n
+        else:
+            hour["taken_in"] += n
     live = await pos_sender.link_live()
     return {
         "live": live, "push_enabled": pos_sender.push_enabled(),
@@ -1192,6 +1246,7 @@ async def status(site_id: int | None = None,
                      for f in fails],
         "refused_24h": int(refused["n"]) if refused else 0,
         "inbound": [{**r, "received_at": str(r["received_at"])} for r in inbound],
+        "last_hour": hour,
     }
 
 
@@ -1218,12 +1273,17 @@ async def set_live(body: LiveIn, user: auth.User = Depends(auth.require("hq"))):
 
 @ui_router.post("/snapshot", response_model=CountAnswer)
 async def snapshot(site_id: int | None = None, user: auth.User = Depends(auth.require("hq"))):
-    """Kirim snapshot penuh: every SKU of every store with its link on (or of
-    one hub), worked out at send time."""
+    """Kirim snapshot penuh: every SKU of every active store (or of one dark
+    store), worked out at send time."""
     n = await pos_sender.queue_full_snapshot(site_id=site_id)
     await _audit(user.email, "hiryu_link", None, "snapshot", {"rows": n, "site_id": site_id})
+    if not n:
+        return {"ok": True, "count": 0,
+                "message": "Tidak ada toko Hiryu aktif di sini, jadi tidak ada yang dikirim. / "
+                           "No active Hiryu store here, so nothing is sent."}
     return {"ok": True, "count": n,
-            "message": f"{n} baris stok diantrekan. / {n} stock rows queued."}
+            "message": f"{n} angka stok diantrekan untuk Hiryu; terkirim dalam beberapa detik. / "
+                       f"{n} stock numbers queued for Hiryu; they go within seconds."}
 
 
 @ui_router.post("/retry-failed", response_model=CountAnswer)
@@ -1260,22 +1320,33 @@ async def test_cancel(body: TestCancelIn, user: auth.User = Depends(auth.require
     return {"http_status": code, "answer": answer}
 
 
+CATALOGUE_MAX_ITEMS = 20_000
+
+
 @ui_router.get("/catalogue", response_model=LinkCatalogue)
 async def catalogue(site_id: int | None = None, store_no: int | None = None,
+                    all_items: bool = False,
                     user: auth.User = Depends(auth.current_user)):
-    """Menu & toko Hiryu (board 2e): the stores Hiryu sent, with their hub,
-    brand, Grab merchant account and link, and one store's menu items with
-    their SKU, units per sale and price. A store waiting for Ops HQ has
-    needs_brand. Every role may look; changes are Ops HQ's."""
+    """Menu & toko Hiryu (board 2e): the stores Hiryu sent, with their dark
+    store, brand, Grab merchant account and Hiryu's own status (active or not,
+    order acceptance), and menu items with their SKU, units per sale and
+    price: one store's (store_no, every item) or, with all_items, the items on
+    the menu of every store listed (one dark store, or every dark store the
+    person may see). A store waiting for Ops HQ has needs_brand. Every role
+    may look; changes are Ops HQ's."""
     where, params = "", []
     if site_id:
         await auth.assert_site_access(user, site_id)
         where, params = " WHERE hs.site_id = %s", [site_id]
+    elif not user.at_least("hq"):
+        where = " WHERE hs.site_id IN (SELECT site_id FROM user_sites WHERE user_id = %s)"
+        params = [user.id]
     stores = await db.fetch_all(
         "SELECT hs.hiryu_store_no, hs.store_name, hs.site_id, s.code AS site_code, "
+        "       s.name AS site_name, "
         "       hs.hiryu_dark_store_id, hs.brand_id, b.name AS brand_name, "
         "       hs.grab_account, hs.order_acceptance, hs.hiryu_active, hs.active, "
-        "       hs.link_on, hs.grab_active, hs.hiryu_received_at, hs.updated_by, "
+        "       hs.hiryu_received_at, hs.updated_by, "
         "       (SELECT COUNT(*) FROM hiryu_items hi WHERE hi.hiryu_store_no = hs.hiryu_store_no "
         "          AND hi.active = 1) AS items, "
         "       (SELECT COUNT(*) FROM hiryu_items hi WHERE hi.hiryu_store_no = hs.hiryu_store_no "
@@ -1285,7 +1356,18 @@ async def catalogue(site_id: int | None = None, store_no: int | None = None,
         " ORDER BY (hs.brand_id IS NULL) DESC, hs.active DESC, s.code, b.name, hs.hiryu_store_no",
         params)
     items = []
-    if store_no:
+    if all_items and stores:
+        nos = [s["hiryu_store_no"] for s in stores]
+        items = await db.fetch_all(
+            "SELECT hi.id, hi.hiryu_store_no, hi.hiryu_item_id, hi.item_name, hi.sku_id, "
+            "       COALESCE(k.hiryu_sku_code, k.brand_sku_code, hi.sku_code) AS sku_code, "
+            "       k.name_display AS sku_name, k.hiryu_created_at, hi.units_per_sale, "
+            "       hi.price_idr, hi.available_status, hi.active "
+            "FROM hiryu_items hi LEFT JOIN skus k ON k.id = hi.sku_id "
+            f"WHERE hi.active = 1 AND hi.hiryu_store_no IN ({db.placeholders(nos)}) "
+            "ORDER BY hi.hiryu_store_no, hi.sku_id IS NOT NULL, hi.item_name LIMIT %s",
+            (*nos, CATALOGUE_MAX_ITEMS))
+    elif store_no:
         items = await db.fetch_all(
             "SELECT hi.id, hi.hiryu_store_no, hi.hiryu_item_id, hi.item_name, hi.sku_id, "
             "       COALESCE(k.hiryu_sku_code, k.brand_sku_code, hi.sku_code) AS sku_code, "
@@ -1302,7 +1384,6 @@ async def catalogue(site_id: int | None = None, store_no: int | None = None,
             "needs_brand": s["brand_id"] is None or not s["grab_account"],
             "acceptance_warning": bool(s["order_acceptance"]) and s["order_acceptance"] != "MANUAL",
             "hiryu_active": bool(s["hiryu_active"]), "active": bool(s["active"]),
-            "link_on": bool(s["link_on"]), "grab_active": bool(s["grab_active"]),
             "hiryu_received_at": _iso(s["hiryu_received_at"]),
             "items": int(s["items"] or 0), "unconnected": int(s["unconnected"] or 0),
         } for s in stores],
@@ -1385,7 +1466,9 @@ async def assign_store(store_no: int, body: StoreAssignIn,
                      (body.brand_id, store["site_id"]))
     problems: list[str] = []
     connected = await _connect_store_items(store_no, body.brand_id, problems)
+    was_active = await _active_stores([store_no])
     await _recompute_store_active([store_no])
+    await _snapshot_new_active([store_no], was_active)
     row = await db.fetch_one("SELECT active FROM hiryu_stores WHERE hiryu_store_no = %s", (store_no,))
     await _audit(user.email, "hiryu_store", store_no, "assign_brand",
                  {"brand_id": body.brand_id, "grab_account": account,
@@ -1401,46 +1484,7 @@ async def assign_store(store_no: int, body: StoreAssignIn,
                        f"{'own merchant account' if account == 'own' else 'Ninja Van merchant account'}."}
 
 
-class StorePatchIn(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    link_on: bool | None = Field(default=None, description="The link for this store (H8)")
-    grab_active: bool | None = Field(default=None, description="The store is active on Grab")
-
-
-@ui_router.patch("/stores/{store_no}", response_model=CountAnswer)
-async def patch_store(store_no: int, body: StorePatchIn,
-                      user: auth.User = Depends(auth.require("hq"))):
-    """Ops HQ, with Shaun at switch-on (kick-off step 13): the link for one
-    store (H8). On queues that store's full stock at once, so Hiryu starts from
-    the WMS number; off stops its stock messages. Also ticks that the store is
-    active on Grab (step 15)."""
-    store = await db.fetch_one("SELECT * FROM hiryu_stores WHERE hiryu_store_no = %s", (store_no,))
-    if not store:
-        raise HTTPException(404, "Toko tidak ditemukan. / Store not found.")
-    queued = 0
-    if body.link_on is not None:
-        if body.link_on and not store["active"]:
-            raise HTTPException(409, "Toko belum aktif: pilih merek dulu, dan toko harus aktif di "
-                                     "Hiryu. / The store is not active yet: pick its brand first, "
-                                     "and it must be active in Hiryu.")
-        await db.execute(
-            "UPDATE hiryu_stores SET link_on = %s, "
-            "link_on_at = IF(%s = 1, UTC_TIMESTAMP(), link_on_at) WHERE hiryu_store_no = %s",
-            (1 if body.link_on else 0, 1 if body.link_on else 0, store_no))
-        if body.link_on and not store["link_on"]:
-            queued = await pos_sender.queue_full_snapshot(store_no=store_no)
-    if body.grab_active is not None:
-        await db.execute("UPDATE hiryu_stores SET grab_active = %s WHERE hiryu_store_no = %s",
-                         (1 if body.grab_active else 0, store_no))
-    await _audit(user.email, "hiryu_store", store_no, "store_switches",
-                 {**body.model_dump(exclude_none=True), "snapshot_rows": queued})
-    return {"ok": True, "count": queued,
-            "message": (f"Sambungan toko menyala. {queued} baris stok diantrekan. / "
-                        f"Store link on. {queued} stock rows queued.") if queued else
-                       "Tersimpan. / Saved."}
-
-
-# --- Sinkron ulang dari Hiryu (catalogue_request) -----------------------------
+# --- Sinkron ulang dari Hiryu (the catalogue pull) ---------------------------
 
 class ResyncIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -1453,14 +1497,24 @@ class ResyncState(BaseModel):
     requested_by_name: str | None = None
     requested_at: str | None = None
     answered_at: str | None = None
-    status: str = Field(description="none | waiting | answered")
+    status: str = Field(description="none | waiting (the pull is running) | answered | failed")
+    reason: str | None = Field(default=None, description="Why the last pull failed, "
+                                                         "'Indonesian / English'")
     next_allowed_at: str | None = Field(description="UTC; null = may press now")
     can_request_now: bool
     cooldown_minutes: int
+    ok: bool | None = Field(default=None, description="POST only: the pull worked")
     message: str | None = None
 
 
+# A pull still without an answer after this long died with its pod (or is an
+# old queued catalogue_request that Hiryu never answered): shown as failed.
+PULL_STALE_SECONDS = 60
+
+
 async def _resync_state(site_id: int) -> dict:
+    """The last press at this dark store and what came of it. A failed pull
+    does not start the 5 minutes: the button may be pressed again at once."""
     minutes = await pos_sender.rule("hiryu_resync_cooldown_minutes", 5) or 5
     last = await db.fetch_one(
         "SELECT request_id, requested_by_name, requested_by, requested_at, answered_at "
@@ -1468,55 +1522,87 @@ async def _resync_state(site_id: int) -> dict:
     if not last:
         return {"site_id": site_id, "status": "none", "next_allowed_at": None,
                 "can_request_now": True, "cooldown_minutes": minutes}
+    reason = None
+    if last["answered_at"]:
+        status = "answered"
+    else:
+        out = await db.fetch_one(
+            "SELECT status, answer_json FROM hiryu_message_log WHERE direction = 'out' "
+            "AND message_type = %s AND message_id = %s", (pos_sender.PULL_TYPE, last["request_id"]))
+        if out and out["status"] == "failed":
+            status = "failed"
+            ans = _parse(out["answer_json"])
+            reason = ans.get("reason") if isinstance(ans, dict) else None
+        elif _ago(last["requested_at"]) > PULL_STALE_SECONDS:
+            status = "failed"
+        else:
+            status = "waiting"
+        if status == "failed" and not reason:
+            reason = "Tidak ada jawaban dari Hiryu / No answer from Hiryu"
     nxt = last["requested_at"] + timedelta(minutes=minutes)
-    wait = nxt > _now()
+    wait = status != "failed" and nxt > _now()
     return {"site_id": site_id, "request_id": last["request_id"],
             "requested_by_name": last["requested_by_name"] or last["requested_by"],
             "requested_at": _iso(last["requested_at"]), "answered_at": _iso(last["answered_at"]),
-            "status": "answered" if last["answered_at"] else "waiting",
+            "status": status, "reason": reason,
             "next_allowed_at": _iso(nxt) if wait else None, "can_request_now": not wait,
             "cooldown_minutes": minutes}
 
 
 @ui_router.get("/catalogue-request", response_model=ResyncState)
 async def resync_state(site_id: int, user: auth.User = Depends(auth.current_user)):
-    """The Sinkron ulang button's state for a hub: the last press, by whom, and
-    when it may be pressed again (Bisa lagi 09:45)."""
+    """The Sinkron ulang button's state for a dark store: the last press, by
+    whom, answered or failed (and why), and when it may be pressed again
+    (Bisa lagi 09:45)."""
     await auth.assert_site_access(user, site_id)
     return await _resync_state(site_id)
 
 
 @ui_router.post("/catalogue-request", response_model=ResyncState)
 async def request_catalogue(body: ResyncIn, user: auth.User = Depends(auth.current_user)):
-    """Sinkron ulang dari Hiryu: any role, once every 5 minutes per hub, logged
-    with the person's name. Queues `catalogue_request` to Hiryu, which answers
-    with message 6 (full, same request_id). Too soon: 429, nothing queued."""
+    """Sinkron ulang dari Hiryu, a pull: any role, once every 5 minutes per
+    dark store (a failed pull does not count), logged with the person's name
+    and audited. The WMS calls GET POS_CATALOGUE_URL with X-Hiryu-Key at once
+    and waits up to 20 s for the full message 6, which goes through the
+    message 6 handler (via pull); the Pesan Hiryu log shows the request out
+    and message 6 in. In Mode demo the built-in stand-in answers. Too soon:
+    429 and nothing is called. The answer says whether it worked (`ok`) and,
+    when not, why (`reason`)."""
     site = await auth.assert_site_access(user, body.site_id)
+    if site.get("is_training"):
+        raise HTTPException(422, "Lokasi latihan tidak tersambung ke Hiryu. / "
+                                 "The training site is not linked to Hiryu.")
     state = await _resync_state(body.site_id)
     if not state["can_request_now"]:
         at = datetime.fromisoformat(state["next_allowed_at"].rstrip("Z")).replace(tzinfo=timezone.utc)
         local = at.astimezone(daycolor.WIB).strftime("%H:%M")
         raise HTTPException(429, f"Bisa lagi {local} WIB. / Possible again at {local} WIB.")
     request_id = f"wms-cat-{body.site_id}-{int(time.time())}"
-    requested_at = _now()
+    who = (user.name or user.email)[:160]
     async with db.tx() as cur:
         await db.run(
             cur,
             "INSERT INTO hiryu_catalogue_requests (request_id, site_id, requested_by, "
             "requested_by_name, requested_at) VALUES (%s,%s,%s,%s,%s)",
-            (request_id, body.site_id, user.email, (user.name or user.email)[:160], requested_at))
-        await ledger.enqueue_pos_message(
-            cur, message_type="catalogue_request", site_id=body.site_id,
-            payload={"request_id": request_id, "requested_at": _iso(requested_at),
-                     "requested_by_name": user.name or user.email},
-            is_training=bool(site.get("is_training")))
+            (request_id, body.site_id, user.email, who, _now()))
         await ledger.audit(cur, actor_email=user.email, entity="hiryu_link", entity_id=body.site_id,
-                           action="catalogue_request", after={"request_id": request_id})
+                           action="catalogue_pull", after={"request_id": request_id})
+    demo = await pos_sender.is_demo_site(body.site_id)
+    result = await pos_sender.pull_catalogue(request_id=request_id, site_id=body.site_id,
+                                             who=who, demo=demo)
     state = await _resync_state(body.site_id)
-    goes = await pos_sender.sending_on() or await pos_sender.is_demo_site(body.site_id)
-    state["message"] = ("Permintaan dikirim ke Hiryu. / Request sent to Hiryu." if goes else
-                        "Permintaan diantrekan; terkirim saat sambungan menyala. / "
-                        "Request queued; it goes when the link is on.")
+    state["ok"] = bool(result["ok"])
+    if result["ok"]:
+        a = result.get("answer") or {}
+        n_p = len(a.get("problems") or [])
+        state["message"] = (
+            f"Katalog dari Hiryu diterima: {a.get('stores', 0)} toko, {a.get('items', 0)} item"
+            + (f", {n_p} masalah (lihat Perlu tindakan)" if n_p else "") + ". / "
+            f"Catalogue from Hiryu taken: {a.get('stores', 0)} stores, {a.get('items', 0)} items"
+            + (f", {n_p} problems (see Perlu tindakan)" if n_p else "") + ".")
+    else:
+        rid, _, ren = (result.get("reason") or "").partition(" / ")
+        state["message"] = f"Sinkron ulang gagal: {rid}. / Resync failed: {ren or rid}."
     return state
 
 
@@ -1525,7 +1611,8 @@ async def request_catalogue(body: ResyncIn, user: auth.User = Depends(auth.curre
 class LinkMessage(BaseModel):
     id: int
     direction: str = Field(description="in (Hiryu to WMS) | out (WMS to Hiryu)")
-    message_no: int | None = Field(description="1 to 6 as on board 11d; null for catalogue_request")
+    message_no: int | None = Field(description="1 to 6 as on board 11d; null for the catalogue "
+                                               "pull (and the old catalogue_request)")
     message_type: str
     h_ref: str | None = Field(description="H number(s) from board 11a, e.g. 'H1 H9'")
     message_id: str
@@ -1533,7 +1620,7 @@ class LinkMessage(BaseModel):
     grab_order_id: str | None
     trigger: str | None
     trigger_en: str | None
-    via: str = Field(description="hiryu | demo | test | webhook | standin")
+    via: str = Field(description="hiryu | demo | test | webhook | standin | pull")
     status: str
     http_status: int | None
     attempts: int
@@ -1604,6 +1691,132 @@ async def messages(site_id: int | None = None, since: str | None = None,
         " ORDER BY id DESC LIMIT %s", (*params, limit))
     return {"messages": [_message_row(r) for r in rows],
             "last_id": max((r["id"] for r in rows), default=after_id)}
+
+
+# --- Pesan Hiryu as a file: CSV (one row per message) or JSON (full bodies) ---
+
+class LinkExport(BaseModel):
+    site_id: int | None
+    date_from: str = Field(description="First WIB day, YYYY-MM-DD")
+    date_to: str = Field(description="Last WIB day, YYYY-MM-DD (inclusive)")
+    capped: bool = Field(description="More messages than the cap: the newest are kept")
+    messages: list[LinkMessage]
+
+
+EXPORT_MAX_DAYS = 31
+EXPORT_MAX_ROWS = 20_000
+_WIB = timedelta(hours=7)
+_DAY = r"^\d{4}-\d{2}-\d{2}$"
+
+_DIR_WORDS = {"in": ("Hiryu ke WMS", "Hiryu to WMS"), "out": ("WMS ke Hiryu", "WMS to Hiryu")}
+_STATUS_WORDS = {
+    "accepted": ("Diterima", "Accepted"), "taken": ("Diterima", "Taken"), "cancelled": ("Dibatalkan", "Cancelled"),
+    "sent": ("Terkirim", "Sent"), "partial": ("Sebagian", "Partly taken"), "duplicate": ("Duplikat", "Duplicate"),
+    "already_cancelled": ("Sudah batal", "Already cancelled"), "repeat": ("Ulangan", "Repeat"),
+    "pending": ("Disimpan", "Kept"), "retrying": ("Dicoba lagi", "Retrying"), "refused": ("Ditolak", "Refused"),
+    "failed": ("Gagal", "Failed"), "sending": ("Menunggu jawaban", "Waiting for the answer"),
+}
+_CSV_HEAD = {
+    "id": ["Waktu (WIB)", "Arah", "Nomor pesan", "Jenis", "H", "Pemicu", "Status", "HTTP",
+           "Nomor GM", "Nomor pesanan Grab", "message_id"],
+    "en": ["Time (WIB)", "Direction", "Message number", "Type", "H", "Trigger", "Status", "HTTP",
+           "GM number", "Grab order ID", "message_id"],
+}
+
+
+async def _export_rows(user: auth.User, site_id: int | None, date_from: str | None,
+                       date_to: str | None) -> tuple[dict | None, str, str, list[dict], bool]:
+    """The messages of a WIB date range, oldest first, for one dark store (plus
+    the catalogue, which belongs to none) or, for Ops HQ, all of them."""
+    site = None
+    if site_id:
+        site = await auth.assert_site_access(user, site_id)
+    elif not user.at_least("hq"):
+        raise HTTPException(422, "Pilih dark store. / Choose a dark store.")
+    today = (_now() + _WIB).date()
+    try:
+        first = datetime.strptime(date_from, "%Y-%m-%d").date() if date_from else today
+        last = datetime.strptime(date_to, "%Y-%m-%d").date() if date_to else first
+    except ValueError:
+        raise HTTPException(422, "Tanggal harus YYYY-MM-DD. / Dates must be YYYY-MM-DD.")
+    if last < first:
+        raise HTTPException(422, "Tanggal akhir sebelum tanggal awal. / The end date is before the start date.")
+    if (last - first).days + 1 > EXPORT_MAX_DAYS:
+        raise HTTPException(422, f"Paling banyak {EXPORT_MAX_DAYS} hari sekali unduh. / "
+                                 f"At most {EXPORT_MAX_DAYS} days per download.")
+    start = datetime.combine(first, datetime.min.time()) - _WIB
+    end = datetime.combine(last + timedelta(days=1), datetime.min.time()) - _WIB
+    where, params = ["created_at >= %s", "created_at < %s"], [start, end]
+    if site_id:
+        where.append("(site_id = %s OR site_id IS NULL)")
+        params.append(site_id)
+    rows = await db.fetch_all(
+        "SELECT * FROM hiryu_message_log WHERE " + " AND ".join(where) +
+        " ORDER BY id DESC LIMIT %s", (*params, EXPORT_MAX_ROWS + 1))
+    capped = len(rows) > EXPORT_MAX_ROWS
+    rows = list(reversed(rows[:EXPORT_MAX_ROWS]))
+    return site, first.isoformat(), last.isoformat(), rows, capped
+
+
+def _export_name(site: dict | None, first: str, last: str, ext: str) -> str:
+    code = re.sub(r"[^A-Za-z0-9-]", "", (site or {}).get("code") or "") or "semua"
+    span = first if first == last else f"{first}_{last}"
+    return f"pesan-hiryu-{code}-{span}.{ext}"
+
+
+def _gm_of(r: dict) -> str | None:
+    if r["message_type"] not in ("order", "order_ready", "item_short"):
+        return None
+    body = _parse(r.get("body_json"))
+    if not isinstance(body, dict):
+        return None
+    data = body.get("data") if isinstance(body.get("data"), dict) else {}
+    return body.get("gm_number") or data.get("gm_number")
+
+
+@ui_router.get("/messages/export.csv", response_class=Response)
+async def messages_export_csv(site_id: int | None = None,
+                              date_from: str | None = Query(default=None, pattern=_DAY),
+                              date_to: str | None = Query(default=None, pattern=_DAY),
+                              lang: Literal["id", "en"] = "id",
+                              user: auth.User = Depends(auth.current_user)):
+    """Pesan Hiryu as a CSV file: one row per message in a WIB date range (at
+    most 31 days, at most 20,000 messages, the newest kept): time WIB,
+    direction, message number, type, H refs, trigger, status, HTTP status, GM
+    number, Grab order ID and message_id. Same access as GET /messages. The
+    log holds no customer data, so neither does the file. X-Export-Capped: 1
+    when messages were left out."""
+    site, first, last, rows, capped = await _export_rows(user, site_id, date_from, date_to)
+    en = lang == "en"
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(_CSV_HEAD[lang])
+    for r in rows:
+        when = (r["created_at"] + _WIB).strftime("%Y-%m-%d %H:%M:%S") if r["created_at"] else ""
+        st = _STATUS_WORDS.get(r["status"], (r["status"], r["status"]))
+        w.writerow([
+            when, _DIR_WORDS.get(r["direction"], (r["direction"],) * 2)[en],
+            r["message_no"] if r["message_no"] is not None else "", r["message_type"], r["h_ref"] or "",
+            (r["trigger_en"] if en else r["trigger_id"]) or r["trigger_id"] or "", st[en],
+            r["http_status"] if r["http_status"] is not None else "", _gm_of(r) or "",
+            r["grab_order_id"] or "", r["message_id"]])
+    headers = {"Content-Disposition": f'attachment; filename="{_export_name(site, first, last, "csv")}"',
+               "X-Export-Capped": "1" if capped else "0"}
+    return Response(content=buf.getvalue().encode("utf-8-sig"), media_type="text/csv", headers=headers)
+
+
+@ui_router.get("/messages/export.json", response_model=LinkExport)
+async def messages_export_json(response: Response, site_id: int | None = None,
+                               date_from: str | None = Query(default=None, pattern=_DAY),
+                               date_to: str | None = Query(default=None, pattern=_DAY),
+                               user: auth.User = Depends(auth.current_user)):
+    """Pesan Hiryu as a JSON file: every message of a WIB date range (same
+    limits as the CSV) with its full body and answer, oldest first."""
+    site, first, last, rows, capped = await _export_rows(user, site_id, date_from, date_to)
+    response.headers["Content-Disposition"] = f'attachment; filename="{_export_name(site, first, last, "json")}"'
+    response.headers["X-Export-Capped"] = "1" if capped else "0"
+    return {"site_id": site_id, "date_from": first, "date_to": last, "capped": capped,
+            "messages": [_message_row(r, full=True) for r in rows]}
 
 
 @ui_router.get("/messages/{message_log_id}", response_model=LinkMessage)

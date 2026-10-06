@@ -549,12 +549,12 @@
       "en": "In <em>Menu &amp; toko Hiryu</em>, register the brand and merchant account of each new store."
      },
      "detail": {
-      "id": "Toko datang dari Hiryu dengan sendirinya. Di <em>Merek</em> pilih Kahf, Labore atau <em>Merek baru</em>. Di <em>Akun merchant Grab</em> pilih <em>Akun merchant merek sendiri</em> atau <em>Akun merchant Ninja Van</em> (Nemu Mart, untuk merek di bawah 10 SKU). Untuk merek yang sudah ditambahkan, isinya diambil dari data merek. Tekan <em>Simpan</em>. WMS menanyakan ini sekali per toko. Jika ada data dari Hiryu yang sepertinya hilang, siapa saja boleh menekan <em>Sinkron ulang dari Hiryu</em>: Hiryu mengirim seluruh katalog saat WMS memintanya. Untuk menjaga Hiryu dan Grab, tombol ini hanya bisa dipakai sekali setiap 5 menit per dark store (tombol lalu menampilkan <em>Bisa lagi 09:45</em>), dan setiap tekanan dicatat dengan nama.",
-      "en": "The store arrives from Hiryu by itself. Under <em>Merek</em> pick Kahf, Labore or <em>Merek baru</em>. Under <em>Akun merchant Grab</em> choose <em>Akun merchant merek sendiri</em> or <em>Akun merchant Ninja Van</em> (Nemu Mart, for a brand under 10 SKUs); for a brand already added it is filled in from the brand. Press <em>Simpan</em>; the WMS asks once per store. If something from Hiryu looks missing, anyone can press <em>Sinkron ulang dari Hiryu</em>: Hiryu sends the full catalogue when the WMS asks. To protect Hiryu and Grab it works once every 5 minutes per dark store (the button then shows <em>Bisa lagi 09:45</em>), and every press is logged with the name."
+      "id": "Toko datang dari Hiryu dengan sendirinya. Di <em>Merek</em> pilih Kahf, Labore atau <em>Merek baru</em>. Di <em>Akun merchant Grab</em> pilih <em>Akun merchant merek sendiri</em> atau <em>Akun merchant Ninja Van</em> (Nemu Mart, untuk merek di bawah 10 SKU). Untuk merek yang sudah ditambahkan, isinya diambil dari data merek. Tekan <em>Simpan</em>. WMS menanyakan ini sekali per toko. Jika ada data dari Hiryu yang sepertinya hilang, siapa saja boleh menekan <em>Sinkron ulang dari Hiryu</em>: WMS langsung mengambil seluruh katalog dari Hiryu, dan tombol menunggu jawabannya paling lama 20 detik. Bila berhasil, tombol menampilkan jam, nama penekan dan bahwa katalog diterima. Bila gagal, tombol menampilkan alasannya dan bisa langsung ditekan lagi (<em>Coba lagi</em>). Untuk menjaga Hiryu dan Grab, tombol ini hanya bisa dipakai sekali setiap 5 menit per dark store (tombol lalu menampilkan <em>Bisa lagi 09:45</em>), dan setiap tekanan dicatat dengan nama.",
+      "en": "The store arrives from Hiryu by itself. Under <em>Merek</em> pick Kahf, Labore or <em>Merek baru</em>. Under <em>Akun merchant Grab</em> choose <em>Akun merchant merek sendiri</em> or <em>Akun merchant Ninja Van</em> (Nemu Mart, for a brand under 10 SKUs); for a brand already added it is filled in from the brand. Press <em>Simpan</em>; the WMS asks once per store. If something from Hiryu looks missing, anyone can press <em>Sinkron ulang dari Hiryu</em>: the WMS fetches the whole catalogue from Hiryu at once, and the button waits up to 20 seconds for it. When it works, the button shows the time, the name and that the catalogue was taken. When it fails, the button shows the reason and can be pressed again at once (<em>Coba lagi</em>). To protect Hiryu and Grab it works once every 5 minutes per dark store (the button then shows <em>Bisa lagi 09:45</em>), and every press is logged with the name."
      },
      "result": {
-      "id": "Yang terlihat: baris toko menampilkan merek dan akun merchant-nya (<em>Merek sendiri</em> atau <em>Ninja Van</em>). Kartu kuning sudah hilang.",
-      "en": "You see: the store row shows its brand and merchant account (<em>Merek sendiri</em> or <em>Ninja Van</em>). The yellow card is gone."
+      "id": "Yang terlihat: baris toko menampilkan merek dan akun merchant-nya (<em>Merek sendiri</em> atau <em>Ninja Van</em>), dan <em>Stok ke Hiryu</em> bila toko itu aktif di Hiryu. Kartu kuning sudah hilang.",
+      "en": "You see: the store row shows its brand and merchant account (<em>Merek sendiri</em> or <em>Ninja Van</em>), and <em>Stok ke Hiryu</em> when the store is active in Hiryu. The yellow card is gone."
      }
     },
     {
@@ -588,8 +588,8 @@
       "en": "One menu per store. To reuse a menu, Hiryu has no copy button: Export CSV from the first menu, Import CSV into the second."
      },
      "result": {
-      "id": "Yang terlihat: di daftar toko WMS, setiap toko menampilkan nama menu dan jumlah itemnya.",
-      "en": "You see: in the WMS store list, each store shows its menu name and item count."
+      "id": "Yang terlihat: di daftar toko WMS, setiap toko menampilkan jumlah itemnya, dan item setiap toko muncul di <em>Item menu</em> (saring per <em>Toko</em>).",
+      "en": "You see: in the WMS store list, each store shows its item count, and each store's items appear under <em>Item menu</em> (filter by <em>Toko</em>)."
      }
     },
     {
@@ -623,8 +623,8 @@
       "en": "A menu item without a SKU cannot be picked, so no item may be left over."
      },
      "result": {
-      "id": "Yang terlihat: <em>Item tanpa SKU</em> bernilai 0 untuk toko itu (layar 2e), dan SKU muncul di <em>Produk</em>.",
-      "en": "You see: <em>Item tanpa SKU</em> is 0 for the store (screen 2e), and the SKUs appear under <em>Produk</em>."
+      "id": "Yang terlihat: di <em>Item menu</em>, saringan <em>SKU</em>: <em>Item tanpa SKU</em> tidak menampilkan baris untuk toko itu (layar 2e), dan SKU muncul di <em>Produk</em>.",
+      "en": "You see: under <em>Item menu</em>, the filter <em>SKU</em>: <em>Item tanpa SKU</em> shows no row for the store (screen 2e), and the SKUs appear under <em>Produk</em>."
      }
     },
     {
@@ -651,8 +651,8 @@
       "en": "Set the bin size of each SKU: <em>Produk</em>, filter <em>Tanpa ukuran bin</em>."
      },
      "detail": {
-      "id": "<em>Ukuran bin</em> (<em>Kecil</em> atau <em>Besar</em>) wajib diisi: SKU tidak bisa mendapat bin sebelum ukurannya diisi. Kotak di atas tabel menjelaskannya: <em>Kecil</em> muat di 15 × 10 × 20 cm (sekitar 3 L, contohnya botol atau tube 100 ml). <em>Besar</em> untuk yang lebih besar, atau botol 150 ml ke atas. Batas ini masih usulan dan bisa diubah oleh Ops HQ. Sisanya boleh diisi nanti: <em>Isi sampai</em>, <em>Pesan ulang saat sisa</em>, <em>Cadangan Grab</em> (1 kecuali ada arahan lain), ukuran kemasan P × L × T dalam mm dan berat dalam g. Setiap kolom yang kosong menampilkan <em>Isi nanti</em> dan SKU itu tetap ditandai di <em>Perlu tindakan</em>, tetapi tidak menghalangi kerja. PO membutuhkan <em>Isi sampai</em>: SKU tanpa data ini tidak mendapat usulan jumlah. Ketik di tabel, atau <em>Unduh CSV</em>, isi, lalu <em>Unggah CSV</em>.",
-      "en": "<em>Ukuran bin</em> (<em>Kecil</em> or <em>Besar</em>) is required: a SKU cannot get a bin until it is set. The box above the table explains them: <em>Kecil</em> fits in 15 × 10 × 20 cm (about 3 L, for example a 100 ml bottle or tube); <em>Besar</em> is anything larger, or a bottle of 150 ml or more. The limits are a proposal Ops HQ can change. The rest can be filled later: <em>Isi sampai</em>, <em>Pesan ulang saat sisa</em>, <em>Cadangan Grab</em> (1 unless told otherwise), pack size P × L × T in mm and weight in g. Each empty one shows <em>Isi nanti</em> and the SKU stays flagged on <em>Perlu tindakan</em>, without blocking. A PO needs <em>Isi sampai</em>: a SKU without it gets no suggested quantity. Type in the table, or <em>Unduh CSV</em>, fill it in, <em>Unggah CSV</em>."
+      "id": "<em>Ukuran bin</em> (<em>Kecil</em> atau <em>Besar</em>) wajib diisi: SKU tidak bisa mendapat bin sebelum ukurannya diisi. Kotak di atas tabel menjelaskannya: <em>Kecil</em> muat di 15 × 10 × 20 cm (sekitar 3 L, contohnya botol atau tube 100 ml). <em>Besar</em> untuk yang lebih besar, atau botol 150 ml ke atas. Batas ini masih usulan dan bisa diubah oleh Ops HQ. Sisanya boleh diisi nanti: <em>Isi sampai</em>, <em>Pesan ulang saat sisa</em>, ukuran kemasan P × L × T dalam mm dan berat dalam g. Setiap kolom yang kosong menampilkan <em>Isi nanti</em> dan SKU itu tetap ditandai di <em>Perlu tindakan</em>, tetapi tidak menghalangi kerja. PO membutuhkan <em>Isi sampai</em>: SKU tanpa data ini tidak mendapat usulan jumlah. Ketik di tabel, atau <em>Unduh CSV</em>, isi, lalu <em>Unggah CSV</em>.",
+      "en": "<em>Ukuran bin</em> (<em>Kecil</em> or <em>Besar</em>) is required: a SKU cannot get a bin until it is set. The box above the table explains them: <em>Kecil</em> fits in 15 × 10 × 20 cm (about 3 L, for example a 100 ml bottle or tube); <em>Besar</em> is anything larger, or a bottle of 150 ml or more. The limits are a proposal Ops HQ can change. The rest can be filled later: <em>Isi sampai</em>, <em>Pesan ulang saat sisa</em>, pack size P × L × T in mm and weight in g. Each empty one shows <em>Isi nanti</em> and the SKU stays flagged on <em>Perlu tindakan</em>, without blocking. A PO needs <em>Isi sampai</em>: a SKU without it gets no suggested quantity. Type in the table, or <em>Unduh CSV</em>, fill it in, <em>Unggah CSV</em>."
      },
      "result": {
       "id": "Yang terlihat: angka <em>Tanpa ukuran bin</em> turun sampai 0. Baris yang datanya masih kurang menampilkan <em>Belum lengkap: 3 data</em> berwarna kuning tua sampai diisi.",
@@ -661,8 +661,8 @@
      "example": {
       "img": "panduan/img/sku-lengkap.png",
       "caption": {
-       "id": "Baris bawah adalah contoh SKU lengkap: LBR-0001 GentleBiome Mild Cleanser 100 ml. Ukuran bin, <em>Isi sampai</em>, <em>Pesan ulang saat sisa</em>, <em>Cadangan Grab</em>, kemasan P × L × T dan berat sudah terisi, dan barcode terdaftar, jadi tertulis <em>Lengkap</em>. Baris atas masih <em>Belum lengkap: 2 data</em> karena kemasan dan berat masih <em>Isi nanti</em>. Isi setiap SKU sampai seperti baris bawah.",
-       "en": "The bottom row is a complete SKU: LBR-0001 GentleBiome Mild Cleanser 100 ml. Bin size, <em>Isi sampai</em>, <em>Pesan ulang saat sisa</em>, <em>Cadangan Grab</em>, pack L × W × H and weight are filled and the barcode is registered, so it says <em>Lengkap</em>. The top row still says <em>Belum lengkap: 2 data</em> because pack size and weight are still <em>Isi nanti</em>. Fill each SKU until it looks like the bottom row."
+       "id": "Baris bawah adalah contoh SKU lengkap: LBR-0001 GentleBiome Mild Cleanser 100 ml. Ukuran bin, <em>Isi sampai</em>, <em>Pesan ulang saat sisa</em>, kemasan P × L × T dan berat sudah terisi, dan barcode terdaftar, jadi tertulis <em>Lengkap</em>. Baris atas masih <em>Belum lengkap: 2 data</em> karena kemasan dan berat masih <em>Isi nanti</em>. Isi setiap SKU sampai seperti baris bawah.",
+       "en": "The bottom row is a complete SKU: LBR-0001 GentleBiome Mild Cleanser 100 ml. Bin size, <em>Isi sampai</em>, <em>Pesan ulang saat sisa</em>, pack L × W × H and weight are filled and the barcode is registered, so it says <em>Lengkap</em>. The top row still says <em>Belum lengkap: 2 data</em> because pack size and weight are still <em>Isi nanti</em>. Fill each SKU until it looks like the bottom row."
       }
      }
     },
@@ -717,16 +717,16 @@
      "tags": [],
      "screens": [],
      "action": {
-      "id": "Nyalakan sambungan untuk toko itu.",
-      "en": "Switch on the link for the store."
+      "id": "Cek stok setiap toko aktif di Hiryu.",
+      "en": "Check the stock of each active store in Hiryu."
      },
      "detail": {
-      "id": "Pada saat yang sama WMS mengirim seluruh stok dan Hiryu berhenti menghitung stoknya sendiri. Lalu buka tiga SKU di Hiryu dan cek apakah angkanya sama dengan angka WMS (stok tersedia dikurangi <em>Cadangan Grab</em>).",
-      "en": "At the same moment the WMS sends the full stock and Hiryu stops its own count. Then open three SKUs in Hiryu and check each matches the WMS number (available minus <em>Cadangan Grab</em>)."
+      "id": "Tidak ada sakelar per toko: WMS mengirim stok untuk setiap toko aktif, yaitu aktif di Hiryu, merek sudah dipilih, dan dark store ada di katalog Hiryu. Bersama Shaun, bila <em>Sambungan Hiryu aktif</em> di <em>Integrasi Hiryu</em> belum menyala, Ops HQ menyalakannya sekali. Pada saat itu WMS mengirim seluruh stok dan Hiryu berhenti menghitung stoknya sendiri. Toko yang aktif belakangan langsung mendapat seluruh stoknya. Lalu buka tiga SKU di Hiryu dan cek apakah angkanya sama dengan angka WMS (stok di rak dikurangi unit yang ditahan untuk pesanan yang belum diambil).",
+      "en": "There is no switch per store: the WMS sends stock for every active store, meaning active in Hiryu, brand chosen, and the dark store in Hiryu's catalogue. With Shaun, if <em>Sambungan Hiryu aktif</em> on <em>Integrasi Hiryu</em> is not on yet, Ops HQ switches it on once. At that moment the WMS sends the full stock and Hiryu stops its own count. A store that becomes active later gets its full stock at once. Then open three SKUs in Hiryu and check each matches the WMS number (on the shelf minus units held for orders not yet picked)."
      },
      "result": {
-      "id": "Yang terlihat: ketiga SKU menampilkan angka yang sama di Hiryu dan di WMS. WMS mencentang langkah ini dengan sendirinya.",
-      "en": "You see: the three SKUs show the same number in Hiryu and in the WMS. The WMS ticks this step by itself."
+      "id": "Yang terlihat: <em>Stok ke Hiryu</em> di setiap toko di <em>Menu &amp; toko Hiryu</em>, dan ketiga SKU menampilkan angka yang sama di Hiryu dan di WMS. WMS mencentang langkah ini dengan sendirinya.",
+      "en": "You see: <em>Stok ke Hiryu</em> on every store in <em>Menu &amp; toko Hiryu</em>, and the three SKUs show the same number in Hiryu and in the WMS. The WMS ticks this step by itself."
      }
     },
     {
@@ -791,12 +791,12 @@
       "en": "Activate each store on Grab with the outlet's Grab manager login."
      },
      "detail": {
-      "id": "Cek apakah menu menampilkan Synced di Hiryu dan jam buka muncul di Grab.",
-      "en": "Check the menu shows Synced in Hiryu and the opening hours show on Grab."
+      "id": "Cek apakah menu menampilkan Synced di Hiryu dan jam buka muncul di Grab. Di <em>Menu &amp; toko Hiryu</em>, <em>Status di Hiryu</em> setiap toko harus <em>Aktif di Hiryu</em> dan <em>terima MANUAL</em>. Status ini hanya dibaca dari Hiryu; ubah di Hiryu bila salah.",
+      "en": "Check the menu shows Synced in Hiryu and the opening hours show on Grab. In <em>Menu &amp; toko Hiryu</em>, each store's <em>Status di Hiryu</em> must be <em>Aktif di Hiryu</em> and <em>terima MANUAL</em>. This status is only read from Hiryu; change it in Hiryu if it is wrong."
      },
      "result": {
-      "id": "Yang terlihat: <em>Aktif</em> di kolom Grab untuk toko itu di <em>Menu &amp; toko Hiryu</em>. WMS mencentang langkah ini dengan sendirinya.",
-      "en": "You see: <em>Aktif</em> under Grab for the store in <em>Menu &amp; toko Hiryu</em>. The WMS ticks this step by itself."
+      "id": "Yang terlihat: toko tampil di Grab. Lalu tekan <em>Tandai selesai</em> di <em>Mulai operasi</em>: WMS tidak bisa melihat Grab.",
+      "en": "You see: the store shows on Grab. Then press <em>Tandai selesai</em> in <em>Mulai operasi</em>: the WMS cannot see Grab."
      }
     },
     {
@@ -1937,8 +1937,8 @@
       "6b"
      ],
      "action": {
-      "id": "Pesanan masuk ke Anda. Ambil keranjang kosong dan pindai labelnya.",
-      "en": "The order comes to you. Take an empty basket and scan its label."
+      "id": "Pesanan masuk ke Anda. Ambil keranjang kosong mana saja dan pindai labelnya.",
+      "en": "The order comes to you. Take any empty basket and scan its label."
      },
      "detail": {
       "id": "WMS memberi setiap pesanan ke pengambil yang paling lama siap, satu pesanan per pengambil. Ponsel berbunyi dan menampilkan GM-358, <em>4 produk · 12 unit</em>. Pesanan dimulai saat Anda memindai keranjang MA5-OUT-02. Jika tidak dimulai dalam 2 menit, pesanan kembali ke antrean.",
@@ -2762,6 +2762,10 @@
     {
      "id": "SPV menyetujui hitung akhir bulan sebelum laporan bulanan merek, yang harus selesai pada hari kerja ke-3.",
      "en": "The SPV approves the month-end count before the monthly brand report, due on the 3rd working day."
+    },
+    {
+     "id": "Setelah koreksi stok yang besar, atau bila Hiryu bilang angkanya terlihat salah, Ops HQ menekan <em>Kirim ulang semua angka stok ke Hiryu</em> di halaman <em>Stok</em>.",
+     "en": "After a big stock correction, or when Hiryu says its numbers look wrong, Ops HQ presses <em>Send every stock number to Hiryu again</em> on the <em>Stock</em> page."
     }
    ]
   },
@@ -3247,8 +3251,8 @@
    ],
    "rules": [
     {
-     "id": "Pakai angka WMS, jangan angka Hiryu. Stok di Hiryu lebih kecil karena ada cadangan untuk Grab.",
-     "en": "Use WMS numbers, never Hiryu's. Hiryu's stock is lower by the Grab buffer."
+     "id": "Pakai angka WMS, jangan angka Hiryu. Stok di Hiryu tidak menghitung unit yang sudah ditahan untuk pesanan yang belum diambil.",
+     "en": "Use WMS numbers, never Hiryu's. Hiryu's stock leaves out units already held for orders not yet picked."
     },
     {
      "id": "Laporan dikirim secara manual. WMS tidak mengirim email.",
@@ -3537,8 +3541,8 @@
       "en": "Check the link when the dark store opens."
      },
      "detail": {
-      "id": "<em>Pengaturan</em>, <em>Integrasi Hiryu</em>: pesan terakhir terkirim, 0 menunggu, 0 gagal. Yang menunggu lebih dari 5 menit tampil merah.",
-      "en": "<em>Pengaturan</em>, <em>Integrasi Hiryu</em>: last message sent, 0 waiting, 0 failed. Anything waiting more than 5 minutes shows red."
+      "id": "<em>Pengaturan</em>, <em>Integrasi Hiryu</em>: ringkasan di atas harus berbunyi <em>Sambungan lancar</em>. Bila ada masalah, ringkasan menulis artinya dan siapa yang harus dihubungi. Rincian teknis ada di <em>Log teknis (untuk IT dan Hiryu)</em>.",
+      "en": "<em>Settings</em>, <em>Hiryu integration</em>: the summary at the top should read <em>The link is working</em>. If something is wrong, the summary says what it means and who to call. The technical details are under <em>Technical log (for IT and Hiryu)</em>."
      },
      "result": {
       "id": "Yang terlihat: <em>Tersambung ke Hiryu</em> di atas layar laptop.",

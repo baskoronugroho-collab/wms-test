@@ -999,7 +999,8 @@ async def elsewhere(line_id: int, user: auth.User = Depends(auth.current_user)):
         "SELECT ib.location_id, l.code AS location_code, "
         "       ib.qty_on_hand - ib.qty_allocated AS free "
         "FROM inventory_balances ib JOIN locations l ON l.id = ib.location_id "
-        "WHERE ib.site_id = %s AND ib.sku_id = %s AND l.is_virtual = 0 "
+        "LEFT JOIN special_bins sb ON sb.location_id = l.id "
+        "WHERE ib.site_id = %s AND ib.sku_id = %s AND l.is_virtual = 0 AND sb.location_id IS NULL "
         "  AND ib.location_id <> %s AND ib.qty_on_hand - ib.qty_allocated > 0 "
         "ORDER BY free DESC", (line["site_id"], line["sku_id"], line["location_id"] or 0))
     return {"places": [{"location_id": r["location_id"], "location_code": r["location_code"],
@@ -1196,13 +1197,12 @@ async def put_store(store_no: int, body: models.HiryuStoreIn,
 @router.get("/stock-sheet", response_model=models.StockSheet)
 async def stock_sheet(site_id: int, user: auth.User = Depends(auth.require("supervisor"))):
     """Ketik di Hiryu = units on the shelf + units already picked for orders not
-    yet packed - Grab buffer, never below 0 (§13.4.2). Off once the link runs:
+    yet packed, never below 0 (§13.4.2). Off once the link runs:
     stock then reaches Hiryu by message 3 after every change (§9.4)."""
     await _refuse_when_live(
         "Lembar stok sudah dimatikan: stok dikirim sendiri ke Hiryu.",
         "The stock sheet is off: stock reaches Hiryu by itself.")
     await auth.assert_site_access(user, site_id)
-    default_buffer = await rule("grab_buffer_default", 1)
     stores = await db.fetch_all(
         "SELECT hs.hiryu_store_no, hs.store_name, hs.brand_id, b.name AS brand_name "
         "FROM hiryu_stores hs JOIN brands b ON b.id = hs.brand_id "
@@ -1211,7 +1211,6 @@ async def stock_sheet(site_id: int, user: auth.User = Depends(auth.require("supe
     for st in stores:
         rows = await db.fetch_all(
             "SELECT s.id AS sku_id, s.brand_sku_code, s.hiryu_sku_code, s.name_display, "
-            "       s.grab_buffer, "
             "       (SELECT COALESCE(SUM(ib.qty_on_hand),0) FROM inventory_balances ib "
             "          JOIN locations l ON l.id = ib.location_id "
             "         WHERE ib.site_id = %s AND ib.sku_id = s.id AND l.is_virtual = 0) AS on_shelf, "
@@ -1232,15 +1231,13 @@ async def stock_sheet(site_id: int, user: auth.User = Depends(auth.require("supe
             (site_id, site_id, site_id, site_id, st["brand_id"], site_id))
         lines = []
         for r in rows:
-            buffer = default_buffer if r["grab_buffer"] is None else int(r["grab_buffer"])
-            base = int(r["on_shelf"]) + int(r["picked_not_ready"])
-            to_type = max(0, base - buffer)
+            to_type = max(0, int(r["on_shelf"]) + int(r["picked_not_ready"]))
             last = r["last_typed"]
             lines.append({
                 "sku_id": r["sku_id"],
                 "hiryu_sku_code": (r["hiryu_sku_code"] or r["brand_sku_code"]).upper(),
                 "name": r["name_display"], "on_shelf": int(r["on_shelf"]),
-                "picked_not_ready": int(r["picked_not_ready"]), "buffer": buffer,
+                "picked_not_ready": int(r["picked_not_ready"]),
                 "to_type": to_type, "last_typed": None if last is None else int(last),
                 "last_typed_at": str(r["last_typed_at"]) if r["last_typed_at"] else None,
                 "changed": last is None or int(last) != to_type,

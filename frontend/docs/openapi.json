@@ -38,7 +38,7 @@
         ],
         "summary": "The browser's heartbeat",
         "description": "The browser's heartbeat.\n\nSame answer as /health, reachable through the ingress. Once a frontend/ is\nshipped the ingress routes everything except /api to nginx, so a browser\nasking for /health gets index.html back with a cheerful 200 — which would\nmake the connection indicator claim the app is up while the backend or the\ndatabase is down. The station app is online-only and blocks work loudly on a\ndropped connection, so that heartbeat has to reach the backend.\n\nHEAD is declared explicitly. Plain Starlette adds HEAD to any GET route, but\nFastAPI's APIRoute does not — and the frontend's heartbeat sends HEAD, so\nwithout this it collects a 405 every 20 s and reports the app as offline\nforever.",
-        "operationId": "api_health_api_health_head",
+        "operationId": "api_health_api_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -58,7 +58,7 @@
         ],
         "summary": "The browser's heartbeat",
         "description": "The browser's heartbeat.\n\nSame answer as /health, reachable through the ingress. Once a frontend/ is\nshipped the ingress routes everything except /api to nginx, so a browser\nasking for /health gets index.html back with a cheerful 200 — which would\nmake the connection indicator claim the app is up while the backend or the\ndatabase is down. The station app is online-only and blocks work loudly on a\ndropped connection, so that heartbeat has to reach the backend.\n\nHEAD is declared explicitly. Plain Starlette adds HEAD to any GET route, but\nFastAPI's APIRoute does not — and the frontend's heartbeat sends HEAD, so\nwithout this it collects a 405 every 20 s and reports the app as offline\nforever.",
-        "operationId": "api_health_api_health_head",
+        "operationId": "api_health_api_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -18985,7 +18985,7 @@
           "hiryu"
         ],
         "summary": "Ketik di Hiryu = units on the shelf + units already picked for orders not",
-        "description": "Ketik di Hiryu = units on the shelf + units already picked for orders not\nyet packed - Grab buffer, never below 0 (§13.4.2). Off once the link runs:\nstock then reaches Hiryu by message 3 after every change (§9.4).",
+        "description": "Ketik di Hiryu = units on the shelf + units already picked for orders not\nyet packed, never below 0 (§13.4.2). Off once the link runs:\nstock then reaches Hiryu by message 3 after every change (§9.4).",
         "operationId": "stock_sheet_api_hiryu_stock_sheet_get",
         "parameters": [
           {
@@ -22308,13 +22308,237 @@
         }
       }
     },
+    "/api/demo/presets": {
+      "get": {
+        "tags": [
+          "demo"
+        ],
+        "summary": "The four demo presets at this dark store, with exactly what will be",
+        "description": "The four demo presets at this dark store, with exactly what will be\nscanned: each product's name, brand SKU code, first barcode, the bin the\npick will most likely go to (and its primary bin), sellable stock and\nquantity. The missing product is marked; for A the replacement is listed.",
+        "operationId": "demo_presets_api_demo_presets_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Presets"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/demo/reset-stock": {
+      "get": {
+        "tags": [
+          "demo"
+        ],
+        "summary": "Reset stok demo, step 1: what it will change (every bin, now and after)",
+        "description": "Reset stok demo, step 1: what it will change (every bin, now and after)\nand whatever refuses it, before the SPV confirms.",
+        "operationId": "reset_stock_plan_api_demo_reset_stock_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetPlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "demo"
+        ],
+        "summary": "Reset stok demo (SPV and above, only in Mode demo): every preset product,",
+        "description": "Reset stok demo (SPV and above, only in Mode demo): every preset product,\nthe replacement included, back to its dev-seed level in its primary rack\nbin (12 when the seed has none), and its other slot (C-1-02 for LBR-0001)\nback to the seed level. Each change is a stock correction through the\nledger (movement adjustment, reason demo_reset), so the ledger stays the\nsource and a stock message 3 is queued for Hiryu, like a count correction;\nthe bins' open count flags are closed as a count would. Refused while an\nopen demo order (not handed over, not cancelled) holds any of these SKUs.",
+        "operationId": "reset_stock_api_demo_reset_stock_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetPlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/demo/orders": {
       "post": {
         "tags": [
           "demo"
         ],
         "summary": "Buat pesanan dummy: a full message 1 (contract v1.1, message_id",
-        "description": "Buat pesanan dummy: a full message 1 (contract v1.1, message_id\n\"demo-...\") from the hub's Hiryu store and menu, through the same handler\nas POST /api/hiryu/v1/orders. Products in stock come first so the order can\nbe picked; one line can be the missing one, carrying the customer's\ninstruction (Ganti, Hapus, Batalkan, Hubungi). The other lines carry no\ninstruction (null, handled as cancel_order). A refusal is returned as the\nhandler's answer, as Hiryu would see it.",
+        "description": "Buat pesanan dummy: a full message 1 (contract v1.1, message_id\n\"demo-...\") from the hub's Hiryu store and menu, through the same handler\nas POST /api/hiryu/v1/orders. Products in stock come first so the order can\nbe picked; one line can be the missing one, carrying the customer's\ninstruction (Ganti, Hapus, Batalkan, Hubungi). The other lines carry no\ninstruction (null, handled as cancel_order). A refusal is returned as the\nhandler's answer, as Hiryu would see it.\n\n`preset` (A to D, GET /api/demo/presets) or `items` fix the products and\nquantities; then nothing is left to chance and stock is not checked, so a\npreset's missing line is sent even at 0 stock (its pick line still goes to\nthe SKU's bin).",
         "operationId": "demo_order_api_demo_orders_post",
         "parameters": [
           {
@@ -26315,7 +26539,7 @@
           "hiryu link"
         ],
         "summary": "Message 6: dark stores, stores, SKUs and menus, sent by Hiryu when any of",
-        "description": "Message 6: dark stores, stores, SKUs and menus, sent by Hiryu when any of\nthem change, and in full when the WMS asks (request_id).",
+        "description": "Message 6: dark stores, stores, SKUs and menus, sent by Hiryu when any of\nthem change. The same body is what Hiryu answers to the catalogue pull\n(GET POS_CATALOGUE_URL, Sinkron ulang dari Hiryu).",
         "operationId": "post_catalogue_api_hiryu_v1_catalogue_post",
         "parameters": [
           {
@@ -26614,8 +26838,8 @@
         "tags": [
           "hiryu link"
         ],
-        "summary": "Kirim snapshot penuh: every SKU of every store with its link on (or of",
-        "description": "Kirim snapshot penuh: every SKU of every store with its link on (or of\none hub), worked out at send time.",
+        "summary": "Kirim snapshot penuh: every SKU of every active store (or of one dark",
+        "description": "Kirim snapshot penuh: every SKU of every active store (or of one dark\nstore), worked out at send time.",
         "operationId": "snapshot_api_hiryu_link_snapshot_post",
         "parameters": [
           {
@@ -26930,8 +27154,8 @@
         "tags": [
           "hiryu link"
         ],
-        "summary": "Menu & toko Hiryu (board 2e): the stores Hiryu sent, with their hub,",
-        "description": "Menu & toko Hiryu (board 2e): the stores Hiryu sent, with their hub,\nbrand, Grab merchant account and link, and one store's menu items with\ntheir SKU, units per sale and price. A store waiting for Ops HQ has\nneeds_brand. Every role may look; changes are Ops HQ's.",
+        "summary": "Menu & toko Hiryu (board 2e): the stores Hiryu sent, with their dark",
+        "description": "Menu & toko Hiryu (board 2e): the stores Hiryu sent, with their dark\nstore, brand, Grab merchant account and Hiryu's own status (active or not,\norder acceptance), and menu items with their SKU, units per sale and\nprice: one store's (store_no, every item) or, with all_items, the items on\nthe menu of every store listed (one dark store, or every dark store the\nperson may see). A store waiting for Ops HQ has needs_brand. Every role\nmay look; changes are Ops HQ's.",
         "operationId": "catalogue_api_hiryu_link_catalogue_get",
         "parameters": [
           {
@@ -26964,6 +27188,16 @@
                 }
               ],
               "title": "Store No"
+            }
+          },
+          {
+            "name": "all_items",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "All Items"
             }
           },
           {
@@ -27108,98 +27342,13 @@
         }
       }
     },
-    "/api/hiryu-link/stores/{store_no}": {
-      "patch": {
-        "tags": [
-          "hiryu link"
-        ],
-        "summary": "Ops HQ, with Shaun at switch-on (kick-off step 13): the link for one",
-        "description": "Ops HQ, with Shaun at switch-on (kick-off step 13): the link for one\nstore (H8). On queues that store's full stock at once, so Hiryu starts from\nthe WMS number; off stops its stock messages. Also ticks that the store is\nactive on Grab (step 15).",
-        "operationId": "patch_store_api_hiryu_link_stores__store_no__patch",
-        "parameters": [
-          {
-            "name": "store_no",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Store No"
-            }
-          },
-          {
-            "name": "x-forwarded-email",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Forwarded-Email"
-            }
-          },
-          {
-            "name": "x-view-as",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-View-As"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StorePatchIn"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CountAnswer"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/hiryu-link/catalogue-request": {
       "get": {
         "tags": [
           "hiryu link"
         ],
-        "summary": "The Sinkron ulang button's state for a hub: the last press, by whom, and",
-        "description": "The Sinkron ulang button's state for a hub: the last press, by whom, and\nwhen it may be pressed again (Bisa lagi 09:45).",
+        "summary": "The Sinkron ulang button's state for a dark store: the last press, by",
+        "description": "The Sinkron ulang button's state for a dark store: the last press, by\nwhom, answered or failed (and why), and when it may be pressed again\n(Bisa lagi 09:45).",
         "operationId": "resync_state_api_hiryu_link_catalogue_request_get",
         "parameters": [
           {
@@ -27271,8 +27420,8 @@
         "tags": [
           "hiryu link"
         ],
-        "summary": "Sinkron ulang dari Hiryu: any role, once every 5 minutes per hub, logged",
-        "description": "Sinkron ulang dari Hiryu: any role, once every 5 minutes per hub, logged\nwith the person's name. Queues `catalogue_request` to Hiryu, which answers\nwith message 6 (full, same request_id). Too soon: 429, nothing queued.",
+        "summary": "Sinkron ulang dari Hiryu, a pull: any role, once every 5 minutes per",
+        "description": "Sinkron ulang dari Hiryu, a pull: any role, once every 5 minutes per\ndark store (a failed pull does not count), logged with the person's name\nand audited. The WMS calls GET POS_CATALOGUE_URL with X-Hiryu-Key at once\nand waits up to 20 s for the full message 6, which goes through the\nmessage 6 handler (via pull); the Pesan Hiryu log shows the request out\nand message 6 in. In Mode demo the built-in stand-in answers. Too soon:\n429 and nothing is called. The answer says whether it worked (`ok`) and,\nwhen not, why (`reason`).",
         "operationId": "request_catalogue_api_hiryu_link_catalogue_request_post",
         "parameters": [
           {
@@ -27451,6 +27600,245 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LinkMessages"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu-link/messages/export.csv": {
+      "get": {
+        "tags": [
+          "hiryu link"
+        ],
+        "summary": "Pesan Hiryu as a CSV file: one row per message in a WIB date range (at",
+        "description": "Pesan Hiryu as a CSV file: one row per message in a WIB date range (at\nmost 31 days, at most 20,000 messages, the newest kept): time WIB,\ndirection, message number, type, H refs, trigger, status, HTTP status, GM\nnumber, Grab order ID and message_id. Same access as GET /messages. The\nlog holds no customer data, so neither does the file. X-Export-Capped: 1\nwhen messages were left out.",
+        "operationId": "messages_export_csv_api_hiryu_link_messages_export_csv_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "id",
+                "en"
+              ],
+              "type": "string",
+              "default": "id",
+              "title": "Lang"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiryu-link/messages/export.json": {
+      "get": {
+        "tags": [
+          "hiryu link"
+        ],
+        "summary": "Pesan Hiryu as a JSON file: every message of a WIB date range (same",
+        "description": "Pesan Hiryu as a JSON file: every message of a WIB date range (same\nlimits as the CSV) with its full body and answer, oldest first.",
+        "operationId": "messages_export_json_api_hiryu_link_messages_export_json_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkExport"
                 }
               }
             }
@@ -28075,6 +28463,24 @@
           "name"
         ],
         "title": "BenchItem"
+      },
+      "Bilingual": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "en": {
+            "type": "string",
+            "title": "En"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "en"
+        ],
+        "title": "Bilingual"
       },
       "BilledIn": {
         "properties": {
@@ -30209,6 +30615,27 @@
         ],
         "title": "DemoItem"
       },
+      "DemoLineIn": {
+        "properties": {
+          "hiryu_item_id": {
+            "type": "string",
+            "title": "Hiryu Item Id"
+          },
+          "item_qty": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Item Qty"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "hiryu_item_id",
+          "item_qty"
+        ],
+        "title": "DemoLineIn"
+      },
       "DemoMissing": {
         "properties": {
           "type": {
@@ -30330,6 +30757,17 @@
             "type": "string",
             "title": "Gm Number"
           },
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset"
+          },
           "message": {
             "additionalProperties": true,
             "type": "object",
@@ -30369,6 +30807,24 @@
             "type": "integer",
             "title": "Site Id"
           },
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "A",
+                  "B",
+                  "C",
+                  "D"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset",
+            "description": "A preset from GET /api/demo/presets: store, items and missing line come from it (the fields below are ignored, except scheduled_in_minutes)"
+          },
           "hiryu_store_id": {
             "anyOf": [
               {
@@ -30380,6 +30836,23 @@
             ],
             "title": "Hiryu Store Id",
             "description": "null = any active store at the hub"
+          },
+          "items": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/DemoLineIn"
+                },
+                "type": "array",
+                "maxItems": 20,
+                "minItems": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Items",
+            "description": "Exact products and quantities, in this order; when given, lines and item_qty are ignored"
           },
           "lines": {
             "anyOf": [
@@ -33731,6 +34204,52 @@
         ],
         "title": "LinkCatalogue"
       },
+      "LinkExport": {
+        "properties": {
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Id"
+          },
+          "date_from": {
+            "type": "string",
+            "title": "Date From",
+            "description": "First WIB day, YYYY-MM-DD"
+          },
+          "date_to": {
+            "type": "string",
+            "title": "Date To",
+            "description": "Last WIB day, YYYY-MM-DD (inclusive)"
+          },
+          "capped": {
+            "type": "boolean",
+            "title": "Capped",
+            "description": "More messages than the cap: the newest are kept"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/LinkMessage"
+            },
+            "type": "array",
+            "title": "Messages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "date_from",
+          "date_to",
+          "capped",
+          "messages"
+        ],
+        "title": "LinkExport"
+      },
       "LinkFailure": {
         "properties": {
           "id": {
@@ -33801,6 +34320,51 @@
           "created_at"
         ],
         "title": "LinkFailure"
+      },
+      "LinkHour": {
+        "properties": {
+          "taken_in": {
+            "type": "integer",
+            "title": "Taken In",
+            "description": "Messages from Hiryu the WMS took (any 2xx answer)"
+          },
+          "sent_out": {
+            "type": "integer",
+            "title": "Sent Out",
+            "description": "Messages to Hiryu that Hiryu took"
+          },
+          "retrying": {
+            "type": "integer",
+            "title": "Retrying",
+            "description": "Messages to Hiryu still being retried"
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed",
+            "description": "Messages to Hiryu that failed and stopped"
+          },
+          "refused": {
+            "type": "integer",
+            "title": "Refused",
+            "description": "Messages from Hiryu the WMS refused (422)"
+          },
+          "partial": {
+            "type": "integer",
+            "title": "Partial",
+            "description": "Catalogue messages only partly taken"
+          }
+        },
+        "type": "object",
+        "required": [
+          "taken_in",
+          "sent_out",
+          "retrying",
+          "failed",
+          "refused",
+          "partial"
+        ],
+        "title": "LinkHour",
+        "description": "The Pesan Hiryu log of the last hour, counted for the plain summary at\nthe top of Integrasi Hiryu."
       },
       "LinkIn": {
         "properties": {
@@ -34011,7 +34575,7 @@
               }
             ],
             "title": "Message No",
-            "description": "1 to 6 as on board 11d; null for catalogue_request"
+            "description": "1 to 6 as on board 11d; null for the catalogue pull (and the old catalogue_request)"
           },
           "message_type": {
             "type": "string",
@@ -34080,7 +34644,7 @@
           "via": {
             "type": "string",
             "title": "Via",
-            "description": "hiryu | demo | test | webhook | standin"
+            "description": "hiryu | demo | test | webhook | standin | pull"
           },
           "status": {
             "type": "string",
@@ -34290,6 +34854,9 @@
             },
             "type": "array",
             "title": "Inbound"
+          },
+          "last_hour": {
+            "$ref": "#/components/schemas/LinkHour"
           }
         },
         "type": "object",
@@ -34305,7 +34872,8 @@
           "last_sent_at",
           "failures",
           "refused_24h",
-          "inbound"
+          "inbound",
+          "last_hour"
         ],
         "title": "LinkStatus"
       },
@@ -34326,6 +34894,17 @@
           "site_code": {
             "type": "string",
             "title": "Site Code"
+          },
+          "site_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Name"
           },
           "hiryu_dark_store_id": {
             "anyOf": [
@@ -34386,7 +34965,8 @@
                 "type": "null"
               }
             ],
-            "title": "Order Acceptance"
+            "title": "Order Acceptance",
+            "description": "From message 6; MANUAL expected"
           },
           "acceptance_warning": {
             "type": "boolean",
@@ -34395,19 +34975,13 @@
           },
           "hiryu_active": {
             "type": "boolean",
-            "title": "Hiryu Active"
+            "title": "Hiryu Active",
+            "description": "Status di Hiryu: active or inactive, from message 6"
           },
           "active": {
             "type": "boolean",
-            "title": "Active"
-          },
-          "link_on": {
-            "type": "boolean",
-            "title": "Link On"
-          },
-          "grab_active": {
-            "type": "boolean",
-            "title": "Grab Active"
+            "title": "Active",
+            "description": "Gets stock messages: active in Hiryu, brand picked, dark store in Hiryu's catalogue (no switch per store)"
           },
           "hiryu_received_at": {
             "anyOf": [
@@ -34455,8 +35029,6 @@
           "acceptance_warning",
           "hiryu_active",
           "active",
-          "link_on",
-          "grab_active",
           "hiryu_received_at",
           "updated_by",
           "items",
@@ -38772,6 +39344,21 @@
             "title": "Suggested Basket",
             "description": "A free basket for the example"
           },
+          "free_baskets": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Free Baskets",
+            "description": "Every free basket now (any of them is right); null when no order is waiting for a basket"
+          },
           "today_count": {
             "type": "integer",
             "title": "Today Count",
@@ -39358,6 +39945,242 @@
           "pr_number"
         ],
         "title": "PrIn"
+      },
+      "Preset": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "title": {
+            "$ref": "#/components/schemas/Bilingual"
+          },
+          "description": {
+            "$ref": "#/components/schemas/Bilingual"
+          },
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason",
+            "description": "Why it cannot run here (Indonesian / English)"
+          },
+          "hiryu_store_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hiryu Store Id"
+          },
+          "store_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Store Name"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PresetItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "missing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PresetMissing"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "title",
+          "description",
+          "ok"
+        ],
+        "title": "Preset"
+      },
+      "PresetItem": {
+        "properties": {
+          "hiryu_item_id": {
+            "type": "string",
+            "title": "Hiryu Item Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "sku_code": {
+            "type": "string",
+            "title": "Sku Code",
+            "description": "The brand SKU code (LBR-0001)"
+          },
+          "barcode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Barcode",
+            "description": "The first barcode registered for the SKU"
+          },
+          "bin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bin",
+            "description": "Where the pick will most likely go now: the first place the order handler would use (A-2-03)"
+          },
+          "primary_bin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Bin",
+            "description": "The SKU's primary rack bin"
+          },
+          "stock": {
+            "type": "integer",
+            "title": "Stock",
+            "description": "Sellable units at the dark store (rack bins, not held)"
+          },
+          "item_qty": {
+            "type": "integer",
+            "title": "Item Qty"
+          },
+          "units": {
+            "type": "integer",
+            "title": "Units",
+            "description": "item_qty x units per sale"
+          },
+          "missing": {
+            "type": "boolean",
+            "title": "Missing",
+            "description": "The picker presses Barang tidak ada here",
+            "default": false
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "hiryu_item_id",
+          "name",
+          "sku_code",
+          "barcode",
+          "bin",
+          "primary_bin",
+          "stock",
+          "item_qty",
+          "units"
+        ],
+        "title": "PresetItem"
+      },
+      "PresetMissing": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "replace",
+              "remove",
+              "cancel_order",
+              "contact_customer"
+            ],
+            "title": "Type"
+          },
+          "hiryu_item_id": {
+            "type": "string",
+            "title": "Hiryu Item Id"
+          },
+          "replace": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PresetItem"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The replacement, for replace"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "hiryu_item_id"
+        ],
+        "title": "PresetMissing"
+      },
+      "Presets": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "demo_mode": {
+            "type": "boolean",
+            "title": "Demo Mode"
+          },
+          "presets": {
+            "items": {
+              "$ref": "#/components/schemas/Preset"
+            },
+            "type": "array",
+            "title": "Presets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "demo_mode",
+          "presets"
+        ],
+        "title": "Presets"
       },
       "ProductMasterDeleteIn": {
         "properties": {
@@ -42506,6 +43329,173 @@
         "type": "object",
         "title": "RequestSaveIn"
       },
+      "ResetBlock": {
+        "properties": {
+          "gm_number": {
+            "type": "string",
+            "title": "Gm Number"
+          },
+          "grab_order_id": {
+            "type": "string",
+            "title": "Grab Order Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "gm_number",
+          "grab_order_id",
+          "status"
+        ],
+        "title": "ResetBlock"
+      },
+      "ResetIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "site_id"
+        ],
+        "title": "ResetIn"
+      },
+      "ResetPlan": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "demo_mode": {
+            "type": "boolean",
+            "title": "Demo Mode"
+          },
+          "can_reset": {
+            "type": "boolean",
+            "title": "Can Reset"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ResetRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "blocked_by": {
+            "items": {
+              "$ref": "#/components/schemas/ResetBlock"
+            },
+            "type": "array",
+            "title": "Blocked By",
+            "description": "Open demo orders holding these SKUs"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Problems",
+            "description": "Indonesian / English"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes",
+            "description": "Indonesian / English"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "demo_mode",
+          "can_reset",
+          "rows"
+        ],
+        "title": "ResetPlan"
+      },
+      "ResetRow": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_code": {
+            "type": "string",
+            "title": "Sku Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "bin": {
+            "type": "string",
+            "title": "Bin"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "description": "primary or overflow"
+          },
+          "now": {
+            "type": "integer",
+            "title": "Now",
+            "description": "Units on hand in the bin now"
+          },
+          "target": {
+            "type": "integer",
+            "title": "Target",
+            "description": "Units after the reset"
+          },
+          "change": {
+            "type": "integer",
+            "title": "Change"
+          },
+          "seed_level": {
+            "type": "boolean",
+            "title": "Seed Level",
+            "description": "False: not in the dev seed, the default 12 is used"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id",
+          "sku_code",
+          "name",
+          "bin",
+          "role",
+          "now",
+          "target",
+          "change",
+          "seed_level"
+        ],
+        "title": "ResetRow"
+      },
       "Restock": {
         "properties": {
           "id": {
@@ -43230,7 +44220,19 @@
           "status": {
             "type": "string",
             "title": "Status",
-            "description": "none | waiting | answered"
+            "description": "none | waiting (the pull is running) | answered | failed"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason",
+            "description": "Why the last pull failed, 'Indonesian / English'"
           },
           "next_allowed_at": {
             "anyOf": [
@@ -43251,6 +44253,18 @@
           "cooldown_minutes": {
             "type": "integer",
             "title": "Cooldown Minutes"
+          },
+          "ok": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ok",
+            "description": "POST only: the pull worked"
           },
           "message": {
             "anyOf": [
@@ -44804,17 +45818,6 @@
             ],
             "title": "Critical Pct"
           },
-          "grab_buffer": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Grab Buffer"
-          },
           "pack_length_mm": {
             "anyOf": [
               {
@@ -45419,10 +46422,6 @@
             "type": "object",
             "title": "Size Labels"
           },
-          "grab_buffer_default": {
-            "type": "integer",
-            "title": "Grab Buffer Default"
-          },
           "restock_default_pct": {
             "anyOf": [
               {
@@ -45450,7 +46449,6 @@
           "counts",
           "bin_sizes",
           "size_labels",
-          "grab_buffer_default",
           "guide",
           "can_edit"
         ],
@@ -46081,18 +47079,6 @@
             ],
             "title": "Critical Pct"
           },
-          "grab_buffer": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Grab Buffer",
-            "description": "Cadangan Grab; null = the default"
-          },
           "pack_length_mm": {
             "anyOf": [
               {
@@ -46422,10 +47408,6 @@
             "type": "integer",
             "title": "Picked Not Ready"
           },
-          "buffer": {
-            "type": "integer",
-            "title": "Buffer"
-          },
           "to_type": {
             "type": "integer",
             "title": "To Type",
@@ -46465,7 +47447,6 @@
           "name",
           "on_shelf",
           "picked_not_ready",
-          "buffer",
           "to_type",
           "last_typed",
           "last_typed_at",
@@ -46851,37 +47832,6 @@
           "brand_id"
         ],
         "title": "StoreAssignIn"
-      },
-      "StorePatchIn": {
-        "properties": {
-          "link_on": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Link On",
-            "description": "The link for this store (H8)"
-          },
-          "grab_active": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Grab Active",
-            "description": "The store is active on Grab"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "title": "StorePatchIn"
       },
       "TabCounts": {
         "properties": {

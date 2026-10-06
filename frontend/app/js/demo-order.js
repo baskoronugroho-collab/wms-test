@@ -5,13 +5,16 @@
  *   NJW.demoOrder.open({ siteId, onDone })        -> Promise<result | null>
  *   NJW.demoOrder.cancel(grabOrderId, { gm, onDone }) -> Promise<result | null>
  *
- * open() asks for the Hiryu store, the number of products (or acak), the
- * quantity per product (or acak), optionally one product the picker will find
- * missing with the customer's instruction (Ganti / Hapus / Batalkan / Hubungi),
- * and optionally a scheduled time. It calls POST /api/demo/orders, which
- * builds a full message 1 (contract v1.1) and passes it through the very
- * handler Hiryu calls. The result shows the GM number, what to do at the
- * missing line, and the exact JSON sent.
+ * open() offers the four presets first (GET /api/demo/presets: fixed
+ * products, each with its barcode, likely bin and stock, so the presenter
+ * knows exactly what will be scanned), and Kustom: the Hiryu store, the number
+ * of products (or acak), the quantity per product (or acak), optionally one
+ * product the picker will find missing with the customer's instruction (Ganti /
+ * Hapus / Batalkan / Hubungi), and optionally a scheduled time. It calls POST
+ * /api/demo/orders ({preset} or the custom fields), which builds a full message
+ * 1 (contract v1.1) and passes it through the very handler Hiryu calls. The
+ * result shows the GM number, what to do at the missing line, and the exact
+ * JSON sent.
  *
  * cancel() sends message 2 (POST /api/demo/orders/{grab_order_id}/cancel).
  *
@@ -25,7 +28,7 @@
   const api = () => NJW.shell.api();
 
   const CSS = `
-  .dm-form { display:grid; gap:16px; }
+  .dm-form { display:grid; grid-template-columns:minmax(0,1fr); gap:16px; }
   .dm-seg { display:flex; flex-wrap:wrap; gap:6px; }
   .dm-seg button { min-height:44px; padding:0 14px; border:2px solid var(--rule); border-radius:12px; background:var(--surface); font-weight:700; color:var(--ink-2); }
   .dm-seg button[aria-pressed="true"] { border-color:var(--action); background:var(--action-bg); color:var(--action); }
@@ -40,6 +43,31 @@
   .dm-json { margin:0; max-height:320px; overflow:auto; background:var(--navy); color:#DCE3EC; border-radius:12px; padding:14px 16px; font:500 12.5px/1.55 var(--mono); white-space:pre; }
   .dm-json .k { color:#9CC3FF; } .dm-json .s { color:#A8E6B5; } .dm-json .n { color:#FFD08A; } .dm-json .b { color:#F5A3C7; }
   details.dm-details summary { cursor:pointer; font-weight:700; color:var(--action); min-height:36px; display:flex; align-items:center; }
+  .dm-presets { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; }
+  @media (min-width:720px) { .dm-presets { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  .dm-preset { display:grid; grid-template-columns:minmax(0,1fr); min-width:0; gap:6px; align-content:start; width:100%; min-height:96px; padding:12px 14px; border:2px solid var(--rule); border-radius:14px; background:var(--surface); text-align:left; color:var(--ink); cursor:pointer; }
+  .dm-preset:hover { border-color:var(--action); }
+  .dm-preset[aria-pressed="true"] { border-color:var(--action); background:var(--action-bg); box-shadow:0 0 0 1px var(--action) inset; }
+  .dm-preset[disabled] { opacity:.6; cursor:not-allowed; }
+  .dm-preset__head { display:flex; align-items:center; gap:10px; }
+  .dm-preset__key { flex:none; display:inline-grid; place-items:center; width:32px; height:32px; border-radius:9px; background:var(--navy); color:#fff; font:700 16px/1 var(--mono); }
+  .dm-preset__title { font-size:16px; font-weight:900; line-height:1.25; }
+  .dm-preset__desc { font-size:13px; color:var(--ink-2); line-height:1.35; }
+  .dm-preset__list { margin:0; padding:0; list-style:none; display:grid; gap:2px; font-size:13px; color:var(--ink-2); }
+  .dm-preset__list li { display:flex; gap:6px; align-items:baseline; min-width:0; }
+  .dm-preset__list .q { flex:none; font-family:var(--mono); font-weight:700; color:var(--ink); }
+  .dm-preset__list .n { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dm-preset__list .b { flex:none; margin-left:auto; font-family:var(--mono); font-weight:600; color:var(--muted); }
+  .dm-preset__list .x { color:var(--stop); font-weight:700; }
+  .dm-preset__why { font-size:13px; color:var(--stop); font-weight:700; }
+  .dm-custom { grid-column:1 / -1; min-height:56px; }
+  .dm-sheet { width:100%; border-collapse:collapse; font-size:13.5px; }
+  .dm-sheet th { text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); padding:6px 8px; border-bottom:1px solid var(--rule); }
+  .dm-sheet td { padding:8px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  .dm-sheet td.m { font-family:var(--mono); font-weight:600; white-space:nowrap; }
+  .dm-sheet tr.is-miss td { background:var(--caution-bg); }
+  .dm-sheet tr.is-rep td { background:var(--action-bg); }
+  .dm-sheetwrap { overflow-x:auto; border:1px solid var(--rule); border-radius:12px; }
   `;
   function style() {
     if (document.getElementById('dm-css')) return;
@@ -87,6 +115,64 @@
     }));
   }
 
+  /* "LABORÉ Sensitive Skin Care GentleBiome Mild Cleanser 100 ml" -> "GentleBiome Mild Cleanser 100 ml". */
+  function shortName(n) {
+    return String(n || '').replace(/^LABOR[EÉ]\s+(Sensitive Skin Care\s+)?/i, '').replace(/^Labore\s+/i, '').replace(/^Kahf\s+/, '') || n;
+  }
+  const pairOf = (b) => (b && typeof b === 'object') ? [b.id || '', b.en || b.id || ''] : [String(b || ''), String(b || '')];
+
+  function presetButton(p) {
+    const sh = S();
+    const { esc, biAttr, t } = sh;
+    const title = pairOf(p.title), desc = pairOf(p.description);
+    const rep = p.missing && p.missing.replace;
+    const why = String(p.reason || '').split(' / ');
+    const list = (p.items || []).map((i) =>
+      '<li><span class="q">' + esc(String(i.item_qty)) + '×</span><span class="n">' + esc(shortName(i.name)) + '</span>' +
+      (i.missing ? '<span class="x" ' + biAttr('tidak ada', 'missing') + '>' + esc(t('tidak ada', 'missing')) + '</span>' : '') +
+      '<span class="b">' + esc(i.bin || '?') + '</span></li>').join('') +
+      (rep ? '<li><span class="q">' + esc(String(rep.item_qty)) + '×</span><span class="n"><span ' + biAttr('ganti: ', 'instead: ') + '>' + esc(t('ganti: ', 'instead: ')) + '</span>' +
+        esc(shortName(rep.name)) + '</span><span class="b">' + esc(rep.bin || '?') + '</span></li>' : '');
+    return '<button type="button" class="dm-preset" data-preset="' + esc(p.key) + '" aria-pressed="false"' + (p.ok ? '' : ' disabled') + '>' +
+      '<span class="dm-preset__head"><span class="dm-preset__key">' + esc(p.key) + '</span>' +
+      '<span class="dm-preset__title" ' + biAttr(title[0], title[1]) + '>' + esc(t(title[0], title[1])) + '</span></span>' +
+      '<span class="dm-preset__desc" ' + biAttr(desc[0], desc[1]) + '>' + esc(t(desc[0], desc[1])) + '</span>' +
+      (p.ok ? '<ul class="dm-preset__list">' + list + '</ul>'
+        : '<span class="dm-preset__why" ' + biAttr(why[0], why[why.length - 1]) + '>' + esc(t(why[0], why[why.length - 1])) + '</span>') +
+      '</button>';
+  }
+
+  /* What will be scanned: name, SKU, first barcode, bin, stock now, units. */
+  function presetSheet(p) {
+    const sh = S();
+    const { esc, bis, biAttr, icon, t } = sh;
+    const rep = p.missing && p.missing.replace;
+    const row = (i, kind) => {
+      const low = kind !== 'miss' && i.stock < i.units;
+      return '<tr class="' + (kind === 'miss' ? 'is-miss' : kind === 'rep' ? 'is-rep' : '') + '">' +
+        '<td><div class="k-strong">' + esc(shortName(i.name)) + '</div>' +
+        (kind === 'miss' ? '<div class="k-caption" ' + biAttr('Tekan Barang tidak ada di sini, catat 0', 'Press Item missing here, record 0') + '></div>' : '') +
+        (kind === 'rep' ? '<div class="k-caption" ' + biAttr('Pengganti, diambil sesudah barang yang tidak ada', 'The replacement, picked after the missing item') + '></div>' : '') +
+        '</td><td class="m">' + esc(i.sku_code) + '</td><td class="m">' + esc(i.barcode || '-') + '</td>' +
+        '<td class="m">' + esc(i.bin || '?') + (i.primary_bin && i.bin && i.primary_bin !== i.bin
+          ? ' <span class="k-caption">(<span ' + biAttr('utama ', 'primary ') + '>' + esc(t('utama ', 'primary ')) + '</span>' + esc(i.primary_bin) + ')</span>' : '') + '</td>' +
+        '<td class="m">' + esc(String(i.stock)) + (low ? ' ' + sh.pill('caution', 'kurang', 'low') : '') + '</td>' +
+        '<td class="m">' + esc(String(i.units)) + '</td></tr>';
+    };
+    const low = (p.items || []).some((i) => !i.missing && i.stock < i.units) || (rep && rep.stock < rep.units);
+    return '<div class="k-stack k-stack--tight">' +
+      '<span class="k-eyebrow" ' + biAttr('Yang akan dipindai', 'What will be scanned') + '></span>' +
+      '<div class="dm-sheetwrap"><table class="dm-sheet"><thead><tr>' +
+      '<th ' + biAttr('Produk', 'Product') + '></th><th>SKU</th><th>Barcode</th>' +
+      '<th>Bin</th><th ' + biAttr('Stok', 'Stock') + '></th><th ' + biAttr('Unit', 'Units') + '></th>' +
+      '</tr></thead><tbody>' +
+      (p.items || []).map((i) => row(i, i.missing ? 'miss' : '')).join('') + (rep ? row(rep, 'rep') : '') +
+      '</tbody></table></div>' +
+      (low ? '<div class="k-note k-note--caution">' + icon('warn') + bis('Stok kurang untuk preset ini. Tekan Reset stok demo di Pengaturan, Demo.',
+        'Not enough stock for this preset. Press Reset demo stock under Settings, Demo.') + '</div>' : '') +
+      '</div>';
+  }
+
   async function open(o) {
     o = o || {};
     style();
@@ -94,15 +180,22 @@
     const { esc, biAttr, bis, icon, t } = sh;
     const siteId = o.siteId || sh.siteId();
     if (!siteId) { sh.toast(['Pilih satu dark store dulu.', 'Choose one dark store first.'], 'caution'); return null; }
-    let data;
-    try { data = await api().get('/demo/stores' + api().qs({ site_id: siteId })); }
-    catch (e) { sh.fail(e); return null; }
+    let data, presets = [];
+    try {
+      const q = api().qs({ site_id: siteId });
+      const got = await Promise.all([
+        api().get('/demo/stores' + q),
+        api().get('/demo/presets' + q).catch(() => null),
+      ]);
+      data = got[0];
+      presets = (got[1] && got[1].presets) || [];
+    } catch (e) { sh.fail(e); return null; }
     if (!data.demo_mode) {
       sh.toast(['Mode demo belum menyala untuk dark store ini (Pengaturan, Demo).', 'Mode demo is not on for this dark store (Settings, Demo).'], 'caution');
       return null;
     }
     const stores = (data.stores || []).filter((s) => (s.items || []).some((i) => i.available));
-    if (!stores.length) {
+    if (!stores.length && !presets.some((p) => p.ok)) {
       sh.toast(['Tidak ada toko Hiryu aktif dengan menu di dark store ini.', 'No active Hiryu store with a menu at this dark store.'], 'caution');
       return null;
     }
@@ -112,6 +205,15 @@
     box.innerHTML =
       '<div class="k-note k-note--info">' + icon('info') + bis('Pesanan dibuat persis seperti pesan 1 dari Hiryu dan masuk lewat jalur yang sama. Tidak ada data pelanggan.',
         'The order is made exactly like Hiryu\'s message 1 and comes in the same way. No customer data.') + '</div>' +
+      '<div class="k-field"><span class="k-field__label" ' + biAttr('Pilih skenario', 'Choose a scenario') + '></span>' +
+      '<div class="dm-presets">' + presets.map(presetButton).join('') +
+      '<button type="button" class="dm-preset dm-custom" data-preset="" aria-pressed="false"' + (stores.length ? '' : ' disabled') + '>' +
+      '<span class="dm-preset__head"><span class="dm-preset__key">' + icon('plus', 18) + '</span>' +
+      '<span class="k-stack k-stack--tight"><span class="dm-preset__title" ' + biAttr('Kustom', 'Custom') + '></span>' +
+      '<span class="dm-preset__desc" ' + biAttr('Pilih sendiri toko, jumlah produk dan barang yang tidak ada; produknya acak.',
+        'Pick the store, the number of products and the missing item yourself; the products are random.') + '></span></span></span></button></div></div>' +
+      '<div id="dm-sheet"></div>' +
+      '<div class="dm-form" id="dm-custom" hidden>' +
       '<div class="k-field"><label class="k-field__label" for="dm-store" ' + biAttr('Toko Hiryu', 'Hiryu store') + '></label>' +
       '<select id="dm-store" class="k-select"><option value="">' + esc(t('Acak', 'Random')) + '</option>' +
       stores.map((s) => '<option value="' + s.hiryu_store_id + '">' + esc(s.name) + ' (#' + s.hiryu_store_id + ')</option>').join('') + '</select></div>' +
@@ -133,7 +235,8 @@
       '<div class="k-stack k-stack--tight">' + bis('Pesanan terjadwal', 'Scheduled order', 'k-strong') +
       bis('Menunggu di Terjadwal, lalu ke pemetik 20 menit sebelum waktunya.', 'Waits in Scheduled, then goes to a picker 20 minutes before.', 'k-caption') + '</div></div>' +
       '<div class="dm-sub" id="dm-schedwrap" hidden><div class="k-field"><span class="k-field__label" ' + biAttr('Waktu kirim', 'Delivery time') + '></span>' +
-      seg('sched', [[30, ['30 menit lagi', 'in 30 min']], [60, ['1 jam lagi', 'in 1 hour']], [120, ['2 jam lagi', 'in 2 hours']]], 30) + '</div></div>';
+      seg('sched', [[30, ['30 menit lagi', 'in 30 min']], [60, ['1 jam lagi', 'in 1 hour']], [120, ['2 jam lagi', 'in 2 hours']]], 30) + '</div></div>' +
+      '</div>';
 
     const $ = (q) => box.querySelector(q);
     const itemsOf = () => {
@@ -163,6 +266,20 @@
     wireSeg(box);
     fillItems();
 
+    // The scenario: a preset (fixed products) or Kustom (the controls below).
+    let chosen = null;
+    function choose(key) {
+      chosen = key || null;
+      box.querySelectorAll('[data-preset]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.preset === (key || ''))));
+      const p = presets.find((x) => x.key === key);
+      $('#dm-custom').hidden = !!p;
+      $('#dm-sheet').innerHTML = p ? presetSheet(p) : '';
+      sh.applyLang($('#dm-sheet'));
+    }
+    box.querySelectorAll('[data-preset]').forEach((b) => b.addEventListener('click', () => { if (!b.disabled) choose(b.dataset.preset); }));
+    const first = presets.find((p) => p.ok);
+    choose(first ? first.key : '');
+
     return new Promise((resolve) => {
       let result = null;
       const m = sh.modal({
@@ -171,23 +288,28 @@
         actions: [
           { label: ['Batal', 'Cancel'], kind: 'secondary' },
           { label: ['Kirim seperti Hiryu', 'Send as Hiryu'], kind: 'primary', minRole: 'supervisor', onClick: async (close, btn) => {
-            const store = $('#dm-store').value;
-            const lines = segValue(box, 'lines');
-            const qty = segValue(box, 'qty');
-            const missOn = $('#dm-miss').getAttribute('aria-checked') === 'true';
-            const schedOn = $('#dm-sched').getAttribute('aria-checked') === 'true';
-            const body = {
-              site_id: siteId,
-              hiryu_store_id: store ? +store : null,
-              lines: lines ? +lines : null,
-              item_qty: qty ? +qty : null,
-              missing: missOn ? {
-                type: ins(),
-                hiryu_item_id: $('#dm-item').value || null,
-                replace_hiryu_item_id: ins() === 'replace' ? ($('#dm-rep').value || null) : null,
-              } : null,
-              scheduled_in_minutes: schedOn ? +(segValue(box, 'sched') || 30) : null,
-            };
+            let body;
+            if (chosen) {
+              body = { site_id: siteId, preset: chosen };
+            } else {
+              const store = $('#dm-store').value;
+              const lines = segValue(box, 'lines');
+              const qty = segValue(box, 'qty');
+              const missOn = $('#dm-miss').getAttribute('aria-checked') === 'true';
+              const schedOn = $('#dm-sched').getAttribute('aria-checked') === 'true';
+              body = {
+                site_id: siteId,
+                hiryu_store_id: store ? +store : null,
+                lines: lines ? +lines : null,
+                item_qty: qty ? +qty : null,
+                missing: missOn ? {
+                  type: ins(),
+                  hiryu_item_id: $('#dm-item').value || null,
+                  replace_hiryu_item_id: ins() === 'replace' ? ($('#dm-rep').value || null) : null,
+                } : null,
+                scheduled_in_minutes: schedOn ? +(segValue(box, 'sched') || 30) : null,
+              };
+            }
             const res = await api().post('/demo/orders', body);
             result = res;
             showResult(m, res);

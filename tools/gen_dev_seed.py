@@ -17,7 +17,7 @@ units an order, about 15 units per SKU, about Rp 45,000 a unit):
     (Andi) and the Ops Head (Bayu). Existing accounts are never changed.
   * brands Kahf and Labore (PT Paragon) and their 68 + 37 SKUs from the 25 Sep
     recheck lists (../Grab Kilat Fulfillment/*_sku_recheck.csv): bin size by the
-    size guide, isi sampai 12 to 24, pesan ulang 25 %, Grab buffer 1. Wardah and
+    size guide, isi sampai 12 to 24, pesan ulang 25 %. Wardah and
     Kirana are switched off once (not in the pilot).
   * Hiryu stores 902 Kahf - Cawang, 903 Labore - Cawang, 904 Kahf - Kemanggisan,
     905 Labore - Kemanggisan: MANUAL, link on, active on Grab; one menu item per
@@ -650,14 +650,14 @@ def emit_master(sql, skus, plans, orders):
         rows.append(f"  ({s['id']}, {s['brand_id']}, {esc(s['code'])}, {esc(s['name'])}, "
                     f"{esc(s['category'])}, {esc(s['line'])}, {esc(s['size'])}, {esc(s['price'])}, "
                     f"{esc(s['cube'])}, 'stable', 'sku_barcode', {esc(s['code'])}, {esc(s['bin'])}, "
-                    f"{s['fill']}, {s['reorder']}, 25, 1, {esc(s['weight'])}, "
+                    f"{s['fill']}, {s['reorder']}, 25, {esc(s['weight'])}, "
                     f"{1 if s['ml'] else 0}, {s['large']}, 1)")
     keep = ("name_display", "hiryu_sku_code", "bin_size", "default_full_threshold",
-            "default_restock_point", "default_restock_pct", "grab_buffer", "pack_weight_g",
+            "default_restock_point", "default_restock_pct", "pack_weight_g",
             "is_liquid", "is_large_bottle")
     sql.values("INSERT INTO skus (id, brand_id, brand_sku_code, name_display, category, product_line, "
                "unit_size, price_idr, unit_cube_cm3, expiry_tier, identity_mode, hiryu_sku_code, bin_size, "
-               "default_full_threshold, default_restock_point, default_restock_pct, grab_buffer, "
+               "default_full_threshold, default_restock_point, default_restock_pct, "
                "pack_weight_g, is_liquid, is_large_bottle, active) VALUES", rows,
                "ON DUPLICATE KEY UPDATE " +
                ", ".join(f"{c} = COALESCE(skus.{c}, VALUES({c}))" for c in keep) +

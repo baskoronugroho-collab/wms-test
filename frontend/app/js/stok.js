@@ -5,7 +5,8 @@
  * Age counts from the inbound date of the oldest batch still held (pseudo
  * aging, decided 5 Oct). "Stok lama" is a batch older than the rule
  * stock_old_days on Aturan & waktu. The hub picker offers "Semua hub".
- * Read only, every role.
+ * Read only, every role. Ops HQ also has "Kirim ulang semua angka stok ke
+ * Hiryu" at the title (POST /api/hiryu-link/snapshot?site_id=).
  */
 (function () {
   'use strict';
@@ -27,6 +28,28 @@
     document.head.appendChild(st);
   }
 
+  /* Kirim ulang semua angka stok ke Hiryu (Ops HQ): the full stock snapshot,
+     every SKU of every store with its link on, at the chosen dark store or at
+     all of them. The WMS also does it every night at 03:00 WIB. */
+  function hiryuResend(ctx) {
+    if (!ctx.actions) return;
+    ctx.actions.innerHTML = '<button type="button" class="k-btn k-btn--secondary" id="sk-hiryu" data-min-role="hq">' + icon('upload', 18) +
+      bis('Kirim ulang semua angka stok ke Hiryu', 'Send every stock number to Hiryu again') + '</button>';
+    ctx.actions.querySelector('#sk-hiryu').addEventListener('click', async () => {
+      const site = S.site();
+      const where = S.siteId() && site ? [S.shortCode(site.code) + ' saja', S.shortCode(site.code) + ' only'] : ['semua dark store', 'every dark store'];
+      const ok = await S.confirm({
+        title: ['Kirim ulang semua angka stok ke Hiryu?', 'Send every stock number to Hiryu again?'],
+        text: ['Hiryu menerima lagi angka yang bisa dijual untuk setiap produk, dihitung sekarang, untuk ' + where[0] + '. Pakai ini setelah koreksi stok yang besar (misalnya hasil hitung stok), atau bila Hiryu bilang angkanya terlihat salah. Tidak perlu setiap hari: WMS sudah mengirim semua angka tiap malam pukul 03:00 WIB.',
+          'Hiryu gets the number it can sell for every product again, worked out now, for ' + where[1] + '. Use it after a big stock correction (for example a count), or when Hiryu says its numbers look wrong. Not needed every day: the WMS already sends every number each night at 03:00 WIB.'],
+        ok: ['Ya, kirim ulang', 'Yes, send again'],
+      });
+      if (!ok) return;
+      try { const r = await api().post('/hiryu-link/snapshot' + api().qs({ site_id: S.siteId() })); S.toast(r.message, 'ok'); }
+      catch (e) { S.fail(e); }
+    });
+  }
+
   S.page(async function (ctx) {
     const st = { flag: ctx.params.get('flag') || 'all', sort: 'name', q: '', brand: '', data: null };
     if (!FLAGS.some((f) => f[0] === st.flag)) st.flag = 'all';
@@ -39,6 +62,7 @@
       '<select class="k-select" id="sk-sort" style="max-width:200px">' + SORTS.map((s) => '<option value="' + s[0] + '">' + esc(t(s[1], s[2])) + '</option>').join('') + '</select></div>' +
       '<div id="sk-rows"><div class="k-loading" ' + biAttr('Memuat stok…', 'Loading stock…') + '></div></div>';
     const $ = (s) => ctx.body.querySelector(s);
+    hiryuResend(ctx);
 
     function paintFlags() {
       const c = st.data ? st.data.counts : {};

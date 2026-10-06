@@ -3,7 +3,7 @@
   "id": "Peta pesan Hiryu dan WMS",
   "en": "Hiryu and WMS message map"
  },
- "contract": "docs/hiryu-link-v1.md v1.1",
+ "contract": "docs/hiryu-link-v1.md v1.2",
  "generated_by": "python tools/gen_message_map.py",
  "retry": {
   "seconds": [
@@ -19,6 +19,88 @@
    "en": "10 s, 30 s, 1 min, 2 min, 5 min, then every 10 min"
   },
   "timeout_seconds": 8
+ },
+ "sender_every_seconds": 5,
+ "timeline": {
+  "title": {
+   "id": "Satu pesanan, dari Terima sampai siap",
+   "en": "One order, from Terima to ready"
+  },
+  "steps": [
+   {
+    "side": "grab",
+    "msg": null,
+    "text": {
+     "id": "Pelanggan memesan di Grab",
+     "en": "The customer orders on Grab"
+    },
+    "when": {
+     "id": "menit 0: jam mulai",
+     "en": "minute 0: the clock starts"
+    }
+   },
+   {
+    "side": "hiryu",
+    "msg": "1",
+    "text": {
+     "id": "Staf menekan Terima di Hiryu, Hiryu mengirim pesan 1",
+     "en": "Staff press Terima in Hiryu, Hiryu sends message 1"
+    },
+    "when": {
+     "id": "saat itu juga (untuk disepakati dengan Shaun)",
+     "en": "at once (to agree with Shaun)"
+    }
+   },
+   {
+    "side": "wms",
+    "msg": "3",
+    "text": {
+     "id": "Pesanan masuk antrean ambil, stok ditahan, WMS mengirim pesan 3",
+     "en": "The order joins the pick queue, stock is held, the WMS sends message 3"
+    },
+    "when": {
+     "id": "dalam sekitar 5 dtk",
+     "en": "within about 5 s"
+    }
+   },
+   {
+    "side": "wms",
+    "msg": null,
+    "text": {
+     "id": "Picker mengambil barang",
+     "en": "The picker picks"
+    },
+    "when": null
+   },
+   {
+    "side": "wms",
+    "msg": "5",
+    "text": {
+     "id": "Bila barang tidak ada: WMS mengirim pesan 5",
+     "en": "If an item is missing: the WMS sends message 5"
+    },
+    "when": {
+     "id": "dalam sekitar 5 dtk",
+     "en": "within about 5 s"
+    }
+   },
+   {
+    "side": "wms",
+    "msg": "4",
+    "text": {
+     "id": "Packer menekan Selesai dikemas, WMS mengirim pesan 4, Hiryu menandai siap di Grab",
+     "en": "The packer taps Selesai dikemas, the WMS sends message 4, Hiryu marks it ready on Grab"
+    },
+    "when": {
+     "id": "dalam sekitar 5 dtk",
+     "en": "within about 5 s"
+    }
+   }
+  ],
+  "target": {
+   "id": "Target: siap di Grab paling lambat 10 menit setelah pelanggan memesan (order_time di pesan 1), bukan setelah Terima.",
+   "en": "Target: ready on Grab within 10 minutes of the customer's order (order_time in message 1), not of Terima."
+  }
  },
  "rules": [
   {
@@ -94,8 +176,8 @@
     "en": "Orders first"
    },
    "text": {
-    "id": "Pesan pesanan (1, 2, 4, 5) didahulukan dari pesan stok dan katalog (3, 6). Di antrean WMS: order_ready dan item_short prioritas 1, stock_level dan catalogue_request prioritas 5. Pembatalan yang datang sebelum pesanannya disimpan dan dijalankan saat pesan 1 tiba.",
-    "en": "Order messages (1, 2, 4, 5) go ahead of stock and catalogue messages (3, 6). In the WMS queue: order_ready and item_short are priority 1, stock_level and catalogue_request priority 5. A cancel that comes before its order is kept and applied when message 1 arrives."
+    "id": "Pesan pesanan (1, 2, 4, 5) didahulukan dari pesan stok dan katalog (3, 6). Di antrean WMS: order_ready dan item_short prioritas 1, stock_level prioritas 5. Tarik katalog tidak lewat antrean. Pembatalan yang datang sebelum pesanannya disimpan dan dijalankan saat pesan 1 tiba.",
+    "en": "Order messages (1, 2, 4, 5) go ahead of stock and catalogue messages (3, 6). In the WMS queue: order_ready and item_short are priority 1, stock_level priority 5. The catalogue pull does not use the queue. A cancel that comes before its order is kept and applied when message 1 arrives."
    }
   },
   {
@@ -116,8 +198,8 @@
     "en": "Switches on the WMS side"
    },
    "text": {
-    "id": "WMS mengirim ke Hiryu hanya bila POS_PUSH_ENABLED, POS_WEBHOOK_URL, POS_SHARED_SECRET dan Sambungan Hiryu aktif semuanya menyala; sebelum itu pesan antre (mode bayangan). Stok hanya dikirim untuk toko yang sambungannya menyala (H8). Lokasi latihan dan pesanan UJI tidak pernah mengirim.",
-    "en": "The WMS sends to Hiryu only when POS_PUSH_ENABLED, POS_WEBHOOK_URL, POS_SHARED_SECRET and Sambungan Hiryu aktif are all on; until then messages queue (shadow mode). Stock goes only for stores whose link is on (H8). The training site and UJI test orders never send."
+    "id": "WMS mengirim pesan 3, 4 dan 5 ke Hiryu hanya bila POS_PUSH_ENABLED, POS_WEBHOOK_URL, POS_SHARED_SECRET dan Sambungan Hiryu aktif semuanya menyala; sebelum itu pesan antre (mode bayangan). Stok dikirim untuk setiap toko aktif, tanpa sakelar per toko (H8). Tarik katalog hanya perlu alamat katalog (POS_CATALOGUE_URL, atau asal POS_WEBHOOK_URL + /catalogue) dan POS_SHARED_SECRET. Lokasi latihan dan pesanan UJI tidak pernah mengirim.",
+    "en": "The WMS sends messages 3, 4 and 5 to Hiryu only when POS_PUSH_ENABLED, POS_WEBHOOK_URL, POS_SHARED_SECRET and Sambungan Hiryu aktif are all on; until then messages queue (shadow mode). Stock goes to every active store, with no switch per store (H8). The catalogue pull needs only the catalogue address (POS_CATALOGUE_URL, or POS_WEBHOOK_URL's origin + /catalogue) and POS_SHARED_SECRET. The training site and UJI test orders never send."
    }
   },
   {
@@ -127,8 +209,8 @@
     "en": "Mode demo"
    },
    "text": {
-    "id": "Dark store dalam Mode demo mengirim ke stand-in Hiryu di dalam WMS, bukan ke POS_WEBHOOK_URL. Stand-in menjawab 200 {\"ok\": true, \"standin\": true}, lalu berlaku seperti Hiryu: setelah item_short dengan cancel_order ia mengirim pesan 2 (merchant, 2001), setelah catalogue_request ia mengirim pesan 6 penuh. Di log tampil sebagai Demo atau Stand-in.",
-    "en": "A dark store in Mode demo sends to the Hiryu stand-in inside the WMS instead of POS_WEBHOOK_URL. The stand-in answers 200 {\"ok\": true, \"standin\": true}, then acts like Hiryu: after item_short with cancel_order it sends message 2 (merchant, 2001), after catalogue_request it sends a full message 6. The log shows these as Demo or Stand-in."
+    "id": "Dark store dalam Mode demo mengirim ke stand-in Hiryu di dalam WMS, bukan ke POS_WEBHOOK_URL. Stand-in menjawab 200 {\"ok\": true, \"standin\": true}, lalu berlaku seperti Hiryu: setelah item_short dengan cancel_order ia mengirim pesan 2 (merchant, 2001), dan tarik katalog ia jawab dengan pesan 6 penuh. Di log tampil sebagai Demo atau Stand-in.",
+    "en": "A dark store in Mode demo sends to the Hiryu stand-in inside the WMS instead of POS_WEBHOOK_URL. The stand-in answers 200 {\"ok\": true, \"standin\": true}, then acts like Hiryu: after item_short with cancel_order it sends message 2 (merchant, 2001), and it answers the catalogue pull with a full message 6. The log shows these as Demo or Stand-in."
    }
   },
   {
@@ -218,12 +300,12 @@
    "pilot": true,
    "messages": [
     "6",
-    "catalogue_request"
+    "catalogue_pull"
    ],
    "grab": [],
    "text": {
-    "id": "Dark store, toko, menu, bundle atau SKU dibuat atau berubah, atau WMS minta Sinkron ulang: Hiryu mengirim pesan 6.",
-    "en": "A dark store, store, menu, bundle or SKU is created or changed, or the WMS asks for a resync: Hiryu sends message 6."
+    "id": "Dark store, toko, menu, bundle atau SKU dibuat atau berubah: Hiryu mengirim pesan 6. Saat Sinkron ulang, WMS menarik katalog lengkap (GET) dan Hiryu menjawab dengan isi pesan 6.",
+    "en": "A dark store, store, menu, bundle or SKU is created or changed: Hiryu sends message 6. On a resync the WMS pulls the whole catalogue (GET) and Hiryu answers with a message 6 body."
    }
   },
   {
@@ -236,7 +318,7 @@
     "4",
     "5",
     "6",
-    "catalogue_request"
+    "catalogue_pull"
    ],
    "grab": [],
    "text": {
@@ -253,8 +335,8 @@
    ],
    "grab": [],
    "text": {
-    "id": "Sambungan satu toko dinyalakan: Hiryu berhenti mengubah stok sendiri dan WMS mengirim snapshot stok penuh toko itu.",
-    "en": "One store's link is switched on: Hiryu stops changing stock itself and the WMS sends that store's full stock snapshot."
+    "id": "Stok ke Hiryu untuk setiap toko aktif (aktif di Hiryu, merek dipilih, dark store ada di katalog Hiryu), tanpa sakelar per toko. Begitu toko aktif dan Sambungan Hiryu aktif menyala, Hiryu berhenti mengubah stok sendiri dan WMS mengirim snapshot stok penuh toko itu.",
+    "en": "Stock goes to Hiryu for every active store (active in Hiryu, brand chosen, dark store in Hiryu's catalogue), with no switch per store. Once a store is active and Sambungan Hiryu aktif is on, Hiryu stops changing stock itself and the WMS sends that store's full stock snapshot."
    }
   },
   {
@@ -363,8 +445,23 @@
      }
     }
    ],
+   "timing": {
+    "agree": true,
+    "event": {
+     "id": "Staf menekan Terima di Hiryu. Hanya pesanan yang diterima yang dikirim.",
+     "en": "Staff press Terima in Hiryu. Only an accepted order is sent."
+    },
+    "speed": {
+     "id": "Usulan: Hiryu mengirim saat itu juga, dalam beberapa detik setelah Terima, karena jam 10 menit sudah berjalan sejak pelanggan memesan. Bila WMS tidak menjawab, Hiryu mencoba lagi dengan message_id yang sama. (untuk disepakati dengan Shaun)",
+     "en": "Proposal: Hiryu sends at once, within a few seconds of Terima, because the 10-minute clock has been running since the customer ordered. If the WMS does not answer, Hiryu retries with the same message_id. (to agree with Shaun)"
+    }
+   },
    "fields": [
     {
+     "label": {
+      "id": "Nomor pesan (sekali saja)",
+      "en": "Message number (used once)"
+     },
      "path": "message_id",
      "type": "string",
      "required": true,
@@ -384,6 +481,10 @@
      }
     },
     {
+     "label": {
+      "id": "Nomor pesanan Grab",
+      "en": "Grab order number"
+     },
      "path": "grab_order_id",
      "type": "string",
      "required": true,
@@ -403,6 +504,10 @@
      }
     },
     {
+     "label": {
+      "id": "Nomor GM (slip Hiryu)",
+      "en": "GM number (Hiryu slip)"
+     },
      "path": "gm_number",
      "type": "string",
      "required": true,
@@ -422,6 +527,10 @@
      }
     },
     {
+     "label": {
+      "id": "Toko",
+      "en": "Store"
+     },
      "path": "hiryu_store_id",
      "type": "integer",
      "required": true,
@@ -441,6 +550,10 @@
      }
     },
     {
+     "label": {
+      "id": "Waktu pelanggan memesan",
+      "en": "Time the customer ordered"
+     },
      "path": "order_time",
      "type": "string",
      "required": true,
@@ -464,6 +577,10 @@
      }
     },
     {
+     "label": {
+      "id": "Waktu pesanan terjadwal",
+      "en": "Scheduled order time"
+     },
      "path": "scheduled_time",
      "type": "string",
      "required": false,
@@ -487,6 +604,10 @@
      }
     },
     {
+     "label": {
+      "id": "Perkiraan siap dari Grab",
+      "en": "Grab's estimated ready time"
+     },
      "path": "estimated_ready_time",
      "type": "string",
      "required": false,
@@ -510,6 +631,10 @@
      }
     },
     {
+     "label": {
+      "id": "Barang yang dipesan",
+      "en": "Items ordered"
+     },
      "path": "lines",
      "type": "array<object>",
      "required": true,
@@ -529,6 +654,10 @@
      }
     },
     {
+     "label": {
+      "id": "Item menu",
+      "en": "Menu item"
+     },
      "path": "lines[].hiryu_item_id",
      "type": "string",
      "required": true,
@@ -548,6 +677,10 @@
      }
     },
     {
+     "label": {
+      "id": "Jumlah item dipesan",
+      "en": "Item quantity ordered"
+     },
      "path": "lines[].item_qty",
      "type": "integer",
      "required": true,
@@ -567,6 +700,10 @@
      }
     },
     {
+     "label": {
+      "id": "Kode produk (SKU)",
+      "en": "Product code (SKU)"
+     },
      "path": "lines[].sku_code",
      "type": "string",
      "required": true,
@@ -586,6 +723,10 @@
      }
     },
     {
+     "label": {
+      "id": "Unit yang diambil",
+      "en": "Units to pick"
+     },
      "path": "lines[].units",
      "type": "integer",
      "required": true,
@@ -605,6 +746,10 @@
      }
     },
     {
+     "label": {
+      "id": "Harga menu",
+      "en": "Menu price"
+     },
      "path": "lines[].item_price",
      "type": "integer",
      "required": false,
@@ -624,6 +769,10 @@
      }
     },
     {
+     "label": {
+      "id": "Instruksi pelanggan jika barang habis",
+      "en": "Customer's instruction if out of stock"
+     },
      "path": "lines[].oos_instruction",
      "type": "object",
      "required": true,
@@ -638,6 +787,10 @@
      }
     },
     {
+     "label": {
+      "id": "Pilihan pelanggan",
+      "en": "Customer's choice"
+     },
      "path": "lines[].oos_instruction.type",
      "type": "string",
      "required": true,
@@ -657,6 +810,10 @@
      }
     },
     {
+     "label": {
+      "id": "Item pengganti",
+      "en": "Replacement item"
+     },
      "path": "lines[].oos_instruction.replace_hiryu_item_id",
      "type": "string",
      "required": false,
@@ -679,6 +836,10 @@
      }
     },
     {
+     "label": {
+      "id": "Kode produk pengganti",
+      "en": "Replacement product code"
+     },
      "path": "lines[].oos_instruction.replace_sku_code",
      "type": "string",
      "required": false,
@@ -701,6 +862,10 @@
      }
     },
     {
+     "label": {
+      "id": "Unit pengganti yang diambil",
+      "en": "Replacement units to pick"
+     },
      "path": "lines[].oos_instruction.replace_units",
      "type": "integer",
      "required": false,
@@ -964,8 +1129,23 @@
      }
     }
    ],
+   "timing": {
+    "agree": true,
+    "event": {
+     "id": "Grab atau pelanggan membatalkan, atau merchant membatalkan di Hiryu (juga setelah pesan 5).",
+     "en": "Grab or the customer cancels, or the merchant cancels in Hiryu (also after message 5)."
+    },
+    "speed": {
+     "id": "Usulan: Hiryu mengirim saat itu juga, begitu tahu pesanan batal, supaya picker berhenti dan stoknya dilepas. (untuk disepakati dengan Shaun)",
+     "en": "Proposal: Hiryu sends at once, as soon as it knows the order is cancelled, so the picker stops and the stock is released. (to agree with Shaun)"
+    }
+   },
    "fields": [
     {
+     "label": {
+      "id": "Nomor pesanan Grab",
+      "en": "Grab order number"
+     },
      "path": "(path) grab_order_id",
      "type": "string",
      "required": true,
@@ -985,6 +1165,10 @@
      }
     },
     {
+     "label": {
+      "id": "Nomor pesan (sekali saja)",
+      "en": "Message number (used once)"
+     },
      "path": "message_id",
      "type": "string",
      "required": true,
@@ -1004,6 +1188,10 @@
      }
     },
     {
+     "label": {
+      "id": "Kode alasan batal",
+      "en": "Cancel reason code"
+     },
      "path": "reason_code",
      "type": "string",
      "required": true,
@@ -1023,6 +1211,10 @@
      }
     },
     {
+     "label": {
+      "id": "Alasan batal",
+      "en": "Cancel reason"
+     },
      "path": "reason",
      "type": "string",
      "required": false,
@@ -1042,6 +1234,10 @@
      }
     },
     {
+     "label": {
+      "id": "Dibatalkan oleh",
+      "en": "Cancelled by"
+     },
      "path": "cancelled_by",
      "type": "string",
      "required": true,
@@ -1061,6 +1257,10 @@
      }
     },
     {
+     "label": {
+      "id": "Waktu batal",
+      "en": "Time cancelled"
+     },
      "path": "cancelled_at",
      "type": "string",
      "required": true,
@@ -1296,13 +1496,28 @@
       "H8"
      ],
      "text": {
-      "id": "Snapshot penuh: sambungan satu toko dinyalakan di Menu & toko Hiryu (stok toko itu), Sambungan Hiryu aktif dinyalakan (semua toko), tiap malam 03:00 WIB, atau Ops HQ menekan Kirim snapshot stok penuh di halaman ini.",
-      "en": "Full snapshot: one store's link switched on in Menu & toko Hiryu (that store's stock), Sambungan Hiryu aktif switched on (every store), every night at 03:00 WIB, or Ops HQ presses Kirim snapshot stok penuh on this page."
+      "id": "Snapshot penuh: satu toko baru menjadi aktif (merek dipilih, atau Hiryu mengaktifkannya; stok toko itu), Sambungan Hiryu aktif dinyalakan (semua toko), tiap malam 03:00 WIB, atau Ops HQ menekan Kirim ulang semua angka stok ke Hiryu di halaman Stok.",
+      "en": "Full snapshot: a store becomes active (brand chosen, or Hiryu activates it; that store's stock), Sambungan Hiryu aktif switched on (every store), every night at 03:00 WIB, or Ops HQ presses Kirim ulang semua angka stok ke Hiryu on the Stok page."
      }
     }
    ],
+   "timing": {
+    "agree": false,
+    "event": {
+     "id": "Angka yang bisa dijual berubah: barang ditaruh di bin, unit ditahan untuk pesanan baru atau dilepas saat batal, barang tidak ada, hitung stok disetujui, koreksi stok. Kirim ulang semua angka (snapshot penuh): tiap malam 03:00 WIB, saat sambungan dinyalakan, atau tombol Kirim ulang semua angka stok ke Hiryu di halaman Stok.",
+     "en": "The number Grab can sell changes: a delivery put away, units held for a new order or released on a cancel, a missing item, a count approved, a stock correction. Every number again (full snapshot): every night at 03:00 WIB, when the link is switched on, or the button Kirim ulang semua angka stok ke Hiryu on the Stok page."
+    },
+    "speed": {
+     "id": "Berangkat setelah pesan pesanan (4, 5) yang menunggu. Angka yang sama dengan angka terakhir yang dikirim tidak dikirim lagi. Pengirim WMS memeriksa antrean tiap 5 dtk, jadi pesan biasanya berangkat dalam sekitar 5 dtk. Bila Hiryu tidak menjawab atau sibuk: coba lagi setelah 10 dtk, 30 dtk, 1 mnt, 2 mnt, 5 mnt, lalu tiap 10 mnt.",
+     "en": "It leaves after any order messages (4, 5) waiting. A number equal to the last one sent is not sent again. The WMS sender checks the queue every 5 s, so a message usually leaves within about 5 s. If Hiryu does not answer or is busy: retried after 10 s, 30 s, 1 min, 2 min, 5 min, then every 10 min."
+    }
+   },
    "fields": [
     {
+     "label": {
+      "id": "Nomor pesan (sekali saja)",
+      "en": "Message number (used once)"
+     },
      "path": "message_id",
      "type": "string",
      "required": true,
@@ -1322,6 +1537,10 @@
      }
     },
     {
+     "label": {
+      "id": "Jenis pesan",
+      "en": "Message type"
+     },
      "path": "type",
      "type": "string",
      "required": true,
@@ -1341,6 +1560,10 @@
      }
     },
     {
+     "label": {
+      "id": "Waktu kirim",
+      "en": "Time sent"
+     },
      "path": "sent_at",
      "type": "string",
      "required": true,
@@ -1360,6 +1583,10 @@
      }
     },
     {
+     "label": {
+      "id": "Isi pesan",
+      "en": "Message content"
+     },
      "path": "data",
      "type": "object",
      "required": true,
@@ -1374,6 +1601,10 @@
      }
     },
     {
+     "label": {
+      "id": "Toko",
+      "en": "Store"
+     },
      "path": "data.hiryu_store_id",
      "type": "integer",
      "required": true,
@@ -1388,6 +1619,10 @@
      }
     },
     {
+     "label": {
+      "id": "Kode produk (SKU)",
+      "en": "Product code (SKU)"
+     },
      "path": "data.sku_code",
      "type": "string",
      "required": true,
@@ -1407,6 +1642,10 @@
      }
     },
     {
+     "label": {
+      "id": "Jumlah yang bisa dijual di Grab",
+      "en": "Units Grab can sell"
+     },
      "path": "data.available",
      "type": "integer",
      "required": true,
@@ -1421,11 +1660,15 @@
      "pattern": null,
      "example": "7",
      "meaning": {
-      "id": "Di rak, dikurangi yang ditahan untuk pesanan yang belum diambil, dikurangi buffer Grab (1 bawaan), tidak pernah di bawah 0. Hiryu menyetel Units on hand ke angka ini, tidak pernah menambah atau mengurangi.",
-      "en": "On the shelf, minus units held for orders not yet picked, minus the Grab buffer (1 by default), never below 0. Hiryu sets Units on hand to this number, never adds or subtracts it."
+      "id": "Di rak, dikurangi yang ditahan untuk pesanan yang belum diambil, tidak pernah di bawah 0. Hiryu menyetel Units on hand ke angka ini, tidak pernah menambah atau mengurangi.",
+      "en": "On the shelf, minus units held for orders not yet picked, never below 0. Hiryu sets Units on hand to this number, never adds or subtracts it."
      }
     },
     {
+     "label": {
+      "id": "Waktu angka dihitung",
+      "en": "Time the number was worked out"
+     },
      "path": "data.as_of",
      "type": "string",
      "required": true,
@@ -1445,6 +1688,10 @@
      }
     },
     {
+     "label": {
+      "id": "Bagian dari kirim ulang semua stok?",
+      "en": "Part of a full stock resend?"
+     },
      "path": "data.is_snapshot",
      "type": "boolean",
      "required": true,
@@ -1454,8 +1701,8 @@
      "pattern": null,
      "example": "false",
      "meaning": {
-      "id": "true untuk setiap pesan snapshot penuh (sambungan dinyalakan, 03:00 WIB, tombol snapshot). Angkanya dipakai sama saja.",
-      "en": "true for every message of a full snapshot (link switched on, 03:00 WIB, the snapshot button). The number is used the same way."
+      "id": "true untuk setiap pesan snapshot penuh (sambungan dinyalakan, 03:00 WIB, tombol Kirim ulang semua angka stok ke Hiryu di halaman Stok). Angkanya dipakai sama saja.",
+      "en": "true for every message of a full snapshot (link switched on, 03:00 WIB, the button Kirim ulang semua angka stok ke Hiryu on the Stok page). The number is used the same way."
      }
     }
    ],
@@ -1524,8 +1771,8 @@
     {
      "side": "hiryu",
      "text": {
-      "id": "Setelah sambungan toko menyala (H8): tidak ada pengurangan sendiri saat Tandai siap dan tidak ada penambahan setelah batal.",
-      "en": "Once the store's link is on (H8): no own deduction at Mark ready and no restore after a cancel."
+      "id": "Setelah Sambungan Hiryu aktif menyala, untuk setiap toko aktif (H8): tidak ada pengurangan sendiri saat Tandai siap dan tidak ada penambahan setelah batal.",
+      "en": "Once Sambungan Hiryu aktif is on, for every active store (H8): no own deduction at Mark ready and no restore after a cancel."
      }
     }
    ],
@@ -1539,8 +1786,8 @@
      "en": "A number equal to the last one sent for that SKU is not sent again (a snapshot always is). Picking units already held usually leaves the number unchanged."
     },
     {
-     "id": "Hanya untuk toko yang aktif dengan sambungan menyala, dan SKU yang punya kode Hiryu.",
-     "en": "Only for stores that are active with their link on, and SKUs that have a Hiryu code."
+     "id": "Untuk setiap toko aktif (aktif di Hiryu, merek dipilih, dark store ada di katalog Hiryu), tanpa sakelar per toko, dan hanya SKU yang punya kode Hiryu.",
+     "en": "For every active store (active in Hiryu, brand chosen, dark store in Hiryu's catalogue), with no switch per store, and only SKUs that have a Hiryu code."
     }
    ]
   },
@@ -1597,8 +1844,23 @@
      }
     }
    ],
+   "timing": {
+    "agree": false,
+    "event": {
+     "id": "Packer menekan Selesai dikemas.",
+     "en": "The packer taps Selesai dikemas."
+    },
+    "speed": {
+     "id": "Pesan pesanan: berangkat lebih dulu dari pesan stok yang sedang menunggu. Pengirim WMS memeriksa antrean tiap 5 dtk, jadi pesan biasanya berangkat dalam sekitar 5 dtk. Bila Hiryu tidak menjawab atau sibuk: coba lagi setelah 10 dtk, 30 dtk, 1 mnt, 2 mnt, 5 mnt, lalu tiap 10 mnt.",
+     "en": "An order message: it leaves ahead of any stock messages waiting. The WMS sender checks the queue every 5 s, so a message usually leaves within about 5 s. If Hiryu does not answer or is busy: retried after 10 s, 30 s, 1 min, 2 min, 5 min, then every 10 min."
+    }
+   },
    "fields": [
     {
+     "label": {
+      "id": "Nomor pesan (sekali saja)",
+      "en": "Message number (used once)"
+     },
      "path": "message_id",
      "type": "string",
      "required": true,
@@ -1618,6 +1880,10 @@
      }
     },
     {
+     "label": {
+      "id": "Jenis pesan",
+      "en": "Message type"
+     },
      "path": "type",
      "type": "string",
      "required": true,
@@ -1637,6 +1903,10 @@
      }
     },
     {
+     "label": {
+      "id": "Waktu kirim",
+      "en": "Time sent"
+     },
      "path": "sent_at",
      "type": "string",
      "required": true,
@@ -1656,6 +1926,10 @@
      }
     },
     {
+     "label": {
+      "id": "Isi pesan",
+      "en": "Message content"
+     },
      "path": "data",
      "type": "object",
      "required": true,
@@ -1670,6 +1944,10 @@
      }
     },
     {
+     "label": {
+      "id": "Nomor pesanan Grab",
+      "en": "Grab order number"
+     },
      "path": "data.grab_order_id",
      "type": "string",
      "required": true,
@@ -1684,6 +1962,10 @@
      }
     },
     {
+     "label": {
+      "id": "Nomor GM (slip Hiryu)",
+      "en": "GM number (Hiryu slip)"
+     },
      "path": "data.gm_number",
      "type": "string",
      "required": true,
@@ -1698,6 +1980,10 @@
      }
     },
     {
+     "label": {
+      "id": "Waktu selesai dikemas",
+      "en": "Time packed"
+     },
      "path": "data.packed_at",
      "type": "string",
      "required": true,
@@ -1857,8 +2143,23 @@
      }
     }
    ],
+   "timing": {
+    "agree": false,
+    "event": {
+     "id": "Picker menekan Barang tidak ada dan cek di bin lain gagal. Satu pesan per baris yang berubah.",
+     "en": "The picker taps Barang tidak ada and the look-elsewhere check fails. One message per line that changed."
+    },
+    "speed": {
+     "id": "Pesan pesanan: berangkat lebih dulu dari pesan stok yang sedang menunggu. Pengirim WMS memeriksa antrean tiap 5 dtk, jadi pesan biasanya berangkat dalam sekitar 5 dtk. Bila Hiryu tidak menjawab atau sibuk: coba lagi setelah 10 dtk, 30 dtk, 1 mnt, 2 mnt, 5 mnt, lalu tiap 10 mnt.",
+     "en": "An order message: it leaves ahead of any stock messages waiting. The WMS sender checks the queue every 5 s, so a message usually leaves within about 5 s. If Hiryu does not answer or is busy: retried after 10 s, 30 s, 1 min, 2 min, 5 min, then every 10 min."
+    }
+   },
    "fields": [
     {
+     "label": {
+      "id": "Nomor pesan (sekali saja)",
+      "en": "Message number (used once)"
+     },
      "path": "message_id",
      "type": "string",
      "required": true,
@@ -1878,6 +2179,10 @@
      }
     },
     {
+     "label": {
+      "id": "Jenis pesan",
+      "en": "Message type"
+     },
      "path": "type",
      "type": "string",
      "required": true,
@@ -1897,6 +2202,10 @@
      }
     },
     {
+     "label": {
+      "id": "Waktu kirim",
+      "en": "Time sent"
+     },
      "path": "sent_at",
      "type": "string",
      "required": true,
@@ -1916,6 +2225,10 @@
      }
     },
     {
+     "label": {
+      "id": "Isi pesan",
+      "en": "Message content"
+     },
      "path": "data",
      "type": "object",
      "required": true,
@@ -1930,6 +2243,10 @@
      }
     },
     {
+     "label": {
+      "id": "Nomor pesanan Grab",
+      "en": "Grab order number"
+     },
      "path": "data.grab_order_id",
      "type": "string",
      "required": true,
@@ -1944,6 +2261,10 @@
      }
     },
     {
+     "label": {
+      "id": "Nomor GM (slip Hiryu)",
+      "en": "GM number (Hiryu slip)"
+     },
      "path": "data.gm_number",
      "type": "string",
      "required": true,
@@ -1958,6 +2279,10 @@
      }
     },
     {
+     "label": {
+      "id": "Item menu yang kurang",
+      "en": "Menu item that is short"
+     },
      "path": "data.hiryu_item_id",
      "type": "string",
      "required": true,
@@ -1972,6 +2297,10 @@
      }
     },
     {
+     "label": {
+      "id": "Kode produk (SKU)",
+      "en": "Product code (SKU)"
+     },
      "path": "data.sku_code",
      "type": "string",
      "required": true,
@@ -1991,6 +2320,10 @@
      }
     },
     {
+     "label": {
+      "id": "Yang dilakukan WMS",
+      "en": "What the WMS did"
+     },
      "path": "data.action",
      "type": "string",
      "required": true,
@@ -2010,6 +2343,10 @@
      }
     },
     {
+     "label": {
+      "id": "Unit dipesan",
+      "en": "Units ordered"
+     },
      "path": "data.units_wanted",
      "type": "integer",
      "required": true,
@@ -2024,6 +2361,10 @@
      }
     },
     {
+     "label": {
+      "id": "Unit ditemukan",
+      "en": "Units found"
+     },
      "path": "data.units_found",
      "type": "integer",
      "required": true,
@@ -2038,6 +2379,10 @@
      }
     },
     {
+     "label": {
+      "id": "Item pengganti",
+      "en": "Replacement item"
+     },
      "path": "data.replace_hiryu_item_id",
      "type": "string",
      "required": true,
@@ -2055,6 +2400,10 @@
      }
     },
     {
+     "label": {
+      "id": "Kode produk pengganti",
+      "en": "Replacement product code"
+     },
      "path": "data.replace_sku_code",
      "type": "string",
      "required": true,
@@ -2077,6 +2426,10 @@
      }
     },
     {
+     "label": {
+      "id": "Unit pengganti diambil",
+      "en": "Replacement units taken"
+     },
      "path": "data.replace_units",
      "type": "integer",
      "required": true,
@@ -2229,26 +2582,41 @@
      }
     },
     {
-     "side": "hiryu",
+     "side": "wms",
      "h": [
       "H6"
      ],
      "text": {
-      "id": "Jawaban catalogue_request (Sinkron ulang dari Hiryu): daftar lengkap, full true, dengan request_id yang sama.",
-      "en": "The answer to a catalogue_request (Sinkron ulang dari Hiryu): the whole list, full true, with the same request_id."
+      "id": "Sinkron ulang dari Hiryu: WMS menarik katalog (GET POS_CATALOGUE_URL) dan Hiryu menjawab dengan isi ini, full true. WMS menjalankannya lewat penangan yang sama.",
+      "en": "Sinkron ulang dari Hiryu: the WMS pulls the catalogue (GET POS_CATALOGUE_URL) and Hiryu answers with this body, full true. The WMS runs it through the same handler."
      }
     },
     {
      "side": "wms",
      "h": [],
      "text": {
-      "id": "Uji di WMS: di Mode demo stand-in Hiryu menjawab Sinkron ulang dengan pesan 6 penuh dari data yang sudah ada di WMS.",
-      "en": "Tests in the WMS: in Mode demo the Hiryu stand-in answers Sinkron ulang with a full message 6 built from what the WMS already holds."
+      "id": "Uji di WMS: di Mode demo stand-in Hiryu menjawab tarik katalog dengan pesan 6 penuh dari data yang sudah ada di WMS.",
+      "en": "Tests in the WMS: in Mode demo the Hiryu stand-in answers the catalogue pull with a full message 6 built from what the WMS already holds."
      }
     }
    ],
+   "timing": {
+    "agree": true,
+    "event": {
+     "id": "Katalog berubah di Hiryu (dark store, toko, menu, item, bundle atau SKU). Isi yang sama adalah jawaban tarik katalog.",
+     "en": "The catalogue changes in Hiryu (dark store, store, menu, item, bundle or SKU). The same body is the answer to the catalogue pull."
+    },
+    "speed": {
+     "id": "Usulan: setiap kali katalog berubah, Hiryu mengirim yang berubah saat itu juga. Jawaban tarik katalog paling lambat 20 dtk. (untuk disepakati dengan Shaun)",
+     "en": "Proposal: whenever the catalogue changes, Hiryu sends what changed at once. The answer to a catalogue pull within 20 s. (to agree with Shaun)"
+    }
+   },
    "fields": [
     {
+     "label": {
+      "id": "Nomor pesan (sekali saja)",
+      "en": "Message number (used once)"
+     },
      "path": "message_id",
      "type": "string",
      "required": true,
@@ -2268,6 +2636,10 @@
      }
     },
     {
+     "label": {
+      "id": "Daftar lengkap?",
+      "en": "Whole list?"
+     },
      "path": "full",
      "type": "boolean",
      "required": true,
@@ -2282,6 +2654,10 @@
      }
     },
     {
+     "label": {
+      "id": "Jawaban untuk permintaan",
+      "en": "Answer to request"
+     },
      "path": "request_id",
      "type": "string",
      "required": false,
@@ -2296,11 +2672,15 @@
      "pattern": "^[A-Za-z0-9._:-]{1,96}$",
      "example": "null",
      "meaning": {
-      "id": "request_id dari catalogue_request yang dijawab; null bila Hiryu mengirim sendiri. Menandai Sinkron ulang selesai.",
-      "en": "The request_id of the catalogue_request this answers; null when Hiryu sends on its own. Marks Sinkron ulang as done."
+      "id": "Pada jawaban tarik katalog: null atau request_id dari ?request_id=; WMS tetap mengisinya dengan request_id permintaannya. Null bila Hiryu mengirim sendiri. Menandai Sinkron ulang selesai.",
+      "en": "In the answer to a catalogue pull: null or the request_id from ?request_id=; the WMS fills in its own request_id either way. Null when Hiryu sends on its own. Marks Sinkron ulang as done."
      }
     },
     {
+     "label": {
+      "id": "Dark store",
+      "en": "Dark stores"
+     },
      "path": "dark_stores",
      "type": "array<object>",
      "required": false,
@@ -2320,6 +2700,10 @@
      }
     },
     {
+     "label": {
+      "id": "Nomor dark store di Hiryu",
+      "en": "Dark store number in Hiryu"
+     },
      "path": "dark_stores[].hiryu_dark_store_id",
      "type": "integer",
      "required": true,
@@ -2339,6 +2723,10 @@
      }
     },
     {
+     "label": {
+      "id": "Nama dark store",
+      "en": "Dark store name"
+     },
      "path": "dark_stores[].name",
      "type": "string",
      "required": true,
@@ -2358,6 +2746,10 @@
      }
     },
     {
+     "label": {
+      "id": "Alamat dark store",
+      "en": "Dark store address"
+     },
      "path": "dark_stores[].address",
      "type": "string",
      "required": true,
@@ -2377,6 +2769,10 @@
      }
     },
     {
+     "label": {
+      "id": "Jam buka",
+      "en": "Opening hours"
+     },
      "path": "dark_stores[].opening_hours",
      "type": "object",
      "required": true,
@@ -2391,6 +2787,10 @@
      }
     },
     {
+     "label": {
+      "id": "Jam buka per hari",
+      "en": "Hours per day"
+     },
      "path": "dark_stores[].opening_hours.{mon,tue,wed,thu,fri,sat,sun}",
      "type": "array<object>",
      "required": true,
@@ -2410,6 +2810,10 @@
      }
     },
     {
+     "label": {
+      "id": "Buka pukul",
+      "en": "Opens at"
+     },
      "path": "dark_stores[].opening_hours.{mon,tue,wed,thu,fri,sat,sun}[].open",
      "type": "string",
      "required": true,
@@ -2429,6 +2833,10 @@
      }
     },
     {
+     "label": {
+      "id": "Tutup pukul",
+      "en": "Closes at"
+     },
      "path": "dark_stores[].opening_hours.{mon,tue,wed,thu,fri,sat,sun}[].close",
      "type": "string",
      "required": true,
@@ -2448,6 +2856,10 @@
      }
     },
     {
+     "label": {
+      "id": "Toko",
+      "en": "Stores"
+     },
      "path": "stores",
      "type": "array<object>",
      "required": false,
@@ -2467,6 +2879,10 @@
      }
     },
     {
+     "label": {
+      "id": "Nomor toko di Hiryu",
+      "en": "Store number in Hiryu"
+     },
      "path": "stores[].hiryu_store_id",
      "type": "integer",
      "required": true,
@@ -2486,6 +2902,10 @@
      }
     },
     {
+     "label": {
+      "id": "Nama toko",
+      "en": "Store name"
+     },
      "path": "stores[].name",
      "type": "string",
      "required": true,
@@ -2505,6 +2925,10 @@
      }
     },
     {
+     "label": {
+      "id": "Dark store tempat toko",
+      "en": "The store's dark store"
+     },
      "path": "stores[].hiryu_dark_store_id",
      "type": "integer",
      "required": true,
@@ -2524,6 +2948,10 @@
      }
     },
     {
+     "label": {
+      "id": "Toko aktif?",
+      "en": "Store active?"
+     },
      "path": "stores[].status",
      "type": "string",
      "required": true,
@@ -2543,6 +2971,10 @@
      }
     },
     {
+     "label": {
+      "id": "Cara terima pesanan",
+      "en": "How orders are accepted"
+     },
      "path": "stores[].order_acceptance",
      "type": "string",
      "required": false,
@@ -2562,6 +2994,10 @@
      }
     },
     {
+     "label": {
+      "id": "Produk (SKU)",
+      "en": "Products (SKUs)"
+     },
      "path": "skus",
      "type": "array<object>",
      "required": false,
@@ -2581,6 +3017,10 @@
      }
     },
     {
+     "label": {
+      "id": "Kode produk (SKU)",
+      "en": "Product code (SKU)"
+     },
      "path": "skus[].sku_code",
      "type": "string",
      "required": true,
@@ -2600,6 +3040,10 @@
      }
     },
     {
+     "label": {
+      "id": "Nama produk",
+      "en": "Product name"
+     },
      "path": "skus[].name",
      "type": "string",
      "required": true,
@@ -2619,6 +3063,10 @@
      }
     },
     {
+     "label": {
+      "id": "Barcode",
+      "en": "Barcodes"
+     },
      "path": "skus[].barcodes",
      "type": "array<string>",
      "required": false,
@@ -2638,6 +3086,10 @@
      }
     },
     {
+     "label": {
+      "id": "Menu toko",
+      "en": "Store menus"
+     },
      "path": "menus",
      "type": "array<object>",
      "required": false,
@@ -2657,6 +3109,10 @@
      }
     },
     {
+     "label": {
+      "id": "Toko",
+      "en": "Store"
+     },
      "path": "menus[].hiryu_store_id",
      "type": "integer",
      "required": true,
@@ -2676,6 +3132,10 @@
      }
     },
     {
+     "label": {
+      "id": "Item di menu",
+      "en": "Menu items"
+     },
      "path": "menus[].items",
      "type": "array<object>",
      "required": true,
@@ -2695,6 +3155,10 @@
      }
     },
     {
+     "label": {
+      "id": "Item menu",
+      "en": "Menu item"
+     },
      "path": "menus[].items[].item_id",
      "type": "string",
      "required": true,
@@ -2714,6 +3178,10 @@
      }
     },
     {
+     "label": {
+      "id": "Nama di menu",
+      "en": "Name on the menu"
+     },
      "path": "menus[].items[].name",
      "type": "string",
      "required": true,
@@ -2733,6 +3201,10 @@
      }
     },
     {
+     "label": {
+      "id": "Kode produk (SKU)",
+      "en": "Product code (SKU)"
+     },
      "path": "menus[].items[].sku_code",
      "type": "string",
      "required": true,
@@ -2752,6 +3224,10 @@
      }
     },
     {
+     "label": {
+      "id": "Unit per penjualan",
+      "en": "Units per sale"
+     },
      "path": "menus[].items[].units_per_sale",
      "type": "integer",
      "required": true,
@@ -2771,6 +3247,10 @@
      }
     },
     {
+     "label": {
+      "id": "Harga menu",
+      "en": "Menu price"
+     },
      "path": "menus[].items[].price",
      "type": "integer",
      "required": false,
@@ -2790,6 +3270,10 @@
      }
     },
     {
+     "label": {
+      "id": "Item menyala di menu?",
+      "en": "Item switched on?"
+     },
      "path": "menus[].items[].available",
      "type": "boolean",
      "required": true,
@@ -2991,15 +3475,15 @@
     {
      "side": "wms",
      "text": {
-      "id": "Toko baru menunggu Ops HQ memilih merek dan akun merchant Grab; sampai itu tidak ada yang dikirim untuknya. SKU baru dibuat untuk merek toko yang memakainya; Ops HQ melengkapinya (Lengkapi data SKU).",
-      "en": "A new store waits for Ops HQ to pick its brand and Grab merchant account; until then nothing is sent for it. A new SKU is made for the brand of the store that uses it; Ops HQ completes it (Lengkapi data SKU)."
+      "id": "Toko baru menunggu Ops HQ memilih merek dan akun merchant Grab; sampai itu tidak ada yang dikirim untuknya. Begitu toko aktif, WMS mengirim snapshot stok penuhnya (H8). SKU baru dibuat untuk merek toko yang memakainya; Ops HQ melengkapinya (Lengkapi data SKU).",
+      "en": "A new store waits for Ops HQ to pick its brand and Grab merchant account; until then nothing is sent for it. Once the store is active, the WMS sends its full stock snapshot (H8). A new SKU is made for the brand of the store that uses it; Ops HQ completes it (Lengkapi data SKU)."
      }
     },
     {
      "side": "wms",
      "text": {
-      "id": "Dengan request_id: Sinkron ulang ditandai terjawab di Menu & toko Hiryu.",
-      "en": "With a request_id: Sinkron ulang shows as answered on Menu & toko Hiryu."
+      "id": "Jawaban tarik katalog: Sinkron ulang tampil Katalog diterima di Menu & toko Hiryu.",
+      "en": "The answer to a catalogue pull: Sinkron ulang shows Catalogue taken on Menu & toko Hiryu."
      }
     },
     {
@@ -3013,12 +3497,12 @@
    "rules": []
   },
   {
-   "key": "catalogue_request",
+   "key": "catalogue_pull",
    "no": null,
-   "log_type": "catalogue_request",
+   "log_type": "catalogue_pull",
    "name": {
-    "id": "Minta katalog penuh",
-    "en": "Catalogue request"
+    "id": "Tarik katalog",
+    "en": "Catalogue pull"
    },
    "direction": "out",
    "from": "wms",
@@ -3027,16 +3511,16 @@
     "H6"
    ],
    "call": {
-    "method": "POST",
-    "path": "POS_WEBHOOK_URL",
-    "url": null,
+    "method": "GET",
+    "path": "POS_CATALOGUE_URL",
+    "url": "https://<hiryu>/catalogue?request_id=wms-cat-3-1790822400",
     "who": {
      "id": "WMS memanggil Hiryu",
      "en": "The WMS calls Hiryu"
     },
     "note": {
-     "id": "Satu alamat di sisi Hiryu (POS_WEBHOOK_URL, disepakati dengan Shaun). Jenis pesan di isi: \"type\": \"catalogue_request\", field di dalam data. Satu pesan per panggilan.",
-     "en": "One address on Hiryu's side (POS_WEBHOOK_URL, to agree with Shaun). The type is in the body: \"type\": \"catalogue_request\", the fields inside data. One message per call."
+     "id": "Satu alamat baca saja di sisi Hiryu (POS_CATALOGUE_URL, disepakati dengan Shaun). Bila kosong, WMS memakai asal POS_WEBHOOK_URL ditambah /catalogue. Tanpa isi. Hiryu menjawab 200 dengan isi pesan 6 lengkap (full true); jawaban itu masuk lewat penangan pesan 6 yang sama.",
+     "en": "One read-only address on Hiryu's side (POS_CATALOGUE_URL, to agree with Shaun). When it is empty, the WMS uses POS_WEBHOOK_URL's origin plus /catalogue. No body. Hiryu answers 200 with a full message 6 body (full true); that answer goes through the same message 6 handler."
     }
    },
    "headers": [
@@ -3045,11 +3529,7 @@
      "value": "<POS_SHARED_SECRET>"
     },
     {
-     "name": "Idempotency-Key",
-     "value": "<message_id>"
-    },
-    {
-     "name": "Content-Type",
+     "name": "Accept",
      "value": "application/json"
     }
    ],
@@ -3060,85 +3540,29 @@
       "H6"
      ],
      "text": {
-      "id": "Siapa pun di dark store menekan Sinkron ulang dari Hiryu di Menu & toko Hiryu. Semua peran, sekali tiap 5 menit per dark store; nama penekan dicatat.",
-      "en": "Anyone at the dark store presses Sinkron ulang dari Hiryu on Menu & toko Hiryu. Any role, once every 5 minutes per dark store; the name is logged."
+      "id": "Siapa pun di dark store menekan Sinkron ulang dari Hiryu di Menu & toko Hiryu. Semua peran, sekali tiap 5 menit per dark store (yang gagal tidak dihitung); nama penekan dicatat.",
+      "en": "Anyone at the dark store presses Sinkron ulang dari Hiryu on Menu & toko Hiryu. Any role, once every 5 minutes per dark store (a failed one does not count); the name is logged."
      }
     }
    ],
+   "timing": {
+    "agree": true,
+    "event": {
+     "id": "Seseorang menekan Sinkron ulang dari Hiryu di Menu & toko Hiryu.",
+     "en": "Someone presses Sinkron ulang dari Hiryu on Menu & toko Hiryu."
+    },
+    "speed": {
+     "id": "Saat tombol ditekan, tanpa antrean. Hiryu menjawab paling lambat 20 dtk; tombol menunggu jawaban itu. (untuk disepakati dengan Shaun)",
+     "en": "On the button press, no queue. Hiryu answers within 20 s; the button waits for that answer. (to agree with Shaun)"
+    }
+   },
    "fields": [
     {
-     "path": "message_id",
-     "type": "string",
-     "required": true,
-     "nullable": false,
-     "when": null,
-     "allowed": [
-      {
-       "id": "wms-<nomor antrean>",
-       "en": "wms-<queue number>"
-      }
-     ],
-     "pattern": null,
-     "example": "\"wms-40400\"",
-     "meaning": {
-      "id": "WMS membuatnya, unik per pesan; percobaan ulang memakai yang sama. Juga dikirim sebagai header Idempotency-Key.",
-      "en": "The WMS makes it, unique per message; a retry reuses it. Also sent as the Idempotency-Key header."
-     }
-    },
-    {
-     "path": "type",
-     "type": "string",
-     "required": true,
-     "nullable": false,
-     "when": null,
-     "allowed": [
-      {
-       "id": "catalogue_request",
-       "en": "catalogue_request"
-      }
-     ],
-     "pattern": null,
-     "example": "\"catalogue_request\"",
-     "meaning": {
-      "id": "Jenis pesan; isi data mengikuti jenis ini.",
-      "en": "The message type; what is in data follows it."
-     }
-    },
-    {
-     "path": "sent_at",
-     "type": "string",
-     "required": true,
-     "nullable": false,
-     "when": null,
-     "allowed": [
-      {
-       "id": "UTC dengan Z, sampai detik",
-       "en": "UTC with Z, to the second"
-      }
-     ],
-     "pattern": null,
-     "example": "\"2026-10-01T02:40:01Z\"",
-     "meaning": {
-      "id": "Saat WMS mengirim pesan ini, diisi ulang di setiap percobaan.",
-      "en": "When the WMS sent it, set again on every attempt."
-     }
-    },
-    {
-     "path": "data",
-     "type": "object",
-     "required": true,
-     "nullable": false,
-     "when": null,
-     "allowed": [],
-     "pattern": null,
-     "example": null,
-     "meaning": {
-      "id": "Isi pesan, field di bawah.",
-      "en": "The message itself, the fields below."
-     }
-    },
-    {
-     "path": "data.request_id",
+     "label": {
+      "id": "Nomor permintaan",
+      "en": "Request number"
+     },
+     "path": "(query) request_id",
      "type": "string",
      "required": true,
      "nullable": false,
@@ -3149,108 +3573,161 @@
        "en": "wms-cat-<dark store id>-<unix seconds>"
       }
      ],
-     "pattern": null,
+     "pattern": "^[A-Za-z0-9._:-]{1,96}$",
      "example": "\"wms-cat-3-1790822400\"",
      "meaning": {
-      "id": "WMS membuatnya, unik per permintaan. Kembalikan di request_id pesan 6.",
-      "en": "The WMS makes it, unique per request. Echo it in request_id of message 6."
-     }
-    },
-    {
-     "path": "data.requested_at",
-     "type": "string",
-     "required": true,
-     "nullable": false,
-     "when": null,
-     "allowed": [
-      {
-       "id": "UTC dengan Z, sampai detik",
-       "en": "UTC with Z, to the second"
-      }
-     ],
-     "pattern": null,
-     "example": "\"2026-10-01T02:40:00Z\"",
-     "meaning": {
-      "id": "Saat tombol ditekan. Untuk log Hiryu.",
-      "en": "When the button was pressed. For Hiryu's log."
+      "id": "WMS membuatnya, unik per tekanan tombol. Untuk log Hiryu; Hiryu boleh mengembalikannya di request_id jawaban, atau mengabaikannya.",
+      "en": "The WMS makes it, unique per press of the button. For Hiryu's log; Hiryu may echo it in request_id of the answer, or ignore it."
      }
     }
    ],
    "example": {
-    "message_id": "wms-40400",
-    "type": "catalogue_request",
-    "sent_at": "2026-10-01T02:40:01Z",
-    "data": {
-     "request_id": "wms-cat-3-1790822400",
-     "requested_at": "2026-10-01T02:40:00Z"
-    }
+    "message_id": "hy-cat-full-3-1790822400",
+    "full": true,
+    "request_id": "wms-cat-3-1790822400",
+    "dark_stores": [
+     {
+      "hiryu_dark_store_id": 13,
+      "name": "Cawang",
+      "address": "Jl. Raya Kalibata No. 4, Jakarta Timur",
+      "opening_hours": {
+       "mon": [
+        {
+         "open": "08:00",
+         "close": "22:00"
+        }
+       ],
+       "tue": [
+        {
+         "open": "08:00",
+         "close": "22:00"
+        }
+       ],
+       "wed": [
+        {
+         "open": "08:00",
+         "close": "22:00"
+        }
+       ],
+       "thu": [
+        {
+         "open": "08:00",
+         "close": "22:00"
+        }
+       ],
+       "fri": [
+        {
+         "open": "08:00",
+         "close": "22:00"
+        }
+       ],
+       "sat": [
+        {
+         "open": "08:00",
+         "close": "22:00"
+        }
+       ],
+       "sun": [
+        {
+         "open": "08:00",
+         "close": "22:00"
+        }
+       ]
+      }
+     }
+    ],
+    "stores": [
+     {
+      "hiryu_store_id": 902,
+      "name": "Kahf - Cawang",
+      "hiryu_dark_store_id": 13,
+      "status": "active",
+      "order_acceptance": "MANUAL"
+     }
+    ],
+    "skus": [
+     {
+      "sku_code": "KHF-FW-OAC-100",
+      "name": "Kahf Oil and Acne Care Face Wash 100 ml",
+      "barcodes": [
+       "8993137000101"
+      ]
+     }
+    ],
+    "menus": [
+     {
+      "hiryu_store_id": 902,
+      "items": [
+       {
+        "item_id": "KHF-FW-OAC-100",
+        "name": "Kahf Face Wash Oil & Acne 100 ml",
+        "sku_code": "KHF-FW-OAC-100",
+        "units_per_sale": 1,
+        "price": 45000,
+        "available": true
+       }
+      ]
+     }
+    ]
    },
    "answers": [
     {
-     "status": "2xx",
+     "status": 200,
      "body": null,
      "when": {
-      "id": "Diterima. Isi jawaban bebas; WMS menyimpannya di log.",
-      "en": "Taken. Any body; the WMS keeps it in the log."
+      "id": "Isi pesan 6 lengkap, full true: semua dark store, toko, SKU dan menu, dengan message_id baru setiap jawaban. Contohnya di samping. WMS menerapkannya dan log menampilkannya sebagai pesan 6 masuk.",
+      "en": "A full message 6 body, full true: every dark store, store, SKU and menu, with a new message_id on every answer. The example is alongside. The WMS applies it and the log shows it as message 6 in."
      }
     },
     {
-     "status": 409,
+     "status": "4xx, 5xx",
      "body": null,
      "when": {
-      "id": "Sudah diterima sebelumnya: duplikat. WMS menganggapnya selesai.",
-      "en": "Taken before: a duplicate. The WMS treats it as done."
-     }
-    },
-    {
-     "status": "408, 429, 5xx",
-     "body": null,
-     "when": {
-      "id": "Terlalu lambat, terlalu banyak panggilan, atau Hiryu sibuk. WMS mencoba lagi sesuai jadwal.",
-      "en": "Too slow, too many calls, or Hiryu is busy. The WMS retries on the schedule."
-     }
-    },
-    {
-     "status": "4xx",
-     "body": null,
-     "when": {
-      "id": "4xx lain, misalnya kunci salah: gagal, WMS berhenti mencoba dan menampilkannya merah di sini.",
-      "en": "Any other 4xx, for example a wrong key: failed, the WMS stops and shows it red here."
+      "id": "Gagal, juga untuk jawaban yang bukan pesan 6 yang sah atau full false. WMS tidak mencoba lagi sendiri: tombol menampilkan Gagal dengan alasannya dan boleh ditekan lagi saat itu juga.",
+      "en": "Failed, also for an answer that is not a valid message 6 or has full false. The WMS does not retry by itself: the button shows the failure with its reason and may be pressed again at once."
      }
     },
     {
      "status": "timeout",
      "body": null,
      "when": {
-      "id": "Tidak ada jawaban dalam 8 detik, atau sambungan putus: dicoba lagi.",
-      "en": "No answer in 8 seconds, or the connection drops: retried."
+      "id": "Tidak ada jawaban dalam 20 detik, atau sambungan putus: gagal, seperti di atas.",
+      "en": "No answer within 20 seconds, or the connection drops: failed, as above."
      }
     }
    ],
    "next": [
     {
-     "side": "hiryu",
+     "side": "wms",
      "text": {
-      "id": "Jawab 2xx saat itu juga, lalu kirim pesan 6 dengan full true dan request_id yang sama.",
-      "en": "Answer 2xx at once, then send message 6 with full true and the same request_id."
+      "id": "Katalog diterapkan seperti pesan 6 lainnya. Tombol menampilkan Katalog diterima dengan jam dan nama penekan; yang tidak bisa dipakai masuk Perlu tindakan.",
+      "en": "The catalogue is applied like any message 6. The button shows Catalogue taken with the time and the name; what cannot be used goes to Perlu tindakan."
      }
     },
     {
-     "side": "wms",
+     "side": "hiryu",
      "text": {
-      "id": "Saat pesan 6 itu tiba, Sinkron ulang tampil terjawab.",
-      "en": "When that message 6 arrives, Sinkron ulang shows as answered."
+      "id": "Tidak ada langkah lagi. Hiryu tetap mengirim pesan 6 sendiri (POST) setiap kali katalognya berubah.",
+      "en": "Nothing more to do. Hiryu still sends message 6 by itself (POST) whenever its catalogue changes."
      }
     }
    ],
    "rules": [
     {
-     "id": "Terlalu cepat: tombol mendapat 429 (Bisa lagi 09:45 WIB) dan tidak ada yang diantrekan. Batas ini di aplikasi WMS, bukan jawaban untuk Hiryu.",
-     "en": "Too soon: the button gets 429 (Bisa lagi 09:45 WIB) and nothing is queued. This limit is in the WMS app, not an answer to Hiryu."
+     "id": "Terlalu cepat: tombol mendapat 429 (Bisa lagi 09:45 WIB) dan Hiryu tidak dipanggil. Batas ini di aplikasi WMS.",
+     "en": "Too soon: the button gets 429 (Bisa lagi 09:45 WIB) and Hiryu is not called. This limit is in the WMS app."
     },
     {
-     "id": "Pilihan lain untuk Shaun: GET di sisi Hiryu yang mengembalikan isi pesan 6.",
-     "en": "Other option for Shaun: a GET on Hiryu's side that returns the message 6 body."
+     "id": "Tarik katalog tidak menunggu POS_PUSH_ENABLED atau Sambungan Hiryu aktif: katalog datang sebelum sambungan dinyalakan. Perlu alamatnya dan POS_SHARED_SECRET.",
+     "en": "The catalogue pull does not wait for POS_PUSH_ENABLED or Sambungan Hiryu aktif: the catalogue comes before switch-on. It needs its address and POS_SHARED_SECRET."
+    },
+    {
+     "id": "Jawaban yang bukan pesan 6 yang sah ditolak seluruhnya dan tidak mengubah apa pun; log menampilkannya Ditolak dengan alasannya.",
+     "en": "An answer that is not a valid message 6 is refused whole and changes nothing; the log shows it as Refused with the reason."
+    },
+    {
+     "id": "Di Mode demo stand-in Hiryu di dalam WMS menjawab dengan katalog yang sudah ada di WMS.",
+     "en": "In Mode demo the Hiryu stand-in inside the WMS answers with the catalogue the WMS already holds."
     }
    ]
   }

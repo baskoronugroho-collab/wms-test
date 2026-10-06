@@ -459,11 +459,16 @@ async def rows_link(R: _Rows, ids, rule, user):
                   row["since"], timedelta(minutes=0), "ops_head", link, "periksa")
     if await table_exists("hiryu_catalogue_requests"):
         for r in await db.fetch_all(
-                "SELECT site_id, request_id, requested_at FROM hiryu_catalogue_requests "
-                f"WHERE site_id IN ({ph}) AND answered_at IS NULL AND requested_at < UTC_TIMESTAMP() - INTERVAL 10 MINUTE "
-                "AND requested_at >= UTC_TIMESTAMP() - INTERVAL 2 DAY", ids):
+                "SELECT r.site_id, r.request_id, r.requested_at FROM hiryu_catalogue_requests r "
+                f"WHERE r.site_id IN ({ph}) AND r.answered_at IS NULL "
+                "AND r.requested_at < UTC_TIMESTAMP() - INTERVAL 10 MINUTE "
+                "AND r.requested_at >= UTC_TIMESTAMP() - INTERVAL 2 DAY "
+                # Only the last press per dark store: a pull that failed and
+                # then worked is done.
+                "AND NOT EXISTS (SELECT 1 FROM hiryu_catalogue_requests r2 "
+                "  WHERE r2.site_id = r.site_id AND r2.id > r.id)", ids):
             R.add("catalogue_unanswered", "hq", r["site_id"],
-                  ("Sinkron ulang belum dijawab Hiryu", "Hiryu has not answered a re-sync"),
+                  ("Sinkron ulang dari Hiryu gagal", "Resync from Hiryu failed"),
                   None, r["requested_at"], timedelta(minutes=10), "ops_head", link, "periksa")
 
 

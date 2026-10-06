@@ -51,7 +51,7 @@ async def _site_rows(site: dict, brand_id: int | None, q: str | None) -> list[di
         params += [like, like, like]
     skus = await db.fetch_all(
         "SELECT s.id AS sku_id, s.name_display, s.hiryu_sku_code, s.brand_id, "
-        "       b.name AS brand_name, s.bin_size, s.grab_buffer, "
+        "       b.name AS brand_name, s.bin_size, "
         "       sa.full_threshold, sa.restock_point, sa.safety_stock, l.code AS bin_code, "
         "       (SELECT bc.barcode FROM barcodes bc WHERE bc.sku_id = s.id "
         "         ORDER BY bc.registered_at, bc.id LIMIT 1) AS barcode "
@@ -107,7 +107,6 @@ async def _site_rows(site: dict, brand_id: int | None, q: str | None) -> list[di
                 elif oldest is not None:
                     basis = "inbound"
         sellable = max(0, d["rack"] - d["alloc"])
-        buffer = s["grab_buffer"]
         out.append({
             "site_id": sid, "site_code": site["code"], "sku_id": s["sku_id"],
             "name": s["name_display"], "hiryu_sku_code": s["hiryu_sku_code"],
@@ -116,7 +115,7 @@ async def _site_rows(site: dict, brand_id: int | None, q: str | None) -> list[di
             "bin_size": racks.norm_size(s["bin_size"]),
             "on_hand": on_hand, "in_rack": d["rack"], "in_inbound": d["IN"],
             "in_quarantine": d["QR"], "in_baskets": d["OUT"], "allocated": d["alloc"],
-            "sellable": sellable, "grab_buffer": buffer,
+            "sellable": sellable,
             "fill_to": s["full_threshold"], "reorder_at": s["restock_point"],
             "critical_at": s["safety_stock"],
             "oldest_inbound_at": racks.iso(oldest), "age_basis": basis,

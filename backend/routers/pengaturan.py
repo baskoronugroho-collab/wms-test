@@ -30,6 +30,7 @@ from pydantic import BaseModel, Field
 import auth
 import db
 import ledger
+import pos_sender
 from routers import locations, racks, reminders
 
 router = APIRouter(prefix="/api", tags=["pengaturan"])
@@ -306,7 +307,7 @@ PHASES = (
     ("B", "Katalog", "Catalogue", ""),
     ("C", "Rak dan label", "Racks and labels", "Daftar rak, cek label, bin khusus, beri bin"),
     ("D", "Stok awal", "Opening stock", "PO pertama, barang masuk pertama"),
-    ("E", "Nyalakan", "Switch on", "Link stok, pesanan uji, aktif di Grab, pantau"),
+    ("E", "Nyalakan", "Switch on", "Stok ke Hiryu, pesanan uji, aktif di Grab, pantau"),
 )
 
 # key, phase, title (ID), title (EN), who (roles), systems, mode, screen, guide,
@@ -411,13 +412,15 @@ STEPS: list[dict] = [
          guide="S05", where="Barang masuk",
          do=["Terima kiriman pertama, pindai setiap unit, simpan ke rak."],
          auto="Dicentang otomatis saat barang masuk pertama selesai."),
-    dict(key="e_link", phase="E", title="Nyalakan link stok", title_en="Switch on the stock link",
+    dict(key="e_link", phase="E", title="Cek stok di Hiryu", title_en="Check the stock in Hiryu",
          who=["hq"], systems=["WMS", "Hiryu"], mode="auto", screen="pengaturan.html#integrasi",
          guide="S02", where="Pengaturan, Integrasi Hiryu",
-         do=["Bersama Shaun: nyalakan link untuk toko. WMS mengirim seluruh stok.",
-             "Buka 3 SKU di Hiryu dan cek angkanya sama dengan WMS (tersedia dikurangi Cadangan "
-             "Grab)."],
-         auto="Dicentang otomatis saat link setiap toko di dark store menyala."),
+         do=["Tidak ada sakelar per toko: stok dikirim ke Hiryu untuk setiap toko aktif "
+             "(aktif di Hiryu, merek dipilih, dark store ada di katalog Hiryu).",
+             "Bersama Shaun: bila Sambungan Hiryu aktif belum menyala, nyalakan sekali. "
+             "WMS mengirim seluruh stok.",
+             "Buka 3 SKU di Hiryu dan cek angkanya sama dengan angka tersedia di WMS."],
+         auto="Dicentang otomatis saat stok dark store ini sudah terkirim ke Hiryu."),
     dict(key="e_test_orders", phase="E", title="Latihan pesanan uji", title_en="Test orders",
          who=["supervisor", "hq"], systems=["WMS"], mode="auto", screen="pesanan.html",
          guide="S02", where="Pesanan, Buat pesanan uji",
@@ -425,11 +428,13 @@ STEPS: list[dict] = [
              "Ambil, kemas, serahkan, lalu Kembalikan ke rak."],
          auto="Dicentang otomatis saat pesanan uji pertama sudah diserahkan."),
     dict(key="e_grab", phase="E", title="Aktifkan toko di Grab", title_en="Activate the stores on Grab",
-         who=["hq"], systems=["Hiryu", "Grab"], mode="auto", screen="menu-toko-hiryu.html",
+         who=["hq"], systems=["Hiryu", "Grab"], mode="manual", screen="menu-toko-hiryu.html",
          guide="S02", where="Hiryu, dengan login manajer Grab outlet",
          do=["Cek menu Synced di Hiryu dan jam buka tampil di Grab.",
+             "Di Menu & toko Hiryu, Status di Hiryu setiap toko: Aktif, terima MANUAL.",
              "Aktifkan hanya bila semua langkah sebelumnya Selesai."],
-         auto="Dicentang otomatis saat setiap toko di dark store Aktif di Grab."),
+         manual="WMS tidak melihat Grab. Ops HQ menekan Tandai selesai setelah setiap toko "
+                "aktif di Grab."),
     dict(key="e_watch", phase="E", title="Pantau pesanan pertama",
          title_en="Watch the first real orders", who=["supervisor", "hq"],
          systems=["Hiryu", "WMS"], mode="manual", screen="pesanan.html", guide="S02",
@@ -573,12 +578,21 @@ async def _check(key: str, site: dict) -> tuple[str, str | None] | None:
             return "selesai", None
         return ("sedang" if int(r["n"] or 0) else "belum"), None
     if key == "e_link":
-        r = await _one("SELECT COUNT(*) AS n, SUM(CASE WHEN link_on = 1 THEN 1 ELSE 0 END) AS on_n "
-                       "FROM hiryu_stores WHERE site_id = %s AND active = 1", (sid,))
-        n, on = int(r["n"] or 0), int(r["on_n"] or 0)
+        # No switch per store (6 Oct): every active store gets its stock. Done
+        # once a stock number for this dark store has reached Hiryu.
+        r = await _one("SELECT COUNT(*) AS n FROM hiryu_stores WHERE site_id = %s AND active = 1",
+                       (sid,))
+        n = int(r["n"] or 0)
         if not n:
-            return "belum", None
-        return ("selesai" if on == n else "sedang" if on else "belum"), f"{on} dari {n} toko"
+            return "belum", "Belum ada toko aktif"
+        sent = await _one("SELECT COUNT(*) AS n FROM pos_outbox WHERE site_id = %s "
+                          "AND message_type = 'stock_level' AND status = 'sent' "
+                          "AND merged_into IS NULL", (sid,))
+        if int(sent["n"] or 0):
+            return "selesai", f"{n} toko aktif, stok terkirim"
+        if await pos_sender.link_live():
+            return "sedang", f"{n} toko aktif, stok belum terkirim"
+        return "belum", "Sambungan Hiryu aktif belum menyala"
     if key == "e_test_orders":
         r = await _one("SELECT COUNT(*) AS n, SUM(CASE WHEN handed_over_at IS NOT NULL THEN 1 "
                        "ELSE 0 END) AS done_n FROM orders WHERE site_id = %s AND is_test = 1",
@@ -587,13 +601,6 @@ async def _check(key: str, site: dict) -> tuple[str, str | None] | None:
         if done:
             return "selesai", f"{done} pesanan uji diserahkan"
         return ("sedang" if n else "belum"), None
-    if key == "e_grab":
-        r = await _one("SELECT COUNT(*) AS n, SUM(CASE WHEN grab_active = 1 THEN 1 ELSE 0 END) "
-                       "AS on_n FROM hiryu_stores WHERE site_id = %s AND active = 1", (sid,))
-        n, on = int(r["n"] or 0), int(r["on_n"] or 0)
-        if not n:
-            return "belum", None
-        return ("selesai" if on == n else "sedang" if on else "belum"), f"{on} dari {n} toko"
     return None
 
 
@@ -751,8 +758,6 @@ NEW_RULES: dict[str, tuple[str, str, str | None]] = {
                            "Ready target: Grab's order time plus", "menit|min"),
     "scheduled_lead_minutes": ("Pesanan terjadwal: siap sebelum waktu jadwal",
                                "Scheduled order: ready before the scheduled time by", "menit|min"),
-    "grab_buffer_default": ("Cadangan Grab bawaan per SKU (bila tidak diisi di Produk)",
-                            "Default Grab buffer per SKU (when not set on Produk)", "unit|units"),
     "bin_kecil_length_cm": ("Bin Kecil: panjang kemasan paling besar",
                             "Kecil bin: longest pack side", "cm|cm"),
     "bin_kecil_width_cm": ("Bin Kecil: lebar kemasan paling besar",
@@ -794,8 +799,8 @@ GROUPS: list[tuple[str, str, str, list[str]]] = [
      ["grab_ready_minutes", "scheduled_lead_minutes", "pick_start_minutes",
       "handover_wait_minutes"]),
     ("stok", "Stok dan restock", "Stock and restock",
-     ["restock_default_pct", "auto_replenish", "safety_breach", "grab_buffer_default",
-      "stock_old_days", "slow_mover_days"]),
+     ["restock_default_pct", "auto_replenish", "safety_breach", "stock_old_days",
+      "slow_mover_days"]),
     ("restock", "Permintaan ke merek", "Requests to brands",
      ["draft_unsent_hours", "sent_unconfirmed_hours", "delivery_overdue_days",
       "variance_open_hours"]),
@@ -815,7 +820,7 @@ GROUPS: list[tuple[str, str, str, list[str]]] = [
 ]
 
 BOUNDS: dict[str, tuple[int, int]] = {
-    "restock_default_pct": (1, 99), "grab_buffer_default": (0, 99),
+    "restock_default_pct": (1, 99),
     "bin_kecil_length_cm": (1, 200), "bin_kecil_width_cm": (1, 200),
     "bin_kecil_height_cm": (1, 200), "bin_besar_bottle_ml": (1, 5000),
     "grab_ready_minutes": (1, 240), "scheduled_lead_minutes": (1, 240),

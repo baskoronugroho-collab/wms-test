@@ -1860,7 +1860,7 @@ async def create_test_order(body: TestOrderIn,
         picks = [(l.sku_id, l.units) for l in body.lines]
     else:
         # Products with free stock at this hub (of the store's brand).
-        where = "WHERE ib.site_id = %s AND l.is_virtual = 0 AND s.active = 1"
+        where = "WHERE ib.site_id = %s AND l.is_virtual = 0 AND sb.location_id IS NULL AND s.active = 1"
         params: list = [site["id"]]
         if brand_id:
             where += " AND s.brand_id = %s"
@@ -1868,7 +1868,8 @@ async def create_test_order(body: TestOrderIn,
         rows = await db.fetch_all(
             "SELECT s.id, s.brand_id, SUM(ib.qty_on_hand - ib.qty_allocated) AS free "
             "FROM inventory_balances ib JOIN skus s ON s.id = ib.sku_id "
-            f"JOIN locations l ON l.id = ib.location_id {where} "
+            f"JOIN locations l ON l.id = ib.location_id "
+            f"LEFT JOIN special_bins sb ON sb.location_id = l.id {where} "
             "GROUP BY s.id, s.brand_id HAVING free > 0", params)
         if not rows:
             raise HTTPException(409, "Tidak ada stok untuk pesanan uji. / No stock for a test order.")

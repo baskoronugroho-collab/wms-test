@@ -456,7 +456,12 @@
   function renderNew() {
     const me = A.me, h = host();
     S.fullScreen(true, { title: ['Pesanan baru', 'New order'], onBack: () => S.fullScreen(false) });
-    const ex = me.suggested_basket || ((S.shortCode(S.site().code) || 'MA5') + '-OUT-01');
+    // Any free basket is right. Show every free one; an older API gives one example.
+    const free = Array.isArray(me.free_baskets) ? me.free_baskets
+      : [me.suggested_basket || ((S.shortCode(S.site().code) || 'MA5') + '-OUT-01')];
+    const freeHtml = free.length
+      ? free.map((c) => '<span class="ps-label">' + icon('basket', 22) + esc(c) + '</span>').join('')
+      : bis('Belum ada. Keranjang kosong lagi setelah pesanan selesai dikemas.', 'None yet. A basket is free again once its order is packed.', 'k-strong');
     h.innerHTML =
       '<div class="k-card k-card--focus k-card--pad k-stack k-stack--tight">' +
         bis('Pesanan baru untuk Anda', 'A new order for you', 'k-eyebrow') +
@@ -468,9 +473,9 @@
         (me.store_name ? '<span class="k-muted k-strong">' + esc(me.store_name) + '</span>' : '') +
       '</div>' +
       '<div class="k-card k-card--pad k-stack">' +
-        '<div class="ps-step"><span class="ps-step__no">1</span><span class="ps-big">' + bis('Ambil keranjang kosong, pindai labelnya', 'Take an empty basket and scan its label') + '</span></div>' +
-        '<div class="k-line" style="gap:12px;flex-wrap:wrap">' + bis('Contoh label', 'Example label', 'k-caption') +
-          '<span class="ps-label">' + icon('basket', 22) + esc(ex) + '</span></div>' +
+        '<div class="ps-step"><span class="ps-step__no">1</span><span class="ps-big">' + bis('Ambil keranjang kosong mana saja, pindai labelnya', 'Take any empty basket and scan its label') + '</span></div>' +
+        '<div class="k-line" style="gap:12px;flex-wrap:wrap">' + bis('Yang kosong sekarang:', 'Free now:', 'k-caption') +
+          freeHtml + '</div>' +
       '</div>' +
       '<div class="k-note k-note--caution">' + icon('clock', 20) + bis('Mulai dalam 2 menit. Kalau tidak, pesanan pindah ke orang lain.',
         'Start within 2 minutes, or the order goes to someone else.') + '</div>' +

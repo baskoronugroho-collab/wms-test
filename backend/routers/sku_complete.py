@@ -2,7 +2,7 @@
 
 SKUs now arrive from Hiryu with a code, a name and maybe a barcode. Before a hub
 can give one a bin and the WMS can ask the brand for it, Ops HQ adds the bin
-size, the stock numbers, the Grab buffer and whatever pack data the brand sent.
+size, the stock numbers and whatever pack data the brand sent.
 
 Deploy 3 (canvas 2f, decided 1 Oct): the bin size, Kecil or Besar, is the one
 required field. A SKU without it cannot get a bin; that condition lives in one
@@ -15,7 +15,6 @@ Where each number lives (nothing new for the stock numbers; V26 adds the rest):
   isi sampai (P)             skus.default_full_threshold  slot_assignments.full_threshold
   pesan ulang saat sisa (R)  skus.default_restock_point   slot_assignments.restock_point
   batas kritis (S)           skus.default_safety_stock    slot_assignments.safety_stock
-  cadangan Grab              skus.grab_buffer (NULL = alert_rules grab_buffer_default)
 
 The SKU's own numbers are what a hub copies when the SKU gets a bin there
 (locations.assign_slot). A hub whose numbers still equal the SKU's own ones
@@ -66,7 +65,7 @@ _COLS = (
     "s.hiryu_sku_code, s.name_display, s.unit_size, s.category, s.photo_key, "
     "s.unit_cube_cm3, s.bin_size, s.bin_max, s.default_full_threshold, "
     "s.default_restock_point, s.default_restock_pct, s.default_safety_stock, "
-    "s.default_safety_pct, s.grab_buffer, s.pack_length_mm, s.pack_width_mm, "
+    "s.default_safety_pct, s.pack_length_mm, s.pack_width_mm, "
     "s.pack_height_mm, s.pack_weight_g, s.is_liquid, s.is_large_bottle"
 )
 
@@ -76,7 +75,6 @@ _PLAIN = {
     "brand_sku_code": "brand_sku_code",
     "bin_size": "bin_size",
     "bin_max": "bin_max",
-    "grab_buffer": "grab_buffer",
     "pack_length_mm": "pack_length_mm",
     "pack_width_mm": "pack_width_mm",
     "pack_height_mm": "pack_height_mm",
@@ -95,7 +93,6 @@ _LABEL = {
     "default_restock_pct": "Pesan ulang saat sisa (%)",
     "default_safety_stock": "Batas kritis",
     "default_safety_pct": "Batas kritis (%)",
-    "grab_buffer": "Cadangan Grab",
     "pack_length_mm": "Panjang (mm)",
     "pack_width_mm": "Lebar (mm)",
     "pack_height_mm": "Tinggi (mm)",
@@ -120,11 +117,6 @@ async def _restock_default_pct() -> int | None:
     if r is not None and not r["enabled"]:
         return None
     return int(r["value_num"]) if r and r["value_num"] else 25
-
-
-async def _buffer_default() -> int:
-    r = await _rule("grab_buffer_default")
-    return int(r["value_num"]) if r and r["value_num"] is not None else 1
 
 
 # The bin size guide (canvas 2f): Kecil fits a 15 x 10 x 20 cm box (about 3 L);
@@ -221,7 +213,6 @@ def _row(r: dict, barcodes: list[dict], hubs: list[dict], guide: dict) -> dict:
         "reorder_pct": r.get("default_restock_pct"),
         "critical_at": r.get("default_safety_stock"),
         "critical_pct": r.get("default_safety_pct"),
-        "grab_buffer": r.get("grab_buffer"),
         "pack_length_mm": r.get("pack_length_mm"), "pack_width_mm": r.get("pack_width_mm"),
         "pack_height_mm": r.get("pack_height_mm"), "pack_weight_g": r.get("pack_weight_g"),
         "is_liquid": _bool(r.get("is_liquid")),
@@ -345,7 +336,6 @@ class SkuRowOut(BaseModel):
     reorder_pct: int | None = None
     critical_at: int | None = None
     critical_pct: int | None = None
-    grab_buffer: int | None = Field(default=None, description="Cadangan Grab; null = the default")
     pack_length_mm: int | None = None
     pack_width_mm: int | None = None
     pack_height_mm: int | None = None
@@ -386,7 +376,6 @@ class SkuListOut(BaseModel):
     counts: SkuCounts
     bin_sizes: list[str]
     size_labels: dict[str, str]
-    grab_buffer_default: int
     restock_default_pct: int | None = None
     guide: SizeGuideOut
     can_edit: bool = Field(description="Ops HQ and above may change SKU data")
@@ -441,7 +430,6 @@ async def list_skus(
         "rows": rows, "total": len(rows),
         "counts": await _counts(brand_id, q, site_id),
         "bin_sizes": list(racks.SIZES), "size_labels": racks.SIZE_LABEL,
-        "grab_buffer_default": await _buffer_default(),
         "restock_default_pct": await _restock_default_pct(),
         "guide": await size_guide(),
         "can_edit": user.at_least("hq"),
@@ -526,9 +514,6 @@ def _plan(row: dict, ch: dict, default_pct: int | None) -> tuple[dict, list[str]
             v = None if v is None else (1 if v else 0)
         elif key == "bin_max":
             if v is not None and num(key, 1, "Isi maks. per bin") is None:
-                continue
-        elif key == "grab_buffer":
-            if v is not None and num(key, 0, "Cadangan Grab") is None:
                 continue
         else:  # pack sizes and weight
             if v is not None and num(key, 1, _LABEL[col]) is None:
@@ -783,7 +768,8 @@ async def update_hub(
 # --- CSV (§2.6.1) -------------------------------------------------------------------
 
 # Column name -> aliases accepted on upload (compared lower case, spaces and
-# dots as underscores). The download writes the first name.
+# dots as underscores). The download writes the first name. A column not listed
+# here, such as one an older download still has, is ignored on upload.
 _CSV = [
     ("sku_id", ("sku_id", "id")),
     ("merek", ("merek", "brand")),
@@ -797,7 +783,6 @@ _CSV = [
     ("isi_sampai", ("isi_sampai", "fill_to", "fill_up_to")),
     ("pesan_ulang_saat_sisa", ("pesan_ulang_saat_sisa", "pesan_ulang", "reorder_at")),
     ("batas_kritis", ("batas_kritis", "critical_at", "critical")),
-    ("cadangan_grab", ("cadangan_grab", "grab_buffer")),
     ("panjang_mm", ("panjang_mm", "length_mm")),
     ("lebar_mm", ("lebar_mm", "width_mm")),
     ("tinggi_mm", ("tinggi_mm", "height_mm")),
@@ -847,7 +832,7 @@ async def export_csv(
             racks.SIZE_LABEL.get(r["bin_size"], "") if r["bin_size"] else "",
             _fmt(r["bin_max"]),
             _fmt(r["fill_to"]), _fmt(r["reorder_at"], r["reorder_pct"]),
-            _fmt(r["critical_at"], r["critical_pct"]), _fmt(r["grab_buffer"]),
+            _fmt(r["critical_at"], r["critical_pct"]),
             _fmt(r["pack_length_mm"]), _fmt(r["pack_width_mm"]), _fmt(r["pack_height_mm"]),
             _fmt(r["pack_weight_g"]), _fmt(r["is_liquid"]), _fmt(r["is_large_bottle"]),
             r["state_text"].lower(),
@@ -936,11 +921,6 @@ def _cell_changes(rec: dict) -> tuple[dict, list[str], list[str]]:
     integer("isi_sampai", "fill_to")
     units_or_pct("pesan_ulang_saat_sisa", "reorder_at", "reorder_pct")
     units_or_pct("batas_kritis", "critical_at", "critical_pct")
-    v = rec.get("cadangan_grab", "")
-    if v.endswith("%"):
-        errs.append("cadangan_grab: isi dalam unit. / cadangan_grab: enter units.")
-    else:
-        integer("cadangan_grab", "grab_buffer")
     integer("panjang_mm", "pack_length_mm")
     integer("lebar_mm", "pack_width_mm")
     integer("tinggi_mm", "pack_height_mm")

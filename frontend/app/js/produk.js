@@ -162,7 +162,7 @@
         '<th ' + biAttr('Produk', 'Product') + '></th><th ' + biAttr('Barcode untuk pindai', 'Barcode to scan') + '></th>' +
         '<th><span ' + biAttr('Ukuran bin', 'Bin size') + '></span> <span class="k-tag" style="color:var(--stop);background:var(--stop-bg)" ' + biAttr('Wajib', 'Required') + '></span></th>' +
         '<th ' + biAttr('Isi sampai', 'Fill up to') + '></th><th ' + biAttr('Pesan ulang saat sisa', 'Reorder at') + '></th>' +
-        '<th ' + biAttr('Cadangan Grab', 'Grab buffer') + '></th><th ' + biAttr('Kemasan P × L × T mm', 'Pack L × W × H mm') + '></th><th ' + biAttr('Berat g', 'Weight g') + '></th>' +
+        '<th ' + biAttr('Kemasan P × L × T mm', 'Pack L × W × H mm') + '></th><th ' + biAttr('Berat g', 'Weight g') + '></th>' +
         '</tr></thead><tbody>' + rows.map((r) => '<tr data-skuid="' + r.id + '">' + rowCells(r) + '</tr>').join('') + '</tbody></table></div></div>' +
         '<div class="k-phone-only k-stack">' + rows.map((r) => '<div class="k-card k-card--pad pd-card" data-skuid="' + r.id + '">' + cardHtml(r) + '</div>').join('') + '</div>' +
         '<div class="k-line k-line--between" style="margin-top:12px;flex-wrap:wrap;gap:8px"><span class="k-caption">' +
@@ -192,11 +192,10 @@
         '<button type="button" class="k-btn k-btn--sm k-btn--ghost" data-bc="paste">' + esc(t('Tempel kode', 'Paste code')) + '</button></div>';
     }
     const num = (r, f, ph) => '<input class="k-input pd-num" type="number" inputmode="numeric" min="0" data-field="' + f + '" value="' + (r[f] == null ? '' : r[f]) + '" placeholder="' + esc(ph || ISI_NANTI()) + '" aria-label="' + esc(f) + '">';
-    const bufPh = () => String(st.data.grab_buffer_default);
     function rowCells(r) {
       return '<td><div class="pd-name">' + esc(r.name_display) + '</div>' + stateLine(r) + '</td>' +
         '<td>' + bcCell(r) + '</td><td>' + sizeSeg(r) + '</td>' +
-        '<td>' + num(r, 'fill_to') + '</td><td>' + num(r, 'reorder_at') + '</td><td>' + num(r, 'grab_buffer', bufPh()) + '</td>' +
+        '<td>' + num(r, 'fill_to') + '</td><td>' + num(r, 'reorder_at') + '</td>' +
         '<td><div class="pd-dims">' + num(r, 'pack_length_mm', '-') + '×' + num(r, 'pack_width_mm', '-') + '×' + num(r, 'pack_height_mm', '-') + '</div>' +
         (r.missing_data.includes('pack_size') ? '<div class="pd-sub pd-sub--caution">' + esc(ISI_NANTI()) + '</div>' : '') + '</td>' +
         '<td>' + num(r, 'pack_weight_g') + '</td>';
@@ -206,7 +205,6 @@
         '<div class="k-line k-line--between" style="align-items:flex-start;gap:10px"><div>' + bcCell(r) + '</div><div>' + sizeSeg(r) + '</div></div>' +
         '<div class="pd-fields"><label>' + esc(t('Isi sampai', 'Fill up to')) + num(r, 'fill_to') + '</label>' +
         '<label>' + esc(t('Pesan ulang saat sisa', 'Reorder at')) + num(r, 'reorder_at') + '</label>' +
-        '<label>' + esc(t('Cadangan Grab', 'Grab buffer')) + num(r, 'grab_buffer', bufPh()) + '</label>' +
         '<label>' + esc(t('Berat g', 'Weight g')) + num(r, 'pack_weight_g') + '</label></div>' +
         '<label class="pd-fields" style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--ink-2)">' + esc(t('Kemasan P × L × T mm', 'Pack L × W × H mm')) +
         '<div class="pd-dims">' + num(r, 'pack_length_mm', '-') + '×' + num(r, 'pack_width_mm', '-') + '×' + num(r, 'pack_height_mm', '-') + '</div></label>';

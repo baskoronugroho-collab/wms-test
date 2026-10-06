@@ -1,7 +1,7 @@
 """Reports (canvas Section 10): end of day, brand sales, operational, variance.
 
-Every figure is a WMS number, never Hiryu's (Hiryu's stock is lower by the Grab
-buffer). Ops HQ downloads the files and emails them by hand; the WMS sends no
+Every figure is a WMS number, never Hiryu's (Hiryu's stock leaves out units held
+for orders not yet picked). Ops HQ downloads the files and emails them by hand; the WMS sends no
 email. Files for brands and Grab are Excel in English; the screens stay in
 Indonesian. Test orders (UJI, is_test) and cancelled orders are left out of
 sales. The 10-minute target counts from Grab's order time to Selesai dikemas.

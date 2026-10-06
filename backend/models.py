@@ -2076,7 +2076,6 @@ class StockSheetLine(BaseModel):
     name: str
     on_shelf: int
     picked_not_ready: int
-    buffer: int
     to_type: int = Field(description="Ketik di Hiryu")
     last_typed: int | None
     last_typed_at: str | None
@@ -2139,7 +2138,6 @@ class SkuCompleteRow(BaseModel):
     reorder_pct: int | None = Field(default=None, description="R as % of isi sampai, if entered so")
     critical_at: int | None = Field(default=None, description="Batas kritis (S), units")
     critical_pct: int | None = Field(default=None, description="S as % of isi sampai, if entered so")
-    grab_buffer: int | None = Field(default=None, description="Cadangan Grab; null = the default")
     pack_length_mm: int | None = None
     pack_width_mm: int | None = None
     pack_height_mm: int | None = None
@@ -2156,7 +2154,6 @@ class SkuCompleteList(BaseModel):
     total: int
     incomplete: int = Field(description="Of the rows matching brand and search")
     bin_sizes: list[str]
-    grab_buffer_default: int
     restock_default_pct: int | None = None
 
 
@@ -2175,7 +2172,6 @@ class SkuCompleteIn(BaseModel):
     reorder_pct: int | None = None
     critical_at: int | None = None
     critical_pct: int | None = None
-    grab_buffer: int | None = None
     pack_length_mm: int | None = None
     pack_width_mm: int | None = None
     pack_height_mm: int | None = None

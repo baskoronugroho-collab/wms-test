@@ -180,10 +180,13 @@ async def baskets(site_id: int, site_code: str) -> list[dict]:
 
 async def free_basket(site_id: int) -> str | None:
     """A free basket to name as the example on board 6b."""
-    for b in await baskets(site_id, ""):
-        if not b["busy"]:
-            return b["code"]
-    return None
+    free = await free_baskets(site_id)
+    return free[0] if free else None
+
+
+async def free_baskets(site_id: int) -> list[str]:
+    """Every free outbound basket, in order: any of them is right on board 6b."""
+    return [b["code"] for b in await baskets(site_id, "") if not b["busy"]]
 
 
 # --------------------------------------------------------------------------

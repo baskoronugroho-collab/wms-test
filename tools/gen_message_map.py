@@ -12,9 +12,13 @@ is what runs, so the field rows come from the code, not from a copy of the doc:
   * Hiryu to WMS (messages 1, 2, 6): the rows are walked from the pydantic models
     in backend/routers/hiryu_link.py (model_json_schema): type, required, may be
     null, pattern, limits and allowed values.
-  * WMS to Hiryu (messages 3, 4, 5 and catalogue_request): the real builders in
+  * WMS to Hiryu (messages 3, 4, 5): the real builders in
     backend/pos_sender.py are run against a stubbed database, and the rows come
     from the keys and values they put in `data`, inside envelope().
+  * The catalogue pull (GET POS_CATALOGUE_URL, Sinkron ulang dari Hiryu): no
+    body; its one query field is written by hand and checked against
+    pos_sender.pull_catalogue, catalogue_url() and the button's route, and its
+    example answer is validated as a full message 6.
 
 What the code cannot say (what a field means, an example, the triggers, what the
 receiver does next) is written by hand below, in Indonesian and English.
@@ -24,8 +28,14 @@ Checks, all failing loudly on drift:
     the WMS's own time parser; every answer body by the answer model;
   * every outbound example has exactly the keys the builder puts in `data`, with
     the same JSON types, and the envelope has exactly envelope()'s keys;
-  * every field row has a hand-written meaning, and no meaning is left for a
-    field the code no longer has;
+  * every field row has a hand-written meaning and a business name (ID and
+    EN, what ops call it), and no meaning or name is left for a field the code
+    no longer has;
+  * the "Kapan dan seberapa cepat" texts and the order timeline match the
+    code: the sender loop's pause in main.py, order messages ahead of stock
+    (ledger.PRIORITY), the same number skipped, the 03:00 WIB snapshot, the
+    snapshot on switch-on and on the button, no buffer in available_now, and
+    the ready target (grab_ready_minutes);
   * routes, auth header, message types, H refs in the log, retry schedule,
     timeout and the error words quoted below are found in the code;
   * the 401 and 422 answers are produced by the real router (FastAPI TestClient).
@@ -59,6 +69,9 @@ from routers import hiryu_link, outbound  # noqa: E402
 
 PROBLEMS: list[str] = []
 
+# The catalogue pull's wait, from the code (pos_sender.CATALOGUE_TIMEOUT).
+PULL_SECS = int(pos_sender.CATALOGUE_TIMEOUT)
+
 
 def fail(msg: str) -> None:
     PROBLEMS.append(msg)
@@ -88,15 +101,15 @@ H_LIST = [
     {"h": "H5", "pilot": True, "messages": ["5", "2"], "grab": ["CheckOrderCancelable", "CancelOrder", "EditOrder"],
      "text": T("Picker menyatakan barang tidak ada: WMS mengirim pesan 5, Hiryu mengubah atau membatalkan pesanan di Grab (2001).",
                "The picker declares an item missing: the WMS sends message 5 and Hiryu edits or cancels the order on Grab (2001).")},
-    {"h": "H6", "pilot": True, "messages": ["6", "catalogue_request"], "grab": [],
-     "text": T("Dark store, toko, menu, bundle atau SKU dibuat atau berubah, atau WMS minta Sinkron ulang: Hiryu mengirim pesan 6.",
-               "A dark store, store, menu, bundle or SKU is created or changed, or the WMS asks for a resync: Hiryu sends message 6.")},
-    {"h": "H7", "pilot": True, "messages": ["1", "2", "3", "4", "5", "6", "catalogue_request"], "grab": [],
+    {"h": "H6", "pilot": True, "messages": ["6", "catalogue_pull"], "grab": [],
+     "text": T("Dark store, toko, menu, bundle atau SKU dibuat atau berubah: Hiryu mengirim pesan 6. Saat Sinkron ulang, WMS menarik katalog lengkap (GET) dan Hiryu menjawab dengan isi pesan 6.",
+               "A dark store, store, menu, bundle or SKU is created or changed: Hiryu sends message 6. On a resync the WMS pulls the whole catalogue (GET) and Hiryu answers with a message 6 body.")},
+    {"h": "H7", "pilot": True, "messages": ["1", "2", "3", "4", "5", "6", "catalogue_pull"], "grab": [],
      "text": T("Selalu: alamat HTTPS untuk pesan dari WMS, kunci bersama di X-Hiryu-Key, antrean yang tahan restart dengan percobaan ulang, dan peringatan bila pesan gagal.",
                "Always: an HTTPS address for the WMS's messages, the shared key in X-Hiryu-Key, a queue that survives a restart with retries, and an alert when messages fail.")},
     {"h": "H8", "pilot": True, "messages": ["3", "1"], "grab": [],
-     "text": T("Sambungan satu toko dinyalakan: Hiryu berhenti mengubah stok sendiri dan WMS mengirim snapshot stok penuh toko itu.",
-               "One store's link is switched on: Hiryu stops changing stock itself and the WMS sends that store's full stock snapshot.")},
+     "text": T("Stok ke Hiryu untuk setiap toko aktif (aktif di Hiryu, merek dipilih, dark store ada di katalog Hiryu), tanpa sakelar per toko. Begitu toko aktif dan Sambungan Hiryu aktif menyala, Hiryu berhenti mengubah stok sendiri dan WMS mengirim snapshot stok penuh toko itu.",
+               "Stock goes to Hiryu for every active store (active in Hiryu, brand chosen, dark store in Hiryu's catalogue), with no switch per store. Once a store is active and Sambungan Hiryu aktif is on, Hiryu stops changing stock itself and the WMS sends that store's full stock snapshot.")},
     {"h": "H9", "pilot": True, "messages": ["1"], "grab": [],
      "text": T("Pilihan pelanggan bila stok habis: dikirim per baris di pesan 1 (oos_instruction), null bila tidak ada.",
                "The customer's out-of-stock choice: sent per line in message 1 (oos_instruction), null when there is none.")},
@@ -160,9 +173,9 @@ def general_rules() -> list[dict]:
                    "is not on this map (422, extra_forbidden) and every text field has a strict pattern, so none of these can ride along.")},
         {"key": "order_first", "title": T("Pesanan dulu", "Orders first"),
          "text": T("Pesan pesanan (1, 2, 4, 5) didahulukan dari pesan stok dan katalog (3, 6). Di antrean WMS: order_ready dan item_short prioritas 1, "
-                   "stock_level dan catalogue_request prioritas 5. Pembatalan yang datang sebelum pesanannya disimpan dan dijalankan saat pesan 1 tiba.",
+                   "stock_level prioritas 5. Tarik katalog tidak lewat antrean. Pembatalan yang datang sebelum pesanannya disimpan dan dijalankan saat pesan 1 tiba.",
                    "Order messages (1, 2, 4, 5) go ahead of stock and catalogue messages (3, 6). In the WMS queue: order_ready and item_short are "
-                   "priority 1, stock_level and catalogue_request priority 5. A cancel that comes before its order is kept and applied when message 1 arrives.")},
+                   "priority 1, stock_level priority 5. The catalogue pull does not use the queue. A cancel that comes before its order is kept and applied when message 1 arrives.")},
         {"key": "retries", "title": T("Jawaban dan percobaan ulang", "Answers and retries"),
          "text": T(f"2xx atau 409: selesai. 408, 429, 5xx, atau tidak ada jawaban dalam {timeout} dtk: coba lagi setelah {rw['id']}. 4xx lain: gagal, "
                    "berhenti, tampil merah di halaman ini; Ops HQ menekan Coba lagi yang gagal. 422 dari WMS: jangan coba lagi, bereskan penyebabnya. "
@@ -171,19 +184,21 @@ def general_rules() -> list[dict]:
                    "on this page; Ops HQ presses Coba lagi yang gagal. A 422 from the WMS: do not retry, fix the cause. A message waiting more than "
                    "5 minutes shows red. Both sides keep unsent messages in a queue that survives a restart.")},
         {"key": "switches", "title": T("Sakelar di sisi WMS", "Switches on the WMS side"),
-         "text": T("WMS mengirim ke Hiryu hanya bila POS_PUSH_ENABLED, POS_WEBHOOK_URL, POS_SHARED_SECRET dan Sambungan Hiryu aktif semuanya menyala; "
-                   "sebelum itu pesan antre (mode bayangan). Stok hanya dikirim untuk toko yang sambungannya menyala (H8). Lokasi latihan dan pesanan UJI "
+         "text": T("WMS mengirim pesan 3, 4 dan 5 ke Hiryu hanya bila POS_PUSH_ENABLED, POS_WEBHOOK_URL, POS_SHARED_SECRET dan Sambungan Hiryu aktif semuanya menyala; "
+                   "sebelum itu pesan antre (mode bayangan). Stok dikirim untuk setiap toko aktif, tanpa sakelar per toko (H8). Tarik katalog hanya perlu "
+                   "alamat katalog (POS_CATALOGUE_URL, atau asal POS_WEBHOOK_URL + /catalogue) dan POS_SHARED_SECRET. Lokasi latihan dan pesanan UJI "
                    "tidak pernah mengirim.",
-                   "The WMS sends to Hiryu only when POS_PUSH_ENABLED, POS_WEBHOOK_URL, POS_SHARED_SECRET and Sambungan Hiryu aktif are all on; "
-                   "until then messages queue (shadow mode). Stock goes only for stores whose link is on (H8). The training site and UJI test "
+                   "The WMS sends messages 3, 4 and 5 to Hiryu only when POS_PUSH_ENABLED, POS_WEBHOOK_URL, POS_SHARED_SECRET and Sambungan Hiryu aktif are all on; "
+                   "until then messages queue (shadow mode). Stock goes to every active store, with no switch per store (H8). The catalogue pull needs only "
+                   "the catalogue address (POS_CATALOGUE_URL, or POS_WEBHOOK_URL's origin + /catalogue) and POS_SHARED_SECRET. The training site and UJI test "
                    "orders never send.")},
         {"key": "demo", "title": T("Mode demo", "Mode demo"),
          "text": T("Dark store dalam Mode demo mengirim ke stand-in Hiryu di dalam WMS, bukan ke POS_WEBHOOK_URL. Stand-in menjawab 200 {\"ok\": true, \"standin\": true}, "
-                   "lalu berlaku seperti Hiryu: setelah item_short dengan cancel_order ia mengirim pesan 2 (merchant, 2001), setelah catalogue_request ia "
-                   "mengirim pesan 6 penuh. Di log tampil sebagai Demo atau Stand-in.",
+                   "lalu berlaku seperti Hiryu: setelah item_short dengan cancel_order ia mengirim pesan 2 (merchant, 2001), dan tarik katalog ia "
+                   "jawab dengan pesan 6 penuh. Di log tampil sebagai Demo atau Stand-in.",
                    "A dark store in Mode demo sends to the Hiryu stand-in inside the WMS instead of POS_WEBHOOK_URL. The stand-in answers 200 "
                    "{\"ok\": true, \"standin\": true}, then acts like Hiryu: after item_short with cancel_order it sends message 2 (merchant, 2001), "
-                   "after catalogue_request it sends a full message 6. The log shows these as Demo or Stand-in.")},
+                   "and it answers the catalogue pull with a full message 6. The log shows these as Demo or Stand-in.")},
         {"key": "ping", "title": T("Cek sambungan", "Health check"),
          "text": T("GET /api/hiryu/v1/ping dengan X-Hiryu-Key menjawab {\"ok\": true} bila kuncinya benar.",
                    "GET /api/hiryu/v1/ping with X-Hiryu-Key answers {\"ok\": true} when the key is right.")},
@@ -330,8 +345,8 @@ ANN_CATALOGUE = {
         "true bila Hiryu mengirim daftar lengkap. Dark store, toko dan item menu yang tidak ada di bagian yang dikirim jadi tidak aktif; bagian yang kosong tidak mengubah apa pun.",
         "true when Hiryu sends the whole list. Dark stores, stores and menu items missing from a section that is sent turn inactive; an empty section changes nothing.")},
     "request_id": {"meaning": T(
-        "request_id dari catalogue_request yang dijawab; null bila Hiryu mengirim sendiri. Menandai Sinkron ulang selesai.",
-        "The request_id of the catalogue_request this answers; null when Hiryu sends on its own. Marks Sinkron ulang as done.")},
+        "Pada jawaban tarik katalog: null atau request_id dari ?request_id=; WMS tetap mengisinya dengan request_id permintaannya. Null bila Hiryu mengirim sendiri. Menandai Sinkron ulang selesai.",
+        "In the answer to a catalogue pull: null or the request_id from ?request_id=; the WMS fills in its own request_id either way. Null when Hiryu sends on its own. Marks Sinkron ulang as done.")},
     "dark_stores": {"meaning": T("Dark store di Hiryu. Setiap dark store Hiryu adalah satu dark store di WMS.",
                                 "Hiryu's dark stores. Each one is one dark store in the WMS.")},
     "dark_stores[].hiryu_dark_store_id": {"meaning": T(
@@ -394,12 +409,92 @@ ANN_CATALOGUE = {
                                                "The item's on or off switch in Hiryu. Shown on the menu list.")},
 }
 
+# The business name of every field: what ops call it, first column of the
+# field table. Every row must have one (the build fails otherwise).
+MSG_ID_NAME = T("Nomor pesan (sekali saja)", "Message number (used once)")
+GRAB_ORDER = T("Nomor pesanan Grab", "Grab order number")
+GM_NO = T("Nomor GM (slip Hiryu)", "GM number (Hiryu slip)")
+STORE = T("Toko", "Store")
+SKU = T("Kode produk (SKU)", "Product code (SKU)")
+
+NAMES_ORDER = {
+    "message_id": MSG_ID_NAME,
+    "grab_order_id": GRAB_ORDER,
+    "gm_number": GM_NO,
+    "hiryu_store_id": STORE,
+    "order_time": T("Waktu pelanggan memesan", "Time the customer ordered"),
+    "scheduled_time": T("Waktu pesanan terjadwal", "Scheduled order time"),
+    "estimated_ready_time": T("Perkiraan siap dari Grab", "Grab's estimated ready time"),
+    "lines": T("Barang yang dipesan", "Items ordered"),
+    "lines[].hiryu_item_id": T("Item menu", "Menu item"),
+    "lines[].item_qty": T("Jumlah item dipesan", "Item quantity ordered"),
+    "lines[].sku_code": SKU,
+    "lines[].units": T("Unit yang diambil", "Units to pick"),
+    "lines[].item_price": T("Harga menu", "Menu price"),
+    "lines[].oos_instruction": T("Instruksi pelanggan jika barang habis", "Customer's instruction if out of stock"),
+    "lines[].oos_instruction.type": T("Pilihan pelanggan", "Customer's choice"),
+    "lines[].oos_instruction.replace_hiryu_item_id": T("Item pengganti", "Replacement item"),
+    "lines[].oos_instruction.replace_sku_code": T("Kode produk pengganti", "Replacement product code"),
+    "lines[].oos_instruction.replace_units": T("Unit pengganti yang diambil", "Replacement units to pick"),
+}
+
+NAMES_CANCEL = {
+    "(path) grab_order_id": GRAB_ORDER,
+    "message_id": MSG_ID_NAME,
+    "reason_code": T("Kode alasan batal", "Cancel reason code"),
+    "reason": T("Alasan batal", "Cancel reason"),
+    "cancelled_by": T("Dibatalkan oleh", "Cancelled by"),
+    "cancelled_at": T("Waktu batal", "Time cancelled"),
+}
+
+_DAYS_PATH = "dark_stores[].opening_hours.{mon,tue,wed,thu,fri,sat,sun}"
+NAMES_CATALOGUE = {
+    "message_id": MSG_ID_NAME,
+    "full": T("Daftar lengkap?", "Whole list?"),
+    "request_id": T("Jawaban untuk permintaan", "Answer to request"),
+    "dark_stores": T("Dark store", "Dark stores"),
+    "dark_stores[].hiryu_dark_store_id": T("Nomor dark store di Hiryu", "Dark store number in Hiryu"),
+    "dark_stores[].name": T("Nama dark store", "Dark store name"),
+    "dark_stores[].address": T("Alamat dark store", "Dark store address"),
+    "dark_stores[].opening_hours": T("Jam buka", "Opening hours"),
+    _DAYS_PATH: T("Jam buka per hari", "Hours per day"),
+    _DAYS_PATH + "[].open": T("Buka pukul", "Opens at"),
+    _DAYS_PATH + "[].close": T("Tutup pukul", "Closes at"),
+    "stores": T("Toko", "Stores"),
+    "stores[].hiryu_store_id": T("Nomor toko di Hiryu", "Store number in Hiryu"),
+    "stores[].name": T("Nama toko", "Store name"),
+    "stores[].hiryu_dark_store_id": T("Dark store tempat toko", "The store's dark store"),
+    "stores[].status": T("Toko aktif?", "Store active?"),
+    "stores[].order_acceptance": T("Cara terima pesanan", "How orders are accepted"),
+    "skus": T("Produk (SKU)", "Products (SKUs)"),
+    "skus[].sku_code": SKU,
+    "skus[].name": T("Nama produk", "Product name"),
+    "skus[].barcodes": T("Barcode", "Barcodes"),
+    "menus": T("Menu toko", "Store menus"),
+    "menus[].hiryu_store_id": STORE,
+    "menus[].items": T("Item di menu", "Menu items"),
+    "menus[].items[].item_id": T("Item menu", "Menu item"),
+    "menus[].items[].name": T("Nama di menu", "Name on the menu"),
+    "menus[].items[].sku_code": SKU,
+    "menus[].items[].units_per_sale": T("Unit per penjualan", "Units per sale"),
+    "menus[].items[].price": T("Harga menu", "Menu price"),
+    "menus[].items[].available": T("Item menyala di menu?", "Item switched on?"),
+}
+
 INBOUND = [
     {
         "key": "1", "no": 1, "log_type": "order", "model": hiryu_link.OrderMessage, "handler": "handle_order",
         "name": T("Pesanan untuk diambil", "Order to pick"),
         "h": ["H1", "H9"], "method": "POST", "path": "/api/hiryu/v1/orders",
-        "example": EX_ORDER, "ann": ANN_ORDER,
+        "example": EX_ORDER, "ann": ANN_ORDER, "names": NAMES_ORDER,
+        "timing": {"agree": True, "event": T(
+            "Staf menekan Terima di Hiryu. Hanya pesanan yang diterima yang dikirim.",
+            "Staff press Terima in Hiryu. Only an accepted order is sent."),
+            "speed": T(
+            "Usulan: Hiryu mengirim saat itu juga, dalam beberapa detik setelah Terima, karena jam 10 menit sudah berjalan sejak pelanggan memesan. "
+            "Bila WMS tidak menjawab, Hiryu mencoba lagi dengan message_id yang sama. (untuk disepakati dengan Shaun)",
+            "Proposal: Hiryu sends at once, within a few seconds of Terima, because the 10-minute clock has been running since the customer ordered. "
+            "If the WMS does not answer, Hiryu retries with the same message_id. (to agree with Shaun)")},
         "triggers": [
             {"side": "hiryu", "h": ["H1"], "text": T(
                 "Staf menekan Terima di Hiryu. Sekali per pesanan, saat itu juga.",
@@ -465,7 +560,13 @@ INBOUND = [
         "key": "2", "no": 2, "log_type": "cancel", "model": hiryu_link.CancelMessage, "handler": "handle_cancel",
         "name": T("Pesanan dibatalkan", "Order cancelled"),
         "h": ["H2"], "method": "POST", "path": "/api/hiryu/v1/orders/{grab_order_id}/cancel",
-        "path_example": EX_CANCEL_PATH, "example": EX_CANCEL, "ann": ANN_CANCEL,
+        "path_example": EX_CANCEL_PATH, "example": EX_CANCEL, "ann": ANN_CANCEL, "names": NAMES_CANCEL,
+        "timing": {"agree": True, "event": T(
+            "Grab atau pelanggan membatalkan, atau merchant membatalkan di Hiryu (juga setelah pesan 5).",
+            "Grab or the customer cancels, or the merchant cancels in Hiryu (also after message 5)."),
+            "speed": T(
+            "Usulan: Hiryu mengirim saat itu juga, begitu tahu pesanan batal, supaya picker berhenti dan stoknya dilepas. (untuk disepakati dengan Shaun)",
+            "Proposal: Hiryu sends at once, as soon as it knows the order is cancelled, so the picker stops and the stock is released. (to agree with Shaun)")},
         "triggers": [
             {"side": "hiryu", "h": ["H2"], "text": T(
                 "Pelanggan membatalkan di Grab, Grab membatalkan, atau merchant membatalkan di Hiryu.",
@@ -517,17 +618,23 @@ INBOUND = [
         "key": "6", "no": 6, "log_type": "catalogue", "model": hiryu_link.CatalogueMessage, "handler": "handle_catalogue",
         "name": T("Katalog", "Catalogue"),
         "h": ["H6"], "method": "POST", "path": "/api/hiryu/v1/catalogue",
-        "example": EX_CATALOGUE, "ann": ANN_CATALOGUE,
+        "example": EX_CATALOGUE, "ann": ANN_CATALOGUE, "names": NAMES_CATALOGUE,
+        "timing": {"agree": True, "event": T(
+            "Katalog berubah di Hiryu (dark store, toko, menu, item, bundle atau SKU). Isi yang sama adalah jawaban tarik katalog.",
+            "The catalogue changes in Hiryu (dark store, store, menu, item, bundle or SKU). The same body is the answer to the catalogue pull."),
+            "speed": T(
+            f"Usulan: setiap kali katalog berubah, Hiryu mengirim yang berubah saat itu juga. Jawaban tarik katalog paling lambat {PULL_SECS} dtk. (untuk disepakati dengan Shaun)",
+            f"Proposal: whenever the catalogue changes, Hiryu sends what changed at once. The answer to a catalogue pull within {PULL_SECS} s. (to agree with Shaun)")},
         "triggers": [
             {"side": "hiryu", "h": ["H6"], "text": T(
                 "Dark store, toko, menu, item, bundle atau SKU dibuat atau berubah di Hiryu: kirim yang berubah, full false.",
                 "A dark store, store, menu, item, bundle or SKU is created or changed in Hiryu: send what changed, full false.")},
-            {"side": "hiryu", "h": ["H6"], "text": T(
-                "Jawaban catalogue_request (Sinkron ulang dari Hiryu): daftar lengkap, full true, dengan request_id yang sama.",
-                "The answer to a catalogue_request (Sinkron ulang dari Hiryu): the whole list, full true, with the same request_id.")},
+            {"side": "wms", "h": ["H6"], "text": T(
+                "Sinkron ulang dari Hiryu: WMS menarik katalog (GET POS_CATALOGUE_URL) dan Hiryu menjawab dengan isi ini, full true. WMS menjalankannya lewat penangan yang sama.",
+                "Sinkron ulang dari Hiryu: the WMS pulls the catalogue (GET POS_CATALOGUE_URL) and Hiryu answers with this body, full true. The WMS runs it through the same handler.")},
             {"side": "wms", "h": [], "text": T(
-                "Uji di WMS: di Mode demo stand-in Hiryu menjawab Sinkron ulang dengan pesan 6 penuh dari data yang sudah ada di WMS.",
-                "Tests in the WMS: in Mode demo the Hiryu stand-in answers Sinkron ulang with a full message 6 built from what the WMS already holds.")},
+                "Uji di WMS: di Mode demo stand-in Hiryu menjawab tarik katalog dengan pesan 6 penuh dari data yang sudah ada di WMS.",
+                "Tests in the WMS: in Mode demo the Hiryu stand-in answers the catalogue pull with a full message 6 built from what the WMS already holds.")},
         ],
         "answers": [
             {"status": 200, "model": hiryu_link.CatalogueAnswer,
@@ -552,11 +659,11 @@ INBOUND = [
                 "Dark store baru muncul dengan tanda Baru dari Hiryu; Ops HQ melengkapi kode dark store, bin dan keranjang di Dark store & mulai operasi.",
                 "A new dark store shows up marked Baru dari Hiryu; Ops HQ completes its dark store code, bins and baskets on Dark store & mulai operasi.")},
             {"side": "wms", "text": T(
-                "Toko baru menunggu Ops HQ memilih merek dan akun merchant Grab; sampai itu tidak ada yang dikirim untuknya. SKU baru dibuat untuk merek toko yang memakainya; Ops HQ melengkapinya (Lengkapi data SKU).",
-                "A new store waits for Ops HQ to pick its brand and Grab merchant account; until then nothing is sent for it. A new SKU is made for the brand of the store that uses it; Ops HQ completes it (Lengkapi data SKU).")},
+                "Toko baru menunggu Ops HQ memilih merek dan akun merchant Grab; sampai itu tidak ada yang dikirim untuknya. Begitu toko aktif, WMS mengirim snapshot stok penuhnya (H8). SKU baru dibuat untuk merek toko yang memakainya; Ops HQ melengkapinya (Lengkapi data SKU).",
+                "A new store waits for Ops HQ to pick its brand and Grab merchant account; until then nothing is sent for it. Once the store is active, the WMS sends its full stock snapshot (H8). A new SKU is made for the brand of the store that uses it; Ops HQ completes it (Lengkapi data SKU).")},
             {"side": "wms", "text": T(
-                "Dengan request_id: Sinkron ulang ditandai terjawab di Menu & toko Hiryu.",
-                "With a request_id: Sinkron ulang shows as answered on Menu & toko Hiryu.")},
+                "Jawaban tarik katalog: Sinkron ulang tampil Katalog diterima di Menu & toko Hiryu.",
+                "The answer to a catalogue pull: Sinkron ulang shows Catalogue taken on Menu & toko Hiryu.")},
             {"side": "hiryu", "text": T(
                 "Periksa problems di jawaban; perbaiki di Hiryu dan kirim lagi bagian itu.",
                 "Check problems in the answer; fix them in Hiryu and send that part again.")},
@@ -566,7 +673,7 @@ INBOUND = [
 
 
 # ==========================================================================
-# WMS to Hiryu: messages 3, 4, 5 and catalogue_request
+# WMS to Hiryu: messages 3, 4, 5 (and the catalogue pull, further down)
 # ==========================================================================
 
 ENVELOPE_ANN = {
@@ -578,9 +685,47 @@ ENVELOPE_ANN = {
                 "meaning": T("Saat WMS mengirim pesan ini, diisi ulang di setiap percobaan.", "When the WMS sent it, set again on every attempt.")},
     "data": {"meaning": T("Isi pesan, field di bawah.", "The message itself, the fields below.")},
 }
+ENVELOPE_NAMES = {
+    "message_id": MSG_ID_NAME,
+    "type": T("Jenis pesan", "Message type"),
+    "sent_at": T("Waktu kirim", "Time sent"),
+    "data": T("Isi pesan", "Message content"),
+}
 
 UTC_Z = T("UTC dengan Z, sampai detik", "UTC with Z, to the second")
 CAPS = T("huruf besar", "in capitals")
+
+
+# --- When and how fast (the WMS side, read from the code) --------------------
+
+def _sender_every() -> int:
+    """The sender loop's pause in main.py: how often queued messages are picked up."""
+    src = (ROOT / "backend" / "main.py").read_text(encoding="utf-8")
+    m = re.search(r"async def _hiryu_sender_loop\(\):(.*?)(?=\n(?:async def|def|@)\s)", src, re.S)
+    body = m.group(1) if m else ""
+    s = re.search(r"asyncio\.sleep\((\d+)\)", body)
+    if not s or "pos_sender.loop_tick()" not in body:
+        fail("main.py: _hiryu_sender_loop no longer sleeps a fixed time and calls pos_sender.loop_tick()")
+        return 5
+    return int(s.group(1))
+
+
+SENDER_EVERY = _sender_every()
+RW = retry_words()
+
+
+def out_speed(first: dict) -> dict:
+    """The speed sentence of a WMS to Hiryu message: its own first sentence,
+    then the sender loop and the retry schedule, both from the code."""
+    n = SENDER_EVERY
+    return T(f"{first['id']} Pengirim WMS memeriksa antrean tiap {n} dtk, jadi pesan biasanya berangkat dalam sekitar {n} dtk. "
+             f"Bila Hiryu tidak menjawab atau sibuk: coba lagi setelah {RW['id']}.",
+             f"{first['en']} The WMS sender checks the queue every {n} s, so a message usually leaves within about {n} s. "
+             f"If Hiryu does not answer or is busy: retried after {RW['en']}.")
+
+
+ORDER_FIRST = T("Pesan pesanan: berangkat lebih dulu dari pesan stok yang sedang menunggu.",
+                "An order message: it leaves ahead of any stock messages waiting.")
 
 OUTBOUND = [
     {
@@ -589,6 +734,23 @@ OUTBOUND = [
         "example": {"message_id": "wms-40211", "type": "stock_level", "sent_at": "2026-10-01T02:15:04Z",
                     "data": {"hiryu_store_id": 902, "sku_code": "KHF-FW-OAC-100", "available": 7,
                              "as_of": "2026-10-01T02:15:03Z", "is_snapshot": False}},
+        "names": {
+            "data.hiryu_store_id": STORE,
+            "data.sku_code": SKU,
+            "data.available": T("Jumlah yang bisa dijual di Grab", "Units Grab can sell"),
+            "data.as_of": T("Waktu angka dihitung", "Time the number was worked out"),
+            "data.is_snapshot": T("Bagian dari kirim ulang semua stok?", "Part of a full stock resend?"),
+        },
+        "timing": {"agree": False, "event": T(
+            "Angka yang bisa dijual berubah: barang ditaruh di bin, unit ditahan untuk pesanan baru atau dilepas saat batal, barang tidak ada, "
+            "hitung stok disetujui, koreksi stok. Kirim ulang semua angka (snapshot penuh): tiap malam 03:00 WIB, saat sambungan dinyalakan, "
+            "atau tombol Kirim ulang semua angka stok ke Hiryu di halaman Stok.",
+            "The number Grab can sell changes: a delivery put away, units held for a new order or released on a cancel, a missing item, "
+            "a count approved, a stock correction. Every number again (full snapshot): every night at 03:00 WIB, when the link is switched on, "
+            "or the button Kirim ulang semua angka stok ke Hiryu on the Stok page."),
+            "speed": out_speed(T(
+                "Berangkat setelah pesan pesanan (4, 5) yang menunggu. Angka yang sama dengan angka terakhir yang dikirim tidak dikirim lagi.",
+                "It leaves after any order messages (4, 5) waiting. A number equal to the last one sent is not sent again."))},
         "ann": {
             "data.hiryu_store_id": {"meaning": T(
                 "Toko Hiryu yang aktif untuk merek ini di dark store ini, dengan sambungan menyala (Kahf - Cawang #902). Stok toko mana yang disetel.",
@@ -596,14 +758,14 @@ OUTBOUND = [
             "data.sku_code": {"allowed": CAPS, "meaning": T("Kode SKU Hiryu. SKU mana yang disetel.",
                                                             "The SKU's Hiryu code. Which SKU to set.")},
             "data.available": {"allowed": T("0 atau lebih", "0 or more"), "meaning": T(
-                "Di rak, dikurangi yang ditahan untuk pesanan yang belum diambil, dikurangi buffer Grab (1 bawaan), tidak pernah di bawah 0. Hiryu menyetel Units on hand ke angka ini, tidak pernah menambah atau mengurangi.",
-                "On the shelf, minus units held for orders not yet picked, minus the Grab buffer (1 by default), never below 0. Hiryu sets Units on hand to this number, never adds or subtracts it.")},
+                "Di rak, dikurangi yang ditahan untuk pesanan yang belum diambil, tidak pernah di bawah 0. Hiryu menyetel Units on hand ke angka ini, tidak pernah menambah atau mengurangi.",
+                "On the shelf, minus units held for orders not yet picked, never below 0. Hiryu sets Units on hand to this number, never adds or subtracts it.")},
             "data.as_of": {"allowed": UTC_Z, "meaning": T(
                 "Saat angka dihitung, yaitu saat dikirim. Hiryu mengabaikan angka yang lebih tua dari yang sudah ia punya.",
                 "When the number was worked out, which is when it was sent. Hiryu ignores a number older than the one it has.")},
             "data.is_snapshot": {"meaning": T(
-                "true untuk setiap pesan snapshot penuh (sambungan dinyalakan, 03:00 WIB, tombol snapshot). Angkanya dipakai sama saja.",
-                "true for every message of a full snapshot (link switched on, 03:00 WIB, the snapshot button). The number is used the same way.")},
+                "true untuk setiap pesan snapshot penuh (sambungan dinyalakan, 03:00 WIB, tombol Kirim ulang semua angka stok ke Hiryu di halaman Stok). Angkanya dipakai sama saja.",
+                "true for every message of a full snapshot (link switched on, 03:00 WIB, the button Kirim ulang semua angka stok ke Hiryu on the Stok page). The number is used the same way.")},
         },
         "triggers": [
             {"side": "wms", "h": ["H3"], "text": T(
@@ -616,24 +778,24 @@ OUTBOUND = [
                 "Hitung stok disetujui, karantina atau hapus buku, koreksi stok.",
                 "A count approved, quarantine or write-off, a stock correction.")},
             {"side": "wms", "h": ["H8"], "text": T(
-                "Snapshot penuh: sambungan satu toko dinyalakan di Menu & toko Hiryu (stok toko itu), Sambungan Hiryu aktif dinyalakan (semua toko), tiap malam 03:00 WIB, atau Ops HQ menekan Kirim snapshot stok penuh di halaman ini.",
-                "Full snapshot: one store's link switched on in Menu & toko Hiryu (that store's stock), Sambungan Hiryu aktif switched on (every store), every night at 03:00 WIB, or Ops HQ presses Kirim snapshot stok penuh on this page.")},
+                "Snapshot penuh: satu toko baru menjadi aktif (merek dipilih, atau Hiryu mengaktifkannya; stok toko itu), Sambungan Hiryu aktif dinyalakan (semua toko), tiap malam 03:00 WIB, atau Ops HQ menekan Kirim ulang semua angka stok ke Hiryu di halaman Stok.",
+                "Full snapshot: a store becomes active (brand chosen, or Hiryu activates it; that store's stock), Sambungan Hiryu aktif switched on (every store), every night at 03:00 WIB, or Ops HQ presses Kirim ulang semua angka stok ke Hiryu on the Stok page.")},
         ],
         "rules": [
             T("Angka dihitung saat dikirim, jadi beberapa pindai beruntun mengirim satu angka saja.",
               "The number is worked out when it is sent, so a burst of scans sends one number."),
             T("Angka yang sama dengan pesan terakhir untuk SKU itu tidak dikirim lagi (snapshot selalu dikirim). Mengambil unit yang sudah ditahan biasanya tidak mengubah angka.",
               "A number equal to the last one sent for that SKU is not sent again (a snapshot always is). Picking units already held usually leaves the number unchanged."),
-            T("Hanya untuk toko yang aktif dengan sambungan menyala, dan SKU yang punya kode Hiryu.",
-              "Only for stores that are active with their link on, and SKUs that have a Hiryu code."),
+            T("Untuk setiap toko aktif (aktif di Hiryu, merek dipilih, dark store ada di katalog Hiryu), tanpa sakelar per toko, dan hanya SKU yang punya kode Hiryu.",
+              "For every active store (active in Hiryu, brand chosen, dark store in Hiryu's catalogue), with no switch per store, and only SKUs that have a Hiryu code."),
         ],
         "next": [
             {"side": "hiryu", "text": T(
                 "Setel Units on hand toko dan SKU itu ke available, lalu teruskan ke Grab seperti sekarang. Abaikan bila as_of lebih tua dari angka yang ada.",
                 "Set Units on hand for that store and SKU to available, then pass it on to Grab as today. Ignore it when as_of is older than the number you have.")},
             {"side": "hiryu", "text": T(
-                "Setelah sambungan toko menyala (H8): tidak ada pengurangan sendiri saat Tandai siap dan tidak ada penambahan setelah batal.",
-                "Once the store's link is on (H8): no own deduction at Mark ready and no restore after a cancel.")},
+                "Setelah Sambungan Hiryu aktif menyala, untuk setiap toko aktif (H8): tidak ada pengurangan sendiri saat Tandai siap dan tidak ada penambahan setelah batal.",
+                "Once Sambungan Hiryu aktif is on, for every active store (H8): no own deduction at Mark ready and no restore after a cancel.")},
         ],
     },
     {
@@ -642,6 +804,14 @@ OUTBOUND = [
         "example": {"message_id": "wms-40377", "type": "order_ready", "sent_at": "2026-10-01T02:48:11Z",
                     "data": {"grab_order_id": "A-7Q2K9XW3M4", "gm_number": "GM-358",
                              "packed_at": "2026-10-01T02:48:10Z"}},
+        "names": {
+            "data.grab_order_id": GRAB_ORDER,
+            "data.gm_number": GM_NO,
+            "data.packed_at": T("Waktu selesai dikemas", "Time packed"),
+        },
+        "timing": {"agree": False, "event": T(
+            "Packer menekan Selesai dikemas.", "The packer taps Selesai dikemas."),
+            "speed": out_speed(ORDER_FIRST)},
         "ann": {
             "data.grab_order_id": {"meaning": T("Pesanan dari pesan 1. Panggil MarkOrderReady di Grab untuk pesanan ini.",
                                                 "The order from message 1. Call MarkOrderReady on Grab for this order.")},
@@ -675,6 +845,22 @@ OUTBOUND = [
                              "action": "replaced", "units_wanted": 3, "units_found": 0,
                              "replace_hiryu_item_id": "LAB-GB-MC-225", "replace_sku_code": "LAB-GB-MC-225",
                              "replace_units": 1}},
+        "names": {
+            "data.grab_order_id": GRAB_ORDER,
+            "data.gm_number": GM_NO,
+            "data.hiryu_item_id": T("Item menu yang kurang", "Menu item that is short"),
+            "data.sku_code": SKU,
+            "data.action": T("Yang dilakukan WMS", "What the WMS did"),
+            "data.units_wanted": T("Unit dipesan", "Units ordered"),
+            "data.units_found": T("Unit ditemukan", "Units found"),
+            "data.replace_hiryu_item_id": T("Item pengganti", "Replacement item"),
+            "data.replace_sku_code": T("Kode produk pengganti", "Replacement product code"),
+            "data.replace_units": T("Unit pengganti diambil", "Replacement units taken"),
+        },
+        "timing": {"agree": False, "event": T(
+            "Picker menekan Barang tidak ada dan cek di bin lain gagal. Satu pesan per baris yang berubah.",
+            "The picker taps Barang tidak ada and the look-elsewhere check fails. One message per line that changed."),
+            "speed": out_speed(ORDER_FIRST)},
         "ann": {
             "data.grab_order_id": {"meaning": T("Pesanan dari pesan 1. Pesanan mana yang diubah di Grab.",
                                                 "The order from message 1. Which order to change on Grab.")},
@@ -724,39 +910,76 @@ OUTBOUND = [
                 "cancel_order: CheckOrderCancelable, CancelOrder with 2001, then send message 2 with reason_code 2001 and cancelled_by merchant. The WMS answers already_cancelled.")},
         ],
     },
-    {
-        "key": "catalogue_request", "no": None, "log_type": "catalogue_request", "queue_type": "catalogue_request",
-        "builder": "_build_catalogue_request",
-        "name": T("Minta katalog penuh", "Catalogue request"), "h": ["H6"],
-        "example": {"message_id": "wms-40400", "type": "catalogue_request", "sent_at": "2026-10-01T02:40:01Z",
-                    "data": {"request_id": "wms-cat-3-1790822400", "requested_at": "2026-10-01T02:40:00Z"}},
-        "ann": {
-            "data.request_id": {"allowed": T("wms-cat-<id dark store>-<detik unix>", "wms-cat-<dark store id>-<unix seconds>"), "meaning": T(
-                "WMS membuatnya, unik per permintaan. Kembalikan di request_id pesan 6.",
-                "The WMS makes it, unique per request. Echo it in request_id of message 6.")},
-            "data.requested_at": {"allowed": UTC_Z, "meaning": T("Saat tombol ditekan. Untuk log Hiryu.",
-                                                                 "When the button was pressed. For Hiryu's log.")},
-        },
-        "triggers": [
-            {"side": "wms", "h": ["H6"], "text": T(
-                "Siapa pun di dark store menekan Sinkron ulang dari Hiryu di Menu & toko Hiryu. Semua peran, sekali tiap 5 menit per dark store; nama penekan dicatat.",
-                "Anyone at the dark store presses Sinkron ulang dari Hiryu on Menu & toko Hiryu. Any role, once every 5 minutes per dark store; the name is logged.")},
-        ],
-        "rules": [
-            T("Terlalu cepat: tombol mendapat 429 (Bisa lagi 09:45 WIB) dan tidak ada yang diantrekan. Batas ini di aplikasi WMS, bukan jawaban untuk Hiryu.",
-              "Too soon: the button gets 429 (Bisa lagi 09:45 WIB) and nothing is queued. This limit is in the WMS app, not an answer to Hiryu."),
-            T("Pilihan lain untuk Shaun: GET di sisi Hiryu yang mengembalikan isi pesan 6.",
-              "Other option for Shaun: a GET on Hiryu's side that returns the message 6 body."),
-        ],
-        "next": [
-            {"side": "hiryu", "text": T(
-                "Jawab 2xx saat itu juga, lalu kirim pesan 6 dengan full true dan request_id yang sama.",
-                "Answer 2xx at once, then send message 6 with full true and the same request_id.")},
-            {"side": "wms", "text": T("Saat pesan 6 itu tiba, Sinkron ulang tampil terjawab.",
-                                      "When that message 6 arrives, Sinkron ulang shows as answered.")},
-        ],
-    },
 ]
+
+# ==========================================================================
+# The catalogue pull: GET POS_CATALOGUE_URL (Sinkron ulang dari Hiryu)
+# ==========================================================================
+
+EX_PULL_REQUEST_ID = "wms-cat-3-1790822400"
+EX_PULL_ANSWER = copy.deepcopy(EX_CATALOGUE) | {"message_id": "hy-cat-full-3-1790822400", "full": True,
+                                               "request_id": EX_PULL_REQUEST_ID}
+
+PULL = {
+    "key": "catalogue_pull", "no": None, "log_type": "catalogue_pull",
+    "name": T("Tarik katalog", "Catalogue pull"), "h": ["H6"],
+    "call": {"method": "GET", "path": "POS_CATALOGUE_URL",
+             "url": "https://<hiryu>/catalogue?request_id=" + EX_PULL_REQUEST_ID,
+             "who": T("WMS memanggil Hiryu", "The WMS calls Hiryu"),
+             "note": T("Satu alamat baca saja di sisi Hiryu (POS_CATALOGUE_URL, disepakati dengan Shaun). Bila kosong, WMS memakai asal POS_WEBHOOK_URL ditambah /catalogue. "
+                       "Tanpa isi. Hiryu menjawab 200 dengan isi pesan 6 lengkap (full true); jawaban itu masuk lewat penangan pesan 6 yang sama.",
+                       "One read-only address on Hiryu's side (POS_CATALOGUE_URL, to agree with Shaun). When it is empty, the WMS uses POS_WEBHOOK_URL's origin plus /catalogue. "
+                       "No body. Hiryu answers 200 with a full message 6 body (full true); that answer goes through the same message 6 handler.")},
+    "headers": [{"name": "X-Hiryu-Key", "value": "<POS_SHARED_SECRET>"},
+                {"name": "Accept", "value": "application/json"}],
+    "fields": [{"label": T("Nomor permintaan", "Request number"), "path": "(query) request_id", "type": "string",
+                "required": True, "nullable": False, "when": None,
+                "allowed": [T("wms-cat-<id dark store>-<detik unix>", "wms-cat-<dark store id>-<unix seconds>")],
+                "pattern": hiryu_link._MSG_ID, "example": json.dumps(EX_PULL_REQUEST_ID),
+                "meaning": T("WMS membuatnya, unik per tekanan tombol. Untuk log Hiryu; Hiryu boleh mengembalikannya di request_id jawaban, atau mengabaikannya.",
+                             "The WMS makes it, unique per press of the button. For Hiryu's log; Hiryu may echo it in request_id of the answer, or ignore it.")}],
+    "example": EX_PULL_ANSWER,
+    "triggers": [
+        {"side": "wms", "h": ["H6"], "text": T(
+            "Siapa pun di dark store menekan Sinkron ulang dari Hiryu di Menu & toko Hiryu. Semua peran, sekali tiap 5 menit per dark store (yang gagal tidak dihitung); nama penekan dicatat.",
+            "Anyone at the dark store presses Sinkron ulang dari Hiryu on Menu & toko Hiryu. Any role, once every 5 minutes per dark store (a failed one does not count); the name is logged.")},
+    ],
+    "timing": {"agree": True, "event": T(
+        "Seseorang menekan Sinkron ulang dari Hiryu di Menu & toko Hiryu.",
+        "Someone presses Sinkron ulang dari Hiryu on Menu & toko Hiryu."),
+        "speed": T(f"Saat tombol ditekan, tanpa antrean. Hiryu menjawab paling lambat {PULL_SECS} dtk; tombol menunggu jawaban itu. (untuk disepakati dengan Shaun)",
+                   f"On the button press, no queue. Hiryu answers within {PULL_SECS} s; the button waits for that answer. (to agree with Shaun)")},
+    "answers": [
+        {"status": 200, "body": None, "when": T(
+            "Isi pesan 6 lengkap, full true: semua dark store, toko, SKU dan menu, dengan message_id baru setiap jawaban. Contohnya di samping. WMS menerapkannya dan log menampilkannya sebagai pesan 6 masuk.",
+            "A full message 6 body, full true: every dark store, store, SKU and menu, with a new message_id on every answer. The example is alongside. The WMS applies it and the log shows it as message 6 in.")},
+        {"status": "4xx, 5xx", "body": None, "when": T(
+            "Gagal, juga untuk jawaban yang bukan pesan 6 yang sah atau full false. WMS tidak mencoba lagi sendiri: tombol menampilkan Gagal dengan alasannya dan boleh ditekan lagi saat itu juga.",
+            "Failed, also for an answer that is not a valid message 6 or has full false. The WMS does not retry by itself: the button shows the failure with its reason and may be pressed again at once.")},
+        {"status": "timeout", "body": None, "when": T(
+            f"Tidak ada jawaban dalam {PULL_SECS} detik, atau sambungan putus: gagal, seperti di atas.",
+            f"No answer within {PULL_SECS} seconds, or the connection drops: failed, as above.")},
+    ],
+    "next": [
+        {"side": "wms", "text": T(
+            "Katalog diterapkan seperti pesan 6 lainnya. Tombol menampilkan Katalog diterima dengan jam dan nama penekan; yang tidak bisa dipakai masuk Perlu tindakan.",
+            "The catalogue is applied like any message 6. The button shows Catalogue taken with the time and the name; what cannot be used goes to Perlu tindakan.")},
+        {"side": "hiryu", "text": T(
+            "Tidak ada langkah lagi. Hiryu tetap mengirim pesan 6 sendiri (POST) setiap kali katalognya berubah.",
+            "Nothing more to do. Hiryu still sends message 6 by itself (POST) whenever its catalogue changes.")},
+    ],
+    "rules": [
+        T("Terlalu cepat: tombol mendapat 429 (Bisa lagi 09:45 WIB) dan Hiryu tidak dipanggil. Batas ini di aplikasi WMS.",
+          "Too soon: the button gets 429 (Bisa lagi 09:45 WIB) and Hiryu is not called. This limit is in the WMS app."),
+        T("Tarik katalog tidak menunggu POS_PUSH_ENABLED atau Sambungan Hiryu aktif: katalog datang sebelum sambungan dinyalakan. Perlu alamatnya dan POS_SHARED_SECRET.",
+          "The catalogue pull does not wait for POS_PUSH_ENABLED or Sambungan Hiryu aktif: the catalogue comes before switch-on. It needs its address and POS_SHARED_SECRET."),
+        T("Jawaban yang bukan pesan 6 yang sah ditolak seluruhnya dan tidak mengubah apa pun; log menampilkannya Ditolak dengan alasannya.",
+          "An answer that is not a valid message 6 is refused whole and changes nothing; the log shows it as Refused with the reason."),
+        T("Di Mode demo stand-in Hiryu di dalam WMS menjawab dengan katalog yang sudah ada di WMS.",
+          "In Mode demo the Hiryu stand-in inside the WMS answers with the catalogue the WMS already holds."),
+    ],
+}
+
 
 OUT_ANSWERS = [
     {"status": "2xx", "body": None, "when": T(
@@ -922,11 +1145,15 @@ def example_cell(value) -> str | None:
     return json.dumps(value, ensure_ascii=False)
 
 
-def finish_row(row: dict, ann: dict, example) -> dict:
+def finish_row(row: dict, ann: dict, example, names: dict) -> dict:
     a = ann.get(row["path"])
     if not a:
         fail(f"no meaning written for field {row['path']}")
         a = {"meaning": T("", "")}
+    label = names.get(row["path"])
+    if not label or not (label.get("id") or "").strip() or not (label.get("en") or "").strip():
+        fail(f"no business name written for field {row['path']}")
+        label = T("", "")
     allowed = []
     if row.get("enum"):
         allowed.append(T(" | ".join(map(str, row["enum"])), " | ".join(map(str, row["enum"]))))
@@ -943,6 +1170,7 @@ def finish_row(row: dict, ann: dict, example) -> dict:
             if row["required"]:
                 fail(f"the example has no value for required field {row['path']}")
     return {
+        "label": label,
         "path": row["path"], "type": row["type"], "required": row["required"], "nullable": row["nullable"],
         "when": a.get("when"), "allowed": allowed, "pattern": row.get("pattern"), "example": ex,
         "meaning": a["meaning"],
@@ -967,11 +1195,11 @@ class FakeDb:
     async def fetch_one(self, sql, params=()):
         s = " ".join(sql.split())
         if "FROM skus WHERE id" in s:
-            return {"id": 1, "brand_id": 1, "hiryu_sku_code": "khf-fw-oac-100", "grab_buffer": None}
+            return {"id": 1, "brand_id": 1, "hiryu_sku_code": "khf-fw-oac-100"}
         if "COUNT(*) AS n FROM pos_outbox" in s:
             return {"n": 0}
         if "FROM inventory_balances" in s:
-            return {"avail": 8}
+            return {"avail": 8, "rack": 9, "held": 1}
         if "FROM alert_rules" in s:
             return {"value_num": 1}
         if "SELECT available FROM pos_outbox" in s:
@@ -1026,10 +1254,6 @@ def run_builders() -> dict:
             msgs, meta = await pos_sender._build_short(dict(row, payload_json=json.dumps({"order_line_id": 77})))
             out.setdefault("5", []).extend((d, meta) for _mid, d in msgs)
         pos_sender.db = FakeDb()
-        msgs, meta = await pos_sender._build_catalogue_request(dict(row, payload_json=json.dumps(
-            {"request_id": "wms-cat-3-1790822400", "requested_at": "2026-10-01T02:40:00Z",
-             "requested_by_name": "SPV"})))
-        out["catalogue_request"] = [(d, meta) for _mid, d in msgs]
         env = pos_sender.envelope("wms-1", "stock_level", {})
         out["_envelope"] = [(env, {})]
 
@@ -1066,7 +1290,7 @@ def outbound_rows(spec: dict, built: list, envelope_keys: list) -> list[dict]:
         t = {"message_id": "string", "type": "string", "sent_at": "string", "data": "object"}[k]
         row = {"path": k, "type": t, "required": True, "nullable": False, "pattern": None, "limits": [],
                "enum": [spec["log_type"]] if k == "type" else None}
-        rows.append(finish_row(row, ENVELOPE_ANN, spec["example"]))
+        rows.append(finish_row(row, ENVELOPE_ANN, spec["example"], ENVELOPE_NAMES))
     for k in keys:
         types = {_json_type(d[k]) for d, _ in built}
         nullable = None in types
@@ -1079,7 +1303,7 @@ def outbound_rows(spec: dict, built: list, envelope_keys: list) -> list[dict]:
             enum = list(pos_sender._ACTION_WORDS.keys())
         row = {"path": "data." + k, "type": types.pop(), "required": True, "nullable": nullable,
                "pattern": None, "limits": [], "enum": enum}
-        rows.append(finish_row(row, spec["ann"], spec["example"]))
+        rows.append(finish_row(row, spec["ann"], spec["example"], spec["names"]))
     return rows
 
 
@@ -1194,6 +1418,109 @@ def check_outbound(spec: dict, built: list, envelope_keys: list) -> None:
             fail(f"message {spec['key']}: {when} is not UTC with Z")
 
 
+def check_timing(source: str) -> int:
+    """What the "Kapan dan seberapa cepat" texts and the timeline say about the
+    WMS side, checked against the code. Returns the ready target in minutes."""
+    import ledger
+    pr = ledger.PRIORITY
+    order_p = {pr.get("order_ready"), pr.get("order_short")}
+    stock_p = {pr.get("stock_level")}
+    if len(order_p) != 1 or len(stock_p) != 1 or not min(stock_p) > max(order_p):
+        fail(f"ledger.PRIORITY no longer puts order messages (4, 5) ahead of stock: {pr}")
+    if "PRIORITY.get(message_type, 5)" not in inspect.getsource(ledger.enqueue_pos_message):
+        fail("ledger.enqueue_pos_message no longer defaults to priority 5")
+    if "o.send_priority, o.id" not in inspect.getsource(pos_sender.send_due):
+        fail("pos_sender.send_due no longer sends by send_priority, then id")
+    if "Angka sama dengan pesan terakhir" not in inspect.getsource(pos_sender._build_stock):
+        fail("pos_sender._build_stock no longer skips a stock number equal to the last one sent")
+    if "local.hour < 3" not in inspect.getsource(pos_sender.nightly_snapshot_due):
+        fail("pos_sender.nightly_snapshot_due no longer starts at 03:00 WIB")
+    if "queue_full_snapshot" not in inspect.getsource(hiryu_link.set_live):
+        fail("switching the link on no longer queues the full snapshot")
+    if "queue_full_snapshot" not in inspect.getsource(hiryu_link.snapshot):
+        fail("POST /api/hiryu-link/snapshot no longer queues the full snapshot")
+    if "buffer" in inspect.getsource(pos_sender.available_now).lower():
+        fail("pos_sender.available_now mentions a buffer again: data.available's meaning says there is none")
+    m = re.search(r'rule\("grab_ready_minutes", (\d+)\)', source)
+    if not m:
+        fail("hiryu_link.py no longer reads grab_ready_minutes for the ready-by")
+        return 10
+    return int(m.group(1))
+
+
+def order_timeline(ready_minutes: int) -> dict:
+    """One order's life, for the strip under the two lanes."""
+    n = SENDER_EVERY
+    step = lambda side, msg, text, when: {"side": side, "msg": msg, "text": text, "when": when}  # noqa: E731
+    return {
+        "title": T("Satu pesanan, dari Terima sampai siap", "One order, from Terima to ready"),
+        "steps": [
+            step("grab", None, T("Pelanggan memesan di Grab", "The customer orders on Grab"),
+                 T("menit 0: jam mulai", "minute 0: the clock starts")),
+            step("hiryu", "1", T("Staf menekan Terima di Hiryu, Hiryu mengirim pesan 1", "Staff press Terima in Hiryu, Hiryu sends message 1"),
+                 T("saat itu juga (untuk disepakati dengan Shaun)", "at once (to agree with Shaun)")),
+            step("wms", "3", T("Pesanan masuk antrean ambil, stok ditahan, WMS mengirim pesan 3", "The order joins the pick queue, stock is held, the WMS sends message 3"),
+                 T(f"dalam sekitar {n} dtk", f"within about {n} s")),
+            step("wms", None, T("Picker mengambil barang", "The picker picks"), None),
+            step("wms", "5", T("Bila barang tidak ada: WMS mengirim pesan 5", "If an item is missing: the WMS sends message 5"),
+                 T(f"dalam sekitar {n} dtk", f"within about {n} s")),
+            step("wms", "4", T("Packer menekan Selesai dikemas, WMS mengirim pesan 4, Hiryu menandai siap di Grab", "The packer taps Selesai dikemas, the WMS sends message 4, Hiryu marks it ready on Grab"),
+                 T(f"dalam sekitar {n} dtk", f"within about {n} s")),
+        ],
+        "target": T(f"Target: siap di Grab paling lambat {ready_minutes} menit setelah pelanggan memesan (order_time di pesan 1), bukan setelah Terima.",
+                    f"Target: ready on Grab within {ready_minutes} minutes of the customer's order (order_time in message 1), not of Terima."),
+    }
+
+
+def check_pull() -> None:
+    """What the catalogue pull card says, checked against the code."""
+    try:
+        msg = hiryu_link.CatalogueMessage.model_validate(PULL["example"])
+        if not msg.full:
+            fail("catalogue_pull: the example answer is not full")
+    except Exception as e:  # noqa: BLE001
+        fail(f"catalogue_pull: the example answer is refused by CatalogueMessage: {e}")
+    if not re.fullmatch(hiryu_link._MSG_ID, EX_PULL_REQUEST_ID):
+        fail("catalogue_pull: the example request_id does not match _MSG_ID")
+    if pos_sender.PULL_TYPE != PULL["log_type"]:
+        fail(f"catalogue_pull: pos_sender.PULL_TYPE is {pos_sender.PULL_TYPE}")
+    fetch = inspect.getsource(pos_sender._fetch_catalogue)
+    for word in ("client.get(", '"X-Hiryu-Key"', '"request_id"', "CATALOGUE_TIMEOUT"):
+        if word not in fetch:
+            fail(f"pos_sender._fetch_catalogue no longer has {word}")
+    pull = inspect.getsource(pos_sender.pull_catalogue)
+    for word in ("hiryu_link.handle_catalogue(", "CatalogueMessage.model_validate", "msg.full",
+                 '"request_id": request_id', "standin_catalogue_body(", "asyncio.wait_for(",
+                 "PULL_TYPE", "push_enabled", "link_live"):
+        if word in ("push_enabled", "link_live"):
+            if word in pull:
+                fail(f"pos_sender.pull_catalogue now reads {word}: the card says the pull does not wait for it")
+            continue
+        if word not in pull:
+            fail(f"pos_sender.pull_catalogue no longer has {word}")
+    route = inspect.getsource(hiryu_link.request_catalogue)
+    for word in ("pos_sender.pull_catalogue(", "429", "is_demo_site"):
+        if word not in route:
+            fail(f"POST /api/hiryu-link/catalogue-request no longer has {word}")
+    if '"failed"' not in inspect.getsource(hiryu_link._resync_state) or "wait = status != \"failed\"" not in inspect.getsource(hiryu_link._resync_state):
+        fail("a failed pull no longer frees the button at once (_resync_state)")
+    saved = {k: os.environ.get(k) for k in ("POS_CATALOGUE_URL", "POS_WEBHOOK_URL")}
+    try:
+        os.environ["POS_CATALOGUE_URL"] = ""
+        os.environ["POS_WEBHOOK_URL"] = "https://hiryu.example/wms/hook"
+        if pos_sender.catalogue_url() != "https://hiryu.example/catalogue":
+            fail(f"catalogue_url() from POS_WEBHOOK_URL gives {pos_sender.catalogue_url()}")
+        os.environ["POS_CATALOGUE_URL"] = "https://hiryu.example/x/cat"
+        if pos_sender.catalogue_url() != "https://hiryu.example/x/cat":
+            fail("catalogue_url() no longer prefers POS_CATALOGUE_URL")
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+
 def check_h_refs(messages: list[dict]) -> None:
     known = {h["h"] for h in H_LIST}
     for m in messages:
@@ -1242,9 +1569,11 @@ def build() -> dict:
                             "limits": [T("1 sampai 64 karakter", "1 to 64 characters")]})
         ann_paths = set(spec["ann"])
         fields = [finish_row(r, spec["ann"], spec["example"] if not r["path"].startswith("(path)")
-                             else {"grab_order_id": spec["path_example"]}) for r in rows]
+                             else {"grab_order_id": spec["path_example"]}, spec["names"]) for r in rows]
         for p in ann_paths - {r["path"] for r in rows}:
             fail(f"message {spec['key']}: a meaning is written for {p}, which the model does not have")
+        for p in set(spec["names"]) - {r["path"] for r in rows}:
+            fail(f"message {spec['key']}: a business name is written for {p}, which the model does not have")
         if spec.get("path_example"):
             fields[0]["example"] = json.dumps(spec["path_example"])
         messages[spec["key"]] = {
@@ -1258,6 +1587,7 @@ def build() -> dict:
             "headers": [{"name": "X-Hiryu-Key", "value": "<POS_SHARED_SECRET>"},
                         {"name": "Content-Type", "value": "application/json"}],
             "triggers": spec["triggers"],
+            "timing": spec["timing"],
             "fields": fields,
             "example": spec["example"],
             "answers": [{k: v for k, v in a.items() if k not in ("model", "source")} for a in spec["answers"]],
@@ -1274,6 +1604,8 @@ def build() -> dict:
         ann_paths = set(spec["ann"])
         for p in ann_paths - {f["path"] for f in fields}:
             fail(f"message {spec['key']}: a meaning is written for {p}, which the builder does not send")
+        for p in set(spec["names"]) - {f["path"] for f in fields}:
+            fail(f"message {spec['key']}: a business name is written for {p}, which the builder does not send")
         messages[spec["key"]] = {
             "key": spec["key"], "no": spec["no"], "log_type": spec["log_type"], "name": spec["name"],
             "direction": "out", "from": "wms", "to": "hiryu", "h": spec["h"],
@@ -1285,6 +1617,7 @@ def build() -> dict:
                         {"name": "Idempotency-Key", "value": "<message_id>"},
                         {"name": "Content-Type", "value": "application/json"}],
             "triggers": spec["triggers"],
+            "timing": spec["timing"],
             "fields": fields,
             "example": spec["example"],
             "answers": OUT_ANSWERS,
@@ -1292,19 +1625,33 @@ def build() -> dict:
             "rules": spec.get("rules", []),
         }
 
-    order = ["1", "2", "3", "4", "5", "6", "catalogue_request"]
+    check_pull()
+    messages["catalogue_pull"] = {
+        "key": PULL["key"], "no": PULL["no"], "log_type": PULL["log_type"], "name": PULL["name"],
+        "direction": "out", "from": "wms", "to": "hiryu", "h": PULL["h"], "call": PULL["call"],
+        "headers": PULL["headers"], "triggers": PULL["triggers"], "timing": PULL["timing"],
+        "fields": PULL["fields"], "example": PULL["example"], "answers": PULL["answers"],
+        "next": PULL["next"], "rules": PULL["rules"],
+    }
+
+    order = ["1", "2", "3", "4", "5", "6", "catalogue_pull"]
     out_messages = [messages[k] for k in order]
     check_h_refs(out_messages)
     log_types = {m["log_type"] for m in out_messages}
-    if log_types != {"order", "cancel", "catalogue"} | set(pos_sender.CONTRACT_TYPE.values()):
+    if log_types != ({"order", "cancel", "catalogue", pos_sender.PULL_TYPE}
+                     | set(pos_sender.CONTRACT_TYPE.values())):
         fail(f"log types {sorted(log_types)} do not cover the code's message types")
+
+    ready_minutes = check_timing(source)
 
     return {
         "title": T("Peta pesan Hiryu dan WMS", "Hiryu and WMS message map"),
-        "contract": "docs/hiryu-link-v1.md v1.1",
+        "contract": "docs/hiryu-link-v1.md v1.2",
         "generated_by": "python tools/gen_message_map.py",
         "retry": {"seconds": list(pos_sender.BACKOFF), "words": retry_words(),
                   "timeout_seconds": int(pos_sender.HTTP_TIMEOUT)},
+        "sender_every_seconds": SENDER_EVERY,
+        "timeline": order_timeline(ready_minutes),
         "rules": general_rules(),
         "h_list": H_LIST,
         "messages": out_messages,

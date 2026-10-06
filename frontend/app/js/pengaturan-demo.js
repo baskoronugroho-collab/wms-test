@@ -6,6 +6,11 @@
  * When on, Buat pesanan dummy (js/demo-order.js) makes orders exactly like
  * Hiryu's message 1, and messages 3, 4 and 5 of this hub go to the built-in
  * Hiryu stand-in, so Pesan Hiryu shows the whole conversation.
+ *
+ * Reset stok demo (SPV and above, Mode demo on):
+ *   GET  /api/demo/reset-stock?site_id=  what it will change, and what refuses it
+ *   POST /api/demo/reset-stock           {site_id}: the preset products back to
+ *        their seed level, as stock corrections through the ledger
  */
 (function () {
   'use strict';
@@ -56,12 +61,66 @@
       '<button type="button" class="k-btn k-btn--primary" data-make data-min-role="supervisor"' + (on ? '' : ' disabled') + '>' + icon('plus') + span(['Buat pesanan dummy', 'Make a dummy order']) + '</button>' +
       '<a class="k-btn k-btn--secondary" href="pengaturan.html?tab=integrasi">' + icon('list') + span(['Lihat Pesan Hiryu', 'See Hiryu messages']) + '</a>' +
       '<a class="k-btn k-btn--secondary" href="pesanan.html?tab=papan">' + icon('grid') + span(['Papan antrean', 'Queue board']) + '</a></div></div>' +
+      '<div class="k-card k-card--pad k-stack">' +
+      '<span class="k-h2" style="font-size:18px">' + span(['Reset stok demo', 'Reset demo stock']) + '</span>' +
+      '<p class="k-p" style="margin:0">' + span(['Mengembalikan produk keempat preset (termasuk pengganti) ke jumlah awal di bin raknya, supaya latihan berikutnya sama. Dicatat sebagai koreksi stok dengan alasan Reset demo, dan stok baru dikirim ke Hiryu.',
+        'Puts the products of the four presets (the replacement too) back to their starting number in their rack bins, so the next rehearsal is the same. Recorded as stock corrections with reason Reset demo, and the new stock goes to Hiryu.']) + '</p>' +
+      '<div class="k-line" style="gap:10px;flex-wrap:wrap">' +
+      '<button type="button" class="k-btn k-btn--secondary" data-reset data-min-role="supervisor"' + (on ? '' : ' disabled') + '>' + icon('count') + span(['Reset stok demo', 'Reset demo stock']) + '</button>' +
+      (on ? '' : '<span class="k-caption">' + span(['Nyalakan Mode demo dulu.', 'Switch Mode demo on first.']) + '</span>') + '</div></div>' +
       '<div class="k-card k-card--pad k-stack"><span class="k-eyebrow" ' + biAttr('Alur demo', 'Demo flow') + '></span><ol class="k-stack" style="margin:0;padding-left:22px">' +
       STEPS.map((x) => '<li>' + span(x[0]) + (x[1] ? ' ' + x[1].split(' ').map((h) => '<span class="k-tag">' + esc(h) + '</span>').join(' ') : '') + '</li>').join('') +
       '</ol></div>' +
       '<div class="k-note">' + icon('info') + span(['Beda dengan Buat pesanan uji (UJI): pesanan uji hanya untuk latihan, tidak pernah ke Hiryu, juga tidak ke stand-in. Pesanan dummy ditandai demo.',
         'Not the same as Buat pesanan uji (UJI): a test order is for training only and never reaches Hiryu, not even the stand-in. Dummy orders are marked demo.']) + '</div>' +
       '</div>';
+  }
+
+  /* Reset stok demo: show every bin, now and after, then confirm. */
+  const RS_CSS = '.dr-table td.m,.dr-table th.m{text-align:right;font-family:var(--mono);white-space:nowrap}.dr-table td.d{font-family:var(--mono);font-weight:700;text-align:right}';
+  async function resetStock() {
+    if (!document.getElementById('dr-css')) {
+      const st = document.createElement('style');
+      st.id = 'dr-css';
+      st.textContent = RS_CSS;
+      document.head.appendChild(st);
+    }
+    const siteId = S.siteId();
+    const plan = await api().get('/demo/reset-stock' + api().qs({ site_id: siteId }));
+    const rows = plan.rows || [];
+    const changing = rows.filter((r) => r.change);
+    const note = (kind, ic, text) => '<div class="k-note k-note--' + kind + '">' + icon(ic) + '<span>' + esc(S.pick(text)) + '</span></div>';
+    const box = document.createElement('div');
+    box.className = 'k-stack';
+    box.innerHTML =
+      (plan.problems || []).map((x) => note('stop', 'warn', x)).join('') +
+      (plan.notes || []).map((x) => note('caution', 'info', x)).join('') +
+      (!(plan.problems || []).length
+        ? '<p class="k-p" style="margin:0">' + (changing.length
+          ? span(['Bin di bawah ini diubah ke jumlah awalnya. Bin yang sudah sesuai tidak diubah.', 'The bins below go back to their starting number. Bins that already match are left as they are.'])
+          : span(['Semua bin sudah sesuai. Tidak ada yang diubah.', 'Every bin already matches. Nothing to change.'])) + '</p>' : '') +
+      '<div class="k-tablewrap"><table class="k-table dr-table"><thead><tr>' +
+      '<th ' + biAttr('Produk', 'Product') + '></th><th>Bin</th><th class="m" ' + biAttr('Sekarang', 'Now') + '></th>' +
+      '<th class="m" ' + biAttr('Sesudah', 'After') + '></th><th class="m" ' + biAttr('Ubah', 'Change') + '></th></tr></thead><tbody>' +
+      rows.map((r) => '<tr' + (r.change ? ' class="is-selected"' : '') + '><td><div class="k-cell2"><span class="k-cell2__main">' + esc(r.sku_code) + '</span>' +
+        '<span class="k-cell2__sub">' + esc(r.name || '') + '</span></div></td>' +
+        '<td class="k-mono">' + esc(r.bin) + (r.role === 'primary' ? '' : ' <span class="k-tag">' + esc(t('cadangan', 'overflow')) + '</span>') + '</td>' +
+        '<td class="m">' + r.now + '</td><td class="m">' + r.target + (r.seed_level ? '' : ' *') + '</td>' +
+        '<td class="d">' + (r.change ? (r.change > 0 ? '+' : '') + r.change : '-') + '</td></tr>').join('') +
+      '</tbody></table></div>' +
+      (rows.some((r) => !r.seed_level) ? '<span class="k-caption">' + span(['* Tidak ada di data awal: diisi 12.', '* Not in the starting data: set to 12.']) + '</span>' : '');
+    const m = S.modal({
+      title: ['Reset stok demo', 'Reset demo stock'], body: box, wide: true,
+      actions: [
+        { label: ['Batal', 'Cancel'], kind: 'secondary' },
+        { label: ['Reset stok', 'Reset stock'], kind: 'primary', minRole: 'supervisor', onClick: async () => {
+          const r = await api().post('/demo/reset-stock', { site_id: siteId });
+          S.toast(r.message || ['Stok demo direset.', 'Demo stock reset.'], 'ok');
+        } },
+      ],
+    });
+    const go = m.el.querySelector('.k-modal__foot .k-btn--primary');
+    if (go && (!plan.can_reset || !changing.length)) go.disabled = true;
   }
 
   let HOOKED = false;
@@ -86,6 +145,8 @@
         S.toast(r.message || (on ? ['Mode demo menyala.', 'Mode demo on.'] : ['Mode demo mati.', 'Mode demo off.']), 'ok');
         paint();
       });
+      const rs = body.querySelector('[data-reset]');
+      if (rs) rs.addEventListener('click', () => resetStock().catch(S.fail));
       const mk = body.querySelector('[data-make]');
       if (mk) mk.addEventListener('click', async () => {
         try { const d = await loadDemoOrder(); await d.open({ siteId: S.siteId() }); }

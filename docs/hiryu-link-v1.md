@@ -1,12 +1,27 @@
 # Hiryu link, version 1 (draft for Shaun)
 
-**Version 1.1, 5 Oct 2026.** Changes from 1.0: message 1 carries the customer's
-out-of-stock instruction per line (`oos_instruction`, H9); message 2 carries
-`cancelled_by`; message 3 carries `is_snapshot`; message 5 says what the WMS did
-with the line (`action`); message 6 carries dark stores, and stores point to a
-dark store instead of a typed hub code and brand; the WMS can ask for the full
-catalogue (`catalogue_request`). The canvas board 11d shows every field in a
-table; this file and 11d use the same names and examples.
+**Version 1.2, 6 Oct 2026.** Changes from 1.1:
+
+- *Sinkron ulang dari Hiryu* is now a **pull**. Hiryu exposes one read-only
+  address, `GET <POS_CATALOGUE_URL>`, that answers with the full message 6
+  body. The queued `catalogue_request` message is gone, so Hiryu has nothing to
+  receive and nothing to answer later. See *Catalogue pull* below.
+- Stock goes to **every active store**. There is no switch per store any more:
+  a store is active when Hiryu says it is active, Ops HQ has picked its brand,
+  and its dark store is in Hiryu's catalogue. A store that becomes active gets
+  its full stock snapshot at once (H8).
+- The WMS no longer keeps its own "live on Grab" tick per store. *Menu & toko
+  Hiryu* shows Hiryu's own status read-only (`status` and `order_acceptance`
+  from message 6).
+- Message 3's `available` no longer keeps units back for Grab: it is
+  everything on the shelf that no order holds yet.
+
+Version 1.1 (5 Oct): message 1 carries the customer's out-of-stock instruction
+per line (`oos_instruction`, H9); message 2 carries `cancelled_by`; message 3
+carries `is_snapshot`; message 5 says what the WMS did with the line
+(`action`); message 6 carries dark stores, and stores point to a dark store
+instead of a typed hub code and brand. The canvas board 11d shows every field
+in a table; this file and 11d use the same names and examples.
 
 The WMS side of PRD §0.6, as built on dev. Everything here is a proposal until
 Shaun agrees it (§0.6.4). Field names are the WMS's; Hiryu can map to them or we
@@ -34,6 +49,8 @@ rename once. Items marked **(to agree with Shaun)** are not agreed yet.
   address, customer notes, payment, driver details. The WMS refuses any field
   not listed here (`422`), so none of these can ride along by mistake.
 - Order messages (1, 2, 4, 5) go ahead of stock and catalogue messages (3, 6).
+  The catalogue pull does not wait in the queue: it runs when the button is
+  pressed.
 
 ### Answers, and what the sender does
 
@@ -144,7 +161,8 @@ with `2001` after its missing line (`POST /api/hiryu/v1/orders/A-3H6PV8N2RT/canc
 ### 6. Catalogue: `POST /api/hiryu/v1/catalogue`
 
 Sent when a dark store, store, menu, item, bundle or SKU changes (H6); `full:
-true` when it is the whole list. In a full list, dark stores, stores and menu
+true` when it is the whole list. The same body, with `full: true`, is Hiryu's
+answer to the catalogue pull (below). In a full list, dark stores, stores and menu
 items missing from a section that is sent turn inactive, and a store with no
 menu in a non-empty `menus` sells nothing; an empty or missing section changes
 nothing, and SKUs never turn inactive this way.
@@ -188,7 +206,7 @@ nothing, and SKUs never turn inactive this way.
 |---|---|---|---|---|
 | `message_id` | string, up to 96 | Yes | Hiryu makes it | A repeat changes nothing |
 | `full` | boolean | Yes | `true` when Hiryu sends the whole list | Dark stores, stores and menu items missing from a section that is sent turn inactive (see above) |
-| `request_id` | string or null | No | The `request_id` of the WMS's `catalogue_request` this answers; null otherwise **(to agree with Shaun)** | Marks *Sinkron ulang* as done |
+| `request_id` | string or null | No | In the answer to a catalogue pull: null, or the `request_id` from the pull's query. Null when Hiryu sends on its own | Marks *Sinkron ulang* as done. For a pull the WMS fills in its own `request_id` whatever is sent |
 | `dark_stores` | list | No | Hiryu, Dark stores | One hub per dark store |
 | `dark_stores[].hiryu_dark_store_id` | integer | Yes | The dark store's number in Hiryu | The hub's key; a new one creates the hub (*Baru dari Hiryu*), Ops HQ adds only the WMS data |
 | `dark_stores[].name` | string, up to 160 | Yes | The dark store's name | Hub name, read-only in the WMS |
@@ -199,8 +217,8 @@ nothing, and SKUs never turn inactive this way.
 | `stores[].hiryu_store_id` | integer | Yes | The store's number | The store's key; a new store waits for Ops HQ (see below) |
 | `stores[].name` | string, up to 160 | Yes | The store's name | Shown on *Menu & toko Hiryu* |
 | `stores[].hiryu_dark_store_id` | integer | Yes | The dark store the store is assigned to | Puts the store on that hub |
-| `stores[].status` | string | Yes | `active` or `inactive` | Inactive: no stock sent, orders refused |
-| `stores[].order_acceptance` | string | No | The store's order acceptance setting **(to agree with Shaun)** | Shown as *terima MANUAL*; Ops HQ is warned when it is not MANUAL |
+| `stores[].status` | string | Yes | `active` or `inactive` | Shown read-only as *Status di Hiryu*. Inactive: no stock sent, orders refused |
+| `stores[].order_acceptance` | string | No | The store's order acceptance setting **(to agree with Shaun)** | Shown read-only under *Status di Hiryu* as *terima MANUAL*; anything else shows a warning and Ops HQ is warned |
 | `skus` | list, up to 10000 | No | Hiryu, SKUs | Products in the WMS |
 | `skus[].sku_code` | string, up to 64 | Yes | The Hiryu SKU code | Finds the product, ignoring capitals; a new code creates one |
 | `skus[].name` | string, up to 255 | Yes | The SKU's name | The product name on every screen |
@@ -217,8 +235,10 @@ nothing, and SKUs never turn inactive this way.
 
 - There is no brand record in Hiryu. A new store waits on *Menu & toko Hiryu*
   until Ops HQ picks its brand and its Grab merchant account (the brand's own,
-  or Ninja Van's as Nemu Mart). Until then nothing is sent for it and it cannot
-  be switched on.
+  or Ninja Van's as Nemu Mart). Until then nothing is sent for it. Once it is
+  active (active in Hiryu, brand picked, dark store in the catalogue) the WMS
+  queues its full stock snapshot and from then on sends its stock (H8). There
+  is no switch per store.
 - A SKU gets its brand from the store whose menu uses it. A SKU code the WMS has
   not seen creates a WMS SKU for that brand; Ops HQ then completes its bin size
   and stock numbers (*Lengkapi data SKU*).
@@ -232,8 +252,8 @@ Answers `{"ok": true}` when the secret is right.
 
 ## WMS to Hiryu
 
-One address on Hiryu's side (`POS_WEBHOOK_URL`, **to agree with Shaun**), the
-type in the body. The WMS sends with `X-Hiryu-Key` and
+One address on Hiryu's side for messages 3 to 5 (`POS_WEBHOOK_URL`, **to agree
+with Shaun**), the type in the body. The WMS sends with `X-Hiryu-Key` and
 `Idempotency-Key: <message_id>`, one message per call, order messages ahead of
 stock messages, and retries on the schedule above until Hiryu answers `2xx`. A
 `4xx` other than `408` and `429` stops retrying and shows as failed on
@@ -244,13 +264,15 @@ stock messages, and retries on the schedule above until Hiryu answers `2xx`. A
  "sent_at": "2026-10-01T02:15:04Z", "data": {}}
 ```
 
-Types: `stock_level`, `order_ready`, `item_short`, `catalogue_request`. The
-fields below go inside `data`.
+Types: `stock_level`, `order_ready`, `item_short`. The fields below go inside
+`data`. (Until 6 Oct there was a fourth type, `catalogue_request`; it is no
+longer sent. The catalogue pull below replaces it.)
 
 ### 3. Stock level: `"type": "stock_level"`
 
 Sent after every stock move for that store and SKU (H3). A full snapshot (every
-SKU of every store) goes at switch-on (H8) and every night at 03:00 WIB.
+SKU of the store) goes when a store becomes active and when *Sambungan Hiryu
+aktif* is switched on (every store) (H8), and every night at 03:00 WIB.
 
 ```json
 {"hiryu_store_id": 902, "sku_code": "KHF-FW-OAC-100", "available": 7,
@@ -265,12 +287,11 @@ SKU of every store) goes at switch-on (H8) and every night at 03:00 WIB.
 | `as_of` | time, UTC | Yes | When the number was worked out | Ignore a number older than the one Hiryu already has |
 | `is_snapshot` | boolean | Yes | `true` for every message of a full snapshot, `false` otherwise | Hiryu may show when the last full resync landed; the number is used the same way |
 
-`available` = on the shelf, minus held for orders not yet picked, minus the
-Grab buffer (1 by default), never below 0. Worked out when the message is sent,
-so a burst of scans sends one number. A number equal to the last one sent for
-that store and SKU is not sent again (a snapshot always is). Stock goes only for
-a store that is active with its link on (H8), and only for a SKU that has a
-Hiryu code.
+`available` = on the shelf, minus held for orders not yet picked, never below
+0. Worked out when the message is sent, so a burst of scans sends one number. A
+number equal to the last one sent for that store and SKU is not sent again (a
+snapshot always is). Stock goes to every active store, with no switch per store
+(H8), and only for a SKU that has a Hiryu code.
 
 ### 4. Order ready: `"type": "order_ready"`
 
@@ -327,32 +348,108 @@ customer's instruction (H5, H10). One message per line that changed.
   stock when it sends this. For `replaced` and `removed` the order goes on to
   packing; if Hiryu then has to cancel it, message 2 stops it in the WMS.
 
-### Catalogue request: `"type": "catalogue_request"` (to agree with Shaun)
+### Catalogue pull: `GET <POS_CATALOGUE_URL>` (to agree with Shaun)
 
-```json
-{"request_id": "wms-cat-3-1790822400", "requested_at": "2026-10-01T02:40:00Z"}
+What Shaun builds: **one read-only address** on Hiryu's side that returns the
+whole catalogue as one message 6 body. Nothing else: Hiryu does not receive
+anything from the WMS for this and does not have to answer later.
+
+```
+GET https://<hiryu>/catalogue?request_id=wms-cat-3-1790822400
+X-Hiryu-Key: <shared secret>
+Accept: application/json
 ```
 
-| Field | Type | Required | Where the WMS gets it | What Hiryu does with it |
-|---|---|---|---|---|
-| `request_id` | string | Yes | The WMS makes it, unique per request (`wms-cat-<hub>-<unix seconds>`) | Echo it in `request_id` of message 6 |
-| `requested_at` | time, UTC | Yes | When the button was pressed | For Hiryu's log |
+| Part | Value | What Hiryu does with it |
+|---|---|---|
+| Address | `POS_CATALOGUE_URL`. When it is empty, the WMS uses the origin of `POS_WEBHOOK_URL` plus `/catalogue` (`https://hiryu.example/wms/hook` gives `https://hiryu.example/catalogue`) | Serves the catalogue there |
+| `X-Hiryu-Key` | The shared secret, as on every call | Wrong or missing: answer `401` |
+| `request_id` (query) | `wms-cat-<dark store id>-<unix seconds>`, unique per press | For Hiryu's log. Hiryu may echo it in `request_id` of the answer, or ignore it |
 
-Sent when anyone presses *Sinkron ulang dari Hiryu* on *Menu & toko Hiryu*. Any
-role may press it, once every 5 minutes per hub; the WMS enforces the wait and
-logs the name. Hiryu answers `2xx` at once, then sends message 6 with
-`full: true` and the same `request_id`. Other option for Shaun: a `GET` on
-Hiryu's side that returns the message 6 body.
+Answer `200` with a message 6 body (the same shape and rules as message 6
+above):
+
+- `full: true`, with every dark store, every store, every SKU and every
+  store's menu. A full list deactivates what is missing from a section that is
+  sent, so it must really be the whole list.
+- `message_id`: a new one on every answer (`hy-cat-full-...`). An answer with a
+  `message_id` the WMS has seen before is treated as a repeat and changes
+  nothing.
+- `request_id`: null or the one from the query; the WMS fills in its own
+  either way.
+- Within **20 seconds**. The person who pressed the button waits for it.
+
+```json
+{
+  "message_id": "hy-cat-full-3-1790822400",
+  "full": true,
+  "request_id": "wms-cat-3-1790822400",
+  "dark_stores": [{"hiryu_dark_store_id": 13, "name": "Cawang",
+                   "address": "Jl. Raya Kalibata No. 4, Jakarta Timur",
+                   "opening_hours": {"mon": [{"open": "08:00", "close": "22:00"}],
+                                     "tue": [{"open": "08:00", "close": "22:00"}],
+                                     "wed": [{"open": "08:00", "close": "22:00"}],
+                                     "thu": [{"open": "08:00", "close": "22:00"}],
+                                     "fri": [{"open": "08:00", "close": "22:00"}],
+                                     "sat": [{"open": "08:00", "close": "22:00"}],
+                                     "sun": []}}],
+  "stores": [{"hiryu_store_id": 902, "name": "Kahf - Cawang", "hiryu_dark_store_id": 13,
+              "status": "active", "order_acceptance": "MANUAL"}],
+  "skus": [{"sku_code": "KHF-FW-OAC-100", "name": "Kahf Oil and Acne Care Face Wash 100 ml",
+            "barcodes": ["8993137000101"]}],
+  "menus": [{"hiryu_store_id": 902, "items": [{"item_id": "KHF-FW-OAC-100",
+             "name": "Kahf Face Wash Oil & Acne 100 ml", "sku_code": "KHF-FW-OAC-100",
+             "units_per_sale": 1, "price": 45000, "available": true}]}]
+}
+```
+
+When the WMS calls it: when anyone presses *Sinkron ulang dari Hiryu* on *Menu
+& toko Hiryu*. Any role may press it, once every 5 minutes per dark store; the
+WMS enforces the wait (too soon: the button shows *Bisa lagi 09:45* and Hiryu
+is not called), logs the name and audits it. A pull that failed does not start
+the 5 minutes, so the button can be pressed again at once.
+
+What the WMS does with the answer: it runs it through the same handler as a
+message 6 that Hiryu POSTs, so the result is exactly the same. The *Pesan
+Hiryu* log shows the pull going out (`catalogue_pull`, H6) and then message 6
+coming in.
+
+When it fails, the WMS does not retry by itself. The button shows *Gagal* with
+a plain reason, the pull shows as failed in *Pesan Hiryu*, and if nobody gets a
+good answer within 10 minutes Ops HQ sees *Sinkron ulang dari Hiryu gagal* on
+*Perlu tindakan*. It fails when:
+
+- no address is set (`POS_CATALOGUE_URL` and `POS_WEBHOOK_URL` both empty) or
+  no `POS_SHARED_SECRET`;
+- Hiryu does not answer within 20 seconds, or cannot be reached;
+- Hiryu answers anything but `200` (`401` or `403`: the key; `404`: the
+  address; `5xx`: Hiryu has a problem);
+- the answer is not JSON, not a valid message 6, or has `full: false`. Then
+  nothing changes, and the log shows the answer as message 6 *Ditolak* with
+  the reason.
+
+The pull needs only the address and the secret. It does not wait for
+`POS_PUSH_ENABLED` or *Sambungan Hiryu aktif*, because the catalogue comes
+before the link is switched on (kick-off phase B). In *Mode demo* the Hiryu
+stand-in inside the WMS answers instead, with the catalogue the WMS already
+holds.
+
+Hiryu can still **push** message 6 by itself (`POST /api/hiryu/v1/catalogue`)
+whenever its catalogue changes. That does not change.
 
 ## Switches on the WMS side
 
 | Setting | Where | Effect |
 |---|---|---|
-| `POS_PUSH_ENABLED` | Substrait env | `false`: messages 3 to 5 and the catalogue request queue but are not sent |
-| `POS_WEBHOOK_URL` | Substrait env | Hiryu's address for messages 3 to 5 and the catalogue request |
-| `POS_SHARED_SECRET` | Substrait env (secret) | The `X-Hiryu-Key` value, both directions |
+| `POS_PUSH_ENABLED` | Substrait env | `false`: messages 3 to 5 queue but are not sent. The catalogue pull does not read it |
+| `POS_WEBHOOK_URL` | Substrait env | Hiryu's address for messages 3 to 5 |
+| `POS_CATALOGUE_URL` | Substrait env | Hiryu's read-only catalogue address for the pull. Empty: the origin of `POS_WEBHOOK_URL` plus `/catalogue` |
+| `POS_SHARED_SECRET` | Substrait env (secret) | The `X-Hiryu-Key` value, both directions and for the pull |
 | *Sambungan Hiryu aktif* | WMS, *Integrasi Hiryu* (Ops HQ) | On: paste and the stock sheet are off; orders come only from message 1; a full stock snapshot is queued. The WMS sends only while this and the three settings above are all on |
-| *Mode demo* | WMS, per hub | That hub's messages go to the Hiryu stand-in inside the WMS (answers `200`), whatever the settings above say |
+| *Mode demo* | WMS, per dark store | That dark store's messages go to the Hiryu stand-in inside the WMS (answers `200`), and the stand-in answers its catalogue pull, whatever the settings above say |
+
+There is no switch per store. Stock goes to every active store: active in
+Hiryu, brand picked by Ops HQ, dark store in Hiryu's catalogue.
 
 The message map on *Pengaturan, Integrasi Hiryu* (*Peta pesan*) shows every
 message field by field, built from the code by `python tools/gen_message_map.py`.

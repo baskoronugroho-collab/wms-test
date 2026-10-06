@@ -1,18 +1,19 @@
-"""The sender for the Hiryu link: messages 3, 4, 5 and the catalogue request
-(PRD §0.6, §9.4; docs/hiryu-link-v1.md v1.1).
+"""The sender for the Hiryu link: messages 3, 4, 5 and the catalogue pull
+(PRD §0.6, §9.4; docs/hiryu-link-v1.md v1.2).
 
 The floor code only ever QUEUES: ledger.enqueue_pos_push after every stock
-change, ledger.enqueue_pos_message at Selesai dikemas and at Barang tidak ada,
-and routers/hiryu_link.py for Sinkron ulang dari Hiryu. This module is the one
-place that reads the queue and talks to Hiryu, so the rules of the contract
-live here and nowhere else:
+change, ledger.enqueue_pos_message at Selesai dikemas and at Barang tidak ada.
+This module is the one place that reads the queue and talks to Hiryu, so the
+rules of the contract live here and nowhere else:
 
   * one message per call, POSTed to POS_WEBHOOK_URL with X-Hiryu-Key and
     Idempotency-Key = message_id;
   * order messages ahead of stock messages (send_priority, then id);
   * a stock number is worked out when it is SENT, not when it was queued, and
     a burst of queued rows for one SKU goes as one number (§9.4.3);
-  * stock goes only for a store whose link is on (hiryu_stores.link_on, H8);
+  * stock goes to every active Hiryu store (hiryu_stores.active: Hiryu says
+    active, a brand is picked, the dark store is in Hiryu's catalogue; H8).
+    There is no switch per store: hiryu_stores.link_on is no longer read;
   * retries with a growing wait (10 s, 30 s, 1 min, 2 min, 5 min, then every
     10 min) until Hiryu answers 2xx; a 4xx other than 408 and 429 stops and
     shows as failed on Integrasi Hiryu;
@@ -25,6 +26,12 @@ the link switch is off. The stand-in is a sink inside the WMS: it records the
 call in the Pesan Hiryu log (hiryu_message_log) and answers 200. No HTTP call is
 made to ourselves. After an item_short with action cancel_order it answers the
 way Hiryu will, with message 2 (cancelled_by merchant, 2001).
+
+The catalogue pull (Sinkron ulang dari Hiryu, `pull_catalogue`) is not
+queued: the button's request calls GET POS_CATALOGUE_URL and waits up to 20 s
+for the full message 6, which goes through the same handler as Hiryu's own
+POST. It replaced the queued `catalogue_request` (6 Oct); old rows of that type
+stay readable in the log and a pending one is suppressed, never sent.
 
 Every message in and out is kept in hiryu_message_log with its exact JSON
 (`log_message`), which is what Pengaturan, Integrasi Hiryu shows as Pesan Hiryu.
@@ -41,6 +48,7 @@ import logging
 import os
 import time
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -58,11 +66,21 @@ CONTRACT_TYPE = {
     "stock_level": "stock_level",
     "order_ready": "order_ready",
     "order_short": "item_short",
-    "catalogue_request": "catalogue_request",
 }
 
-# Message number on 11d (the catalogue request has none: it asks for 6).
-MESSAGE_NO = {"stock_level": 3, "order_ready": 4, "order_short": 5, "catalogue_request": None}
+# Message number on 11d.
+MESSAGE_NO = {"stock_level": 3, "order_ready": 4, "order_short": 5}
+
+# Outbox types no longer sent. A row still pending is suppressed with this
+# reason; sent rows and their log entries stay readable.
+RETIRED_TYPES = {
+    "catalogue_request": ("Diganti tarik katalog (GET POS_CATALOGUE_URL) / "
+                          "Replaced by the catalogue pull (GET POS_CATALOGUE_URL)"),
+}
+
+# The catalogue pull in the Pesan Hiryu log (no message number: its answer is 6).
+PULL_TYPE = "catalogue_pull"
+CATALOGUE_TIMEOUT = 20.0
 
 STALE_CLAIM_SECONDS = 60
 HTTP_TIMEOUT = 8.0
@@ -83,6 +101,19 @@ def webhook_url() -> str:
 
 def shared_secret() -> str:
     return os.getenv("POS_SHARED_SECRET", "").strip()
+
+
+def catalogue_url() -> str:
+    """Hiryu's read-only catalogue address. POS_CATALOGUE_URL; when empty, the
+    origin of POS_WEBHOOK_URL + /catalogue (https://hiryu.example/wms/hook ->
+    https://hiryu.example/catalogue). Empty when neither gives an address."""
+    url = os.getenv("POS_CATALOGUE_URL", "").strip()
+    if url:
+        return url
+    hook = urlsplit(webhook_url())
+    if hook.scheme not in ("http", "https") or not hook.netloc:
+        return ""
+    return f"{hook.scheme}://{hook.netloc}/catalogue"
 
 
 async def rule(key: str, default: int | None) -> int | None:
@@ -180,26 +211,24 @@ async def log_message(*, direction: str, message_type: str, message_id: str, via
 # Available to sell (§9.4.2, §9.5)
 # --------------------------------------------------------------------------
 
-async def available_now(site_id: int, sku_id: int, grab_buffer: int | None = None) -> int:
-    """On the shelf, minus held for orders not yet picked, minus the Grab buffer,
-    never below 0.
+async def available_now(site_id: int, sku_id: int) -> int:
+    """On the rack, minus held for orders not yet picked, never below 0.
 
-    On the shelf = real (non-virtual) locations only. Units waiting in a
-    temporary inbound bin are not in the ledger at all until put away
-    (routers/requests.py), and picked units have already left the balance, so
-    neither is counted. qty_allocated is exactly "held, not yet picked": the
-    pick releases it. Quarantine has no location of its own yet; when it gets
-    one, exclude it here.
+    The same number as Stok's "Bisa dijual" (routers/stok.py): real rack bins
+    only. Units in a special bin are left out: a temporary inbound bin (IN, not
+    put away yet), the quarantine tray (QR, not sellable) and an outbound
+    basket (OUT, already picked). qty_allocated is exactly "held, not yet
+    picked": the pick releases it.
     """
     row = await db.fetch_one(
-        "SELECT COALESCE(SUM(GREATEST(0, ib.qty_on_hand - ib.qty_allocated)), 0) AS avail "
+        "SELECT COALESCE(SUM(ib.qty_on_hand), 0) AS rack, COALESCE(SUM(ib.qty_allocated), 0) AS held "
         "FROM inventory_balances ib JOIN locations l ON l.id = ib.location_id "
-        "WHERE ib.site_id = %s AND ib.sku_id = %s AND l.is_virtual = 0",
+        "LEFT JOIN special_bins sb ON sb.location_id = l.id "
+        "WHERE ib.site_id = %s AND ib.sku_id = %s AND l.is_virtual = 0 AND sb.location_id IS NULL",
         (site_id, sku_id))
-    base = int(row["avail"]) if row else 0
-    if grab_buffer is None:
-        grab_buffer = await rule("grab_buffer_default", 1) or 0
-    return max(0, base - max(0, int(grab_buffer)))
+    if not row:
+        return 0
+    return max(0, int(row["rack"] or 0) - int(row["held"] or 0))
 
 
 # --------------------------------------------------------------------------
@@ -262,7 +291,7 @@ async def _stock_trigger(row: dict, snapshot: bool) -> tuple[str, str]:
 
 async def _build_stock(row: dict) -> tuple[list[tuple[str, dict]], int, dict]:
     sku = await db.fetch_one(
-        "SELECT id, brand_id, hiryu_sku_code, grab_buffer FROM skus WHERE id = %s",
+        "SELECT id, brand_id, hiryu_sku_code FROM skus WHERE id = %s",
         (row["sku_id"],))
     if not sku:
         raise Suppress("SKU tidak ada / SKU not found")
@@ -270,13 +299,12 @@ async def _build_stock(row: dict) -> tuple[list[tuple[str, dict]], int, dict]:
         raise Suppress("SKU belum punya kode Hiryu / SKU has no Hiryu SKU code")
     stores = await db.fetch_all(
         "SELECT hiryu_store_no FROM hiryu_stores "
-        "WHERE site_id = %s AND brand_id = %s AND active = 1 AND link_on = 1 "
+        "WHERE site_id = %s AND brand_id = %s AND active = 1 "
         "ORDER BY hiryu_store_no",
         (row["site_id"], sku["brand_id"]))
     if not stores:
-        raise Suppress("Tidak ada toko Hiryu aktif dengan sambungan menyala untuk merek ini "
-                       "di dark store ini / No active Hiryu store with its link on for this brand "
-                       "at this dark store")
+        raise Suppress("Tidak ada toko Hiryu aktif untuk merek ini di dark store ini / "
+                       "No active Hiryu store for this brand at this dark store")
 
     # A snapshot row, or any pending snapshot row this one answers, makes the
     # message part of the snapshot (is_snapshot, message 3).
@@ -297,9 +325,7 @@ async def _build_stock(row: dict) -> tuple[list[tuple[str, dict]], int, dict]:
         "  AND status = 'pending' AND id <> %s",
         (row["id"], row["site_id"], row["sku_id"], row["id"]))
 
-    grab_buffer = sku["grab_buffer"]
-    avail = await available_now(row["site_id"], row["sku_id"],
-                                None if grab_buffer is None else int(grab_buffer))
+    avail = await available_now(row["site_id"], row["sku_id"])
     # Hiryu already has this number (a pick of reserved stock changes nothing it
     # sells): skip the repeat. A snapshot always sends.
     if not snapshot:
@@ -451,19 +477,6 @@ async def _build_short(row: dict) -> tuple[list[tuple[str, dict]], dict]:
     return [(f"wms-{row['id']}", data)], meta
 
 
-async def _build_catalogue_request(row: dict) -> tuple[list[tuple[str, dict]], dict]:
-    queued = _payload(row)
-    if not queued.get("request_id"):
-        raise Suppress("Permintaan katalog tanpa request_id / Catalogue request without request_id")
-    who = queued.get("requested_by_name") or "?"
-    data = {"request_id": queued["request_id"],
-            "requested_at": queued.get("requested_at") or _iso(row["created_at"])}
-    meta = {"h": "H6",
-            "trigger": (f"Sinkron ulang dari Hiryu ditekan oleh {who}",
-                        f"Sinkron ulang dari Hiryu pressed by {who}")}
-    return [(f"wms-{row['id']}", data)], meta
-
-
 # --------------------------------------------------------------------------
 # Sending
 # --------------------------------------------------------------------------
@@ -508,12 +521,10 @@ def _plain(text, fallback: str = "-") -> str:
     return s[:255] or fallback
 
 
-async def _standin_catalogue(row: dict, data: dict) -> None:
-    """Sinkron ulang in Mode demo: the stand-in answers like Hiryu, with a full
-    message 6 carrying the same request_id. It sends back what the WMS already
-    holds (dark stores, stores, SKUs, menus), so nothing changes but the request
-    is answered and the exact JSON shows in Pesan Hiryu."""
-    from routers import hiryu_link   # here, not at the top: hiryu_link imports this module
+async def standin_catalogue_body(message_id: str) -> dict:
+    """The Hiryu stand-in's answer to a catalogue pull (Mode demo): a full
+    message 6 of what the WMS already holds (dark stores, stores, SKUs, menus),
+    so nothing changes but the exact JSON shows in Pesan Hiryu."""
     closed = {d: [] for d in ("mon", "tue", "wed", "thu", "fri", "sat", "sun")}
     sites = await db.fetch_all(
         "SELECT hiryu_dark_store_id, name, address, opening_hours_json FROM sites "
@@ -565,24 +576,16 @@ async def _standin_catalogue(row: dict, data: dict) -> None:
         bars = [r["barcode"] for r in await db.fetch_all(
             "SELECT barcode FROM barcodes WHERE sku_id = %s ORDER BY barcode LIMIT 10", (sku["id"],))]
         skus.append({"sku_code": code, "name": _plain(sku["name_display"]), "barcodes": bars})
-    try:
-        msg = hiryu_link.CatalogueMessage(
-            message_id=f"demo-cat-{row['id']}", full=True, request_id=data["request_id"],
-            dark_stores=dark_stores, stores=stores, skus=skus,
-            menus=[{"hiryu_store_id": k, "items": v} for k, v in menus.items()])
-        await hiryu_link.handle_catalogue(msg, "demo:hiryu-standin", via="demo")
-    except Exception:
-        log.exception("stand-in message 6 for outbox row %s failed", row["id"])
+    return {"message_id": message_id, "full": True, "request_id": None,
+            "dark_stores": dark_stores, "stores": stores, "skus": skus,
+            "menus": [{"hiryu_store_id": k, "items": v} for k, v in menus.items()]}
 
 
 async def _standin_reacts(row: dict, mtype: str, data: dict) -> None:
     """What Hiryu does next, played by the stand-in: after item_short with
     cancel_order it cancels on Grab with 2001 and sends message 2 back
-    (cancelled_by merchant); after a catalogue_request it answers with a full
-    message 6. Through the very same handlers Hiryu's calls run."""
-    if mtype == "catalogue_request":
-        await _standin_catalogue(row, data)
-        return
+    (cancelled_by merchant), through the very same handler Hiryu's call runs.
+    (The catalogue pull is answered in pull_catalogue, not here.)"""
     if mtype != "order_short" or data.get("action") != "cancel_order":
         return
     from routers import hiryu_link   # here, not at the top: hiryu_link imports this module
@@ -687,8 +690,8 @@ async def send_due(batch: int = 20) -> int:
                     messages, meta = await _build_ready(row)
                 elif mtype == "order_short":
                     messages, meta = await _build_short(row)
-                elif mtype == "catalogue_request":
-                    messages, meta = await _build_catalogue_request(row)
+                elif mtype in RETIRED_TYPES:
+                    raise Suppress(RETIRED_TYPES[mtype])
                 else:
                     raise Suppress(f"Jenis pesan tidak dikenal / Unknown message type: {mtype}")
                 outcome, error = "ok", None
@@ -724,16 +727,162 @@ async def send_due(batch: int = 20) -> int:
 
 
 # --------------------------------------------------------------------------
+# The catalogue pull (Sinkron ulang dari Hiryu)
+# --------------------------------------------------------------------------
+
+def _pull_http_reason(code: int) -> str:
+    if code in (401, 403):
+        return (f"Hiryu menolak kunci X-Hiryu-Key (HTTP {code}) / "
+                f"Hiryu refused the X-Hiryu-Key (HTTP {code})")
+    if code == 404:
+        return ("Alamat katalog Hiryu tidak ditemukan (HTTP 404) / "
+                "Hiryu's catalogue address was not found (HTTP 404)")
+    if code >= 500:
+        return f"Hiryu sedang bermasalah (HTTP {code}) / Hiryu has a problem (HTTP {code})"
+    return f"Hiryu menjawab HTTP {code}, bukan 200 / Hiryu answered HTTP {code}, not 200"
+
+
+async def _set_log(direction: str, message_id: str, *, status: str, http_status: int | None,
+                   answer) -> None:
+    """Finish a row log_message wrote, without counting another attempt."""
+    try:
+        text = answer if isinstance(answer, str) or answer is None else dumps(answer)
+        await db.execute(
+            "UPDATE hiryu_message_log SET status = %s, http_status = %s, answer_json = %s "
+            "WHERE direction = %s AND message_id = %s",
+            (status, http_status, (text or "")[:60000] or None, direction, message_id[:96]))
+    except Exception:
+        log.exception("could not finish the Pesan Hiryu log for %s", message_id)
+
+
+async def _fetch_catalogue(url: str, request_id: str) -> tuple[int, str]:
+    async with httpx.AsyncClient(timeout=CATALOGUE_TIMEOUT) as client:
+        r = await client.get(url, params={"request_id": request_id},
+                             headers={"X-Hiryu-Key": shared_secret(), "Accept": "application/json"})
+        return r.status_code, r.text
+
+
+async def pull_catalogue(*, request_id: str, site_id: int, who: str, demo: bool) -> dict:
+    """Sinkron ulang dari Hiryu: GET Hiryu's catalogue address (catalogue_url)
+    with X-Hiryu-Key and ?request_id=, and run the answer, the full message 6,
+    through hiryu_link.handle_catalogue (via "pull"; "demo" when the stand-in
+    answers). Waits at most CATALOGUE_TIMEOUT seconds in all. Works without
+    POS_PUSH_ENABLED and Sambungan Hiryu aktif: the catalogue comes before
+    switch-on. Never raises.
+
+    The Pesan Hiryu log gets the request out (catalogue_pull, H6) first, then
+    message 6 in. Returns {"ok", "reason" ('Indonesian / English' or None),
+    "http_status", "answer" (message 6's answer when ok)}."""
+    import asyncio
+    from fastapi import HTTPException
+    from pydantic import ValidationError
+    from routers import hiryu_link   # here, not at the top: hiryu_link imports this module
+
+    url = catalogue_url()
+    via_out, via_in = ("standin", "demo") if demo else ("pull", "pull")
+    trigger = (f"Sinkron ulang dari Hiryu ditekan oleh {who}",
+               f"Sinkron ulang dari Hiryu pressed by {who}")
+    request = {"method": "GET", "url": "Hiryu stand-in (Mode demo)" if demo else (url or None),
+               "query": {"request_id": request_id}}
+    await log_message(direction="out", message_type=PULL_TYPE, message_id=request_id, via=via_out,
+                      status="sending", body=request, h_ref="H6", site_id=site_id,
+                      trigger=trigger)
+
+    async def done(ok: bool, reason: str | None = None, code: int | None = None, answer=None):
+        await _set_log("out", request_id, status="sent" if ok else "failed", http_status=code,
+                       answer=answer if ok else {"reason": reason, "answer": answer})
+        return {"ok": ok, "reason": reason, "http_status": code, "answer": answer if ok else None}
+
+    async def refuse_in(payload, mid: str | None, detail) -> None:
+        await log_message(direction="in", message_type="catalogue",
+                          message_id=(mid or f"{request_id}-answer")[:96], via=via_in,
+                          status="refused", body=payload, answer={"detail": detail},
+                          http_status=422, message_no=6, h_ref="H6", site_id=site_id,
+                          trigger=(f"Jawaban Sinkron ulang {request_id}",
+                                   f"Answer to Sinkron ulang {request_id}"))
+
+    code = 200
+    if demo:
+        try:
+            payload = await standin_catalogue_body(f"demo-cat-{request_id}"[:96])
+        except Exception:
+            log.exception("the stand-in could not build the catalogue for %s", request_id)
+            return await done(False, "Stand-in Hiryu tidak bisa membuat katalog / "
+                                     "The Hiryu stand-in could not build the catalogue")
+    else:
+        if not url:
+            return await done(False, "Alamat katalog Hiryu belum diisi (POS_CATALOGUE_URL atau "
+                                     "POS_WEBHOOK_URL) / Hiryu's catalogue address is not set "
+                                     "(POS_CATALOGUE_URL or POS_WEBHOOK_URL)")
+        if not shared_secret():
+            return await done(False, "Kunci POS_SHARED_SECRET belum diisi / "
+                                     "The POS_SHARED_SECRET key is not set")
+        secs = int(CATALOGUE_TIMEOUT)
+        try:
+            code, text = await asyncio.wait_for(_fetch_catalogue(url, request_id), CATALOGUE_TIMEOUT)
+        except (asyncio.TimeoutError, httpx.TimeoutException):
+            return await done(False, f"Hiryu tidak menjawab dalam {secs} detik / "
+                                     f"Hiryu did not answer within {secs} seconds")
+        except httpx.HTTPError as e:
+            return await done(False, f"Tidak bisa menghubungi Hiryu ({type(e).__name__}) / "
+                                     f"Could not reach Hiryu ({type(e).__name__})")
+        if code != 200:
+            return await done(False, _pull_http_reason(code), code, text[:300] or None)
+        try:
+            payload = json.loads(text)
+        except ValueError:
+            return await done(False, "Jawaban Hiryu bukan JSON / Hiryu's answer is not JSON",
+                              code, text[:300] or None)
+
+    mid = payload.get("message_id") if isinstance(payload, dict) else None
+    mid = mid if isinstance(mid, str) else None
+    try:
+        msg = hiryu_link.CatalogueMessage.model_validate(payload)
+    except ValidationError as e:
+        errors = [{k: v for k, v in er.items() if k != "input"}
+                  for er in e.errors(include_url=False)]
+        first = errors[0] if errors else {}
+        where = ".".join(str(x) for x in first.get("loc", ())) or "-"
+        what = str(first.get("msg", ""))[:120]
+        await refuse_in(payload, mid, errors[:20])
+        return await done(False, f"Jawaban Hiryu tidak sesuai pesan 6 ({where}: {what}) / "
+                                 f"Hiryu's answer does not fit message 6 ({where}: {what})", code)
+    if not msg.full:
+        await refuse_in(payload, mid, "full harus true / full must be true")
+        return await done(False, "Jawaban Hiryu bukan daftar lengkap (full false) / "
+                                 "Hiryu's answer is not the whole list (full false)", code)
+
+    # The answer belongs to this request whatever Hiryu put in request_id.
+    msg = msg.model_copy(update={"request_id": request_id})
+    try:
+        _status, answer = await hiryu_link.handle_catalogue(
+            msg, "demo:hiryu-standin" if demo else "hiryu:pull", via=via_in)
+    except HTTPException as e:
+        return await done(False, f"WMS menolak katalog (HTTP {e.status_code}) / "
+                                 f"The WMS refused the catalogue (HTTP {e.status_code})", code)
+    except Exception:
+        log.exception("handling the pulled catalogue %s failed", request_id)
+        return await done(False, "WMS gagal memproses katalog / The WMS could not process the "
+                                 "catalogue", code)
+    # A message_id Hiryu used before is answered from memory and changes
+    # nothing; the request is still answered.
+    await db.execute(
+        "UPDATE hiryu_catalogue_requests SET answered_at = COALESCE(answered_at, UTC_TIMESTAMP()), "
+        "answered_message_id = COALESCE(answered_message_id, %s) WHERE request_id = %s",
+        (msg.message_id, request_id))
+    return await done(True, None, code, {"message_id": msg.message_id, **answer})
+
+
+# --------------------------------------------------------------------------
 # Full snapshot (§9.4.4) and the 5-second tick
 # --------------------------------------------------------------------------
 
 async def queue_full_snapshot(site_id: int | None = None, store_no: int | None = None) -> int:
     """One stock_level row per SKU per live darkstore that has an active Hiryu
-    store with its link on for the SKU's brand: every SKU slotted there, and
-    every SKU on that store's menu (so a menu SKU with no bin is told 0). The
-    number itself is worked out at send time. `site_id` or `store_no` limit it
-    to one hub or one store (switching one store's link on, H8). Returns the
-    rows queued."""
+    store for the SKU's brand: every SKU slotted there, and every SKU on that
+    store's menu (so a menu SKU with no bin is told 0). The number itself is
+    worked out at send time. `site_id` or `store_no` limit it to one hub or one
+    store (a store that just became active, H8). Returns the rows queued."""
     store_where, params = "", []
     if store_no is not None:
         store_where, params = " AND hs.hiryu_store_no = %s", [store_no]
@@ -748,11 +897,10 @@ async def queue_full_snapshot(site_id: int | None = None, store_no: int | None =
         "  SELECT sa.site_id, sa.sku_id FROM slot_assignments sa "
         "    JOIN skus k ON k.id = sa.sku_id "
         "    JOIN hiryu_stores hs ON hs.site_id = sa.site_id AND hs.brand_id = k.brand_id "
-        "         AND hs.active = 1 AND hs.link_on = 1" + store_where +
+        "         AND hs.active = 1" + store_where +
         "  UNION "
         "  SELECT hs.site_id, hi.sku_id FROM hiryu_items hi "
-        "    JOIN hiryu_stores hs ON hs.hiryu_store_no = hi.hiryu_store_no AND hs.active = 1 "
-        "         AND hs.link_on = 1" + store_where +
+        "    JOIN hiryu_stores hs ON hs.hiryu_store_no = hi.hiryu_store_no AND hs.active = 1" + store_where +
         "   WHERE hi.active = 1 AND hi.sku_id IS NOT NULL"
         ") x JOIN sites st ON st.id = x.site_id "
         "WHERE st.site_type = 'darkstore' AND st.is_training = 0 AND st.active = 1" + site_where,
