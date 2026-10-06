@@ -629,10 +629,10 @@
       "en": "You see: <em>Tanpa ukuran bin</em> counts down to 0. Rows still missing data show <em>Belum lengkap: 3 data</em> in amber until filled."
      },
      "example": {
-      "img": "panduan/img/sku-lengkap.jpg",
+      "img": "panduan/img/sku-lengkap.png",
       "caption": {
-       "id": "Contoh SKU lengkap: LBR-0001 GentleBiome Mild Cleanser 100 ml. Ukuran bin, Isi sampai, Pesan ulang saat sisa, Cadangan Grab, ukuran kemasan, berat dan barcode sudah terisi, jadi baris ini tidak ditandai <em>Belum lengkap</em>. Isi SKU lain sampai terlihat seperti ini.",
-       "en": "A complete SKU: LBR-0001 GentleBiome Mild Cleanser 100 ml. Bin size, Isi sampai, Pesan ulang saat sisa, Cadangan Grab, pack size, weight and barcode are all filled, so the row is not flagged <em>Belum lengkap</em>. Fill the other SKUs until they look like this."
+       "id": "Baris bawah adalah contoh SKU lengkap: LBR-0001 GentleBiome Mild Cleanser 100 ml. Ukuran bin, <em>Isi sampai</em>, <em>Pesan ulang saat sisa</em>, <em>Cadangan Grab</em>, kemasan P × L × T dan berat sudah terisi, dan barcode terdaftar, jadi tertulis <em>Lengkap</em>. Baris atas masih <em>Belum lengkap: 2 data</em> karena kemasan dan berat masih <em>Isi nanti</em>. Isi setiap SKU sampai seperti baris bawah.",
+       "en": "The bottom row is a complete SKU: LBR-0001 GentleBiome Mild Cleanser 100 ml. Bin size, <em>Isi sampai</em>, <em>Pesan ulang saat sisa</em>, <em>Cadangan Grab</em>, pack L × W × H and weight are filled and the barcode is registered, so it says <em>Lengkap</em>. The top row still says <em>Belum lengkap: 2 data</em> because pack size and weight are still <em>Isi nanti</em>. Fill each SKU until it looks like the bottom row."
       }
      }
     },

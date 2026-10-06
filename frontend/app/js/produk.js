@@ -42,7 +42,10 @@
 .pd-num::placeholder{color:var(--caution);font-family:var(--font);font-weight:700;font-size:12px;text-align:left}
 .pd-num.is-saved{box-shadow:0 0 0 2px var(--ok)}
 .pd-dims{display:flex;align-items:center;gap:4px;color:var(--muted);font-weight:700}
-.pd-dims .pd-num{width:48px}
+.pd-dims .pd-num{width:56px;padding:0 6px!important}
+.pd-num{-moz-appearance:textfield}
+.pd-num::-webkit-inner-spin-button,.pd-num::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.pd-num[data-field=pack_weight_g]{width:84px}
 .pd-card{display:flex;flex-direction:column;gap:10px}
 .pd-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .pd-fields label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--ink-2)}
