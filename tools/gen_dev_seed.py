@@ -66,6 +66,9 @@ GATE = ("NOT EXISTS (SELECT 1 FROM audit_log WHERE entity = 'dev_seed' "
         f"AND action = '{MARK}')")
 
 BRANDS = [(10, "KHF", "Kahf", "kahf"), (11, "LBR", "Labore", "labore")]
+# Complete reference SKUs: id -> pack length, width, height (mm) and weight (g).
+REFERENCE_PACKS = {1069: (148, 42, 42, 130),    # LBR-0001 GentleBiome Mild Cleanser 100 ml
+                   1070: (192, 62, 52, 270)}    # LBR-0002 GentleBiome Mild Cleanser 225 ml
 COMPANY = "PT Paragon Technology and Innovation"
 RESTOCK_EMAIL = "restock@paragon.example"
 
@@ -662,6 +665,13 @@ def emit_master(sql, skus, plans, orders):
     sql.stmt("INSERT IGNORE INTO barcodes (barcode, sku_id, source, registered_by) VALUES\n" +
              ",\n".join(f"  ({esc(s['barcode'])}, {s['id']}, '{s['bc_source']}', '{OLD_SEED}')"
                         for s in skus))
+    sql.note("Two complete SKUs as the reference for Data belum lengkap (the product lists have no\n"
+             "pack sizes): the demo's Mild Cleanser 100 ml and 225 ml. Empty fields only.")
+    for sku_id, (length, width, height, grams) in REFERENCE_PACKS.items():
+        sql.stmt(f"UPDATE skus SET pack_length_mm = COALESCE(pack_length_mm, {length}), "
+                 f"pack_width_mm = COALESCE(pack_width_mm, {width}), "
+                 f"pack_height_mm = COALESCE(pack_height_mm, {height}), "
+                 f"pack_weight_g = COALESCE(pack_weight_g, {grams}) WHERE id = {sku_id}")
 
     sql.note("5. Hiryu stores 902 to 905 and their menus, one single per SKU. The first seed's test\n"
              "store 901 and its items (IDITE2026092...) were the seed's own and are removed.")

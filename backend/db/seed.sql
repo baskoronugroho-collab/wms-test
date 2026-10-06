@@ -291,6 +291,11 @@ INSERT IGNORE INTO barcodes (barcode, sku_id, source, registered_by) VALUES
   ('2990000011046', 1104, 'test', 'seed@ninjavan.co'),
   ('8993137718790', 1105, 'manufacturer', 'seed@ninjavan.co');
 
+-- Two complete SKUs as the reference for Data belum lengkap (the product lists have no
+-- pack sizes): the demo's Mild Cleanser 100 ml and 225 ml. Empty fields only.
+UPDATE skus SET pack_length_mm = COALESCE(pack_length_mm, 148), pack_width_mm = COALESCE(pack_width_mm, 42), pack_height_mm = COALESCE(pack_height_mm, 42), pack_weight_g = COALESCE(pack_weight_g, 130) WHERE id = 1069;
+UPDATE skus SET pack_length_mm = COALESCE(pack_length_mm, 192), pack_width_mm = COALESCE(pack_width_mm, 62), pack_height_mm = COALESCE(pack_height_mm, 52), pack_weight_g = COALESCE(pack_weight_g, 270) WHERE id = 1070;
+
 -- 5. Hiryu stores 902 to 905 and their menus, one single per SKU. The first seed's test
 -- store 901 and its items (IDITE2026092...) were the seed's own and are removed.
 DELETE FROM hiryu_item_prices WHERE hiryu_item_id LIKE 'IDITE2026092%';

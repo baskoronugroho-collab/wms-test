@@ -627,6 +627,13 @@
      "result": {
       "id": "Yang terlihat: angka <em>Tanpa ukuran bin</em> turun sampai 0. Baris yang datanya masih kurang menampilkan <em>Belum lengkap: 3 data</em> berwarna kuning tua sampai diisi.",
       "en": "You see: <em>Tanpa ukuran bin</em> counts down to 0. Rows still missing data show <em>Belum lengkap: 3 data</em> in amber until filled."
+     },
+     "example": {
+      "img": "panduan/img/sku-lengkap.jpg",
+      "caption": {
+       "id": "Contoh SKU lengkap: LBR-0001 GentleBiome Mild Cleanser 100 ml. Ukuran bin, Isi sampai, Pesan ulang saat sisa, Cadangan Grab, ukuran kemasan, berat dan barcode sudah terisi, jadi baris ini tidak ditandai <em>Belum lengkap</em>. Isi SKU lain sampai terlihat seperti ini.",
+       "en": "A complete SKU: LBR-0001 GentleBiome Mild Cleanser 100 ml. Bin size, Isi sampai, Pesan ulang saat sisa, Cadangan Grab, pack size, weight and barcode are all filled, so the row is not flagged <em>Belum lengkap</em>. Fill the other SKUs until they look like this."
+      }
      }
     },
     {
@@ -2082,12 +2089,12 @@
       "en": "Pack in the pack the WMS names, then type the GM number and press <em>Selesai dikemas</em>."
      },
      "detail": {
-      "id": "WMS memilih kemasan dari ukuran dan berat produk: di sini <em>Karton</em>, karena pesanan berisi botol besar (yang 225 ml; total 1,3 L, 1,0 kg). Pesanan tanpa botol besar masuk <em>Kantong kertas</em>. Pesanan yang sangat besar dapat dua kemasan. Centang setiap barang. Masukkan slip Hiryu dengan nomor GM terlihat. Jika tidak muat, tekan <em>Ganti kemasan</em> dan isi alasannya. Slip tidak punya barcode, jadi ketik nomornya di <em>Ketik nomor GM</em> (358). Pesanan di WMS sama dengan pesanan di Hiryu (ID pesanan Grab dan barisnya sama, dikirim saat <em>Accept</em>). Setiap unit sudah dicek dengan pindai saat diambil, dan nomor GM yang diketik dicocokkan dengan keranjang. Jadi pengemas cukup mencocokkan nomor GM di slip dengan layar.",
-      "en": "The WMS names the pack from the products' size and weight: here <em>Karton</em>, because the order holds a large bottle (the 225 ml; 1,3 L, 1,0 kg in all). An order with no large bottle goes in a <em>Kantong kertas</em>; a very big one gets two packs. Tick each item. Put the Hiryu slip in with the GM number showing. If it does not fit, press <em>Ganti kemasan</em> and give a reason. The slip has no barcode, so type the number in <em>Ketik nomor GM</em> (358). The WMS order is Hiryu's order (same Grab order ID and lines, sent at <em>Accept</em>), every unit was checked by scan at picking, and the typed GM number is checked against the basket: the packer only compares the slip's GM number with the screen."
+      "id": "WMS memilih kemasan dari ukuran dan berat produk: di sini <em>Kantong kertas</em>, karena satu botol besar (yang 225 ml) masih muat di kantong. <em>Karton</em> dipakai jika ada lebih dari satu botol besar, isi lebih dari 3,9 L atau 3 kg, atau ada barang lebih panjang dari 27 cm. Pesanan yang sangat besar dapat dua kemasan. Centang setiap barang. Masukkan slip Hiryu dengan nomor GM terlihat. Jika tidak muat, tekan <em>Ganti kemasan</em> dan isi alasannya. Slip tidak punya barcode, jadi ketik nomornya di <em>Ketik nomor GM</em> (358). Pesanan di WMS sama dengan pesanan di Hiryu (ID pesanan Grab dan barisnya sama, dikirim saat <em>Accept</em>). Setiap unit sudah dicek dengan pindai saat diambil, dan nomor GM yang diketik dicocokkan dengan keranjang. Jadi pengemas cukup mencocokkan nomor GM di slip dengan layar.",
+      "en": "The WMS names the pack from the products' size and weight: here a <em>Kantong kertas</em>, because one large bottle (the 225 ml) still fits a bag. A <em>Karton</em> is used for more than one large bottle, more than 3.9 L or 3 kg, or an item longer than 27 cm; a very big one gets two packs. Tick each item. Put the Hiryu slip in with the GM number showing. If it does not fit, press <em>Ganti kemasan</em> and give a reason. The slip has no barcode, so type the number in <em>Ketik nomor GM</em> (358). The WMS order is Hiryu's order (same Grab order ID and lines, sent at <em>Accept</em>), every unit was checked by scan at picking, and the typed GM number is checked against the basket: the packer only compares the slip's GM number with the screen."
      },
      "result": {
-      "id": "Yang terlihat: Hiryu menandai pesanan siap di Grab, dan satu karton berkurang dari stok bahan kemas.",
-      "en": "You see: Hiryu marks the order ready on Grab, and one carton comes off the consumables stock."
+      "id": "Yang terlihat: Hiryu menandai pesanan siap di Grab, dan satu kantong kertas berkurang dari stok bahan kemas.",
+      "en": "You see: Hiryu marks the order ready on Grab, and one paper bag comes off the consumables stock."
      }
     },
     {

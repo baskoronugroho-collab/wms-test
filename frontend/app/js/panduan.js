@@ -66,6 +66,12 @@
         (st.detail && (st.detail.id || st.detail.en) ? '<span style="font-size:15px;line-height:1.5;color:var(--ink-2)">' + L(st.detail) + '</span>' : '') +
         (st.result && (st.result.id || st.result.en) ? '<span style="display:flex;gap:6px;align-items:flex-start;font-size:15px;font-weight:600;line-height:1.45">' +
           '<span style="color:var(--ok);margin-top:2px">' + icon('check', 18, 2.6) + '</span><span>' + L(st.result) + '</span></span>' : '') +
+        (st.example && st.example.img ? '<figure style="margin:6px 0 0;display:flex;flex-direction:column;gap:8px">' +
+          '<span class="k-eyebrow">' + esc(t('Contoh', 'Example')) + '</span>' +
+          '<a href="' + esc(st.example.img) + '" target="_blank" rel="noopener"><img src="' + esc(st.example.img) + '" alt="" loading="lazy" ' +
+            'style="display:block;width:100%;height:auto;border:1px solid var(--rule);border-radius:12px;background:var(--surface)"></a>' +
+          (st.example.caption ? '<figcaption style="font-size:14px;line-height:1.45;color:var(--ink-2)">' + L(st.example.caption) + '</figcaption>' : '') +
+        '</figure>' : '') +
       '</div></div>';
   }
 

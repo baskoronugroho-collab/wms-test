@@ -160,15 +160,23 @@ async def _columns(table: str) -> set[str]:
     return _COLUMNS[table]
 
 
+def _demo_left_out(alias: str = "o") -> str:
+    """A dummy order of Mode demo (is_demo, V27) counts while its hub is in Mode
+    demo, so the reports match what the demo showed; once the hub leaves Mode
+    demo its dummy orders drop out of every report."""
+    return (f"({alias}.is_demo = 1 AND {alias}.site_id NOT IN "
+            "(SELECT dm.id FROM sites dm WHERE dm.demo_mode = 1))")
+
+
 async def _test_filter(alias: str = "o") -> str:
-    """Leave out test orders: is_test, UJI orders made in the WMS, and the dummy
-    orders of Mode demo (is_demo, V27)."""
+    """Leave out test orders: is_test, UJI orders made in the WMS, and dummy
+    orders of a hub no longer in Mode demo."""
     cols = await _columns("orders")
     sql = f"AND {alias}.is_test = 0 "
     if "source" in cols:
         sql += f"AND COALESCE({alias}.source, '') <> 'uji' "
     if "is_demo" in cols:
-        sql += f"AND {alias}.is_demo = 0 "
+        sql += f"AND NOT {_demo_left_out(alias)} "
     return sql
 
 
@@ -680,7 +688,7 @@ async def end_of_day_data(site: dict, day: date) -> dict:
     o_cols = await _columns("orders")
     reason_col = "o.cancel_reason_code" if "cancel_reason_code" in o_cols else "NULL"
     test_sql = ("(o.is_test = 1" + (" OR COALESCE(o.source,'') = 'uji'" if "source" in o_cols else "")
-                + (" OR o.is_demo = 1" if "is_demo" in o_cols else "") + ")")
+                + (" OR " + _demo_left_out("o") if "is_demo" in o_cols else "") + ")")
     by_col = "o.hiryu_cancelled_by" if "hiryu_cancelled_by" in o_cols else "NULL"
     orders = await db.fetch_all(
         "SELECT o.id, o.status, o.hiryu_short_no, o.external_ref, " + test_sql + " AS is_test, "
