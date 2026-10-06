@@ -9,7 +9,8 @@
  *   ?receipt=<id>&step=manual    5c2 pick a product with no barcode from the list
  *   ?receipt=<id>&step=putaway   5e  the batch to put away; 5f each bin to its rack bin
  *   ?receipt=<id>&step=summary   5g  all received: the three photos, Selesai
- *   ?slip=<id>                   5j  the putaway slip, A4 print view
+ *   ?slip=<id>                   5j  the putaway slip: thermal 80 mm slip (js/print.js),
+ *                                    A4 when this device has no thermal printer
  *
  * API (backend/routers/inbound.py, faktur.py): /api/inbound/... and
  * /api/receipts/{id}/faktur. Units in a temporary bin are not stock; the rack
@@ -58,17 +59,9 @@
       '.bm-cols{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}',
       '@media (min-width:1024px){.bm-cols{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}}',
       '.bm-mini td,.bm-mini th{padding:8px 10px}',
-      '.bm-slipwrap{background:var(--sunk);padding:16px;overflow:auto}',
-      '.bm-slip{width:794px;min-height:1123px;margin:0 auto;background:#FFF;color:#16181D;padding:40px 44px;box-sizing:border-box;font-size:13px;display:flex;flex-direction:column;gap:16px}',
-      '.bm-slip table{width:100%;border-collapse:collapse}',
-      '.bm-slip th{background:#EDEFF3;font-size:11px;text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:7px 8px;color:#5F6672}',
-      '.bm-slip td{border-bottom:1px solid #E1E4EA;padding:8px;vertical-align:top}',
-      '.bm-slip .num{text-align:right;font-family:var(--mono);font-weight:700}',
-      '.bm-sign{flex:1;border:1px solid #E1E4EA;border-radius:10px;padding:12px;min-height:110px;display:flex;flex-direction:column;gap:6px}',
-      '.bm-sign__line{margin-top:auto;border-bottom:1px solid #3C424D;height:36px}',
-      '@media print{@page{size:A4 portrait;margin:0}body.bm-printing .k-app>*:not(.k-main),body.bm-printing .k-pagehead,body.bm-printing .bm-noprint{display:none!important}',
-      'body.bm-printing .k-main,body.bm-printing #k-body{padding:0!important;margin:0!important}',
-      'body.bm-printing .bm-slipwrap{padding:0;background:#FFF}body.bm-printing .bm-slip{margin:0}}',
+      '.bm-roll{background:var(--sunk);border-radius:16px;padding:20px 12px;overflow-x:auto;display:flex;justify-content:center}',
+      '.bm-roll .njw-slip{padding:4mm;box-shadow:var(--shadow);flex:none}',
+      '@media (min-width:768px){.bm-roll .njw-slip{zoom:1.3}}',
     ].join('\n');
     document.head.appendChild(st);
   }
@@ -799,6 +792,7 @@
         await API().post('/inbound/receipts/' + R.id + '/finish', {});
         S.toast(['Penerimaan selesai.', 'Receipt finished.'], 'ok');
         go({ receipt: R.id }, true);
+        autoSlip(R.id);
       } catch (err) { S.fail(err); e.currentTarget.disabled = false; }
     });
   }
@@ -906,53 +900,103 @@
   }
   const photoName = (k) => ({ sj_signed: t('SJ ditandatangani', 'Signed SJ'), selfie: t('Swafoto', 'Selfie'), sj_driver: t('SJ + driver', 'SJ + driver'), sj_no_po: t('SJ tanpa PO', 'SJ, no PO'), damage: t('Kerusakan', 'Damage') }[k] || k);
 
-  /* ================= 5j: the putaway slip (A4) ================= */
+  /* ================= 5j: the putaway slip (thermal) ================= */
+  /* Printed on the 80 mm thermal printer at the packing counter (48 characters a
+   * line, 32 on 58 mm), the same printer and set up as Hiryu's packing slip; on A4
+   * when this device has none (Pengaturan, Printer). Long product names wrap onto
+   * the next line: Kahf and Labore names differ only at the end (size, variant).
+   * The printed slip is Indonesian, like the other paper records. */
+
+  function slipLines(s, W) {
+    const P = NJW.print;
+    const L = 10;
+    const kv = (k, v) => P.wrap(v || '-', W - L).map((x, i) => (i ? ' '.repeat(L) : (k + ' '.repeat(L)).slice(0, L)) + x);
+    const from = P.when(s.received_from), to = P.when(s.received_to);
+    const diffText = (x) => {
+      if (x.kind === 'extra') return x.sku_name + ': ' + x.qty + ' unit lebih, tetap di ' + (x.bin_code || '') + '.';
+      if (x.kind === 'damaged') return x.sku_name + ': ' + x.qty + ' unit rusak, ' + (x.place === 'quarantine' ? 'di karantina ' + (x.bin_code || '') + '.' : 'dikembalikan ke driver, tertulis di Surat Jalan.');
+      return x.sku_name + ': kurang ' + x.qty + ' unit dari permintaan.';
+    };
+    const pend = s.differences.filter((x) => x.status === 'pending');
+    const sign = (who, names) => [{ b: P.wrap(who + ': ' + (names || ''), W) }, '', 'Tanda tangan ' + '_'.repeat(W - 13), '', 'Tanggal/jam  ' + '_'.repeat(W - 13), ''];
+    const out = [
+      P.center('NINJA VAN · SATSET WMS', W),
+      { b: P.center('SLIP PUTAWAY', W) },
+      { b: P.center(s.slip_no || '', W) },
+      P.rule('=', W),
+      kv('Hub', S.shortCode(s.site_code) + ' · ' + (s.site_name || '')),
+      kv('Merek', (s.brand_name || '') + (s.brand_legal_name ? ' · ' + s.brand_legal_name : '')),
+      kv('Ninja ref', s.reference),
+      kv('No. PO', s.brand_po_number),
+      kv('Diterima', from.date + ', ' + from.time + (s.received_to ? ' sampai ' + to.time : '') + ' WIB'),
+      kv('Penerima', (s.receiver || '-') + (s.sj_signed_by ? ' · Surat Jalan ditandatangani ' + s.sj_signed_by : '')),
+      kv('Dicetak', P.when().both),
+      P.rule('=', W),
+    ];
+    if (!s.lines.length) out.push(P.wrap('Belum ada unit yang ditaruh di rak.', W));
+    s.lines.forEach((l, i) => {
+      if (i) out.push(P.rule('-', W));
+      out.push({ b: P.wrap((i + 1) + '. ' + l.sku_name, W, '   ') });
+      out.push(P.lr('   Jumlah', n(l.qty) + ' pcs', W, '   '));
+      if (l.batch_no) out.push(P.lr('   Batch', l.batch_no, W, '   '));
+      out.push(P.lr('   Dari bin sementara', l.from_bin, W, '   '));
+      out.push({ b: P.lr('   Ke bin rak', l.to_bin, W, '   ') });
+      out.push(P.lr('   Warna sekat', l.divider.colour_id + ', minggu ' + l.divider.week_parity, W, '   '));
+    });
+    out.push(P.rule('=', W), { b: P.lr('Total ditaruh di rak', n(s.total_put) + ' pcs', W) },
+      P.wrap('Bin sementara kosong lagi setelah tiap batch. Satu bin, satu produk.', W));
+    if (s.differences.length) {
+      out.push(P.rule('-', W), { b: P.wrap('SELISIH' + (pend.length ? ', menunggu persetujuan Ops HQ' : '') + ' (tidak ditaruh di rak)', W) });
+      s.differences.forEach((x) => out.push(P.wrap('- ' + diffText(x), W, '  ')));
+    }
+    if (s.claim_deadline) out.push({ b: P.wrap('Batas klaim ke merek (24 jam): ' + P.when(s.claim_deadline).both + '.', W) });
+    out.push(P.rule('=', W), ...sign('Ditaruh oleh (staf)', s.signatures.put_by.join(', ')), ...sign('Diperiksa SPV', s.signatures.spv),
+      P.rule('-', W), P.wrap('Slip ini catatan kepatuhan. SPV tanda tangan, lalu simpan bersama Surat Jalan dan Faktur dari kiriman ini.', W));
+    return out;
+  }
+  const printSlip = (s) => NJW.print.thermal(NJW.print.slip(slipLines(s, NJW.print.cols())), { title: 'Slip putaway ' + (s.slip_no || '') });
+
+  /* Auto-print (Pengaturan, Printer): once per receipt on this device, when an SPV
+   * finishes the receipt (the slip is SPV and up). */
+  async function autoSlip(id) {
+    const P = NJW.print;
+    if (!P || !P.settings().autoSlip || !S.atLeast('supervisor')) return;
+    if (!P.once('putaway-slip-' + id)) return;
+    try {
+      const s = await API().get('/inbound/receipts/' + id + '/slip');
+      await printSlip(s);
+      S.toast(['Slip putaway ' + s.slip_no + ' dicetak.', 'Putaway slip ' + s.slip_no + ' printed.'], 'ok');
+    } catch (e) {
+      S.toast(['Slip putaway tidak tercetak otomatis. Cetak dari tanda terima.', 'The putaway slip did not print by itself. Print it from the receipt.'], 'caution');
+    }
+  }
 
   async function slipView(ctx, id) {
     S.fullScreen(true, { title: ['Slip putaway', 'Putaway slip'], onBack: () => go({ receipt: id }) });
     const s = await API().get('/inbound/receipts/' + id + '/slip');
-    document.body.classList.add('bm-printing');
-    const d = (iso) => iso ? S.fmt.day(iso) + ' ' + String(iso).slice(0, 4) : '-';
-    const pend = s.differences.filter((x) => x.status === 'pending');
-    const diffLine = (x) => {
-      const nm = esc(x.sku_name);
-      if (x.kind === 'extra') return nm + ': ' + x.qty + ' unit lebih, tetap di <b class="k-mono">' + esc(x.bin_code || '') + '</b>.';
-      if (x.kind === 'damaged') return nm + ': ' + x.qty + ' unit rusak, ' + (x.place === 'quarantine' ? 'di karantina <b class="k-mono">' + esc(x.bin_code || '') + '</b>.' : 'dikembalikan ke driver, tertulis di Surat Jalan.');
-      return nm + ': kurang ' + x.qty + ' unit dari permintaan.';
-    };
-    const info = [['Hub', S.shortCode(s.site_code) + ' · ' + s.site_name], ['Merek', (s.brand_name || '') + (s.brand_legal_name ? ' · ' + s.brand_legal_name : '')],
-      ['Ninja reference', s.reference || '-'], ['No. PO merek', s.brand_po_number || '-'],
-      ['Diterima', d(s.received_from) + ', ' + S.fmt.time(s.received_from) + ' sampai ' + S.fmt.time(s.received_to) + ' WIB'],
-      ['Penerima', (s.receiver || '-') + (s.sj_signed_by ? ' · Surat Jalan ditandatangani ' + s.sj_signed_by : '')]];
-    ctx.body.innerHTML = '<div class="bm-noprint k-line" style="justify-content:flex-end;gap:8px;margin-bottom:12px">' +
+    const P = NJW.print;
+    P.previewCss();
+    const st = P.settings();
+    const where = st.thermal === true
+      ? note('info', 'Dicetak di printer thermal ' + st.width + ' mm (' + P.cols() + ' karakter per baris).' + (st.kiosk ? '' : ' Di dialog cetak, pilih printer thermal.'),
+        'Prints on the ' + st.width + ' mm thermal printer (' + P.cols() + ' characters a line).' + (st.kiosk ? '' : ' In the print dialog, choose the thermal printer.'))
+      : st.thermal === false
+        ? note('info', 'Perangkat ini tidak punya printer thermal: slip dicetak di kertas A4.', 'This device has no thermal printer: the slip prints on A4 paper.')
+        : '<div class="k-note k-note--caution">' + icon('warn', 20) + '<span>' + p2('Printer belum diatur di perangkat ini, jadi slip dicetak di kertas A4. ', 'No printer is set up on this device yet, so the slip prints on A4 paper. ') +
+          '<a class="k-linkbtn" href="pengaturan.html?tab=printer" ' + biAttr('Atur printer', 'Set up the printer') + '></a></span></div>';
+    ctx.body.innerHTML = '<div class="bm-wrap">' +
+      '<div class="k-line" style="justify-content:flex-end;gap:8px;flex-wrap:wrap">' +
         btn('k-btn--secondary', 'Kembali', 'Back', 'id="bm-sback"', 'back') + btn('k-btn--primary', 'Cetak', 'Print', 'id="bm-print"', 'print') + '</div>' +
-      '<div class="bm-slipwrap"><div class="bm-slip" lang="id">' +
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px"><div><div style="color:#C8102E;font-weight:800;font-size:11px;letter-spacing:.1em">NINJA VAN · KILAT WMS</div>' +
-          '<div style="font-size:24px;font-weight:800;margin-top:4px">Slip putaway <span class="k-mono">' + esc(s.slip_no) + '</span></div></div>' +
-          '<div style="text-align:right;color:#5F6672;font-size:12px">Dicetak ' + esc(S.fmt.day(new Date().toISOString())) + ', ' + esc(S.fmt.time(new Date().toISOString())) + ' WIB<br>Halaman 1 dari 1</div></div>' +
-        '<div style="display:grid;grid-template-columns:150px 1fr;gap:4px 12px">' + info.map((x) => '<div style="color:#5F6672">' + esc(x[0]) + '</div><div style="font-weight:700">' + esc(x[1]) + '</div>').join('') + '</div>' +
-        '<table><thead><tr><th>No</th><th>Produk</th><th style="text-align:right">Unit (pcs)</th><th>Batch</th><th>Dari bin sementara</th><th>Ke bin rak</th><th>Warna sekat hari ini</th></tr></thead><tbody>' +
-          s.lines.map((l, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(l.sku_name) + '</td><td class="num">' + n(l.qty) + '</td><td>' + esc(l.batch_no || '-') + '</td>' +
-            '<td class="k-mono">' + esc(l.from_bin) + '</td><td class="k-mono" style="font-weight:700">' + esc(l.to_bin) + '</td>' +
-            '<td><span class="bm-swatch" style="background:' + esc(l.divider.hex) + '"></span>' + esc(l.divider.colour_id) + ', minggu ' + esc(l.divider.week_parity) + '</td></tr>').join('') +
-          '<tr><td></td><td style="font-weight:700">Total ditaruh di rak</td><td class="num">' + n(s.total_put) + '</td><td colspan="4" style="color:#5F6672">Bin sementara kosong lagi setelah tiap batch. Satu bin, satu produk.</td></tr></tbody></table>' +
-        (s.differences.length ? '<div style="border:1px solid #F2C46D;background:#FFF1D6;border-radius:10px;padding:12px 14px;color:#8A5300"><div style="font-weight:800;margin-bottom:6px">Selisih' +
-          (pend.length ? ', menunggu persetujuan Ops HQ' : '') + ' (tidak ditaruh di rak)</div>' + s.differences.map((x) => '<div>' + diffLine(x) + '</div>').join('') + '</div>' : '') +
-        (s.claim_deadline ? '<div style="font-weight:700">Batas klaim ke merek (24 jam): ' + esc(d(s.claim_deadline)) + ', ' + esc(S.fmt.time(s.claim_deadline)) + ' WIB.</div>' : '') +
-        '<div style="display:flex;gap:16px">' +
-          '<div class="bm-sign"><div style="font-weight:700">Ditaruh oleh (staf)</div><div>Nama: ' + esc(s.signatures.put_by.join(', ') || '') + '</div><div class="bm-sign__line"></div><div style="color:#5F6672">Tanda tangan · Tanggal dan jam: ____________</div></div>' +
-          '<div class="bm-sign"><div style="font-weight:700">Diperiksa SPV</div><div>Nama: ' + esc(s.signatures.spv || '') + '</div><div class="bm-sign__line"></div><div style="color:#5F6672">Tanda tangan · Tanggal dan jam: ____________</div></div></div>' +
-        '<div style="color:#5F6672;margin-top:auto">Slip ini catatan kepatuhan. SPV tanda tangan, lalu simpan bersama Surat Jalan dan Faktur dari kiriman ini.</div>' +
-      '</div></div>';
-    $('#bm-print', ctx.body).addEventListener('click', () => window.print());
-    $('#bm-sback', ctx.body).addEventListener('click', () => { document.body.classList.remove('bm-printing'); go({ receipt: id }); });
+      where +
+      '<div class="bm-roll" lang="id">' + P.slip(slipLines(s, P.cols())) + '</div></div>';
+    $('#bm-print', ctx.body).addEventListener('click', () => printSlip(s));
+    $('#bm-sback', ctx.body).addEventListener('click', () => go({ receipt: id }));
   }
 
   /* ================= router ================= */
 
   S.page(async function (ctx) {
     styles();
-    document.body.classList.remove('bm-printing');
     const slip = S.param('slip'), nopo = S.param('nopo'), rid = S.param('receipt'), step = S.param('step');
     if (slip) return slipView(ctx, slip);
     if (nopo) return noPo(ctx, nopo);

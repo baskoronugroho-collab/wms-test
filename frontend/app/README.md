@@ -22,7 +22,7 @@ Every page is this file. Owners normally change only the `init` options; the vie
 <link rel="apple-touch-icon" href="../assets/app/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="kilat.css">
 </head>
 <body>
@@ -75,7 +75,10 @@ also ship static markup.
   `ctx.actions` is the button slot at the right of the page title (laptop) and is emptied too.
 - No handler registered (file missing, or no `S.page`/`S.tab` for that tab): the page shows
   "Segera hadir". Pengaturan loads `js/pengaturan-<tab>.js` per tab; each calls
-  `S.tab('<tab>', fn)` (tab ids: `hub`, `orang`, `aturan`, `integrasi`, `demo`).
+  `S.tab('<tab>', fn)` (tab ids: `hub`, `orang`, `aturan`, `printer`, `integrasi`, `demo`).
+- Printing: load `js/print.js` on the page and use `NJW.print.thermal(html)` for a slip (80 or 58 mm
+  roll, A4 when the device has no thermal printer) or `NJW.print.a4(html)`. The device settings are
+  set in Pengaturan, Printer and kept per browser profile, like Hiryu's.
 - Errors thrown by a handler become a red toast. Call the API only with `NJW.api.raw`
   (`get/post/put/patch/del/form/qs`); it adds `X-View-As` for a superadmin preview. Never edit
   `js/api.js`.

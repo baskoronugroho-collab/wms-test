@@ -388,8 +388,8 @@
       "en": "Set up the devices and sign in on each one."
      },
      "detail": {
-      "id": "Dua HP hub, scanner, laptop pengemasan dengan Hiryu Live Orders terbuka, printer struk untuk slip kemas, dan printer kantor apa saja yang bisa memakai kertas A4 untuk label bin. Setiap orang masuk dengan login sendiri. Jangan pernah memakai login bersama.",
-      "en": "Two hub phones, the scanner, the packing laptop with Hiryu Live Orders open, the receipt printer for the packing slip, and any office printer that takes A4 paper for the bin labels. Everyone signs in with their own login, never a shared one."
+      "id": "Dua HP hub, scanner, laptop pengemasan dengan Hiryu Live Orders terbuka, printer thermal 80 mm untuk slip kemas Hiryu dan slip putaway WMS, dan printer kantor apa saja yang bisa memakai kertas A4 untuk label bin (cara memasang keduanya di langkah 5). Setiap orang masuk dengan login sendiri. Jangan pernah memakai login bersama.",
+      "en": "Two hub phones, the scanner, the packing laptop with Hiryu Live Orders open, the 80 mm thermal printer for Hiryu's packing slip and the WMS putaway slip, and any office printer that takes A4 paper for the bin labels (step 5 sets both up). Everyone signs in with their own login, never a shared one."
      },
      "result": {
       "id": "Yang terlihat: setiap orang masuk ke <em>Perlu tindakan</em> setelah login. Lalu SPV menekan <em>Tandai selesai</em> untuk langkah ini di <em>Mulai operasi</em>.",
@@ -412,6 +412,36 @@
       "WMS"
      ],
      "tags": [],
+     "screens": [],
+     "action": {
+      "id": "Pasang dua printer di PC meja kemas: <em>Pengaturan</em>, <em>Printer</em>.",
+      "en": "Set up the two printers on the packing counter PC: <em>Pengaturan</em>, <em>Printer</em>."
+     },
+     "detail": {
+      "id": "Printer thermal 80 mm dan cara pasangnya sama dengan slip kemas Hiryu: satu printer dipakai bersama oleh Hiryu dan WMS. Pakai jalur printer Windows, bukan USB langsung (WinUSB lewat Zadig): jalur itu membuat printer A4 dan WMS tidak bisa mencetak lagi di PC itu. Jadikan printer thermal printer default Windows, kertas 80 mm. Buat profil Chrome <em>Kemas</em> yang dibuka dengan --kiosk-printing: slip kemas Hiryu dan slip putaway WMS keluar di printer thermal tanpa dialog. Pakai profil Chrome biasa untuk cetakan A4 (label rak dan bin, nota retur ke merek) dan pilih printer A4 di dialog cetak. Di setiap profil, isi <em>Perangkat ini</em> di tab <em>Printer</em>. Pengaturan ini disimpan per profil browser di PC itu, bukan per orang. Nyalakan <em>Cetak slip putaway otomatis saat penerimaan selesai</em> di satu profil saja.",
+      "en": "The 80 mm thermal printer and its set up are the same as for Hiryu's packing slip: Hiryu and the WMS share one printer. Use the Windows printer route, not direct USB (WinUSB with Zadig): that route stops the A4 printer and the WMS from printing on that PC. Make the thermal printer the Windows default, 80 mm paper. Make a Chrome profile <em>Kemas</em> started with --kiosk-printing: Hiryu packing slips and WMS putaway slips come out on the thermal printer with no dialog. Use the normal Chrome profile for A4 prints (rack and bin labels, return notes to the brand) and choose the A4 printer in the print dialog. In each profile, fill in <em>Perangkat ini</em> on the <em>Printer</em> tab. These settings are kept per browser profile on that PC, not per person. Switch <em>Cetak slip putaway otomatis saat penerimaan selesai</em> on in one profile only."
+     },
+     "result": {
+      "id": "Yang terlihat: di profil Kemas, <em>Cetak tes thermal</em> keluar tanpa dialog dengan penggaris 48 kolom utuh. Di profil biasa, <em>Cetak tes A4</em> keluar di printer A4 dengan garis 100 mm.",
+      "en": "You see: in the Kemas profile, <em>Cetak tes thermal</em> comes out with no dialog and the 48 column ruler uncut. In the normal profile, <em>Cetak tes A4</em> comes out on the A4 printer with a 100 mm line."
+     }
+    },
+    {
+     "n": 6,
+     "phase": {
+      "id": "Fase A · Orang dan tempat",
+      "en": "Phase A · People and place"
+     },
+     "roles": [
+      {
+       "id": "SPV",
+       "en": "SPV"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
      "screens": [
       "2c"
      ],
@@ -420,8 +450,8 @@
       "en": "Training: train every staff member before the hub opens."
      },
      "detail": {
-      "id": "Jumlah orang yang dilatih mengikuti kebutuhan per shift: pengambil, pengemas, serah terima dan penerimaan barang, untuk setiap shift. Setiap orang berlatih di WMS dengan pesanan uji (langkah 14), di HP dan login masing-masing.",
-      "en": "How many people are trained follows the number needed per shift: pickers, the packer, handover and receiving, for every shift. Each person practises on the WMS with test orders (step 14), on their own phone and login."
+      "id": "Jumlah orang yang dilatih mengikuti kebutuhan per shift: pengambil, pengemas, serah terima dan penerimaan barang, untuk setiap shift. Setiap orang berlatih di WMS dengan pesanan uji (langkah 15), di HP dan login masing-masing.",
+      "en": "How many people are trained follows the number needed per shift: pickers, the packer, handover and receiving, for every shift. Each person practises on the WMS with test orders (step 15), on their own phone and login."
      },
      "result": {
       "id": "Yang terlihat: setiap peran di setiap shift punya cukup orang yang sudah dilatih. Lalu SPV menekan <em>Tandai selesai</em> di <em>Mulai operasi</em>.",
@@ -429,7 +459,7 @@
      }
     },
     {
-     "n": 6,
+     "n": 7,
      "phase": {
       "id": "Fase B · Katalog",
       "en": "Phase B · Catalogue"
@@ -461,7 +491,7 @@
      }
     },
     {
-     "n": 7,
+     "n": 8,
      "phase": {
       "id": "Fase B · Katalog",
       "en": "Phase B · Catalogue"
@@ -496,7 +526,7 @@
      }
     },
     {
-     "n": 8,
+     "n": 9,
      "phase": {
       "id": "Fase B · Katalog",
       "en": "Phase B · Catalogue"
@@ -528,7 +558,7 @@
      }
     },
     {
-     "n": 9,
+     "n": 10,
      "phase": {
       "id": "Fase B · Katalog",
       "en": "Phase B · Catalogue"
@@ -563,7 +593,7 @@
      }
     },
     {
-     "n": 10,
+     "n": 11,
      "phase": {
       "id": "Fase B · Katalog",
       "en": "Phase B · Catalogue"
@@ -598,7 +628,7 @@
      }
     },
     {
-     "n": 11,
+     "n": 12,
      "phase": {
       "id": "Fase B · Katalog",
       "en": "Phase B · Catalogue"
@@ -637,7 +667,7 @@
      }
     },
     {
-     "n": 12,
+     "n": 13,
      "phase": {
       "id": "Fase B · Katalog",
       "en": "Phase B · Catalogue"
@@ -669,7 +699,7 @@
      }
     },
     {
-     "n": 13,
+     "n": 14,
      "phase": {
       "id": "Fase E · Aktifkan",
       "en": "Phase E · Switch on"
@@ -700,7 +730,7 @@
      }
     },
     {
-     "n": 14,
+     "n": 15,
      "phase": {
       "id": "Fase E · Aktifkan",
       "en": "Phase E · Switch on"
@@ -734,7 +764,7 @@
      }
     },
     {
-     "n": 15,
+     "n": 16,
      "phase": {
       "id": "Fase E · Aktifkan",
       "en": "Phase E · Switch on"
@@ -770,7 +800,7 @@
      }
     },
     {
-     "n": 16,
+     "n": 17,
      "phase": {
       "id": "Fase E · Aktifkan",
       "en": "Phase E · Switch on"
@@ -1632,8 +1662,8 @@
       "en": "<em>Cetak slip putaway</em>, check it against the racks and sign it."
      },
      "detail": {
-      "id": "Tombolnya ada di tanda terima di laptop (Layar 5h). Slip A4 menampilkan Ninja reference dan nomor PO merek, lalu per baris: produk, jumlah unit, dari bin sementara, ke bin rak, dan warna sekat hari ini (contoh Biru, minggu B). Slip juga menampilkan selisih yang menunggu Ops HQ, batas klaim 24 jam, dan kotak tanda tangan untuk staf yang menaruh barang dan untuk SPV.",
-      "en": "The button is on the receipt on the laptop (Screen 5h). The A4 slip shows the Ninja reference and the brand PO number, then per line: product, units, from temporary bin, to rack bin and today's divider colour (e.g. Biru, minggu B), the differences waiting for Ops HQ, the 24-hour claim deadline, and boxes for the staff who put away and the SPV."
+      "id": "Tombolnya ada di tanda terima di laptop (Layar 5h). Slip dicetak di printer thermal 80 mm di meja kemas, printer yang sama dengan slip kemas Hiryu. Jika perangkat itu tidak punya printer thermal, slip dicetak di kertas A4 (<em>Pengaturan</em>, <em>Printer</em>). Slip menampilkan Ninja reference dan nomor PO merek, lalu per baris: produk, jumlah unit, dari bin sementara, ke bin rak, dan warna sekat hari ini (contoh Biru, minggu B). Nama produk yang panjang pindah ke baris berikutnya, tidak dipotong. Slip juga menampilkan selisih yang menunggu Ops HQ, batas klaim 24 jam, dan garis tanda tangan untuk staf yang menaruh barang dan untuk SPV. Jika <em>Cetak slip putaway otomatis saat penerimaan selesai</em> menyala di perangkat itu, slip tercetak sendiri satu kali saat SPV menekan <em>Selesai</em>.",
+      "en": "The button is on the receipt on the laptop (Screen 5h). The slip prints on the 80 mm thermal printer at the packing counter, the same printer as Hiryu's packing slip; on a device with no thermal printer it prints on A4 paper (<em>Pengaturan</em>, <em>Printer</em>). It shows the Ninja reference and the brand PO number, then per line: product, units, from temporary bin, to rack bin and today's divider colour (e.g. Biru, minggu B). A long product name wraps onto the next line instead of being cut. It also shows the differences waiting for Ops HQ, the 24-hour claim deadline, and signature lines for the staff who put away and the SPV. When <em>Cetak slip putaway otomatis saat penerimaan selesai</em> is on for that device, the slip prints by itself once when the SPV presses <em>Selesai</em>."
      },
      "result": {
       "id": "Yang terlihat: slip sudah ditandatangani SPV dan disimpan bersama Surat Jalan dan Faktur. Slip ini adalah bukti resmi penaruhan barang di rak.",

@@ -61,7 +61,7 @@
       '.hs-thumb img{width:100%;height:100%;object-fit:cover}',
       '.hs-cnt{font-family:var(--mono);font-weight:800;font-size:16px}',
       '#k-body .hs-table td{vertical-align:middle}',
-      '#k-body .hs-table td.k-num .hs-sub,#k-body .hs-table td.k-num .k-strong{font-family:inherit;font-family:"Plus Jakarta Sans",system-ui,sans-serif}',
+      '#k-body .hs-table td.k-num .hs-sub,#k-body .hs-table td.k-num .k-strong{font-family:inherit;font-family:var(--font)}',
     ].join('\n');
     document.head.appendChild(st);
   }

@@ -12,6 +12,13 @@
  *
  * Pesan Hiryu refreshes every 3 seconds with what changed since the last look
  * (new messages and retries), and can be paused.
+ *
+ * Peta pesan (above the log): every message between Hiryu and the WMS, field
+ * by field, from peta-pesan.json. That file is built from the code by
+ * `python tools/gen_message_map.py`; edit the generator, never the JSON. Each
+ * log row's number and its "Definisi" link open the map card of its message;
+ * ?pesan=<key> in the URL opens one card (keys 1 to 6, catalogue_request,
+ * rules, h).
  */
 (function () {
   'use strict';
@@ -79,6 +86,88 @@
   .hl-mobile { flex-direction:column; gap:4px; min-width:0; }
   .hl-mobile__top { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
   .hl-empty { padding:28px 16px; text-align:center; color:var(--muted); }
+  .hl-no--go { cursor:pointer; } .hl-no--go:hover { box-shadow:0 0 0 3px var(--action-bg); }
+
+  /* Peta pesan: two lanes, Hiryu left and WMS right, one arrow per message. */
+  .pm-heads { display:flex; justify-content:space-between; }
+  .pm-head { width:64px; display:flex; justify-content:center; }
+  .pm-rows { position:relative; padding:4px 0 2px; }
+  .pm-rows::before, .pm-rows::after { content:""; position:absolute; top:0; bottom:0; width:2px; border-radius:2px; background:var(--rule); }
+  .pm-rows::before { left:31px; } .pm-rows::after { right:31px; }
+  .pm-row { position:relative; margin:0 32px; padding:8px 0 12px; display:flex; flex-direction:column; gap:8px; }
+  .pm-msg { margin:0 14px; display:grid; grid-template-columns:34px minmax(0,1fr) auto; gap:10px; align-items:center; min-height:56px; padding:8px 12px;
+            border:1px solid var(--rule); border-radius:12px; background:var(--surface); color:var(--ink); text-align:left; cursor:pointer; font:inherit; }
+  .pm-msg:hover { background:var(--ground); }
+  .pm-msg.is-selected { border-color:var(--action); box-shadow:0 0 0 2px var(--action-bg); }
+  .pm-msg:focus-visible, .pm-chipbtn:focus-visible { outline:3px solid rgba(31,78,140,.35); outline-offset:2px; }
+  .pm-msg__text { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .pm-msg__name { font-weight:700; line-height:1.3; }
+  .pm-msg__sub { font:600 12px var(--mono); color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pm-msg__tags { display:flex; flex-wrap:wrap; gap:4px; justify-content:flex-end; }
+  .pm-arrow { position:relative; display:block; height:2px; }
+  .pm-row--in .pm-arrow { background:var(--ok); color:var(--ok); }
+  .pm-row--out .pm-arrow { background:var(--action); color:var(--action); }
+  .pm-arrow::before { content:""; position:absolute; top:-4px; width:10px; height:10px; border-radius:50%; background:currentColor; }
+  .pm-arrow::after { content:""; position:absolute; top:-5px; width:0; height:0; border-top:6px solid transparent; border-bottom:6px solid transparent; }
+  .pm-row--in .pm-arrow::before { left:-5px; } .pm-row--out .pm-arrow::before { right:-5px; }
+  .pm-row--in .pm-arrow::after { right:-1px; border-left:10px solid currentColor; }
+  .pm-row--out .pm-arrow::after { left:-1px; border-right:10px solid currentColor; }
+  @media (max-width:640px) {
+    .pm-head { width:48px; }
+    .pm-rows::before { left:23px; } .pm-rows::after { right:23px; }
+    .pm-row { margin:0 24px; }
+    .pm-msg { margin:0 8px; grid-template-columns:34px minmax(0,1fr); }
+    .pm-msg__tags { grid-column:2; justify-content:flex-start; }
+  }
+  .pm-card { border-top:1px solid var(--rule); padding:16px 20px 20px; display:grid; grid-template-columns:minmax(0,1fr); gap:20px; min-width:0; }
+  .pm-card:focus { outline:none; }
+  .pm-card, #pm-map { scroll-margin-top:88px; }
+  .pm-card__head { display:flex; align-items:flex-start; gap:12px; }
+  .pm-card__name { font-size:20px; font-weight:800; line-height:1.25; }
+  .pm-type { font-size:12px; font-weight:600; color:var(--muted); }
+  .pm-sec { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; min-width:0; }
+  .pm-sec__title { margin:0; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .pm-grid2 { display:grid; grid-template-columns:minmax(0,1fr); gap:20px; min-width:0; }
+  @media (min-width:1024px) { .pm-grid2 { grid-template-columns:minmax(0,1fr) minmax(0,1fr); } }
+  .pm-list { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
+  .pm-list li { display:grid; gap:4px; font-size:14px; line-height:1.45; color:var(--ink-2); }
+  .pm-list__tags { display:flex; flex-wrap:wrap; align-items:center; gap:4px; }
+  .pm-call { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .pm-method { font:800 12px var(--mono); padding:4px 8px; border-radius:6px; background:var(--navy); color:var(--navy-ink); }
+  .pm-path { font:700 13.5px var(--mono); color:var(--ink); overflow-wrap:anywhere; }
+  .pm-p { margin:0; font-size:14px; line-height:1.5; color:var(--ink-2); }
+  .pm-headers { display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
+  .pm-code-inline { font:600 12px var(--mono); background:var(--sunk); color:var(--ink-2); padding:2px 6px; border-radius:5px; overflow-wrap:anywhere; }
+  .pm-pattern { display:inline-block; margin-top:4px; }
+  .pm-table { min-width:900px; font-size:13px; }
+  .pm-table th { white-space:nowrap; }
+  .pm-table td { height:auto; padding:9px 10px; vertical-align:top; }
+  .pm-fpath { font:600 12.5px var(--mono); min-width:170px; max-width:260px; overflow-wrap:anywhere; }
+  .pm-fpath .pm-parent { color:var(--muted); font-weight:500; }
+  .pm-fpath b { color:var(--ink); font-weight:700; }
+  .pm-nowrap { white-space:nowrap; }
+  .pm-req { min-width:90px; } .pm-allowed { min-width:170px; max-width:240px; overflow-wrap:anywhere; }
+  .pm-ex { font-size:12px; min-width:110px; max-width:170px; overflow-wrap:anywhere; }
+  .pm-mean { min-width:240px; line-height:1.45; color:var(--ink-2); }
+  .pm-url { font:600 12.5px var(--mono); color:var(--ink-2); overflow-wrap:anywhere; }
+  .pm-ans { display:grid; grid-template-columns:auto minmax(0,1fr); gap:10px; align-items:start; padding:10px 0; border-top:1px solid var(--rule); font-size:14px; line-height:1.45; }
+  .pm-ans:first-child { border-top:0; padding-top:0; }
+  .pm-code { display:inline-block; min-width:44px; text-align:center; font:800 12px var(--mono); padding:4px 8px; border-radius:6px; white-space:nowrap; }
+  .pm-code--ok { color:var(--ok); background:var(--ok-bg); }
+  .pm-code--caution { color:var(--caution); background:var(--caution-bg); }
+  .pm-code--stop { color:var(--stop); background:var(--stop-bg); }
+  .pm-code--info { color:var(--action); background:var(--action-bg); }
+  .pm-json--sm { max-height:220px; font-size:12px; padding:10px 12px; margin-top:4px; }
+  .pm-bullets { margin:0; padding-left:20px; display:grid; gap:6px; font-size:14px; line-height:1.5; color:var(--ink-2); }
+  .pm-rules { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
+  @media (min-width:1024px) { .pm-rules { grid-template-columns:minmax(0,1fr) minmax(0,1fr); } }
+  .pm-rule { display:grid; gap:4px; padding:12px 14px; border-radius:12px; background:var(--sunk); font-size:14px; line-height:1.5; }
+  .pm-rule__title { font-weight:800; color:var(--ink); }
+  .pm-table--h { min-width:760px; }
+  .pm-hmsgs { min-width:240px; }
+  .pm-chipbtn { display:inline-flex; align-items:center; justify-content:center; min-width:44px; height:40px; padding:0 10px; margin:2px 4px 2px 0;
+                border:0; border-radius:999px; background:var(--navy); color:var(--navy-ink); font:800 13px var(--mono); cursor:pointer; }
+  .pm-later td { color:var(--muted); }
   `;
   function style() {
     if (document.getElementById('hl-css')) return;
@@ -121,8 +210,14 @@
   const dirHtml = (m) => m.direction === 'in'
     ? '<span class="hl-dir hl-dir--in">Hiryu ' + icon('arrow', 13, 2.6) + ' WMS</span>'
     : '<span class="hl-dir hl-dir--out">WMS ' + icon('arrow', 13, 2.6) + ' Hiryu</span>';
-  const noHtml = (m) => m.message_no ? '<span class="hl-no" title="' + esc(t('Pesan ', 'Message ') + m.message_no) + '">' + m.message_no + '</span>'
-    : '<span class="hl-no hl-no--q" title="catalogue_request">6?</span>';
+  /* The number opens the message's card in Peta pesan (wireLog). */
+  const noHtml = (m) => {
+    const k = mapKeyOf(m);
+    const go = k ? ' data-mapgo="' + esc(k) + '"' : '';
+    const tip = t(': buka di peta pesan', ': open in the message map');
+    return m.message_no ? '<span class="hl-no' + (k ? ' hl-no--go' : '') + '"' + go + ' title="' + esc(t('Pesan ', 'Message ') + m.message_no + (k ? tip : '')) + '">' + m.message_no + '</span>'
+      : '<span class="hl-no hl-no--q' + (k ? ' hl-no--go' : '') + '"' + go + ' title="' + esc('catalogue_request' + (k ? tip : '')) + '">6?</span>';
+  };
   function gmOf(m) {
     const b = m.body || {};
     const d = b.data || {};
@@ -151,7 +246,7 @@
   let ST = null;
   function fresh() {
     return { status: null, statusErr: null, msgs: new Map(), order: [], since: null, open: new Set(), seen: new Set(), paused: false,
-      dir: 'all', hideStock: false, q: '', first: true };
+      dir: 'all', hideStock: false, q: '', first: true, mapSel: null };
   }
 
   /* ------------------------------------------------------------ status ---- */
@@ -277,7 +372,9 @@
       '<span>' + esc(t('lewat', 'via')) + ' <b>' + esc(via) + '</b></span>' +
       (m.http_status != null ? '<span>HTTP <b>' + esc(String(m.http_status)) + '</b></span>' : '') +
       '<span>' + esc(t('percobaan', 'attempts')) + ' <b>' + esc(String(m.attempts)) + '</b></span>' +
-      '<span>' + esc(t('waktu', 'time')) + ' <b>' + esc(S.fmt.dt(m.time)) + ':' + esc(timeOf(m.time).slice(-2)) + '</b></span></div>' +
+      '<span>' + esc(t('waktu', 'time')) + ' <b>' + esc(S.fmt.dt(m.time)) + ':' + esc(timeOf(m.time).slice(-2)) + '</b></span>' +
+      (mapKeyOf(m) ? '<button type="button" class="k-linkbtn" data-mapgo="' + esc(mapKeyOf(m)) + '">' + icon('book', 16) +
+        span(['Definisi di peta pesan', 'Definition in the message map']) + '</button>' : '') + '</div>' +
       '<div class="hl-panes"><div><div class="hl-pane__label"><span>' + esc(t('Isi pesan (JSON persis)', 'Message body (exact JSON)')) + '</span>' +
       (m.body_truncated ? '' : '<button type="button" class="hl-copy" data-copy="body">' + esc(t('Salin', 'Copy')) + '</button>') + '</div>' + body + '</div>' +
       '<div><div class="hl-pane__label"><span>' + esc(t('Jawaban', 'Answer')) + '</span><button type="button" class="hl-copy" data-copy="answer">' + esc(t('Salin', 'Copy')) + '</button></div>' +
@@ -312,6 +409,200 @@
       '</div></div>';
   }
 
+  /* ------------------------------------------------------ message map ---- */
+
+  /* Peta pesan. peta-pesan.json is fetched once, with the same ?v= as the
+     page's scripts (as panduan.js does for panduan/sections.json). */
+  let MAP = null, MAP_ERR = false;
+  async function loadMap() {
+    if (MAP) return;
+    try {
+      const v = ((document.querySelector('script[src*="shell.js"]') || {}).src || '').split('v=')[1] || '';
+      const r = await fetch('peta-pesan.json' + (v ? '?v=' + v : ''), { cache: 'no-cache' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      MAP = await r.json();
+      MAP_ERR = false;
+    } catch (e) { MAP_ERR = true; }
+  }
+
+  /* Log message type to map key. The outbox calls message 5 order_short. */
+  const MAP_KEY = { order: '1', cancel: '2', stock_level: '3', order_ready: '4', item_short: '5', order_short: '5',
+    catalogue: '6', catalogue_request: 'catalogue_request' };
+  function mapKeyOf(m) {
+    return MAP_KEY[m.message_type] || (m.message_no ? String(m.message_no) : null);
+  }
+  const L = (o) => (o ? span([o.id, o.en]) : '');
+  const mapMsg = (key) => (MAP ? MAP.messages.find((x) => x.key === key) : null);
+  const mapBadge = (m) => (m.no ? '<span class="hl-no">' + m.no + '</span>' : '<span class="hl-no hl-no--q">6?</span>');
+  const sideChip = (side) => (side === 'hiryu' ? '<span class="k-sys k-sys--hiryu">Hiryu</span>' : '<span class="k-sys k-sys--wms">WMS</span>');
+  const hTags = (hs) => (hs || []).map((h) => '<span class="hl-h">' + esc(h) + '</span>').join('');
+  const closeBtn = '<button type="button" class="k-btn k-btn--ghost k-btn--sm" data-map="" data-aria-id="Tutup" data-aria-en="Close" aria-label="Tutup">' + icon('close', 18) + '</button>';
+
+  function flowHtml() {
+    return '<div class="pm-flow">' +
+      '<div class="pm-heads"><span class="pm-head">' + sideChip('hiryu') + '</span><span class="pm-head">' + sideChip('wms') + '</span></div>' +
+      '<div class="pm-rows">' + MAP.messages.map((m) => {
+        const sel = ST.mapSel === m.key;
+        const sub = m.direction === 'in' ? m.call.method + ' ' + m.call.path.replace('/api/hiryu/v1', '') : 'type: ' + m.log_type;
+        return '<div class="pm-row pm-row--' + m.direction + '">' +
+          '<button type="button" class="pm-msg' + (sel ? ' is-selected' : '') + '" data-map="' + esc(m.key) + '" aria-pressed="' + sel + '">' +
+          mapBadge(m) + '<span class="pm-msg__text"><span class="pm-msg__name">' + L(m.name) + '</span>' +
+          '<span class="pm-msg__sub">' + esc(sub) + '</span></span><span class="pm-msg__tags">' + hTags(m.h) + '</span>' +
+          '<span class="k-sr">' + span(m.direction === 'in' ? ['Hiryu ke WMS', 'Hiryu to WMS'] : ['WMS ke Hiryu', 'WMS to Hiryu']) + '</span></button>' +
+          '<span class="pm-arrow" aria-hidden="true"></span></div>';
+      }).join('') + '</div></div>';
+  }
+
+  function reqHtml(m, f) {
+    if (f.when) return L(f.when) + (m.direction === 'out' && f.nullable ? span(['; selain itu null', '; null otherwise']) : '');
+    if (f.required) return f.nullable ? span(['Ya, boleh null', 'Yes, may be null']) : span(['Ya', 'Yes']);
+    return f.nullable ? span(['Tidak, boleh null', 'No, may be null']) : span(['Tidak', 'No']);
+  }
+  function pathHtml(p) {
+    if (p.indexOf('(path) ') === 0) {
+      return '<b>' + esc(p.slice(7)) + '</b> <span class="k-tag">' + span(['di alamat', 'in the path']) + '</span>';
+    }
+    const cut = p.lastIndexOf('.');
+    return cut < 0 ? '<b>' + esc(p) + '</b>' : '<span class="pm-parent">' + esc(p.slice(0, cut + 1)) + '</span><b>' + esc(p.slice(cut + 1)) + '</b>';
+  }
+  function fieldsHtml(m) {
+    const th = (id, en) => '<th ' + biAttr(id, en) + '></th>';
+    return '<div class="k-tablewrap"><table class="k-table pm-table"><thead><tr>' +
+      '<th>Field</th>' + th('Tipe', 'Type') + th('Wajib', 'Required') + th('Nilai yang boleh', 'Allowed values') + th('Contoh', 'Example') + th('Arti', 'Meaning') +
+      '</tr></thead><tbody>' + m.fields.map((f) =>
+        '<tr><td class="pm-fpath">' + pathHtml(f.path) + '</td>' +
+        '<td class="k-mono pm-nowrap">' + esc(f.type + (f.nullable ? ' | null' : '')) + '</td>' +
+        '<td class="pm-req">' + reqHtml(m, f) + '</td>' +
+        '<td class="pm-allowed">' + ((f.allowed || []).map(L).join('<br>') || (f.pattern ? '' : '<span class="k-muted">-</span>')) +
+          (f.pattern ? '<br><code class="pm-code-inline pm-pattern">' + esc(f.pattern) + '</code>' : '') + '</td>' +
+        '<td class="k-mono pm-ex">' + (f.example == null ? '<span class="k-muted">-</span>' : esc(f.example)) + '</td>' +
+        '<td class="pm-mean">' + L(f.meaning) + '</td></tr>').join('') +
+      '</tbody></table></div>';
+  }
+  function answerHtml(a) {
+    const s = String(a.status);
+    const kind = s === 'replay' ? 'info' : /^2/.test(s) || s === '409' ? 'ok' : /^(408|5)|timeout/.test(s) ? 'caution' : 'stop';
+    const label = s === 'replay' ? span(['Ulangan', 'Repeat']) : s === 'timeout' ? span(['Tanpa jawaban', 'No answer']) : esc(s);
+    return '<div class="pm-ans"><span class="pm-code pm-code--' + kind + '">' + label + '</span>' +
+      '<div class="k-stack k-stack--tight" style="min-width:0"><span>' + L(a.when) + '</span>' +
+      (a.request ? '<span class="k-caption">' + span(['Dikirim dengan: ', 'Sent with: ']) + '<code class="pm-code-inline">' + esc(JSON.stringify(a.request)) + '</code></span>' : '') +
+      (a.body != null ? '<pre class="hl-json pm-json--sm">' + jsonHtml(a.body) + '</pre>' : '') + '</div></div>';
+  }
+  const sec = (title, body) => '<section class="pm-sec"><h4 class="pm-sec__title">' + span(title) + '</h4>' + body + '</section>';
+  const sideList = (items) => '<ul class="pm-list">' + items.map((x) =>
+    '<li><span class="pm-list__tags">' + sideChip(x.side) + hTags(x.h) + '</span><span>' + L(x.text) + '</span></li>').join('') + '</ul>';
+
+  function msgCardHtml(m) {
+    const head = '<div class="pm-card__head">' + mapBadge(m) +
+      '<div class="k-stack k-stack--tight k-grow" style="min-width:0"><span class="pm-card__name">' + L(m.name) + '</span>' +
+      '<span class="k-line" style="gap:6px;flex-wrap:wrap">' + dirHtml({ direction: m.direction }) + hTags(m.h) +
+      '<span class="k-mono pm-type">' + esc(m.log_type) + '</span></span></div>' + closeBtn + '</div>';
+    const call = '<div class="pm-call"><span class="pm-method">' + esc(m.call.method) + '</span><span class="pm-path">' + esc(m.call.path) + '</span></div>' +
+      '<p class="pm-p">' + L(m.call.who) + '. ' + L(m.call.note) + '</p>' +
+      '<div class="pm-headers">' + m.headers.map((h) => '<code class="pm-code-inline">' + esc(h.name + ': ' + h.value) + '</code>').join('') + '</div>';
+    const example = '<div class="hl-pane__label"><span>' + span(['Contoh lengkap, persis seperti dikirim', 'Full example, exactly as sent']) + '</span>' +
+      '<button type="button" class="hl-copy" data-mapcopy="' + esc(m.key) + '">' + span(['Salin', 'Copy']) + '</button></div>' +
+      (m.call.url ? '<div class="pm-url">' + esc(m.call.method + ' ' + m.call.url) + '</div>' : '') +
+      '<pre class="hl-json">' + jsonHtml(m.example) + '</pre>';
+    const answers = '<div>' + m.answers.map(answerHtml).join('') + '</div>';
+    return head +
+      '<div class="pm-grid2">' + sec(['Kapan dikirim', 'When it is sent'], sideList(m.triggers)) +
+      sec(['Alamat dan kunci', 'Address and key'], call) + '</div>' +
+      sec(['Field', 'Fields'], fieldsHtml(m)) +
+      '<div class="pm-grid2">' + '<section class="pm-sec">' + example + '</section>' +
+      sec(m.direction === 'in' ? ['Jawaban WMS', 'The WMS answers'] : ['Jawaban yang diharapkan dari Hiryu', 'What Hiryu should answer'], answers) + '</div>' +
+      '<div class="pm-grid2">' + sec(['Setelah itu', 'What happens next'], sideList(m.next)) +
+      ((m.rules || []).length ? sec(['Perlu diketahui', 'Good to know'], '<ul class="pm-bullets">' + m.rules.map((r) => '<li>' + L(r) + '</li>').join('') + '</ul>') : '') +
+      '</div>';
+  }
+
+  function rulesCardHtml() {
+    return '<div class="pm-card__head"><span class="pm-card__name k-grow">' + span(['Aturan umum, semua pesan', 'General rules, every message']) + '</span>' + closeBtn + '</div>' +
+      '<div class="pm-rules">' + MAP.rules.map((r) => '<div class="pm-rule"><span class="pm-rule__title">' + L(r.title) + '</span><span class="pm-p">' + L(r.text) + '</span></div>').join('') + '</div>';
+  }
+
+  function hCardHtml() {
+    const th = (id, en) => '<th ' + biAttr(id, en) + '></th>';
+    return '<div class="pm-card__head"><span class="pm-card__name k-grow">' + span(['Daftar H dari papan 11a', 'The H list from board 11a']) + '</span>' + closeBtn + '</div>' +
+      '<div class="k-tablewrap"><table class="k-table pm-table pm-table--h"><thead><tr><th>H</th>' + th('Arti', 'Meaning') + th('Pesan', 'Messages') + th('Panggilan Grab', 'Grab call') +
+      '</tr></thead><tbody>' + MAP.h_list.map((h) =>
+        '<tr' + (h.pilot ? '' : ' class="pm-later"') + '><td class="pm-nowrap"><span class="hl-h">' + esc(h.h) + '</span>' +
+        (h.pilot ? '' : '<br><span class="k-tag" style="margin-top:6px">' + span(['setelah pilot', 'after the pilot']) + '</span>') + '</td>' +
+        '<td class="pm-mean">' + L(h.text) + '</td>' +
+        '<td class="pm-hmsgs">' + (h.messages.length ? h.messages.map((k) => '<button type="button" class="pm-chipbtn" data-map="' + esc(k) + '" title="' +
+          esc(L(mapMsg(k) && mapMsg(k).name).replace(/<[^>]*>/g, '')) + '">' + esc(k === 'catalogue_request' ? '6?' : k) + '</button>').join('') : '<span class="k-muted">-</span>') + '</td>' +
+        '<td class="k-mono" style="font-size:12px">' + (h.grab.length ? esc(h.grab.join(', ')) : '<span class="k-muted">-</span>') + '</td></tr>').join('') +
+      '</tbody></table></div>';
+  }
+
+  function mapCardHtml() {
+    if (!MAP || !ST.mapSel) return '';
+    const m = mapMsg(ST.mapSel);
+    const inner = ST.mapSel === 'rules' ? rulesCardHtml() : ST.mapSel === 'h' ? hCardHtml() : m ? msgCardHtml(m) : '';
+    return inner ? '<div class="pm-card" id="pm-card" tabindex="-1">' + inner + '</div>' : '';
+  }
+
+  function mapHtml() {
+    const sel = (k) => ' aria-pressed="' + (ST.mapSel === k) + '"';
+    const head = '<div class="hl-livehead"><div class="k-stack k-stack--tight"><span class="k-h2" style="font-size:20px">' + span(['Peta pesan', 'Message map']) + '</span>' +
+      '<span class="k-caption">' + span(['Semua pesan antara Hiryu dan WMS, field demi field, sesuai kode yang berjalan. Pilih satu untuk melihat pemicu, alamat, field, contoh JSON dan jawabannya.',
+        'Every message between Hiryu and the WMS, field by field, as the running code has it. Pick one to see its triggers, address, fields, example JSON and answer.']) + '</span></div>' +
+      (MAP ? '<div class="k-line" style="gap:8px;flex-wrap:wrap">' +
+        '<button type="button" class="k-btn k-btn--sm k-btn--secondary" data-map="rules"' + sel('rules') + '>' + icon('book', 16) + span(['Aturan umum', 'General rules']) + '</button>' +
+        '<button type="button" class="k-btn k-btn--sm k-btn--secondary" data-map="h"' + sel('h') + '>' + icon('list', 16) + span(['Daftar H1 sampai H11', 'H1 to H11']) + '</button></div>' : '') +
+      '</div>';
+    const body = MAP ? flowHtml()
+      : MAP_ERR ? '<div class="k-note k-note--caution">' + icon('warn') + span(['Peta pesan belum bisa dibuka. Muat ulang halaman.', 'The message map cannot be opened yet. Reload the page.']) + '</div>'
+        : '<div class="k-loading" ' + biAttr('Memuat peta…', 'Loading the map…') + '></div>';
+    return '<div class="k-card" id="pm-map"><div style="padding:16px 20px" class="k-stack">' + head + body + '</div>' + mapCardHtml() + '</div>';
+  }
+
+  function paintMap() {
+    const wrap = BODY && BODY.querySelector('#pm-wrap');
+    if (!wrap) return;
+    wrap.innerHTML = mapHtml();
+    S.applyLang(wrap);
+  }
+
+  /* Open one card (or close with null). `scroll` brings the card into view,
+     used when the jump comes from the log or the H list. */
+  function openMap(key, opts) {
+    const o = opts || {};
+    ST.mapSel = key ? (o.toggle && ST.mapSel === key ? null : key) : null;
+    try {
+      const u = new URL(location.href);
+      if (ST.mapSel) u.searchParams.set('pesan', ST.mapSel); else u.searchParams.delete('pesan');
+      history.replaceState(history.state, '', u.pathname + u.search + u.hash);
+    } catch (e) { /* the URL is a nicety */ }
+    paintMap();
+    const card = document.getElementById('pm-card');
+    if (card && (o.scroll || card.getBoundingClientRect().top > window.innerHeight - 120)) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      card.focus({ preventScroll: true });
+    } else if (!card && o.toggle) {
+      const map = document.getElementById('pm-map');
+      if (map && map.getBoundingClientRect().top < 0) map.scrollIntoView({ block: 'start' });
+    }
+  }
+
+  function wireMap() {
+    const wrap = BODY.querySelector('#pm-wrap');
+    if (!wrap) return;
+    wrap.addEventListener('click', async (ev) => {
+      const copy = ev.target.closest('[data-mapcopy]');
+      if (copy) {
+        const m = mapMsg(copy.dataset.mapcopy);
+        try { await navigator.clipboard.writeText(JSON.stringify(m.example, null, 2)); S.toast(['Disalin.', 'Copied.'], 'ok'); }
+        catch (e) { S.toast(['Tidak bisa menyalin di peramban ini.', 'Cannot copy in this browser.'], 'caution'); }
+        return;
+      }
+      const b = ev.target.closest('[data-map]');
+      if (!b) return;
+      const fromCard = !!b.closest('#pm-card');
+      openMap(b.dataset.map || null, { toggle: !fromCard, scroll: fromCard && !!b.dataset.map });
+    });
+  }
+
   /* ------------------------------------------------------------ paint ---- */
 
   let BODY = null;
@@ -320,8 +611,10 @@
     BODY.innerHTML = '<div class="k-stack k-stack--loose">' +
       '<div id="hl-status">' + statusHtml() + '</div>' +
       '<div id="hl-lanes">' + lanesHtml() + '</div>' +
+      '<div id="pm-wrap">' + mapHtml() + '</div>' +
       logHtml() + '</div>';
     wireStatus();
+    wireMap();
     wireLog();
     S.applyLang(BODY);
     S.lockAll(BODY);
@@ -414,6 +707,8 @@
   function wireLog() {
     const log = BODY.querySelector('#hl-log');
     log.addEventListener('click', async (ev) => {
+      const go = ev.target.closest('[data-mapgo]');
+      if (go) { ev.preventDefault(); openMap(go.dataset.mapgo, { scroll: true }); return; }
       const seg = ev.target.closest('[data-dir]');
       if (seg) { ST.dir = seg.dataset.dir; log.querySelectorAll('[data-dir]').forEach((b) => b.setAttribute('aria-pressed', String(b === seg))); paintList(); return; }
       if (ev.target.closest('[data-pause]')) { ST.paused = !ST.paused; repaintLogHead(); return; }
@@ -492,9 +787,11 @@
       BODY.innerHTML = '<div class="k-card k-card--pad">' + span(['Pilih satu hub.', 'Choose one hub.']) + '</div>';
       return;
     }
+    ST.mapSel = S.param('pesan') || null;
     BODY.innerHTML = '<div class="k-loading" ' + biAttr('Memuat…', 'Loading…') + '></div>';
-    await Promise.all([loadStatus(), loadMessages()]);
+    await Promise.all([loadStatus(), loadMessages(), loadMap()]);
     paintAll();
+    if (ST.mapSel && document.getElementById('pm-card')) document.getElementById('pm-card').scrollIntoView({ block: 'start' });
     let busy = false;
     ctx.every(3000, async () => {
       if (ST.paused || busy || !BODY.isConnected) return;

@@ -333,7 +333,10 @@ STEPS: list[dict] = [
          title_en="Set up the devices and sign in", who=["supervisor"], systems=["Hiryu", "WMS"],
          mode="manual", screen=None, guide="S02", where="Di hub",
          do=["Dua ponsel hub, pemindai, laptop packing dengan Hiryu Live Orders, printer struk, "
-             "printer A4 untuk label bin.", "Setiap orang masuk dengan akunnya sendiri."],
+             "printer A4 untuk label bin.",
+             "Atur kedua printer di Pengaturan, Printer: printer struk 80 mm untuk slip Hiryu "
+             "dan slip putaway, printer A4 untuk label.",
+             "Setiap orang masuk dengan akunnya sendiri."],
          manual="WMS tidak bisa melihat langkah ini. SPV menandainya setelah semua perangkat "
                 "terpasang dan setiap orang sudah masuk."),
     dict(key="a_training", phase="A", title="Latih staf", title_en="Train the staff",

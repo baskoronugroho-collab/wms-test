@@ -16,11 +16,14 @@ rename once. Items marked **(to agree with Shaun)** are not agreed yet.
 
 - HTTPS only. Every call carries the header `X-Hiryu-Key: <shared secret>`. The
   secret is different on dev and production (`POS_SHARED_SECRET`). Missing or
-  wrong: `403`, nothing changes.
+  wrong at the WMS: `401` (the public path carries no Google sign-in), nothing
+  changes.
 - Every message has a `message_id`, unique per sender. A message received twice
-  gets the same answer twice and changes nothing the second time. The WMS also
-  sends `Idempotency-Key: <message_id>`; Hiryu may send it too, but the WMS goes
-  by `message_id`.
+  gets the same answer twice and changes nothing the second time. A message the
+  WMS refused (`422`) is not kept, so once the cause is fixed the same message
+  may be sent again and is then taken. The WMS also sends
+  `Idempotency-Key: <message_id>`; Hiryu may send it too, but the WMS goes by
+  `message_id`.
 - Times are ISO 8601 with a zone (`2026-10-01T09:41:00+07:00`) or UTC with `Z`.
   A time with no zone is refused.
 - Numbers are absolute, never "+2".
@@ -40,7 +43,7 @@ rename once. Items marked **(to agree with Shaun)** are not agreed yet.
 | `409` | Taken before: a duplicate. Nothing changed | Done |
 | `422` | Refused, `detail` says why | Do not retry. Show it as failed (WMS: *Integrasi Hiryu*) and fix the cause |
 | `408`, `429` | Too slow, or too many calls | Retry on the schedule |
-| other `4xx` | For example `403`: wrong or missing key | Stop. Show it as failed and alert |
+| other `4xx` | For example `401` or `403`: wrong or missing key | Stop. Show it as failed and alert |
 | `5xx`, or no answer in 8 s | The other side is down or busy | Retry on the schedule |
 
 Retry schedule, both sides: 10 s, 30 s, 1 min, 2 min, 5 min, then every 10 min,
@@ -103,10 +106,13 @@ Sent the moment staff press **Accept** in Hiryu (H1, H9).
 - `oos_instruction` is `null` when Grab gives no instruction; the WMS then
   treats the line as `cancel_order`.
 - A `replace_sku_code` the WMS does not know does not refuse the order: the line
-  is treated as `cancel_order` and Ops HQ is flagged.
+  is treated as `cancel_order` and Ops HQ is flagged. The same goes for a
+  `replace` without all three of `replace_hiryu_item_id`, `replace_sku_code`
+  and `replace_units`.
 - Answer `201`: `{"order_id": 123, "status": "accepted"}`. The same
   `grab_order_id` again answers `200` with `"status": "duplicate"`.
-- A store or SKU code the WMS does not know answers `422` and flags Ops HQ.
+- A store or SKU code the WMS does not know answers `422` and flags Ops HQ. So
+  does a new store whose brand Ops HQ has not picked yet.
 
 ### 2. Order cancelled: `POST /api/hiryu/v1/orders/{grab_order_id}/cancel`
 
@@ -138,8 +144,10 @@ with `2001` after its missing line (`POST /api/hiryu/v1/orders/A-3H6PV8N2RT/canc
 ### 6. Catalogue: `POST /api/hiryu/v1/catalogue`
 
 Sent when a dark store, store, menu, item, bundle or SKU changes (H6); `full:
-true` when it is the whole list (anything missing from a full list turns
-inactive).
+true` when it is the whole list. In a full list, dark stores, stores and menu
+items missing from a section that is sent turn inactive, and a store with no
+menu in a non-empty `menus` sells nothing; an empty or missing section changes
+nothing, and SKUs never turn inactive this way.
 
 ```json
 {
@@ -179,7 +187,7 @@ inactive).
 | Field | Type | Required | Where Hiryu gets it | What the WMS does with it |
 |---|---|---|---|---|
 | `message_id` | string, up to 96 | Yes | Hiryu makes it | A repeat changes nothing |
-| `full` | boolean | Yes | `true` when Hiryu sends the whole list | Anything missing from a full list turns inactive |
+| `full` | boolean | Yes | `true` when Hiryu sends the whole list | Dark stores, stores and menu items missing from a section that is sent turn inactive (see above) |
 | `request_id` | string or null | No | The `request_id` of the WMS's `catalogue_request` this answers; null otherwise **(to agree with Shaun)** | Marks *Sinkron ulang* as done |
 | `dark_stores` | list | No | Hiryu, Dark stores | One hub per dark store |
 | `dark_stores[].hiryu_dark_store_id` | integer | Yes | The dark store's number in Hiryu | The hub's key; a new one creates the hub (*Baru dari Hiryu*), Ops HQ adds only the WMS data |
@@ -259,7 +267,10 @@ SKU of every store) goes at switch-on (H8) and every night at 03:00 WIB.
 
 `available` = on the shelf, minus held for orders not yet picked, minus the
 Grab buffer (1 by default), never below 0. Worked out when the message is sent,
-so a burst of scans sends one number.
+so a burst of scans sends one number. A number equal to the last one sent for
+that store and SKU is not sent again (a snapshot always is). Stock goes only for
+a store that is active with its link on (H8), and only for a SKU that has a
+Hiryu code.
 
 ### 4. Order ready: `"type": "order_ready"`
 
@@ -275,7 +286,9 @@ so a burst of scans sends one number.
 | `packed_at` | time, UTC | Yes | When the packer tapped *Selesai dikemas* | For Hiryu's log |
 
 Sent when the packer taps *Selesai dikemas* (H4); never for a cancelled order.
-Hiryu marks the order ready on Grab. Staff no longer press Mark ready.
+Hiryu marks the order ready on Grab. Staff no longer press Mark ready. Messages
+4 and 5 go only for orders that came by message 1: never for a pasted order, a
+WMS test order (UJI) or the training site.
 
 ### 5. Item short: `"type": "item_short"`
 
@@ -317,12 +330,12 @@ customer's instruction (H5, H10). One message per line that changed.
 ### Catalogue request: `"type": "catalogue_request"` (to agree with Shaun)
 
 ```json
-{"request_id": "wms-cat-0940", "requested_at": "2026-10-01T02:40:00Z"}
+{"request_id": "wms-cat-3-1790822400", "requested_at": "2026-10-01T02:40:00Z"}
 ```
 
 | Field | Type | Required | Where the WMS gets it | What Hiryu does with it |
 |---|---|---|---|---|
-| `request_id` | string | Yes | The WMS makes it, unique per request | Echo it in `request_id` of message 6 |
+| `request_id` | string | Yes | The WMS makes it, unique per request (`wms-cat-<hub>-<unix seconds>`) | Echo it in `request_id` of message 6 |
 | `requested_at` | time, UTC | Yes | When the button was pressed | For Hiryu's log |
 
 Sent when anyone presses *Sinkron ulang dari Hiryu* on *Menu & toko Hiryu*. Any
@@ -335,7 +348,11 @@ Hiryu's side that returns the message 6 body.
 
 | Setting | Where | Effect |
 |---|---|---|
-| `POS_PUSH_ENABLED` | Substrait env | `false`: messages 3 to 5 queue but are not sent |
+| `POS_PUSH_ENABLED` | Substrait env | `false`: messages 3 to 5 and the catalogue request queue but are not sent |
 | `POS_WEBHOOK_URL` | Substrait env | Hiryu's address for messages 3 to 5 and the catalogue request |
 | `POS_SHARED_SECRET` | Substrait env (secret) | The `X-Hiryu-Key` value, both directions |
-| *Sambungan Hiryu aktif* | WMS, *Integrasi Hiryu* (Ops HQ) | On: paste and the stock sheet are off; orders come only from message 1 |
+| *Sambungan Hiryu aktif* | WMS, *Integrasi Hiryu* (Ops HQ) | On: paste and the stock sheet are off; orders come only from message 1; a full stock snapshot is queued. The WMS sends only while this and the three settings above are all on |
+| *Mode demo* | WMS, per hub | That hub's messages go to the Hiryu stand-in inside the WMS (answers `200`), whatever the settings above say |
+
+The message map on *Pengaturan, Integrasi Hiryu* (*Peta pesan*) shows every
+message field by field, built from the code by `python tools/gen_message_map.py`.

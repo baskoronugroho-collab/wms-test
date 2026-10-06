@@ -9,13 +9,14 @@
 <link rel="apple-touch-icon" href="../assets/app/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="kilat.css?v=40b46de">
 </head>
 <body>
 <script src="../js/api.js?v=40b46de"></script>
 <script src="../js/scan.js?v=40b46de"></script>
 <script src="shell.js?v=40b46de"></script>
+<script src="js/print.js"></script>
 <script>
 NJW.shell.init({
   page: 'pengaturan',
@@ -25,6 +26,7 @@ NJW.shell.init({
     {id: 'hub', label: ['Hub & mulai operasi', 'Hubs & go-live'], script: 'js/pengaturan-hub.js'},
     {id: 'orang', label: ['Orang & akses', 'People & access'], script: 'js/pengaturan-orang.js'},
     {id: 'aturan', label: ['Aturan & waktu', 'Rules & times'], script: 'js/pengaturan-aturan.js'},
+    {id: 'printer', label: ['Printer', 'Printers'], script: 'js/pengaturan-printer.js'},
     {id: 'integrasi', label: ['Integrasi Hiryu', 'Hiryu integration'], script: 'js/pengaturan-integrasi.js'},
     {id: 'demo', label: ['Demo', 'Demo'], script: 'js/pengaturan-demo.js'}
   ]
