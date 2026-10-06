@@ -532,10 +532,10 @@ async def add_special_bin(cur, site_id: int, kind: str, actor_email: str) -> dic
     site = await db.one(cur, "SELECT id, code, hiryu_dark_store_id, setup_completed_at "
                              "FROM sites WHERE id = %s FOR UPDATE", (site_id,))
     if not site:
-        raise HTTPException(404, "Hub tidak ditemukan. / Hub not found.")
+        raise HTTPException(404, "Dark store tidak ditemukan. / Dark store not found.")
     if site["hiryu_dark_store_id"] is not None and site["setup_completed_at"] is None:
-        raise HTTPException(409, "Lengkapi hub dulu (kode hub) di Hub & mulai operasi. / "
-                                 "Complete the hub (hub code) first.")
+        raise HTTPException(409, "Lengkapi dark store dulu (kode dark store) di Dark store & mulai operasi. / "
+                                 "Complete the dark store (dark store code) first.")
     count = await db.one(cur, "SELECT COUNT(*) AS n FROM special_bins "
                               "WHERE site_id = %s AND kind = %s AND active = 1", (site_id, kind))
     if int(count["n"]) >= SPECIAL_MAX:
@@ -594,8 +594,8 @@ async def remove_last_special_bin(site_id: int, kind: str, actor_email: str) -> 
     count = await db.fetch_one("SELECT COUNT(*) AS n FROM special_bins WHERE site_id = %s "
                                "AND kind = %s AND active = 1", (site_id, kind))
     if not last or int(count["n"]) <= SPECIAL_MIN[kind]:
-        raise HTTPException(409, ("Minimal 1. Setiap hub punya baki karantina. / At least 1: "
-                                  "every hub has a quarantine tray.") if kind == "QR"
+        raise HTTPException(409, ("Minimal 1. Setiap dark store punya baki karantina. / At least 1: "
+                                  "every dark store has a quarantine tray.") if kind == "QR"
                             else "Tidak ada bin untuk dikurangi. / Nothing to take away.")
     why = await special_bin_busy(site_id, kind, last["code"], last["location_id"])
     if why:

@@ -420,8 +420,8 @@ async def rows_catalogue(R: _Rows, ids, rule, user):
     if {"hiryu_dark_store_id", "setup_completed_at"} <= st:
         for r in await db.fetch_all("SELECT id, code, name, hiryu_received_at, created_at FROM sites "
                                     "WHERE hiryu_dark_store_id IS NOT NULL AND setup_completed_at IS NULL AND active = 1"):
-            R.add("hub_setup", "hq", None, (f"Hub baru dari Hiryu: {r['name']}", f"New hub from Hiryu: {r['name']}"),
-                  ("Lengkapi kode hub dan bin khusus.", "Complete the hub code and special bins."),
+            R.add("hub_setup", "hq", None, (f"Dark store baru dari Hiryu: {r['name']}", f"New dark store from Hiryu: {r['name']}"),
+                  ("Lengkapi kode dark store dan bin khusus.", "Complete the dark store code and special bins."),
                   r["hiryu_received_at"] or r["created_at"], None, None, f"pengaturan.html?tab=hub&id={r['id']}",
                   "lengkapi")
 

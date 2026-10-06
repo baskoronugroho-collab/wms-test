@@ -621,8 +621,8 @@ async def open_receipt(body: OpenIn, user: auth.User = Depends(auth.current_user
         rep = await db.one(cur, "SELECT * FROM replenishments WHERE id = %s FOR UPDATE",
                            (rep_id,))
         if not rep or rep["site_id"] != body.site_id:
-            raise HTTPException(404, "Kiriman tidak ditemukan di hub ini. / "
-                                     "Delivery not found at this hub.")
+            raise HTTPException(404, "Kiriman tidak ditemukan di dark store ini. / "
+                                     "Delivery not found at this dark store.")
         if rep["status"] not in ("confirmed", "receiving"):
             raise HTTPException(409, f"{rep['reference']} belum dikonfirmasi merek atau sudah "
                                      "diterima. / Not confirmed yet, or already received.")
@@ -1567,8 +1567,8 @@ async def link_no_po(receipt_id: int, body: LinkIn, user: auth.User = Depends(au
         raise HTTPException(409, "Kiriman ini tidak menunggu dihubungkan. / Not waiting for a link.")
     rep = await db.fetch_one("SELECT * FROM replenishments WHERE id = %s", (body.replenishment_id,))
     if not rep or rep["site_id"] != r["site_id"] or rep["brand_id"] != r["brand_id"]:
-        raise HTTPException(422, "Pilih permintaan dari hub dan merek yang sama. / Choose a request "
-                                 "of the same hub and brand.")
+        raise HTTPException(422, "Pilih permintaan dari dark store dan merek yang sama. / Choose a request "
+                                 "of the same dark store and brand.")
     if rep["status"] not in ("po", "sent", "confirmed"):
         raise HTTPException(409, f"{rep['reference']} sudah {rep['status']}. / already {rep['status']}.")
     async with db.tx() as cur:

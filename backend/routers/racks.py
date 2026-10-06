@@ -857,8 +857,8 @@ async def _site_ready(user: auth.User, site_id: int) -> dict:
     row = await db.fetch_one("SELECT hiryu_dark_store_id, setup_completed_at FROM sites "
                              "WHERE id = %s", (site_id,))
     if row and row["hiryu_dark_store_id"] is not None and row["setup_completed_at"] is None:
-        raise HTTPException(409, "Lengkapi hub dulu di Pengaturan, Hub & mulai operasi. / "
-                                 "Complete the hub first (Settings, Hub).")
+        raise HTTPException(409, "Lengkapi dark store dulu di Pengaturan, Dark store & mulai operasi. / "
+                                 "Complete the dark store first (Settings, Dark store).")
     return site
 
 
@@ -1432,7 +1432,7 @@ async def special_bins(site_id: int, user: auth.User = Depends(auth.current_user
             "label_printed_text": (f"Label dicetak {wib_date_text(max(printed) + timedelta(hours=7))}"
                                    if all_printed else "Label belum dicetak"),
             "note": ("Bisa ditambah kapan saja, label langsung dicetak." if kind == "IN"
-                     else "Minimal 1. Setiap hub punya baki karantina." if kind == "QR" else None),
+                     else "Minimal 1. Setiap dark store punya baki karantina." if kind == "QR" else None),
         })
     return {
         "site": {"id": site["id"], "code": site["code"], "name": site["name"]},
@@ -1606,7 +1606,7 @@ async def needs_bin_options(site_id: int, sku_id: int, rack_id: int | None = Non
     if rid:
         rack, bins = await rack_bins(rid)
         if rack["site_id"] != site_id:
-            raise HTTPException(404, "Rak bukan di hub ini. / Not a rack of this hub.")
+            raise HTTPException(404, "Rak bukan di dark store ini. / Not a rack of this dark store.")
         free_here = [f for f in free if f["rack_id"] == rid]
         suggested = free_here[0]["location_id"] if free_here else None
         suggested_code = short_code(free_here[0]["code"], rack["site_code"]) if free_here else None
@@ -1657,7 +1657,7 @@ async def assign_needed_bin(site_id: int, sku_id: int, body: AssignBinIn,
         "FROM locations l JOIN levels lv ON lv.id = l.level_id "
         "JOIN baskets bk ON bk.location_id = l.id WHERE l.id = %s", (body.location_id,))
     if not loc or loc["site_id"] != site_id:
-        raise HTTPException(404, "Bin rak tidak ditemukan di hub ini. / Rack bin not found here.")
+        raise HTTPException(404, "Bin rak tidak ditemukan di dark store ini. / Rack bin not found here.")
     bin_size = norm_size(loc["basket_size"]) or "BESAR"
     short = short_code(loc["code"], site["code"])
     if bin_size != size:

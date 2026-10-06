@@ -292,8 +292,8 @@ async def paste_order(body: models.HiryuPasteIn,
         raise HTTPException(422, f"Toko Hiryu #{body.store_no} belum terdaftar. Beri tahu SPV. / "
                                  f"Hiryu store #{body.store_no} is not mapped yet. Tell the SPV.")
     if store["site_id"] != body.site_id:
-        raise HTTPException(409, f"Toko ini milik hub lain: {store['site_code']}. / "
-                                 f"This store belongs to another hub: {store['site_code']}.")
+        raise HTTPException(409, f"Toko ini milik dark store lain: {store['site_code']}. / "
+                                 f"This store belongs to another dark store: {store['site_code']}.")
 
     status = body.status.upper()
     existing = await db.fetch_one(
@@ -322,7 +322,7 @@ async def paste_order(body: models.HiryuPasteIn,
     # 5. Follow Hiryu's acceptance (§9.2b).
     acceptance = (body.acceptance or "").upper() or None
     if acceptance == "MANUAL" and status == "RECEIVED":
-        raise HTTPException(409, "Tekan Accept di Hiryu dulu, lalu salin ulang. / "
+        raise HTTPException(409, "Tekan Terima di Hiryu dulu, lalu salin ulang. / "
                                  "Press Accept in Hiryu first, then copy again.")
     if status in LATE_STATUSES:
         raise HTTPException(409, "Pesanan ini sudah lewat tahap ambil barang. Laporkan ke supervisor. / "
@@ -1177,7 +1177,7 @@ async def put_store(store_no: int, body: models.HiryuStoreIn,
     site = await db.fetch_one("SELECT id FROM sites WHERE id=%s", (body.site_id,))
     brand = await db.fetch_one("SELECT id FROM brands WHERE id=%s", (body.brand_id,))
     if not site or not brand:
-        raise HTTPException(404, "Hub atau merek tidak ditemukan. / Hub or brand not found.")
+        raise HTTPException(404, "Dark store atau merek tidak ditemukan. / Dark store or brand not found.")
     await db.execute(
         "INSERT INTO hiryu_stores (hiryu_store_no, store_name, partner_store_id, site_id, "
         "brand_id, active, updated_by) VALUES (%s,%s,%s,%s,%s,%s,%s) "

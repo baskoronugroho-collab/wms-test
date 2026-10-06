@@ -361,7 +361,7 @@
       title: ['Hubungkan ke permintaan', 'Link to a request'],
       body: cands.length ? '<div class="k-stack">' + cands.map((c, i) => '<label class="k-check"><input type="radio" name="bm-c" value="' + c.id + '"' + (i ? '' : ' checked') + '> <span class="k-mono">' +
         esc(c.reference) + '</span> ' + (c.brand_po_number ? '· ' + esc(c.brand_po_number) : '') + '</label>').join('') + '</div>'
-        : '<p class="k-p" ' + biAttr('Tidak ada permintaan terbuka untuk merek ini di hub ini.', 'No open request for this brand at this hub.') + '></p>',
+        : '<p class="k-p" ' + biAttr('Tidak ada permintaan terbuka untuk merek ini di dark store ini.', 'No open request for this brand at this dark store.') + '></p>',
       actions: cands.length ? [{ label: ['Batal', 'Cancel'], kind: 'secondary' }, {
         label: ['Hubungkan', 'Link'], kind: 'primary', minRole: 'hq', onClick: async (close, b) => {
           const v = $('input[name="bm-c"]:checked', b.closest('.k-modal'));
@@ -924,7 +924,7 @@
       { b: P.center('SLIP PUTAWAY', W) },
       { b: P.center(s.slip_no || '', W) },
       P.rule('=', W),
-      kv('Hub', S.shortCode(s.site_code) + ' · ' + (s.site_name || '')),
+      kv('Dark store', S.shortCode(s.site_code) + ' · ' + (s.site_name || '')),
       kv('Merek', (s.brand_name || '') + (s.brand_legal_name ? ' · ' + s.brand_legal_name : '')),
       kv('Ninja ref', s.reference),
       kv('No. PO', s.brand_po_number),

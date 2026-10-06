@@ -633,7 +633,7 @@ async def _site(site_id: int) -> dict:
     s = await db.fetch_one("SELECT id, code, name, is_training FROM sites WHERE id = %s",
                            (site_id,))
     if not s:
-        raise HTTPException(404, "Hub tidak ditemukan. / Hub not found.")
+        raise HTTPException(404, "Dark store tidak ditemukan. / Dark store not found.")
     return s
 
 

@@ -170,7 +170,7 @@
 
   function needSite(ctx) {
     if (ctx.siteId) return false;
-    ctx.body.innerHTML = '<div class="k-card k-empty">' + bis('Pilih satu hub dulu.', 'Pick one hub first.', 'k-empty__title') + '</div>';
+    ctx.body.innerHTML = '<div class="k-card k-empty">' + bis('Pilih satu dark store dulu.', 'Pick one dark store first.', 'k-empty__title') + '</div>';
     return true;
   }
 

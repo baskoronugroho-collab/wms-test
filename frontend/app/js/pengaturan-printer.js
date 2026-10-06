@@ -139,7 +139,7 @@
     const hub = S.site() ? S.shortCode(S.site().code) : '-';
     const lines = [
       { b: pr.center('TES PRINTER THERMAL', W) },
-      pr.center('SatSet WMS · hub ' + hub, W),
+      pr.center('SatSet WMS · dark store ' + hub, W),
       pr.center((s.thermal === true ? s.width : 80) + ' mm · ' + W + ' karakter per baris', W),
       pr.rule('=', W),
       tens, ones, ticks,
@@ -163,7 +163,7 @@
     const pr = P(), hub = S.site() ? S.shortCode(S.site().code) : '-';
     const html = '<div style="border:1px solid #000;padding:10mm;min-height:250mm;box-sizing:border-box">' +
       '<div style="font-weight:700;font-size:20pt">Tes printer A4</div>' +
-      '<div style="margin-top:2mm">SatSet WMS · hub ' + pr.esc(hub) + ' · dicetak ' + pr.esc(pr.when().both) + '</div>' +
+      '<div style="margin-top:2mm">SatSet WMS · dark store ' + pr.esc(hub) + ' · dicetak ' + pr.esc(pr.when().both) + '</div>' +
       '<p style="margin-top:8mm;font-size:12pt;line-height:1.5">Jika halaman ini keluar utuh di kertas A4 dengan bingkai lengkap, printer A4 siap untuk label rak dan bin dan nota retur ke merek.</p>' +
       '<p style="font-size:12pt;line-height:1.5">Ukur garis di bawah ini. Panjangnya harus 100 mm. Jika lebih pendek atau lebih panjang, atur skala di dialog cetak ke 100% (bukan Sesuaikan dengan halaman).</p>' +
       '<div style="margin-top:6mm;width:100mm;border-top:2px solid #000;position:relative;height:6mm">' +
@@ -174,8 +174,8 @@
   }
 
   S.tab('printer', function (ctx) {
-    S.setSub('Dua printer per hub: thermal 80 mm untuk slip, A4 untuk label dan nota. Diatur per perangkat, sama seperti Hiryu.',
-      'Two printers per hub: thermal 80 mm for slips, A4 for labels and notes. Set per device, the same as Hiryu.');
+    S.setSub('Dua printer per dark store: thermal 80 mm untuk slip, A4 untuk label dan nota. Diatur per perangkat, sama seperti Hiryu.',
+      'Two printers per dark store: thermal 80 mm for slips, A4 for labels and notes. Set per device, the same as Hiryu.');
     const host = ctx.body;
     if (!P()) {
       host.innerHTML = '<div class="k-note k-note--stop">' + icon('warn', 20) + sp('Modul cetak (js/print.js) tidak termuat. Muat ulang halaman.', 'The print module (js/print.js) did not load. Reload the page.') + '</div>';

@@ -28,7 +28,7 @@
   const key = () => 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   const needHub = (ctx) => {
     if (ctx.siteId) return false;
-    ctx.body.innerHTML = '<div class="k-note k-note--info">' + icon('info', 20) + sp('Pilih satu hub di atas.', 'Choose one hub above.') + '</div>';
+    ctx.body.innerHTML = '<div class="k-note k-note--info">' + icon('info', 20) + sp('Pilih satu dark store di atas.', 'Choose one dark store above.') + '</div>';
     return true;
   };
   const REASONS = [
@@ -130,7 +130,7 @@
     const reported = (x) => '<div class="kr-name" style="font-weight:600">' + esc(first(x.reported_name) || x.reported_by) + '</div><div class="kr-sub">' + esc(S.fmt.dt(x.reported_at)) + '</div>' +
       (x.due_id ? '<div class="kr-sub" style="font-weight:800;color:' + (x.overdue ? 'var(--caution)' : 'var(--muted)') + '" ' + biAttr(x.due_id, x.due_en) + '>' + esc(t(x.due_id, x.due_en)) + '</div>' : '');
     ctx.body.innerHTML = '<div class="k-stack" id="kr-k">' +
-      '<div class="k-laptop-only"><div class="k-tablewrap"><table class="k-table"><thead><tr>' + (multi ? '<th>Hub</th>' : '') +
+      '<div class="k-laptop-only"><div class="k-tablewrap"><table class="k-table"><thead><tr>' + (multi ? '<th>Dark store</th>' : '') +
       '<th ' + biAttr('Barang dan foto', 'Item and photo') + '></th><th ' + biAttr('Alasan', 'Reason') + '></th><th ' + biAttr('Dilaporkan', 'Reported') + '></th><th ' + biAttr('Keputusan', 'Decision') + '></th></tr></thead><tbody>' +
       res.items.map((x) => '<tr class="' + (x.overdue ? 'is-caution' : '') + '">' + (multi ? '<td class="k-mono k-strong">' + esc(x.site_code) + '</td>' : '') +
         '<td><div class="kr-item"' + photoOpen(x) + '>' + thumb(x.photo_url) + '<div><div class="kr-name">' + esc(x.sku_name) + '</div><div class="kr-sub">' + itemSub(x) + '</div></div></div></td>' +
@@ -139,8 +139,8 @@
         '<div class="k-grow"><div class="kr-name">' + esc(x.sku_name) + '</div><div class="kr-sub">' + itemSub(x) + '</div></div></div>' +
         '<div class="k-line" style="margin:8px 0;gap:10px">' + reasonPill(x) + '<span class="kr-sub">' + esc(first(x.reported_name) + ' · ' + S.fmt.dt(x.reported_at)) + '</span>' +
         (x.due_id ? '<span class="kr-sub" style="font-weight:800;color:' + (x.overdue ? 'var(--caution)' : 'var(--muted)') + '">' + esc(t(x.due_id, x.due_en)) + '</span>' : '') + '</div>' + decBtns(x) + '</div>').join('') + '</div>' +
-      '<div class="k-card k-card--pad kr-foot"><div><div class="k-strong" id="kr-n"></div><div class="kr-sub" ' + biAttr('Kembali ke rak jadi tugas staf, stok naik saat bin dipindai. Hapus menunggu persetujuan Ops HQ. Beban biaya otomatis: rusak di hub = Ninja, ditolak saat barang masuk = merek.',
-        'Back to rack becomes a staff task; the stock rises when the bin is scanned. Write-off waits for Ops HQ. Cost bearer is automatic: damaged in the hub = Ninja, rejected at inbound = brand.') + '></div></div>' +
+      '<div class="k-card k-card--pad kr-foot"><div><div class="k-strong" id="kr-n"></div><div class="kr-sub" ' + biAttr('Kembali ke rak jadi tugas staf, stok naik saat bin dipindai. Hapus menunggu persetujuan Ops HQ. Beban biaya otomatis: rusak di dark store = Ninja, ditolak saat barang masuk = merek.',
+        'Back to rack becomes a staff task; the stock rises when the bin is scanned. Write-off waits for Ops HQ. Cost bearer is automatic: damaged in the dark store = Ninja, rejected at inbound = brand.') + '></div></div>' +
       btn('k-btn--primary', 'Simpan keputusan', 'Save decisions', 'id="kr-save" data-min-role="supervisor"') + '</div></div>';
     const root = $('#kr-k', ctx.body);
     const paintN = () => { const c = Object.keys(chosen).length; S.bi($('#kr-n', root), c + ' keputusan dipilih', c + ' decision(s) chosen'); };
@@ -181,7 +181,7 @@
     const acts = (x) => btn('k-btn--primary k-btn--sm', 'Setujui', 'Approve', 'data-ok="' + x.id + '" data-min-role="hq"', 'check') + ' ' + btn('k-btn--secondary k-btn--sm', 'Tolak', 'Refuse', 'data-no="' + x.id + '" data-min-role="hq"');
     const bearer = (x) => '<div class="kr-name">' + esc(t(x.cost_bearer_id, x.cost_bearer_en)) + '</div><div class="kr-sub">' + esc(t(x.bearer_note_id, x.bearer_note_en)) + '</div>';
     const groupHead = (g) => esc(g.brand_name) + '<span class="kr-sub">' + esc(g.units + ' unit') + '</span><span class="kr-sub">' + esc(t('Merek ' + g.brand_units + ' · Ninja ' + g.ninja_units, 'Brand ' + g.brand_units + ' · Ninja ' + g.ninja_units)) + '</span>';
-    ctx.body.innerHTML = '<div class="k-stack" id="kr-h"><div class="k-laptop-only"><div class="k-tablewrap"><table class="k-table"><thead><tr><th>Hub</th><th ' + biAttr('Barang dan foto', 'Item and photo') + '></th><th class="k-num">Unit</th>' +
+    ctx.body.innerHTML = '<div class="k-stack" id="kr-h"><div class="k-laptop-only"><div class="k-tablewrap"><table class="k-table"><thead><tr><th>Dark store</th><th ' + biAttr('Barang dan foto', 'Item and photo') + '></th><th class="k-num">Unit</th>' +
       '<th ' + biAttr('Alasan', 'Reason') + '></th><th ' + biAttr('Beban', 'Borne by') + '></th><th ' + biAttr('Diajukan', 'Raised') + '></th><th></th></tr></thead><tbody>' +
       res.brands.map((g) => '<tr class="kr-group"><td colspan="7">' + groupHead(g) + '</td></tr>' + g.items.map((x) => '<tr><td class="k-mono k-strong">' + esc(x.site_code) + '</td>' +
         '<td><div class="kr-item"' + photoOpen(x) + '>' + thumb(x.photo_url) + '<div><div class="kr-name">' + esc(x.sku_name) + '</div><div class="kr-sub">' + esc(x.reason_note || x.where_id || '') + '</div></div></div></td>' +
@@ -322,7 +322,7 @@
       '<div>Barang yang dikembalikan dari dark store ke merek.</div></div><span class="kr-reff">' + esc(note.reference) + '</span></div>' +
       '<div class="kr-meta">' +
       '<div><div class="kr-eyebrow">Merek</div><b>' + esc(note.brand_name + (note.brand_company ? ' · ' + note.brand_company : '')) + '</b></div>' +
-      '<div><div class="kr-eyebrow">Hub</div><b>' + esc(note.site_code + ' · ' + note.site_name) + '</b></div>' +
+      '<div><div class="kr-eyebrow">Dark store</div><b>' + esc(note.site_code + ' · ' + note.site_name) + '</b></div>' +
       '<div><div class="kr-eyebrow">Tanggal nota</div><b>' + esc(S.fmt.day(note.created_at) + ' ' + new Date(note.created_at.replace(' ', 'T')).getFullYear()) + '</b></div>' +
       '<div><div class="kr-eyebrow">Ikut kiriman</div><b style="font-family:var(--mono)">' + esc(note.delivery_ref || 'Kiriman merek berikutnya') + '</b></div>' +
       '<div><div class="kr-eyebrow">Dibuat oleh</div><b>' + esc((note.created_name || note.created_by) + (note.created_role === 'supervisor' ? ', SPV ' + note.site_code : '')) + '</b></div>' +
@@ -332,7 +332,7 @@
         '<td style="text-align:right;font-family:var(--mono);font-weight:700">' + n(l.qty) + '</td><td style="text-align:center"><span class="kr-box"></span></td></tr>').join('') +
       '<tr><td></td><td><b>Total</b></td><td></td><td></td><td style="text-align:right;font-family:var(--mono);font-weight:800">' + n(note.units) + '</td><td></td></tr></tbody></table>' +
       '<div style="margin-top:18px"><b>Catatan</b><ol style="margin:6px 0 0;padding-left:18px;line-height:1.8"><li>Driver menghitung dan mencentang setiap baris sebelum tanda tangan.</li>' +
-      '<li>Jumlah yang tidak sama ditulis di baris itu dan diparaf kedua pihak.</li><li>Cetak dua lembar: satu dibawa driver, satu disimpan SPV hub.</li></ol></div>' +
+      '<li>Jumlah yang tidak sama ditulis di baris itu dan diparaf kedua pihak.</li><li>Cetak dua lembar: satu dibawa driver, satu disimpan SPV dark store.</li></ol></div>' +
       '<div class="kr-sign"><div><span class="kr-eyebrow">Diserahkan oleh · Ninja</span><span>Nama: ......................................................<br><br>Tanggal dan jam: ......................................</span></div>' +
       '<div><span class="kr-eyebrow">Diterima oleh · Driver</span><span>Nama: ......................................................<br><br>No. polisi kendaraan: ..............................</span></div></div>' +
       '<div style="display:flex;justify-content:space-between;border-top:1px solid #000;margin-top:20px;padding-top:8px;font-size:12px"><span>Dicetak dari SatSet WMS · ' + esc(printed + ' · ' + ((me && me.name) || '')) + '</span><span>Halaman 1 dari 1</span></div>';
@@ -405,7 +405,7 @@
         title: ['Driver sudah tanda tangan', 'The driver has signed'],
         body: '<div class="k-stack"><label class="k-field"><span class="k-field__label" ' + biAttr('Nama driver (boleh kosong)', 'Driver\'s name (optional)') + '></span><input class="k-input" id="kr-dn"></label>' +
           '<label class="k-field"><span class="k-field__label" ' + biAttr('No. polisi kendaraan (boleh kosong)', 'Vehicle plate (optional)') + '></span><input class="k-input k-mono" id="kr-vn" autocapitalize="characters"></label>' +
-          '<p class="k-caption" ' + biAttr('Satu lembar dibawa driver, satu disimpan SPV. Unit keluar dari hub.', 'One copy goes with the driver, one stays with the SPV. The units leave the hub.') + '></p></div>',
+          '<p class="k-caption" ' + biAttr('Satu lembar dibawa driver, satu disimpan SPV. Unit keluar dari dark store.', 'One copy goes with the driver, one stays with the SPV. The units leave the dark store.') + '></p></div>',
         actions: [{ label: ['Batal', 'Cancel'], kind: 'secondary' }, {
           label: ['Selesai serahkan', 'Finish the handover'], kind: 'primary',
           onClick: async () => {
@@ -436,7 +436,7 @@
     async function onCode(code, z) {
       const c = String(code).trim().toUpperCase();
       if (st.item && trays.includes(c)) { await submit(c, z); return; }
-      if (st.item && /-QR-\d+$/.test(c)) { z.reject(t(c + ' bukan baki hub ini.', c + ' is not a tray of this hub.')); return; }
+      if (st.item && /-QR-\d+$/.test(c)) { z.reject(t(c + ' bukan baki dark store ini.', c + ' is not a tray of this dark store.')); return; }
       try {
         const r = await api().get('/quarantine/lookup' + api().qs({ site_id: ctx.siteId, code }));
         st.item = r; st.bin = r.bin; st.qty = 1;

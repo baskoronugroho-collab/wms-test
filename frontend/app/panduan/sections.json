@@ -123,8 +123,8 @@
       "en": ""
      },
      "result": {
-      "id": "Yang terlihat: semua item menu, nama, peran dan hub Anda.",
-      "en": "You see: every menu item, your name, role and hub."
+      "id": "Yang terlihat: semua item menu, nama, peran dan dark store Anda.",
+      "en": "You see: every menu item, your name, role and dark store."
      }
     },
     {
@@ -223,12 +223,12 @@
    "n": 2,
    "page": "pengaturan.html?tab=hub",
    "title": {
-    "id": "Persiapan awal: membuka hub baru",
-    "en": "Kick-off: opening a new hub"
+    "id": "Persiapan awal: membuka dark store baru",
+    "en": "Kick-off: opening a new dark store"
    },
    "intro": {
-    "id": "Semua yang harus dilakukan, berurutan, sebelum hub menerima pesanan Grab pertama. Hiryu dulu: jika satu langkah menyangkut kedua sistem, kerjakan bagian Hiryu sebelum bagian WMS.",
-    "en": "Everything that has to happen, in order, before a hub takes its first Grab order. Hiryu first: when a step touches both systems, do the Hiryu part before the WMS part."
+    "id": "Semua yang harus dilakukan, berurutan, sebelum dark store menerima pesanan Grab pertama. Hiryu dulu: jika satu langkah menyangkut kedua sistem, kerjakan bagian Hiryu sebelum bagian WMS.",
+    "en": "Everything that has to happen, in order, before a dark store takes its first Grab order. Hiryu first: when a step touches both systems, do the Hiryu part before the WMS part."
    },
    "who": [
     {
@@ -241,8 +241,8 @@
     }
    ],
    "when": {
-    "id": "Sekali per hub, sebelum pesanan Grab pertama",
-    "en": "Once per hub, before the first Grab order"
+    "id": "Sekali per dark store, sebelum pesanan Grab pertama",
+    "en": "Once per dark store, before the first Grab order"
    },
    "where": [
     {
@@ -314,12 +314,12 @@
       "2a"
      ],
      "action": {
-      "id": "Buka <em>Hub &amp; mulai operasi</em> dan lengkapi hub baru.",
-      "en": "Open <em>Hub &amp; mulai operasi</em> and complete the new hub."
+      "id": "Buka <em>Dark store &amp; mulai operasi</em> dan lengkapi dark store baru.",
+      "en": "Open <em>Dark store &amp; mulai operasi</em> and complete the new dark store."
      },
      "detail": {
-      "id": "Hub datang dari Hiryu dengan sendirinya. Nama, alamat dan jam hanya bisa dilihat, tidak bisa diubah. Isi hanya yang dibutuhkan WMS: <em>Kode hub</em> MA5, <em>Bin barang masuk sementara</em> 6, <em>Baki karantina</em> 1, <em>Keranjang pesanan</em> 6. Tekan <em>Simpan hub</em>.",
-      "en": "The hub arrives from Hiryu by itself; name, address and hours are read-only. Fill in only what the WMS needs: <em>Kode hub</em> MA5, <em>Bin barang masuk sementara</em> 6, <em>Baki karantina</em> 1, <em>Keranjang pesanan</em> 6. Press <em>Simpan hub</em>."
+      "id": "Dark store datang dari Hiryu dengan sendirinya. Nama, alamat dan jam hanya bisa dilihat, tidak bisa diubah. Isi hanya yang dibutuhkan WMS: <em>Kode dark store</em> MA5, <em>Bin barang masuk sementara</em> 6, <em>Baki karantina</em> 1, <em>Keranjang pesanan</em> 6. Tekan <em>Simpan dark store</em>.",
+      "en": "The dark store arrives from Hiryu by itself; name, address and hours are read-only. Fill in only what the WMS needs: <em>Kode dark store</em> MA5, <em>Bin barang masuk sementara</em> 6, <em>Baki karantina</em> 1, <em>Keranjang pesanan</em> 6. Press <em>Simpan dark store</em>."
      },
      "result": {
       "id": "Yang terlihat: banner <em>Baru dari Hiryu</em> sudah hilang, dan kode MA5-IN-01 sampai 06, MA5-QR-01 dan MA5-OUT-01 sampai 06 sudah ada.",
@@ -355,8 +355,8 @@
       "en": "Add each person: Hiryu login first, then <em>Tambah orang</em> in the WMS."
      },
      "detail": {
-      "id": "Di Hiryu beri peran MANAGER (SPV) atau STAFF. Di WMS: hanya email @ninjavan.co, <em>Nama</em>, <em>Peran</em>, <em>Hub</em>, centang <em>Login Hiryu sudah dibuat</em>, lalu <em>Simpan</em>. Tidak ada undangan dan tidak ada email yang dikirim (belum ada link email saat peluncuran): orang itu langsung masuk dengan akun Google @ninjavan.co miliknya. SPV hanya bisa menambah Staf, di hub-nya sendiri.",
-      "en": "In Hiryu give MANAGER (SPV) or STAFF. In the WMS: an @ninjavan.co email only, <em>Nama</em>, <em>Peran</em>, <em>Hub</em>, tick <em>Login Hiryu sudah dibuat</em>, then <em>Simpan</em>. No invitation and no email are sent (there is no email link at launch): the person signs in straight away with their @ninjavan.co Google account. An SPV can add Staf only, at their own hub."
+      "id": "Di Hiryu beri peran MANAGER (SPV) atau STAFF. Di WMS: hanya email @ninjavan.co, <em>Nama</em>, <em>Peran</em>, <em>Dark store</em>, centang <em>Login Hiryu sudah dibuat</em>, lalu <em>Simpan</em>. Tidak ada undangan dan tidak ada email yang dikirim (belum ada link email saat peluncuran): orang itu langsung masuk dengan akun Google @ninjavan.co miliknya. SPV hanya bisa menambah Staf, di dark store miliknya sendiri.",
+      "en": "In Hiryu give MANAGER (SPV) or STAFF. In the WMS: an @ninjavan.co email only, <em>Nama</em>, <em>Peran</em>, <em>Dark store</em>, tick <em>Login Hiryu sudah dibuat</em>, then <em>Simpan</em>. No invitation and no email are sent (there is no email link at launch): the person signs in straight away with their @ninjavan.co Google account. An SPV can add Staf only, at their own dark store."
      },
      "result": {
       "id": "Yang terlihat: orang itu ada di <em>Orang &amp; akses</em> dengan centang di kolom Login Hiryu.",
@@ -388,8 +388,8 @@
       "en": "Set up the devices and sign in on each one."
      },
      "detail": {
-      "id": "Dua HP hub, scanner, laptop pengemasan dengan Hiryu Live Orders terbuka, printer thermal 80 mm untuk slip kemas Hiryu dan slip putaway WMS, dan printer kantor apa saja yang bisa memakai kertas A4 untuk label bin (cara memasang keduanya di langkah 5). Setiap orang masuk dengan login sendiri. Jangan pernah memakai login bersama.",
-      "en": "Two hub phones, the scanner, the packing laptop with Hiryu Live Orders open, the 80 mm thermal printer for Hiryu's packing slip and the WMS putaway slip, and any office printer that takes A4 paper for the bin labels (step 5 sets both up). Everyone signs in with their own login, never a shared one."
+      "id": "Dua HP dark store, scanner, laptop pengemasan dengan Hiryu Live Orders terbuka, printer thermal 80 mm untuk slip kemas Hiryu dan slip putaway WMS, dan printer kantor apa saja yang bisa memakai kertas A4 untuk label bin (cara memasang keduanya di langkah 5). Setiap orang masuk dengan login sendiri. Jangan pernah memakai login bersama.",
+      "en": "Two dark store phones, the scanner, the packing laptop with Hiryu Live Orders open, the 80 mm thermal printer for Hiryu's packing slip and the WMS putaway slip, and any office printer that takes A4 paper for the bin labels (step 5 sets both up). Everyone signs in with their own login, never a shared one."
      },
      "result": {
       "id": "Yang terlihat: setiap orang masuk ke <em>Perlu tindakan</em> setelah login. Lalu SPV menekan <em>Tandai selesai</em> untuk langkah ini di <em>Mulai operasi</em>.",
@@ -446,8 +446,8 @@
       "2c"
      ],
      "action": {
-      "id": "Pelatihan: latih setiap staf sebelum hub buka.",
-      "en": "Training: train every staff member before the hub opens."
+      "id": "Pelatihan: latih setiap staf sebelum dark store buka.",
+      "en": "Training: train every staff member before the dark store opens."
      },
      "detail": {
       "id": "Jumlah orang yang dilatih mengikuti kebutuhan per shift: pengambil, pengemas, serah terima dan penerimaan barang, untuk setiap shift. Setiap orang berlatih di WMS dengan pesanan uji (langkah 15), di HP dan login masing-masing.",
@@ -513,12 +513,12 @@
      ],
      "screens": [],
      "action": {
-      "id": "Buat setiap toko di Hiryu dan hubungkan ke hub.",
-      "en": "Create each store in Hiryu and assign it to the hub."
+      "id": "Buat setiap toko di Hiryu dan hubungkan ke dark store.",
+      "en": "Create each store in Hiryu and assign it to the dark store."
      },
      "detail": {
-      "id": "Toko baru selalu untuk satu merek baru: satu merek per toko, satu toko per merek di setiap hub, contohnya <em>Labore - Cawang</em>. Merek memakai akun merchant Grab miliknya sendiri (Grab meminta minimal 10 SKU). Jika kurang dari 10 SKU, merek memakai akun merchant internal Ninja Van, yaitu Nemu Mart. Atur penerimaan pesanan ke MANUAL.",
-      "en": "A new store is always for one new brand: one brand per store, one store per brand at each hub, for example <em>Labore - Cawang</em>. The brand sits on its own Grab merchant account (Grab asks at least 10 SKUs), or, with fewer than 10 SKUs, on Ninja Van's internal merchant account, which acts as Nemu Mart. Set order acceptance to MANUAL."
+      "id": "Toko baru selalu untuk satu merek baru: satu merek per toko, satu toko per merek di setiap dark store, contohnya <em>Labore - Cawang</em>. Merek memakai akun merchant Grab miliknya sendiri (Grab meminta minimal 10 SKU). Jika kurang dari 10 SKU, merek memakai akun merchant internal Ninja Van, yaitu Nemu Mart. Atur penerimaan pesanan ke MANUAL.",
+      "en": "A new store is always for one new brand: one brand per store, one store per brand at each dark store, for example <em>Labore - Cawang</em>. The brand sits on its own Grab merchant account (Grab asks at least 10 SKUs), or, with fewer than 10 SKUs, on Ninja Van's internal merchant account, which acts as Nemu Mart. Set order acceptance to MANUAL."
      },
      "result": {
       "id": "Yang terlihat: toko ada di Hiryu dengan nomornya, contohnya #903.",
@@ -549,8 +549,8 @@
       "en": "In <em>Menu &amp; toko Hiryu</em>, register the brand and merchant account of each new store."
      },
      "detail": {
-      "id": "Toko datang dari Hiryu dengan sendirinya. Di <em>Merek</em> pilih Kahf, Labore atau <em>Merek baru</em>. Di <em>Akun merchant Grab</em> pilih <em>Akun merchant merek sendiri</em> atau <em>Akun merchant Ninja Van</em> (Nemu Mart, untuk merek di bawah 10 SKU). Untuk merek yang sudah ditambahkan, isinya diambil dari data merek. Tekan <em>Simpan</em>. WMS menanyakan ini sekali per toko. Jika ada data dari Hiryu yang sepertinya hilang, siapa saja boleh menekan <em>Sinkron ulang dari Hiryu</em>: Hiryu mengirim seluruh katalog saat WMS memintanya. Untuk menjaga Hiryu dan Grab, tombol ini hanya bisa dipakai sekali setiap 5 menit per hub (tombol lalu menampilkan <em>Bisa lagi 09:45</em>), dan setiap tekanan dicatat dengan nama.",
-      "en": "The store arrives from Hiryu by itself. Under <em>Merek</em> pick Kahf, Labore or <em>Merek baru</em>. Under <em>Akun merchant Grab</em> choose <em>Akun merchant merek sendiri</em> or <em>Akun merchant Ninja Van</em> (Nemu Mart, for a brand under 10 SKUs); for a brand already added it is filled in from the brand. Press <em>Simpan</em>; the WMS asks once per store. If something from Hiryu looks missing, anyone can press <em>Sinkron ulang dari Hiryu</em>: Hiryu sends the full catalogue when the WMS asks. To protect Hiryu and Grab it works once every 5 minutes per hub (the button then shows <em>Bisa lagi 09:45</em>), and every press is logged with the name."
+      "id": "Toko datang dari Hiryu dengan sendirinya. Di <em>Merek</em> pilih Kahf, Labore atau <em>Merek baru</em>. Di <em>Akun merchant Grab</em> pilih <em>Akun merchant merek sendiri</em> atau <em>Akun merchant Ninja Van</em> (Nemu Mart, untuk merek di bawah 10 SKU). Untuk merek yang sudah ditambahkan, isinya diambil dari data merek. Tekan <em>Simpan</em>. WMS menanyakan ini sekali per toko. Jika ada data dari Hiryu yang sepertinya hilang, siapa saja boleh menekan <em>Sinkron ulang dari Hiryu</em>: Hiryu mengirim seluruh katalog saat WMS memintanya. Untuk menjaga Hiryu dan Grab, tombol ini hanya bisa dipakai sekali setiap 5 menit per dark store (tombol lalu menampilkan <em>Bisa lagi 09:45</em>), dan setiap tekanan dicatat dengan nama.",
+      "en": "The store arrives from Hiryu by itself. Under <em>Merek</em> pick Kahf, Labore or <em>Merek baru</em>. Under <em>Akun merchant Grab</em> choose <em>Akun merchant merek sendiri</em> or <em>Akun merchant Ninja Van</em> (Nemu Mart, for a brand under 10 SKUs); for a brand already added it is filled in from the brand. Press <em>Simpan</em>; the WMS asks once per store. If something from Hiryu looks missing, anyone can press <em>Sinkron ulang dari Hiryu</em>: Hiryu sends the full catalogue when the WMS asks. To protect Hiryu and Grab it works once every 5 minutes per dark store (the button then shows <em>Bisa lagi 09:45</em>), and every press is logged with the name."
      },
      "result": {
       "id": "Yang terlihat: baris toko menampilkan merek dan akun merchant-nya (<em>Merek sendiri</em> atau <em>Ninja Van</em>). Kartu kuning sudah hilang.",
@@ -755,8 +755,8 @@
       "en": "Train with WMS test orders: <em>Pesanan</em>, <em>Buat pesanan uji</em>."
      },
      "detail": {
-      "id": "Pesanan uji adalah pesanan palsu yang dibuat hanya di WMS, dari stok hub, dengan tanda <em>UJI</em>. Pesanan ini tidak terhubung ke Hiryu atau Grab, tidak ada yang membayar, dan tidak pernah masuk laporan. Staf mengambil, mengemas dan menyerahkannya untuk berlatih, lalu mengembalikan barangnya dengan <em>Kembalikan ke rak</em>. Ulangi sampai setiap orang yang dilatih sudah mengerjakan setiap tugas sekali.",
-      "en": "A test order is a dummy order made in the WMS only, from the hub's stock, marked <em>UJI</em>. It has no link to Hiryu or Grab, nobody pays for it, and it never appears in reports. Staff pick, pack and hand it over to practise, then put the items back with <em>Kembalikan ke rak</em>. Repeat until every trained person has done each job once."
+      "id": "Pesanan uji adalah pesanan palsu yang dibuat hanya di WMS, dari stok dark store, dengan tanda <em>UJI</em>. Pesanan ini tidak terhubung ke Hiryu atau Grab, tidak ada yang membayar, dan tidak pernah masuk laporan. Staf mengambil, mengemas dan menyerahkannya untuk berlatih, lalu mengembalikan barangnya dengan <em>Kembalikan ke rak</em>. Ulangi sampai setiap orang yang dilatih sudah mengerjakan setiap tugas sekali.",
+      "en": "A test order is a dummy order made in the WMS only, from the dark store's stock, marked <em>UJI</em>. It has no link to Hiryu or Grab, nobody pays for it, and it never appears in reports. Staff pick, pack and hand it over to practise, then put the items back with <em>Kembalikan ke rak</em>. Repeat until every trained person has done each job once."
      },
      "result": {
       "id": "Yang terlihat: pesanan uji ada di <em>Pesanan</em> dengan tanda <em>UJI</em>, dan tidak ada yang baru di Hiryu Live Orders.",
@@ -841,12 +841,12 @@
      "en": "Hiryu first. When a step touches both systems, do the Hiryu part first."
     },
     {
-     "id": "Hub, toko dan SKU datang dari Hiryu, jadi tidak ada yang diketik dua kali. Hanya merek yang ditambahkan di WMS.",
-     "en": "The hub, stores and SKUs come from Hiryu, so nothing is typed twice. Brands are the one thing added in the WMS."
+     "id": "Dark store, toko dan SKU datang dari Hiryu, jadi tidak ada yang diketik dua kali. Hanya merek yang ditambahkan di WMS.",
+     "en": "The dark store, stores and SKUs come from Hiryu, so nothing is typed twice. Brands are the one thing added in the WMS."
     },
     {
-     "id": "Satu toko menjual satu merek. Pilot punya dua merek, Kahf dan Labore, masing-masing dengan tokonya sendiri di setiap hub. Merek di bawah 10 SKU memakai akun merchant Ninja Van (Nemu Mart).",
-     "en": "One store sells one brand. The pilot has two brands, Kahf and Labore, each with its own store per hub. A brand under 10 SKUs sits on Ninja Van's merchant account (Nemu Mart)."
+     "id": "Satu toko menjual satu merek. Pilot punya dua merek, Kahf dan Labore, masing-masing dengan tokonya sendiri di setiap dark store. Merek di bawah 10 SKU memakai akun merchant Ninja Van (Nemu Mart).",
+     "en": "One store sells one brand. The pilot has two brands, Kahf and Labore, each with its own store per dark store. A brand under 10 SKUs sits on Ninja Van's merchant account (Nemu Mart)."
     },
     {
      "id": "Toko tanpa stok tidak menampilkan apa pun di Grab.",
@@ -1091,8 +1091,8 @@
     "en": "Restock request to the brand"
    },
    "intro": {
-    "id": "Minta stok dari merek sebelum sebuah SKU habis di hub. SPV atau Ops HQ mengajukan kebutuhan. Hanya Ops HQ yang mengirim permintaan restock ke merek dan menyetujui setiap selisih.",
-    "en": "Get stock from the brand before a SKU runs out at the hub. The SPV or Ops HQ raises the need; only Ops HQ sends the restock request to the brand and approves every difference."
+    "id": "Minta stok dari merek sebelum sebuah SKU habis di dark store. SPV atau Ops HQ mengajukan kebutuhan. Hanya Ops HQ yang mengirim permintaan restock ke merek dan menyetujui setiap selisih.",
+    "en": "Get stock from the brand before a SKU runs out at the dark store. The SPV or Ops HQ raises the need; only Ops HQ sends the restock request to the brand and approves every difference."
    },
    "who": [
     {
@@ -1113,8 +1113,8 @@
     }
    ],
    "when": {
-    "id": "Sejak sebuah SKU mencapai angka pesan ulangnya sampai hub selesai menjalankan keputusan Ops HQ tentang selisih.",
-    "en": "From the moment a SKU reaches its reorder number until the hub has carried out Ops HQ's decision on any difference."
+    "id": "Sejak sebuah SKU mencapai angka pesan ulangnya sampai dark store selesai menjalankan keputusan Ops HQ tentang selisih.",
+    "en": "From the moment a SKU reaches its reorder number until the dark store has carried out Ops HQ's decision on any difference."
    },
    "where": [
     {
@@ -1139,12 +1139,12 @@
       "1a"
      ],
      "action": {
-      "id": "Stok sebuah SKU di hub turun sampai angka <em>pesan ulang saat sisa</em>.",
-      "en": "A SKU at a hub falls to its <em>pesan ulang saat sisa</em> number."
+      "id": "Stok sebuah SKU di dark store turun sampai angka <em>pesan ulang saat sisa</em>.",
+      "en": "A SKU at a dark store falls to its <em>pesan ulang saat sisa</em> number."
      },
      "detail": {
-      "id": "WMS membuka satu draf per merek per hub. Isinya SKU merek itu yang stoknya sama dengan atau di bawah angka tersebut.",
-      "en": "The WMS opens one draft per brand per hub, with that brand's SKUs that are at or under their number."
+      "id": "WMS membuka satu draf per merek per dark store. Isinya SKU merek itu yang stoknya sama dengan atau di bawah angka tersebut.",
+      "en": "The WMS opens one draft per brand per dark store, with that brand's SKUs that are at or under their number."
      },
      "result": {
       "id": "Yang terlihat: <em>Draf restock Labore: ajukan ke Ops HQ</em> di <em>Perlu tindakan</em>, untuk SPV dan Ops HQ.",
@@ -1339,8 +1339,8 @@
       "en": "One list shows every difference: short, extra, and units rejected at inbound (damaged, kept in MA5-QR-01 or returned to the driver, one photo each). Per row, check <em>Ditagih</em> and <em>Setujui</em>. For extras choose <em>Tolak kelebihan</em> (the suggestion: the units go on the brand's return list and leave with the next delivery, or the same driver if still there) or <em>Terima</em> (put away and billed). Extras wait in their temporary bin, not sellable, until then. Add a note for the brand, then <em>Simpan keputusan</em>. Until a row is approved it shows <em>Menunggu persetujuan Ops HQ</em> and changes neither stock nor what is billed; once approved, the WMS records it in both by itself. The amber chip shows the deadline, e.g. <em>Putuskan sebelum Jum 2 Okt 15:40</em>. The Ops Head is notified of each difference (<em>Ops Head diberi tahu</em>) and has no approval step."
      },
      "result": {
-      "id": "Yang terlihat: setiap baris sudah disetujui, permintaan ditutup dengan jumlah yang ditagih merek (<em>Total ditagih merek</em>), dan ada tugas untuk hub di <em>Perlu tindakan</em>.",
-      "en": "You see: each row approved, the request closes with the number the brand bills (<em>Total ditagih merek</em>), and a task for the hub on <em>Perlu tindakan</em>."
+      "id": "Yang terlihat: setiap baris sudah disetujui, permintaan ditutup dengan jumlah yang ditagih merek (<em>Total ditagih merek</em>), dan ada tugas untuk dark store di <em>Perlu tindakan</em>.",
+      "en": "You see: each row approved, the request closes with the number the brand bills (<em>Total ditagih merek</em>), and a task for the dark store on <em>Perlu tindakan</em>."
      }
     },
     {
@@ -1384,12 +1384,12 @@
      "en": "The SPV or Ops HQ can make or raise a draft. Only Ops HQ sends the request to the brand."
     },
     {
-     "id": "Permintaan kita tidak punya nomor PO. Kuncinya adalah Ninja reference RPL-&lt;hub&gt;-&lt;yymm&gt;-&lt;n&gt;, dengan yymm adalah bulan saat permintaan dibuat: dibuat 28 Sep untuk pengiriman 1 Okt menjadi RPL-MA5-2609-002. Merek menjawab dengan nomor PO-nya sendiri. Nomor itu selalu disimpan bersama nama merek, karena dua merek bisa memakai nomor yang sama.",
-     "en": "Our request has no PO number. Its key is the Ninja reference RPL-&lt;hub&gt;-&lt;yymm&gt;-&lt;n&gt;, where yymm is the month the request is made: made 28 Sep for delivery 1 Oct is RPL-MA5-2609-002. The brand answers with its own PO number, always stored with the brand, because two brands may use the same number."
+     "id": "Permintaan kita tidak punya nomor PO. Kuncinya adalah Ninja reference RPL-&lt;dark store&gt;-&lt;yymm&gt;-&lt;n&gt;, dengan yymm adalah bulan saat permintaan dibuat: dibuat 28 Sep untuk pengiriman 1 Okt menjadi RPL-MA5-2609-002. Merek menjawab dengan nomor PO-nya sendiri. Nomor itu selalu disimpan bersama nama merek, karena dua merek bisa memakai nomor yang sama.",
+     "en": "Our request has no PO number. Its key is the Ninja reference RPL-&lt;dark store&gt;-&lt;yymm&gt;-&lt;n&gt;, where yymm is the month the request is made: made 28 Sep for delivery 1 Oct is RPL-MA5-2609-002. The brand answers with its own PO number, always stored with the brand, because two brands may use the same number."
     },
     {
-     "id": "Satu permintaan per merek per hub per kiriman, dengan barcode setiap SKU (barcode yang MISSING diisi oleh merek di kolom kuning). Jumlah terkunci saat <em>Simpan permintaan</em>.",
-     "en": "One request per brand per hub per delivery, with every SKU's barcode (a MISSING one comes back from the brand in the yellow column). Quantities freeze at <em>Simpan permintaan</em>."
+     "id": "Satu permintaan per merek per dark store per kiriman, dengan barcode setiap SKU (barcode yang MISSING diisi oleh merek di kolom kuning). Jumlah terkunci saat <em>Simpan permintaan</em>.",
+     "en": "One request per brand per dark store per delivery, with every SKU's barcode (a MISSING one comes back from the brand in the yellow column). Quantities freeze at <em>Simpan permintaan</em>."
     },
     {
      "id": "Ops HQ menyetujui setiap selisih dalam 24 jam: kurang, lebih, dan unit yang ditolak saat barang masuk. Selisih baru masuk ke stok dan tagihan setelah disetujui. Sebelum itu tertulis <em>Menunggu persetujuan Ops HQ</em>. Ops Head diberi tahu tentang setiap selisih.",
@@ -1431,8 +1431,8 @@
     }
    ],
    "when": {
-    "id": "Kiriman merek datang ke hub, antara 09:00 dan 16:00.",
-    "en": "A brand delivery arrives at the hub, between 09:00 and 16:00."
+    "id": "Kiriman merek datang ke dark store, antara 09:00 dan 16:00.",
+    "en": "A brand delivery arrives at the dark store, between 09:00 and 16:00."
    },
    "where": [
     {
@@ -1475,8 +1475,8 @@
       "en": "At the door, check the Surat Jalan."
      },
      "detail": {
-      "id": "Surat Jalan harus menyebut hub ini, merek, dan Ninja reference kita atau nomor PO merek. Hitung kartonnya saja dan cocokkan dengan Surat Jalan. Barang dihitung per pcs saat dipindai. Jika jumlah karton berbeda, panggil SPV. SPV memutuskan saat itu juga: terima dan tulis ulang Surat Jalan (<em>Terima &amp; tulis ulang</em>) atau tolak kiriman (<em>Tolak</em>). SPV langsung melaporkan Surat Jalan yang ditulis ulang ke Ops HQ. WMS mengirim laporannya saat <em>Terima &amp; tulis ulang</em> ditekan. Jangan tanda tangan dulu.",
-      "en": "It must name this hub, the brand, and our Ninja reference or the brand's PO number. Count only the cartons and compare with the Surat Jalan; the goods are counted in pieces (pcs) when scanned. If the carton count differs, call the SPV, who decides on the spot: accept and rewrite the Surat Jalan (<em>Terima &amp; tulis ulang</em>) or refuse the delivery (<em>Tolak</em>). The SPV raises a rewrite to Ops HQ at once; the WMS sends it when <em>Terima &amp; tulis ulang</em> is tapped. Do not sign yet."
+      "id": "Surat Jalan harus menyebut dark store ini, merek, dan Ninja reference kita atau nomor PO merek. Hitung kartonnya saja dan cocokkan dengan Surat Jalan. Barang dihitung per pcs saat dipindai. Jika jumlah karton berbeda, panggil SPV. SPV memutuskan saat itu juga: terima dan tulis ulang Surat Jalan (<em>Terima &amp; tulis ulang</em>) atau tolak kiriman (<em>Tolak</em>). SPV langsung melaporkan Surat Jalan yang ditulis ulang ke Ops HQ. WMS mengirim laporannya saat <em>Terima &amp; tulis ulang</em> ditekan. Jangan tanda tangan dulu.",
+      "en": "It must name this dark store, the brand, and our Ninja reference or the brand's PO number. Count only the cartons and compare with the Surat Jalan; the goods are counted in pieces (pcs) when scanned. If the carton count differs, call the SPV, who decides on the spot: accept and rewrite the Surat Jalan (<em>Terima &amp; tulis ulang</em>) or refuse the delivery (<em>Tolak</em>). The SPV raises a rewrite to Ops HQ at once; the WMS sends it when <em>Terima &amp; tulis ulang</em> is tapped. Do not sign yet."
      },
      "result": {
       "id": "Yang terlihat: nomor untuk dicari dan jumlah karton untuk langkah 2. Jumlah yang berbeda tampil oranye (<em>Surat Jalan: 5 karton, dihitung: 4</em>) dengan dua tombol bertanda <em>Keputusan SPV</em>.",
@@ -1841,7 +1841,7 @@
     }
    ],
    "when": {
-    "id": "Setiap pesanan Grab, dari <em>Accept</em> sampai diambil driver",
+    "id": "Setiap pesanan Grab, dari <em>Terima</em> sampai diambil driver",
     "en": "Every Grab order, from <em>Accept</em> to driver pickup"
    },
    "where": [
@@ -1879,7 +1879,7 @@
      ],
      "screens": [],
      "action": {
-      "id": "Di Hiryu, tekan <em>Accept</em> dalam satu menit setelah bunyi pesanan baru.",
+      "id": "Di Hiryu, tekan <em>Terima</em> dalam satu menit setelah bunyi pesanan baru.",
       "en": "In Hiryu, press <em>Accept</em> within a minute of the new-order sound."
      },
      "detail": {
@@ -2119,7 +2119,7 @@
       "en": "Pack in the pack the WMS names, then type the GM number and press <em>Selesai dikemas</em>."
      },
      "detail": {
-      "id": "WMS memilih kemasan dari ukuran dan berat produk: di sini <em>Kantong kertas</em>, karena satu botol besar (yang 225 ml) masih muat di kantong. <em>Karton</em> dipakai jika ada lebih dari satu botol besar, isi lebih dari 3,9 L atau 3 kg, atau ada barang lebih panjang dari 27 cm. Pesanan yang sangat besar dapat dua kemasan. Centang setiap barang. Masukkan slip Hiryu dengan nomor GM terlihat. Jika tidak muat, tekan <em>Ganti kemasan</em> dan isi alasannya. Slip tidak punya barcode, jadi ketik nomornya di <em>Ketik nomor GM</em> (358). Pesanan di WMS sama dengan pesanan di Hiryu (ID pesanan Grab dan barisnya sama, dikirim saat <em>Accept</em>). Setiap unit sudah dicek dengan pindai saat diambil, dan nomor GM yang diketik dicocokkan dengan keranjang. Jadi pengemas cukup mencocokkan nomor GM di slip dengan layar.",
+      "id": "WMS memilih kemasan dari ukuran dan berat produk: di sini <em>Kantong kertas</em>, karena satu botol besar (yang 225 ml) masih muat di kantong. <em>Karton</em> dipakai jika ada lebih dari satu botol besar, isi lebih dari 3,9 L atau 3 kg, atau ada barang lebih panjang dari 27 cm. Pesanan yang sangat besar dapat dua kemasan. Centang setiap barang. Masukkan slip Hiryu dengan nomor GM terlihat. Jika tidak muat, tekan <em>Ganti kemasan</em> dan isi alasannya. Slip tidak punya barcode, jadi ketik nomornya di <em>Ketik nomor GM</em> (358). Pesanan di WMS sama dengan pesanan di Hiryu (ID pesanan Grab dan barisnya sama, dikirim saat <em>Terima</em>). Setiap unit sudah dicek dengan pindai saat diambil, dan nomor GM yang diketik dicocokkan dengan keranjang. Jadi pengemas cukup mencocokkan nomor GM di slip dengan layar.",
       "en": "The WMS names the pack from the products' size and weight: here a <em>Kantong kertas</em>, because one large bottle (the 225 ml) still fits a bag. A <em>Karton</em> is used for more than one large bottle, more than 3.9 L or 3 kg, or an item longer than 27 cm; a very big one gets two packs. Tick each item. Put the Hiryu slip in with the GM number showing. If it does not fit, press <em>Ganti kemasan</em> and give a reason. The slip has no barcode, so type the number in <em>Ketik nomor GM</em> (358). The WMS order is Hiryu's order (same Grab order ID and lines, sent at <em>Accept</em>), every unit was checked by scan at picking, and the typed GM number is checked against the basket: the packer only compares the slip's GM number with the screen."
      },
      "result": {
@@ -2256,7 +2256,7 @@
      "en": "2 minutes to start (scan the basket), or the order goes back to the queue."
     },
     {
-     "id": "Target 10 menit dihitung dari jam pesanan Grab, bukan dari <em>Accept</em>, dan berakhir saat selesai dikemas. Ini target, bukan hitung mundur. Stopwatch menghitung naik, supaya Anda bisa melihat kecepatan kerja Anda sendiri.",
+     "id": "Target 10 menit dihitung dari jam pesanan Grab, bukan dari <em>Terima</em>, dan berakhir saat selesai dikemas. Ini target, bukan hitung mundur. Stopwatch menghitung naik, supaya Anda bisa melihat kecepatan kerja Anda sendiri.",
      "en": "The 10-minute target starts at Grab's order time, not at <em>Accept</em>, and ends at packed: a target, not a countdown. The stopwatch counts up, for the worker's own pace."
     },
     {
@@ -2368,8 +2368,8 @@
       "en": "Laptop: <em>Karantina &amp; retur</em> → <em>Karantina</em>. Decide each unit within 24 hours."
      },
      "detail": {
-      "id": "Pilih <em>Kembali ke rak</em> jika ternyata unit masih bagus: staf mendapat tugas, dan unit bisa dijual lagi setelah staf memindai bin. <em>Retur ke merek</em> memasukkan unit ke daftar retur merek. <em>Hapus</em> menghapus unit dari stok. <em>Beban biaya</em> diisi oleh WMS, bukan dipilih: <em>Ninja</em> untuk semua yang rusak di hub setelah ditaruh di rak, merek untuk unit yang ditolak saat barang masuk. Lalu tekan <em>Simpan keputusan</em>.",
-      "en": "<em>Kembali ke rak</em> if it is fine after all: staff get a task, and the unit is sellable again when they scan the bin. <em>Retur ke merek</em> puts it on the brand's return list. <em>Hapus</em> writes it off. <em>Beban biaya</em> is filled in by the WMS, not chosen: <em>Ninja</em> for anything damaged in the hub after putaway, the brand for units rejected at inbound. Then <em>Simpan keputusan</em>."
+      "id": "Pilih <em>Kembali ke rak</em> jika ternyata unit masih bagus: staf mendapat tugas, dan unit bisa dijual lagi setelah staf memindai bin. <em>Retur ke merek</em> memasukkan unit ke daftar retur merek. <em>Hapus</em> menghapus unit dari stok. <em>Beban biaya</em> diisi oleh WMS, bukan dipilih: <em>Ninja</em> untuk semua yang rusak di dark store setelah ditaruh di rak, merek untuk unit yang ditolak saat barang masuk. Lalu tekan <em>Simpan keputusan</em>.",
+      "en": "<em>Kembali ke rak</em> if it is fine after all: staff get a task, and the unit is sellable again when they scan the bin. <em>Retur ke merek</em> puts it on the brand's return list. <em>Hapus</em> writes it off. <em>Beban biaya</em> is filled in by the WMS, not chosen: <em>Ninja</em> for anything damaged in the dark store after putaway, the brand for units rejected at inbound. Then <em>Simpan keputusan</em>."
      },
      "result": {
       "id": "Yang terlihat: unit yang sudah lebih dari 24 jam berwarna oranye dengan <em>Lewat 2 jam</em>; unit ini juga muncul di <em>Perlu tindakan</em>.",
@@ -2398,8 +2398,8 @@
       "en": "<em>Persetujuan hapus</em>: <em>Setujui</em> or <em>Tolak</em> each write-off."
      },
      "detail": {
-      "id": "Satu daftar untuk semua hub, dikelompokkan per merek, dengan jumlah unit per penanggung biaya. Cek alasan dan fotonya; penanggung biaya sudah terisi. <em>Tolak</em> membuat unit tetap di baki dan mengirimnya kembali ke SPV dengan catatan.",
-      "en": "One list for every hub, grouped by brand with the units per cost bearer. Check the reason and the photo; the cost bearer is already filled in. <em>Tolak</em> keeps the unit in the tray and sends it back to the SPV with a note."
+      "id": "Satu daftar untuk semua dark store, dikelompokkan per merek, dengan jumlah unit per penanggung biaya. Cek alasan dan fotonya; penanggung biaya sudah terisi. <em>Tolak</em> membuat unit tetap di baki dan mengirimnya kembali ke SPV dengan catatan.",
+      "en": "One list for every dark store, grouped by brand with the units per cost bearer. Check the reason and the photo; the cost bearer is already filled in. <em>Tolak</em> keeps the unit in the tray and sends it back to the SPV with a note."
      },
      "result": {
       "id": "Yang terlihat: unit yang disetujui keluar dari stok dan muncul di laporan bulanan merek, dengan alasan dan penanggung biayanya.",
@@ -2514,8 +2514,8 @@
      "en": "Damage after the stock has entered our inventory is Ninja's cost. Units rejected at inbound are the brand's. The WMS shows this; nobody chooses it."
     },
     {
-     "id": "Pesanan batal yang dibawa kembali oleh sopir dicek saat tiba, sama seperti retur lainnya: unit yang bagus kembali ke rak, unit yang rusak masuk karantina sebagai kerusakan di hub.",
-     "en": "A cancelled order the driver brings back is checked on arrival like any return: fine units go back to the rack, damaged units go to quarantine as damage in the hub."
+     "id": "Pesanan batal yang dibawa kembali oleh sopir dicek saat tiba, sama seperti retur lainnya: unit yang bagus kembali ke rak, unit yang rusak masuk karantina sebagai kerusakan di dark store.",
+     "en": "A cancelled order the driver brings back is checked on arrival like any return: fine units go back to the rack, damaged units go to quarantine as damage in the dark store."
     },
     {
      "id": "Kerusakan yang dilaporkan pelanggan setelah serah terima adalah klaim Grab, diurus di Hiryu atau Grab, bukan di WMS.",
@@ -2729,8 +2729,8 @@
       "en": "Ops HQ reviews every approved difference afterwards: <em>Tinjau Ops HQ</em>."
      },
      "detail": {
-      "id": "Untuk kedua hub, setelah stok sudah berubah. Tinjauan ini tidak menahan apa pun; hasilnya masuk ke laporan selisih bulanan (Bagian 10). Hitung penuh akhir bulan memberi angka stok hasil hitung untuk laporan merek.",
-      "en": "For both hubs, after the stock has already changed. The review does not hold anything back; it feeds the monthly variance report (Section 10). The month-end full count gives the brand report its counted stock."
+      "id": "Untuk kedua dark store, setelah stok sudah berubah. Tinjauan ini tidak menahan apa pun; hasilnya masuk ke laporan selisih bulanan (Bagian 10). Hitung penuh akhir bulan memberi angka stok hasil hitung untuk laporan merek.",
+      "en": "For both dark stores, after the stock has already changed. The review does not hold anything back; it feeds the monthly variance report (Section 10). The month-end full count gives the brand report its counted stock."
      },
      "result": {
       "id": "Yang terlihat: setiap selisih yang disetujui menampilkan <em>Belum ditinjau</em> sampai Ops HQ memeriksanya.",
@@ -2813,8 +2813,8 @@
       "en": "Each <em>Selesai dikemas</em> deducts every consumable at its <em>Pemakaian per pesanan</em>."
      },
      "detail": {
-      "id": "Tas kertas: 1 per pesanan yang dikemas dalam tas. Kardus: 1 per pesanan yang dikemas dalam kardus. Lakban: 0,6 m per kardus. Label bin: 1 per pesanan. Sekat dan stiker hari dikurangi per pengiriman yang diterima (2 per minggu per hub, satu per merek). Pesanan yang dikemas sebagai <em>2 kemasan</em> memakai satu tas dan satu kardus. Ops HQ mengatur logika pemakaian ini di sistem. Tidak ada yang perlu mengetik apa pun.",
-      "en": "Paper bag: 1 per order packed in a bag. Carton: 1 per order packed in a carton. Tape: 0,6 m per carton. Bin label: 1 per order. Dividers and day stickers come off per delivery received (2 a week per hub, one per brand). An order packed as <em>2 kemasan</em> takes a bag and a carton. Ops HQ sets this usage logic in the system. Nobody types anything."
+      "id": "Tas kertas: 1 per pesanan yang dikemas dalam tas. Kardus: 1 per pesanan yang dikemas dalam kardus. Lakban: 0,6 m per kardus. Label bin: 1 per pesanan. Sekat dan stiker hari dikurangi per pengiriman yang diterima (2 per minggu per dark store, satu per merek). Pesanan yang dikemas sebagai <em>2 kemasan</em> memakai satu tas dan satu kardus. Ops HQ mengatur logika pemakaian ini di sistem. Tidak ada yang perlu mengetik apa pun.",
+      "en": "Paper bag: 1 per order packed in a bag. Carton: 1 per order packed in a carton. Tape: 0,6 m per carton. Bin label: 1 per order. Dividers and day stickers come off per delivery received (2 a week per dark store, one per brand). An order packed as <em>2 kemasan</em> takes a bag and a carton. Ops HQ sets this usage logic in the system. Nobody types anything."
      },
      "result": {
       "id": "Yang terlihat: <em>Dihitung otomatis dari 49 pesanan dikemas 7 hari terakhir</em> (7 sehari), dan setiap angka stok di <em>Bahan kemas</em> berkurang sesuai pesanan.",
@@ -2842,8 +2842,8 @@
       "en": "Laptop <em>Bahan kemas</em>: below the minimum, <em>Ajukan ke Ops HQ</em>."
      },
      "detail": {
-      "id": "Untuk setiap barang: pemakaian per pesanan, stok, pemakaian per hari, sisa hari dan minimum (garis kecil di batang). Barang di bawah minimum berubah oranye dengan <em>di bawah minimum</em> dan muncul di <em>Perlu tindakan</em>. Minimum adalah pemakaian 14 hari dengan target Grab 200 pesanan per hub per bulan (sekitar 7 sehari, 10 sampai 15 unit per pesanan). SPV hanya mengajukan kebutuhan; SPV tidak bisa membeli.",
-      "en": "Per item: usage per order, stock, use per day, days left and the minimum (the tick on the bar). An item below the minimum turns amber with <em>di bawah minimum</em> and appears on <em>Perlu tindakan</em>. The minimum is 14 days of use at the Grab target of 200 orders per hub per month (about 7 a day, 10 to 15 units each). The SPV only raises the need; the SPV cannot buy."
+      "id": "Untuk setiap barang: pemakaian per pesanan, stok, pemakaian per hari, sisa hari dan minimum (garis kecil di batang). Barang di bawah minimum berubah oranye dengan <em>di bawah minimum</em> dan muncul di <em>Perlu tindakan</em>. Minimum adalah pemakaian 14 hari dengan target Grab 200 pesanan per dark store per bulan (sekitar 7 sehari, 10 sampai 15 unit per pesanan). SPV hanya mengajukan kebutuhan; SPV tidak bisa membeli.",
+      "en": "Per item: usage per order, stock, use per day, days left and the minimum (the tick on the bar). An item below the minimum turns amber with <em>di bawah minimum</em> and appears on <em>Perlu tindakan</em>. The minimum is 14 days of use at the Grab target of 200 orders per dark store per month (about 7 a day, 10 to 15 units each). The SPV only raises the need; the SPV cannot buy."
      },
      "result": {
       "id": "Yang terlihat: <em>Diajukan ke Ops HQ</em> pada barang itu dengan nama Anda dan waktunya.",
@@ -2900,8 +2900,8 @@
       "en": "Change a minimum, a usage per order or the usage logic with the pencil icon. New item: <em>Tambah bahan kemas</em>."
      },
      "detail": {
-      "id": "Minimum bisa diubah kapan saja, sesuai pemakaian nyata di hub. Barang baru perlu <em>Nama</em>, <em>Satuan</em>, <em>Isi per pak</em>, <em>Pemakaian per pesanan</em> dan <em>Minimum</em>. Hanya Ops HQ yang melihat ikon pensil dan tombol itu.",
-      "en": "Minimums can be changed at any time as the hub learns its real use. A new item needs <em>Nama</em>, <em>Satuan</em>, <em>Isi per pak</em>, <em>Pemakaian per pesanan</em> and <em>Minimum</em>. Only Ops HQ sees the pencil icons and the button."
+      "id": "Minimum bisa diubah kapan saja, sesuai pemakaian nyata di dark store. Barang baru perlu <em>Nama</em>, <em>Satuan</em>, <em>Isi per pak</em>, <em>Pemakaian per pesanan</em> dan <em>Minimum</em>. Hanya Ops HQ yang melihat ikon pensil dan tombol itu.",
+      "en": "Minimums can be changed at any time as the dark store learns its real use. A new item needs <em>Nama</em>, <em>Satuan</em>, <em>Isi per pak</em>, <em>Pemakaian per pesanan</em> and <em>Minimum</em>. Only Ops HQ sees the pencil icons and the button."
      },
      "result": {
       "id": "Yang terlihat: angka baru di baris itu, dipakai mulai pesanan berikutnya yang dikemas.",
@@ -2925,8 +2925,8 @@
       "9b"
      ],
      "action": {
-      "id": "Saat kiriman sampai di hub, buka HP <em>Bahan kemas</em>, tab <em>Terima</em>: pilih barangnya, isi jumlah pak dan isi per pak, lalu <em>Kirim ke Ops HQ</em>.",
-      "en": "When the delivery reaches the hub, phone <em>Bahan kemas</em>, tab <em>Terima</em>: choose the item, enter packs and pieces per pack, <em>Kirim ke Ops HQ</em>."
+      "id": "Saat kiriman sampai di dark store, buka HP <em>Bahan kemas</em>, tab <em>Terima</em>: pilih barangnya, isi jumlah pak dan isi per pak, lalu <em>Kirim ke Ops HQ</em>.",
+      "en": "When the delivery reaches the dark store, phone <em>Bahan kemas</em>, tab <em>Terima</em>: choose the item, enter packs and pieces per pack, <em>Kirim ke Ops HQ</em>."
      },
      "detail": {
       "id": "Hitung pak yang datang. Isi per pak sudah terisi dari kiriman terakhir; ubah jika paknya berbeda. Stok belum berubah.",
@@ -3014,8 +3014,8 @@
      "en": "The SPV enters what arrives and counts once a week; the stock changes only after Ops HQ approves."
     },
     {
-     "id": "Minimum per barang = pemakaian 14 hari dengan target Grab (200 pesanan per hub per bulan): tas kertas 90 pcs, kardus 15 pcs, label 100, lakban 10 m, sekat dan stiker hari untuk 4 pengiriman. Ini usulan; Ops HQ bisa mengubahnya.",
-     "en": "Minimum per item = 14 days of use at the Grab target (200 orders per hub per month): paper bag 90 pcs, carton 15 pcs, labels 100, tape 10 m, dividers and day stickers for 4 deliveries. A proposal; Ops HQ can change it."
+     "id": "Minimum per barang = pemakaian 14 hari dengan target Grab (200 pesanan per dark store per bulan): tas kertas 90 pcs, kardus 15 pcs, label 100, lakban 10 m, sekat dan stiker hari untuk 4 pengiriman. Ini usulan; Ops HQ bisa mengubahnya.",
+     "en": "Minimum per item = 14 days of use at the Grab target (200 orders per dark store per month): paper bag 90 pcs, carton 15 pcs, labels 100, tape 10 m, dividers and day stickers for 4 deliveries. A proposal; Ops HQ can change it."
     },
     {
      "id": "Hanya Ops HQ yang menambah bahan kemas atau mengubah minimum, pemakaian per pesanan atau logika pemakaian.",
@@ -3035,8 +3035,8 @@
     "en": "Reports"
    },
    "intro": {
-    "id": "Angka-angka yang diterima hub, merek, Grab dan manajemen. Laporan dibuat mingguan dan bulanan, untuk semua hub, satu hub atau beberapa hub. Setiap laporan dibuat dari angka WMS; Ops HQ mengunduhnya dan mengirimnya lewat email secara manual.",
-    "en": "The figures the hubs, the brands, Grab and management get. Reports are weekly and monthly, for all hubs, one hub or several. Every report is built from WMS numbers; Ops HQ downloads it and sends it by email by hand."
+    "id": "Angka-angka yang diterima dark store, merek, Grab dan manajemen. Laporan dibuat mingguan dan bulanan, untuk semua dark store, satu dark store atau beberapa dark store. Setiap laporan dibuat dari angka WMS; Ops HQ mengunduhnya dan mengirimnya lewat email secara manual.",
+    "en": "The figures the dark stores, the brands, Grab and management get. Reports are weekly and monthly, for all dark stores, one dark store or several. Every report is built from WMS numbers; Ops HQ downloads it and sends it by email by hand."
    },
    "who": [
     {
@@ -3118,8 +3118,8 @@
       "en": "<em>Laporan</em> → <em>Penjualan merek</em> → Kahf → <em>Mingguan</em> → last week → <em>Unduh Excel</em>"
      },
      "detail": {
-      "id": "Di <em>Pilih hub</em>, <em>Semua hub</em> sudah terpilih dari awal; tekan <em>MA5</em> atau <em>KJ5</em> untuk satu hub saja. Lakukan hal yang sama untuk Labore. Kirim setiap file lewat email ke kontak merek itu.",
-      "en": "Under <em>Pilih hub</em>, <em>Semua hub</em> is selected first; tap <em>MA5</em> or <em>KJ5</em> for one hub only. Do the same for Labore. Email each file to that brand's contacts."
+      "id": "Di <em>Pilih dark store</em>, <em>Semua dark store</em> sudah terpilih dari awal; tekan <em>MA5</em> atau <em>KJ5</em> untuk satu dark store saja. Lakukan hal yang sama untuk Labore. Kirim setiap file lewat email ke kontak merek itu.",
+      "en": "Under <em>Pilih dark store</em>, <em>Semua dark store</em> is selected first; tap <em>MA5</em> or <em>KJ5</em> for one dark store only. Do the same for Labore. Email each file to that brand's contacts."
      },
      "result": {
       "id": "Yang terlihat: file Excel berbahasa Inggris dengan satu sheet, Sales by SKU.",
@@ -3174,12 +3174,12 @@
       "10d"
      ],
      "action": {
-      "id": "<em>Laporan</em> → <em>Laporan operasional</em> → <em>Mingguan</em> atau <em>Bulanan</em> → periode → hub → <em>Unduh</em>",
-      "en": "<em>Laporan</em> → <em>Laporan operasional</em> → <em>Mingguan</em> or <em>Bulanan</em> → period → hubs → <em>Unduh</em>"
+      "id": "<em>Laporan</em> → <em>Laporan operasional</em> → <em>Mingguan</em> atau <em>Bulanan</em> → periode → dark store → <em>Unduh</em>",
+      "en": "<em>Laporan</em> → <em>Laporan operasional</em> → <em>Mingguan</em> or <em>Bulanan</em> → period → dark stores → <em>Unduh</em>"
      },
      "detail": {
-      "id": "Di <em>Pilih hub</em>, biarkan <em>Semua hub</em> atau tekan <em>MA5</em> atau <em>KJ5</em>. Kirim lewat email ke Grab dan ke manajemen. Laporan ini berisi jumlah pesanan, persentase yang siap dalam 10 menit, rata-rata waktu ambil dan kemas, pembatalan karena barang hilang dan persentasenya, ketepatan stok dari hasil hitung, pengiriman tepat waktu, dan berapa minggu stok cukup per merek.",
-      "en": "Under <em>Pilih hub</em>, keep <em>Semua hub</em> or tap <em>MA5</em> or <em>KJ5</em>. Email it to Grab and to management. It shows orders, the share ready within 10 minutes, average pick and pack time, missing-item cancels and their share, stock accuracy from counts, deliveries on time and weeks of stock cover per brand."
+      "id": "Di <em>Pilih dark store</em>, biarkan <em>Semua dark store</em> atau tekan <em>MA5</em> atau <em>KJ5</em>. Kirim lewat email ke Grab dan ke manajemen. Laporan ini berisi jumlah pesanan, persentase yang siap dalam 10 menit, rata-rata waktu ambil dan kemas, pembatalan karena barang hilang dan persentasenya, ketepatan stok dari hasil hitung, pengiriman tepat waktu, dan berapa minggu stok cukup per merek.",
+      "en": "Under <em>Pilih dark store</em>, keep <em>Semua dark store</em> or tap <em>MA5</em> or <em>KJ5</em>. Email it to Grab and to management. It shows orders, the share ready within 10 minutes, average pick and pack time, missing-item cancels and their share, stock accuracy from counts, deliveries on time and weeks of stock cover per brand."
      },
      "result": {
       "id": "Yang terlihat: setiap angka untuk periode itu di samping angka periode sebelumnya.",
@@ -3207,8 +3207,8 @@
       "en": "<em>Laporan</em> → <em>Laporan selisih bulanan</em> → last month → <em>Unduh Excel</em>"
      },
      "detail": {
-      "id": "Laporan selisih untuk klaim, yang diproses di luar WMS. Isinya hanya selisih yang sudah final: disetujui SPV, lalu ditinjau Ops HQ. Sheet Summary menampilkan setiap jenis selisih per hub dan merek, dengan jumlah unit, nilai menurut harga menu dan siapa yang menanggung biaya (merek untuk selisih saat barang masuk dan unit yang ditolak saat itu, Ninja untuk semua yang rusak di hub setelah ditaruh di rak). Rinciannya ada di satu sheet per jenis.",
-      "en": "The variance report for claims, which are processed outside the WMS. Only finalised differences are in it: approved by the SPV, then reviewed by Ops HQ. The Summary sheet shows each type of difference per hub and brand, with units, value at menu price and who bears the cost (the brand for differences at inbound and units rejected there, Ninja for anything damaged in the hub after putaway); one sheet per type holds the detail."
+      "id": "Laporan selisih untuk klaim, yang diproses di luar WMS. Isinya hanya selisih yang sudah final: disetujui SPV, lalu ditinjau Ops HQ. Sheet Summary menampilkan setiap jenis selisih per dark store dan merek, dengan jumlah unit, nilai menurut harga menu dan siapa yang menanggung biaya (merek untuk selisih saat barang masuk dan unit yang ditolak saat itu, Ninja untuk semua yang rusak di dark store setelah ditaruh di rak). Rinciannya ada di satu sheet per jenis.",
+      "en": "The variance report for claims, which are processed outside the WMS. Only finalised differences are in it: approved by the SPV, then reviewed by Ops HQ. The Summary sheet shows each type of difference per dark store and brand, with units, value at menu price and who bears the cost (the brand for differences at inbound and units rejected there, Ninja for anything damaged in the dark store after putaway); one sheet per type holds the detail."
      },
      "result": {
       "id": "Yang terlihat: file Excel berbahasa Inggris, setiap baris <em>Final</em>, dan \"Finalised by Ops HQ\" dengan tanggalnya.",
@@ -3259,7 +3259,7 @@
      "en": "Test orders and cancelled orders are left out of sales."
     },
     {
-     "id": "Siap dalam 10 menit dihitung dari waktu pesanan Grab sampai <em>Selesai dikemas</em>, bukan dari <em>Accept</em> (diputuskan oleh pimpinan ops).",
+     "id": "Siap dalam 10 menit dihitung dari waktu pesanan Grab sampai <em>Selesai dikemas</em>, bukan dari <em>Terima</em> (diputuskan oleh pimpinan ops).",
      "en": "Ready within 10 minutes counts from Grab's order time to <em>Selesai dikemas</em>, not from <em>Accept</em> (decided by the ops lead)."
     },
     {
@@ -3275,8 +3275,8 @@
      "en": "Only finalised differences (approved by the SPV, reviewed by Ops HQ) go into the variance report."
     },
     {
-     "id": "Kerusakan setelah stok masuk ke hub menjadi biaya Ninja. Kerusakan yang dilaporkan pelanggan setelah serah terima adalah klaim Grab, diurus di Hiryu atau Grab, dan tidak masuk laporan WMS mana pun. Paket batal yang dibawa kembali sopir dalam keadaan rusak dicatat sebagai biaya Ninja di WMS; Ops HQ mengklaimnya ke Grab di luar WMS. Tidak ada tanggal kedaluwarsa di laporan mana pun.",
-     "en": "Damage after the stock has entered the hub is Ninja's cost. Damage a customer reports after handover is a Grab claim, handled in Hiryu or Grab, and is in no WMS report. A cancelled parcel the driver brings back damaged is booked as Ninja in the WMS; Ops HQ claims it from Grab outside the WMS. No expiry dates in any report."
+     "id": "Kerusakan setelah stok masuk ke dark store menjadi biaya Ninja. Kerusakan yang dilaporkan pelanggan setelah serah terima adalah klaim Grab, diurus di Hiryu atau Grab, dan tidak masuk laporan WMS mana pun. Paket batal yang dibawa kembali sopir dalam keadaan rusak dicatat sebagai biaya Ninja di WMS; Ops HQ mengklaimnya ke Grab di luar WMS. Tidak ada tanggal kedaluwarsa di laporan mana pun.",
+     "en": "Damage after the stock has entered the dark store is Ninja's cost. Damage a customer reports after handover is a Grab claim, handled in Hiryu or Grab, and is in no WMS report. A cancelled parcel the driver brings back damaged is booked as Ninja in the WMS; Ops HQ claims it from Grab outside the WMS. No expiry dates in any report."
     }
    ]
   },
@@ -3288,8 +3288,8 @@
     "en": "The Hiryu link"
    },
    "intro": {
-    "id": "Bagaimana satu pesanan Grab berjalan antara Grab, Hiryu, WMS dan hub. Hiryu mengerjakan langkahnya dulu, lalu WMS. Staf tidak lagi menekan <em>Mark ready</em>.",
-    "en": "How one Grab order moves between Grab, Hiryu, the WMS and the hub. Hiryu does its step first, then the WMS. Staff no longer press <em>Mark ready</em>."
+    "id": "Bagaimana satu pesanan Grab berjalan antara Grab, Hiryu, WMS dan dark store. Hiryu mengerjakan langkahnya dulu, lalu WMS. Staf tidak lagi menekan <em>Tandai siap</em>.",
+    "en": "How one Grab order moves between Grab, Hiryu, the WMS and the dark store. Hiryu does its step first, then the WMS. Staff no longer press <em>Mark ready</em>."
    },
    "who": [
     {
@@ -3339,7 +3339,7 @@
      "tags": [],
      "screens": [],
      "action": {
-      "id": "Pelanggan memesan di Grab. Saat bunyi pesanan baru, tekan <em>Accept</em> di Hiryu.",
+      "id": "Pelanggan memesan di Grab. Saat bunyi pesanan baru, tekan <em>Terima</em> di Hiryu.",
       "en": "The customer orders on Grab. At the new-order sound, press <em>Accept</em> in Hiryu."
      },
      "detail": {
@@ -3427,7 +3427,7 @@
       "en": "Pack the order and press <em>Selesai dikemas</em>."
      },
      "detail": {
-      "id": "WMS memberi tahu Hiryu bahwa pesanan siap, lalu Hiryu menandainya siap di Grab. Jangan tekan <em>Mark ready</em> di Hiryu.",
+      "id": "WMS memberi tahu Hiryu bahwa pesanan siap, lalu Hiryu menandainya siap di Grab. Jangan tekan <em>Tandai siap</em> di Hiryu.",
       "en": "The WMS tells Hiryu the order is ready, and Hiryu marks it ready on Grab. Do not press <em>Mark ready</em> in Hiryu."
      },
      "result": {
@@ -3533,8 +3533,8 @@
      "tags": [],
      "screens": [],
      "action": {
-      "id": "Cek sambungan saat hub buka.",
-      "en": "Check the link when the hub opens."
+      "id": "Cek sambungan saat dark store buka.",
+      "en": "Check the link when the dark store opens."
      },
      "detail": {
       "id": "<em>Pengaturan</em>, <em>Integrasi Hiryu</em>: pesan terakhir terkirim, 0 menunggu, 0 gagal. Yang menunggu lebih dari 5 menit tampil merah.",
@@ -3552,7 +3552,7 @@
      "en": "Hiryu first: when a step touches both systems, do the Hiryu part first, then the WMS part."
     },
     {
-     "id": "Staf tidak lagi menekan <em>Mark ready</em> di Hiryu. <em>Selesai dikemas</em> di WMS yang mengerjakannya.",
+     "id": "Staf tidak lagi menekan <em>Tandai siap</em> di Hiryu. <em>Selesai dikemas</em> di WMS yang mengerjakannya.",
      "en": "Staff no longer press <em>Mark ready</em> in Hiryu. <em>Selesai dikemas</em> in the WMS does it."
     },
     {

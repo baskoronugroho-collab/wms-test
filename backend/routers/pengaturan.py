@@ -85,7 +85,7 @@ async def _hub(site_id: int) -> dict:
         "       setup_completed_at, setup_completed_by, inbound_bins, quarantine_trays, "
         "       outbound_baskets FROM sites WHERE id = %s", (site_id,))
     if not row:
-        raise HTTPException(404, "Hub tidak ditemukan. / Hub not found.")
+        raise HTTPException(404, "Dark store tidak ditemukan. / Dark store not found.")
     return row
 
 
@@ -147,7 +147,7 @@ async def list_hubs(user: auth.User = Depends(auth.current_user)):
             "SELECT site_id FROM user_sites WHERE user_id = %s", (user.id,))}
         rows = [r for r in rows if int(r["id"]) in mine]
     return {"hubs": [await hub_payload(r) for r in rows], "can_edit": user.at_least("hq"),
-            "intro": "Hub dibuat di Hiryu dan muncul di sini sendiri. Di WMS Anda hanya "
+            "intro": "Dark store dibuat di Hiryu dan muncul di sini sendiri. Di WMS Anda hanya "
                      "melengkapi data gudang."}
 
 
@@ -178,12 +178,12 @@ async def complete_hub(site_id: int, body: HubCompleteIn,
     row = await _hub(site_id)
     code = (body.code or "").strip().upper()
     if not 2 <= len(code) <= 8 or not set(code) <= _CODE_OK:
-        raise HTTPException(422, "Kode hub: 2 sampai 8 huruf atau angka, misalnya MA5. / "
-                                 "Hub code: 2 to 8 letters or digits, e.g. MA5.")
+        raise HTTPException(422, "Kode dark store: 2 sampai 8 huruf atau angka, misalnya MA5. / "
+                                 "Dark store code: 2 to 8 letters or digits, e.g. MA5.")
     if code.startswith("HY") and row["hiryu_dark_store_id"] is not None and \
             code == row["code"] and row["setup_completed_at"] is None:
-        raise HTTPException(422, "Isi kode hub yang dipakai di gudang, misalnya MA5. / "
-                                 "Enter the hub's real code, e.g. MA5.")
+        raise HTTPException(422, "Isi kode dark store yang dipakai di gudang, misalnya MA5. / "
+                                 "Enter the dark store's real code, e.g. MA5.")
     for label, v, lo in (("Bin barang masuk sementara", body.inbound_bins, 1),
                          ("Baki karantina", body.quarantine_trays, 1),
                          ("Keranjang pesanan", body.outbound_baskets, 1)):
@@ -193,11 +193,11 @@ async def complete_hub(site_id: int, body: HubCompleteIn,
     if code != row["code"]:
         if await db.fetch_one("SELECT 1 AS x FROM locations WHERE site_id = %s LIMIT 1",
                               (site_id,)):
-            raise HTTPException(409, f"Kode hub {row['code']} sudah dipakai di kode bin, jadi "
-                                     "tidak bisa diganti. / The hub code is already on bin labels.")
+            raise HTTPException(409, f"Kode dark store {row['code']} sudah dipakai di kode bin, jadi "
+                                     "tidak bisa diganti. / The dark store code is already on bin labels.")
         if await db.fetch_one("SELECT id FROM sites WHERE code = %s AND id <> %s",
                               (code, site_id)):
-            raise HTTPException(409, f"Kode hub {code} sudah dipakai hub lain. / Hub code "
+            raise HTTPException(409, f"Kode dark store {code} sudah dipakai dark store lain. / Dark store code "
                                      f"{code} is taken.")
     want = {"IN": body.inbound_bins, "QR": body.quarantine_trays, "OUT": body.outbound_baskets}
     have = {k: len(await locations.special_bins_of(site_id, k)) for k in want}
@@ -221,7 +221,7 @@ async def complete_hub(site_id: int, body: HubCompleteIn,
                 problems.append(str(e.detail))
                 break
     payload = await hub_payload(await _hub(site_id))
-    msg = f"Hub {code} tersimpan."
+    msg = f"Dark store {code} tersimpan."
     if problems:
         msg += " " + " ".join(problems)
     return {"ok": True, "message": msg, "hub": payload}
@@ -251,11 +251,11 @@ async def link_hub(site_id: int, body: HubLinkIn,
     await auth.assert_site_access(user, site_id)
     new = await _hub(site_id)
     if new["hiryu_dark_store_id"] is None or new["setup_completed_at"] is not None:
-        raise HTTPException(409, "Hanya hub baru dari Hiryu yang belum dilengkapi. / Only a new "
-                                 "hub from Hiryu that was not completed yet.")
+        raise HTTPException(409, "Hanya dark store baru dari Hiryu yang belum dilengkapi. / Only a new "
+                                 "dark store from Hiryu that was not completed yet.")
     target = await _hub(body.target_site_id)
     if target["id"] == new["id"] or not target["active"] or target["is_training"]:
-        raise HTTPException(422, "Pilih hub lain yang aktif. / Choose another live hub.")
+        raise HTTPException(422, "Pilih dark store lain yang aktif. / Choose another live dark store.")
     if target["hiryu_dark_store_id"] is not None:
         raise HTTPException(409, f"{target['code']} sudah tersambung ke dark store "
                                  f"#{target['hiryu_dark_store_id']}. / Already linked.")
@@ -263,8 +263,8 @@ async def link_hub(site_id: int, body: HubLinkIn,
                          ("inbound_receipts", "barang masuk"), ("replenishments", "restock")):
         if await db.fetch_one(f"SELECT 1 AS x FROM {table} WHERE site_id = %s LIMIT 1",
                               (site_id,)):
-            raise HTTPException(409, f"Hub baru ini sudah punya {label}, jadi tidak bisa "
-                                     "disambungkan. / The new hub already has its own data.")
+            raise HTTPException(409, f"Dark store baru ini sudah punya {label}, jadi tidak bisa "
+                                     "disambungkan. / The new dark store already has its own data.")
     dark_id = new["hiryu_dark_store_id"]
     async with db.tx() as cur:
         # The unique key on hiryu_dark_store_id: free it on the new entry first.
@@ -316,23 +316,23 @@ STEPS: list[dict] = [
          title_en="Create the dark store in Hiryu", who=["hq"], systems=["Hiryu"], mode="auto",
          screen=None, guide="S02", where="Hiryu, Dark stores",
          do=["Nama, alamat dan jam buka. Jam buka di sini yang tampil di Grab."],
-         auto="Dicentang otomatis saat hub masuk dari Hiryu."),
-    dict(key="a_hub", phase="A", title="Lengkapi hub di WMS", title_en="Complete the hub in the WMS",
+         auto="Dicentang otomatis saat dark store masuk dari Hiryu."),
+    dict(key="a_hub", phase="A", title="Lengkapi dark store di WMS", title_en="Complete the dark store in the WMS",
          who=["hq"], systems=["WMS"], mode="auto", screen="pengaturan.html#hub", guide="S02",
-         where="Pengaturan, Hub & mulai operasi",
-         do=["Isi kode hub, bin barang masuk sementara, baki karantina dan keranjang pesanan.",
-             "Tekan Simpan hub."],
-         auto="Dicentang otomatis saat hub disimpan."),
+         where="Pengaturan, Dark store & mulai operasi",
+         do=["Isi kode dark store, bin barang masuk sementara, baki karantina dan keranjang pesanan.",
+             "Tekan Simpan dark store."],
+         auto="Dicentang otomatis saat dark store disimpan."),
     dict(key="a_people", phase="A", title="Tambah orang", title_en="Add the people",
          who=["hq", "supervisor"], systems=["Hiryu", "WMS"], mode="auto",
          screen="pengaturan.html#orang", guide="S02", where="Hiryu dulu, lalu Orang & akses",
          do=["Di Hiryu beri MANAGER (SPV) atau STAFF.",
-             "Di WMS: email @ninjavan.co, nama, peran, hub, centang Login Hiryu sudah dibuat."],
-         auto="Dicentang otomatis saat hub punya minimal 1 SPV dan 1 staf."),
+             "Di WMS: email @ninjavan.co, nama, peran, dark store, centang Login Hiryu sudah dibuat."],
+         auto="Dicentang otomatis saat dark store punya minimal 1 SPV dan 1 staf."),
     dict(key="a_devices", phase="A", title="Pasang perangkat dan login",
          title_en="Set up the devices and sign in", who=["supervisor"], systems=["Hiryu", "WMS"],
-         mode="manual", screen=None, guide="S02", where="Di hub",
-         do=["Dua ponsel hub, pemindai, laptop packing dengan Hiryu Live Orders, printer struk, "
+         mode="manual", screen=None, guide="S02", where="Di dark store",
+         do=["Dua ponsel dark store, pemindai, laptop packing dengan Hiryu Live Orders, printer struk, "
              "printer A4 untuk label bin.",
              "Atur kedua printer di Pengaturan, Printer: printer struk 80 mm untuk slip Hiryu "
              "dan slip putaway, printer A4 untuk label.",
@@ -341,8 +341,8 @@ STEPS: list[dict] = [
                 "terpasang dan setiap orang sudah masuk."),
     dict(key="a_training", phase="A", title="Latih staf", title_en="Train the staff",
          who=["supervisor"], systems=["WMS"], mode="manual", screen="pesanan.html", guide="S02",
-         where="Di hub",
-         do=["Latih setiap staf sebelum hub buka, sesuai jumlah orang per shift.",
+         where="Di dark store",
+         do=["Latih setiap staf sebelum dark store buka, sesuai jumlah orang per shift.",
              "Setiap orang berlatih dengan pesanan uji di ponselnya sendiri."],
          manual="WMS tidak bisa melihat langkah ini. SPV menandainya setelah cukup staf di tiap "
                 "shift sudah dilatih dengan pesanan uji."),
@@ -351,17 +351,17 @@ STEPS: list[dict] = [
          where="Produk, Merek, Tambah merek",
          do=["Nama merek, perusahaan, email kontak restock, barcode di kemasan, akun merchant Grab.",
              "Tambah merek sebelum tokonya dibuat di Hiryu."],
-         auto="Dicentang otomatis saat setiap toko di hub punya merek yang terdaftar."),
+         auto="Dicentang otomatis saat setiap toko di dark store punya merek yang terdaftar."),
     dict(key="b_stores", phase="B", title="Buat toko di Hiryu", title_en="Create the stores in Hiryu",
          who=["hq"], systems=["Hiryu"], mode="auto", screen=None, guide="S02",
          where="Hiryu, Stores",
-         do=["Satu toko untuk satu merek, pasang ke hub ini.", "Terima pesanan: MANUAL."],
+         do=["Satu toko untuk satu merek, pasang ke dark store ini.", "Terima pesanan: MANUAL."],
          auto="Dicentang otomatis saat toko masuk dari Hiryu."),
     dict(key="b_store_brand", phase="B", title="Pilih merek toko", title_en="Pick each store's brand",
          who=["hq"], systems=["WMS"], mode="auto", screen="menu-toko-hiryu.html", guide="S02",
          where="Menu & toko Hiryu",
          do=["Pilih merek dan akun merchant Grab untuk setiap toko baru, lalu Simpan."],
-         auto="Dicentang otomatis saat setiap toko di hub punya merek."),
+         auto="Dicentang otomatis saat setiap toko di dark store punya merek."),
     dict(key="b_menus", phase="B", title="Buat menu tiap toko di Hiryu",
          title_en="Build each store's menu in Hiryu", who=["hq"], systems=["Hiryu"], mode="auto",
          screen="menu-toko-hiryu.html", guide="S02", where="Hiryu, Menus",
@@ -371,7 +371,7 @@ STEPS: list[dict] = [
          title_en="Create the SKUs and Bundles", who=["hq"], systems=["Hiryu"], mode="auto",
          screen="menu-toko-hiryu.html", guide="S02", where="Hiryu, SKUs dan Bundles",
          do=["Sambungkan setiap item menu ke SKU-nya. Item tanpa SKU tidak bisa diambil."],
-         auto="Dicentang otomatis saat Item tanpa SKU di hub ini 0."),
+         auto="Dicentang otomatis saat Item tanpa SKU di dark store ini 0."),
     dict(key="b_sku_data", phase="B", title="Lengkapi data SKU", title_en="Complete the SKU data",
          who=["hq"], systems=["WMS"], mode="auto", screen="produk.html?filter=no_size",
          guide="S02", where="Produk, filter Tanpa ukuran bin",
@@ -383,7 +383,7 @@ STEPS: list[dict] = [
          who=["supervisor"], systems=["WMS"], mode="auto", screen="rak-bin.html", guide="S03",
          where="Rak & bin, Tambah rak",
          do=["Isi rak persis seperti yang berdiri: level, kolom, bin dan ukurannya."],
-         auto="Dicentang otomatis saat hub punya rak dengan bin."),
+         auto="Dicentang otomatis saat dark store punya rak dengan bin."),
     dict(key="c_labels", phase="C", title="Cetak dan cek label", title_en="Print and check the labels",
          who=["supervisor", "staff"], systems=["WMS"], mode="auto",
          screen="rak-bin.html#cek-label", guide="S03", where="Rak & bin, Cetak label, Cek label",
@@ -417,7 +417,7 @@ STEPS: list[dict] = [
          do=["Bersama Shaun: nyalakan link untuk toko. WMS mengirim seluruh stok.",
              "Buka 3 SKU di Hiryu dan cek angkanya sama dengan WMS (tersedia dikurangi Cadangan "
              "Grab)."],
-         auto="Dicentang otomatis saat link setiap toko di hub menyala."),
+         auto="Dicentang otomatis saat link setiap toko di dark store menyala."),
     dict(key="e_test_orders", phase="E", title="Latihan pesanan uji", title_en="Test orders",
          who=["supervisor", "hq"], systems=["WMS"], mode="auto", screen="pesanan.html",
          guide="S02", where="Pesanan, Buat pesanan uji",
@@ -429,11 +429,11 @@ STEPS: list[dict] = [
          guide="S02", where="Hiryu, dengan login manajer Grab outlet",
          do=["Cek menu Synced di Hiryu dan jam buka tampil di Grab.",
              "Aktifkan hanya bila semua langkah sebelumnya Selesai."],
-         auto="Dicentang otomatis saat setiap toko di hub Aktif di Grab."),
+         auto="Dicentang otomatis saat setiap toko di dark store Aktif di Grab."),
     dict(key="e_watch", phase="E", title="Pantau pesanan pertama",
          title_en="Watch the first real orders", who=["supervisor", "hq"],
          systems=["Hiryu", "WMS"], mode="manual", screen="pesanan.html", guide="S02",
-         where="Di hub",
+         where="Di dark store",
          do=["Dampingi picker dan packer pada pesanan Grab pertama tiap toko.",
              "Bereskan masalah di hari yang sama."],
          manual="SPV atau Ops HQ menandainya setelah pesanan pertama tiap toko diserahkan."),
@@ -657,7 +657,7 @@ async def kickoff_payload(site_id: int, user: auth.User) -> dict:
     return {
         "site": {"id": site["id"], "code": site["code"], "name": site["name"]},
         "title": f"Mulai operasi {site['code']}",
-        "intro": "Sampai hub siap menerima pesanan Grab. WMS mencentang sendiri langkah yang "
+        "intro": "Sampai dark store siap menerima pesanan Grab. WMS mencentang sendiri langkah yang "
                  "bisa dilihatnya.",
         "done": done_all, "total": len(steps),
         "progress_text": f"{done_all} dari {len(steps)} langkah selesai",
@@ -780,8 +780,8 @@ NEW_RULES: dict[str, tuple[str, str, str | None]] = {
                                  "jam|hours"),
     "consumable_count_days": ("Hitung bahan kemas setiap", "Count consumables every",
                               "hari|days"),
-    "consumable_orders_month": ("Target pesanan per hub per bulan (dasar minimum bahan kemas)",
-                                "Orders per hub per month (basis of the consumables minimum)",
+    "consumable_orders_month": ("Target pesanan per dark store per bulan (dasar minimum bahan kemas)",
+                                "Orders per dark store per month (basis of the consumables minimum)",
                                 "pesanan|orders"),
     "consumable_min_days": ("Minimum bahan kemas cukup untuk", "Consumables minimum covers",
                             "hari|days"),

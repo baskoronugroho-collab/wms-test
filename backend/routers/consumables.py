@@ -333,7 +333,7 @@ async def add_item(body: ItemIn, user: auth.User = Depends(auth.require("hq"))):
         await auth.assert_site_access(user, body.site_id)
         sites = [body.site_id]
     else:
-        raise HTTPException(422, "Pilih hub. / Choose a hub.")
+        raise HTTPException(422, "Pilih dark store. / Choose a dark store.")
     ids = []
     async with db.tx() as cur:
         for sid in sites:
@@ -410,7 +410,7 @@ async def open_requests(site_id: int | None = None, user: auth.User = Depends(au
     if site_id:
         await auth.assert_site_access(user, site_id)
     elif not user.at_least("hq"):
-        raise HTTPException(422, "Pilih hub. / Choose a hub.")
+        raise HTTPException(422, "Pilih dark store. / Choose a dark store.")
     rows = await db.fetch_all(
         "SELECT r.*, c.name, c.unit, st.code AS site_code FROM consumable_requests r "
         "JOIN consumables c ON c.id = r.consumable_id JOIN sites st ON st.id = r.site_id "
@@ -485,7 +485,7 @@ async def pending_receipts(site_id: int | None = None, user: auth.User = Depends
     if site_id:
         await auth.assert_site_access(user, site_id)
     elif not user.at_least("hq"):
-        raise HTTPException(422, "Pilih hub. / Choose a hub.")
+        raise HTTPException(422, "Pilih dark store. / Choose a dark store.")
     rows = await db.fetch_all(
         "SELECT x.*, c.name, c.unit, c.stock_qty, st.code AS site_code, r.pr_number, r.pr_qty "
         "FROM consumable_receipts x JOIN consumables c ON c.id = x.consumable_id "
@@ -564,7 +564,7 @@ async def submit_count(body: CountIn, user: auth.User = Depends(auth.require("su
             it = await db.one(cur, "SELECT stock_qty FROM consumables WHERE id = %s AND site_id = %s",
                               (ln.consumable_id, body.site_id))
             if not it:
-                raise HTTPException(422, "Barang tidak dikenal di hub ini. / Unknown item at this hub.")
+                raise HTTPException(422, "Barang tidak dikenal di dark store ini. / Unknown item at this dark store.")
             await db.run(cur, "INSERT INTO consumable_count_lines (count_id, consumable_id, qty_counted, "
                               "qty_system) VALUES (%s,%s,%s,%s)",
                          (cid, ln.consumable_id, Decimal(str(ln.qty)), it["stock_qty"]))
@@ -594,7 +594,7 @@ async def list_counts(site_id: int | None = None, status: str = Query(default="a
     if site_id:
         await auth.assert_site_access(user, site_id)
     elif not user.at_least("hq"):
-        raise HTTPException(422, "Pilih hub. / Choose a hub.")
+        raise HTTPException(422, "Pilih dark store. / Choose a dark store.")
     where, params = [], []
     if site_id:
         where.append("k.site_id = %s")

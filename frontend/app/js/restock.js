@@ -89,7 +89,7 @@
     }
     const when = (r) => r.decide_by ? S.fmt.dt(r.decide_by) : r.confirmed_at && r.eta_date ? S.fmt.day(r.eta_date) : S.fmt.dt(r.sent_at || r.po_saved_at || r.raised_at || r.created_at);
     return '<div class="k-laptop-only"><div class="k-tablewrap"><table class="k-table"><thead><tr>' +
-      '<th ' + biAttr('Ninja reference', 'Ninja reference') + '></th><th ' + biAttr('Merek', 'Brand') + '></th><th ' + biAttr('Hub', 'Hub') + '></th>' +
+      '<th ' + biAttr('Ninja reference', 'Ninja reference') + '></th><th ' + biAttr('Merek', 'Brand') + '></th><th ' + biAttr('Dark store', 'Dark store') + '></th>' +
       '<th ' + biAttr('No. PO merek', 'Brand PO') + '></th><th class="k-num">SKU</th><th class="k-num" ' + biAttr('Unit', 'Units') + '></th>' +
       '<th ' + biAttr('Status', 'Status') + '></th><th ' + biAttr('Waktu', 'When') + '></th><th></th></tr></thead><tbody>' +
       rows.map((r) => '<tr' + (r.differences_pending ? ' class="is-caution"' : '') + '><td class="k-mono k-strong">' + (r.reference_is_final ? esc(r.reference) : '<span class="k-muted" ' + biAttr('(draf)', '(draft)') + '></span>') + '</td>' +

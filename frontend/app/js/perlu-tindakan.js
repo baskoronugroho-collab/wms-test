@@ -46,7 +46,7 @@
   function tableHtml(items, showHub) {
     return '<div class="k-tablewrap"><table class="k-table"><thead><tr>' +
       '<th style="width:150px" ' + biAttr('Status', 'Status') + '></th>' +
-      (showHub ? '<th style="width:80px" ' + biAttr('Hub', 'Hub') + '></th>' : '') +
+      (showHub ? '<th style="width:80px" ' + biAttr('Dark store', 'Dark store') + '></th>' : '') +
       '<th ' + biAttr('Apa', 'What') + '></th><th style="width:150px" ' + biAttr('Batas', 'Due') + '></th><th style="width:140px"></th>' +
       '</tr></thead><tbody>' + items.map((x) => {
         const k = kindOf(x.kind);

@@ -54,7 +54,7 @@ REASONS = {
 HUB_REASONS = ("rusak", "bocor", "kedaluwarsa", "produk_salah")
 
 ORIGINS = {
-    "hub": ("ninja", "Rusak di hub", "Damaged in the hub"),
+    "hub": ("ninja", "Rusak di dark store", "Damaged in the dark store"),
     "inbound": ("brand", "Ditolak saat masuk", "Rejected at inbound"),
     "inbound_rejected": ("brand", "Ditolak saat masuk", "Rejected at inbound"),
     "driver_return": ("ninja", "Ops HQ klaim ke Grab di luar WMS",
@@ -98,8 +98,8 @@ async def _tray(site_id: int, code: str | None, cur=None, strict: bool = False) 
     if code in known:
         return code
     if strict:
-        raise HTTPException(422, f"{code} bukan baki karantina hub ini. Pindai {known[0]}. / "
-                                 f"{code} is not a quarantine tray of this hub. Scan {known[0]}.")
+        raise HTTPException(422, f"{code} bukan baki karantina dark store ini. Pindai {known[0]}. / "
+                                 f"{code} is not a quarantine tray of this dark store. Scan {known[0]}.")
     return code
 
 
@@ -419,7 +419,7 @@ async def list_quarantine(site_id: int | None = None,
         where.append("q.site_id = %s")
         params.append(site_id)
     elif not user.at_least("hq"):
-        raise HTTPException(422, "Pilih hub. / Choose a hub.")
+        raise HTTPException(422, "Pilih dark store. / Choose a dark store.")
     if status == "open":
         where.append("q.status = 'open'")
     elif status == "decided":
@@ -590,7 +590,7 @@ async def write_offs(site_id: int | None = None, user: auth.User = Depends(auth.
         where.append("q.site_id = %s")
         params.append(site_id)
     elif not user.at_least("hq"):
-        raise HTTPException(422, "Pilih hub. / Choose a hub.")
+        raise HTTPException(422, "Pilih dark store. / Choose a dark store.")
     rows = await db.fetch_all(_ITEM_SQL + "WHERE " + " AND ".join(where) +
                               " ORDER BY b.name, q.decided_at", params)
     names = await names_for([r["reported_by"] for r in rows] + [r["decided_by"] for r in rows])

@@ -695,8 +695,8 @@
     const snap = BODY.querySelector('[data-snap]');
     if (snap) snap.addEventListener('click', async () => {
       const ok = await S.confirm({ title: ['Kirim snapshot stok penuh?', 'Send a full stock snapshot?'],
-        text: ['Setiap SKU dari setiap toko dengan sambungan menyala di hub ini dikirim ulang ke Hiryu.',
-          'Every SKU of every store with its link on at this hub is sent to Hiryu again.'] });
+        text: ['Setiap SKU dari setiap toko dengan sambungan menyala di dark store ini dikirim ulang ke Hiryu.',
+          'Every SKU of every store with its link on at this dark store is sent to Hiryu again.'] });
       if (!ok) return;
       try { const r = await api().post('/hiryu-link/snapshot' + api().qs({ site_id: S.siteId() })); S.toast(r.message, 'ok'); }
       catch (e) { S.fail(e); }
@@ -784,7 +784,7 @@
       document.addEventListener('njw:lang', () => { if (S.currentTab() === 'integrasi' && BODY && BODY.isConnected) paintAll(); });
     }
     if (!S.siteId() && !S.atLeast('hq')) {
-      BODY.innerHTML = '<div class="k-card k-card--pad">' + span(['Pilih satu hub.', 'Choose one hub.']) + '</div>';
+      BODY.innerHTML = '<div class="k-card k-card--pad">' + span(['Pilih satu dark store.', 'Choose one dark store.']) + '</div>';
       return;
     }
     ST.mapSel = S.param('pesan') || null;

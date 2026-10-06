@@ -74,7 +74,7 @@ def T(id_text: str, en_text: str) -> dict:
 
 H_LIST = [
     {"h": "H1", "pilot": True, "messages": ["1"], "grab": [],
-     "text": T("Staf menekan Accept di Hiryu: Hiryu mengirim pesan 1, pesanan untuk diambil.",
+     "text": T("Staf menekan Terima di Hiryu: Hiryu mengirim pesan 1, pesanan untuk diambil.",
                "Staff press Accept in Hiryu: Hiryu sends message 1, the order to pick.")},
     {"h": "H2", "pilot": True, "messages": ["2"], "grab": [],
      "text": T("Pembatalan apa pun (pelanggan, Grab, merchant, atau setelah H5): Hiryu mengirim pesan 2.",
@@ -149,7 +149,7 @@ def general_rules() -> list[dict]:
          "text": T("Angka selalu mutlak, tidak pernah \"+2\". Kode SKU dibandingkan tanpa melihat huruf besar kecil; WMS mengirimnya dalam huruf besar.",
                    "Numbers are absolute, never \"+2\". SKU codes are compared ignoring capitals; the WMS sends them in capitals.")},
         {"key": "hiryu_first", "title": T("Hiryu dulu", "Hiryu first"),
-         "text": T("Untuk setiap alur yang menyentuh dua sistem, Hiryu melakukan langkahnya dulu, lalu WMS. Pesanan masuk ke WMS hanya setelah Accept di Hiryu. "
+         "text": T("Untuk setiap alur yang menyentuh dua sistem, Hiryu melakukan langkahnya dulu, lalu WMS. Pesanan masuk ke WMS hanya setelah staf menekan Terima di Hiryu. "
                    "WMS memberi tahu Hiryu, dan hanya Hiryu yang bicara dengan Grab.",
                    "In any flow that touches both systems, Hiryu does its step first, then the WMS. An order reaches the WMS only after Accept in Hiryu. "
                    "The WMS tells Hiryu, and only Hiryu talks to Grab.")},
@@ -178,10 +178,10 @@ def general_rules() -> list[dict]:
                    "until then messages queue (shadow mode). Stock goes only for stores whose link is on (H8). The training site and UJI test "
                    "orders never send.")},
         {"key": "demo", "title": T("Mode demo", "Mode demo"),
-         "text": T("Hub dalam Mode demo mengirim ke stand-in Hiryu di dalam WMS, bukan ke POS_WEBHOOK_URL. Stand-in menjawab 200 {\"ok\": true, \"standin\": true}, "
+         "text": T("Dark store dalam Mode demo mengirim ke stand-in Hiryu di dalam WMS, bukan ke POS_WEBHOOK_URL. Stand-in menjawab 200 {\"ok\": true, \"standin\": true}, "
                    "lalu berlaku seperti Hiryu: setelah item_short dengan cancel_order ia mengirim pesan 2 (merchant, 2001), setelah catalogue_request ia "
                    "mengirim pesan 6 penuh. Di log tampil sebagai Demo atau Stand-in.",
-                   "A hub in Mode demo sends to the Hiryu stand-in inside the WMS instead of POS_WEBHOOK_URL. The stand-in answers 200 "
+                   "A dark store in Mode demo sends to the Hiryu stand-in inside the WMS instead of POS_WEBHOOK_URL. The stand-in answers 200 "
                    "{\"ok\": true, \"standin\": true}, then acts like Hiryu: after item_short with cancel_order it sends message 2 (merchant, 2001), "
                    "after catalogue_request it sends a full message 6. The log shows these as Demo or Stand-in.")},
         {"key": "ping", "title": T("Cek sambungan", "Health check"),
@@ -256,10 +256,10 @@ ANN_ORDER = {
         "Nomor pendek di Live Orders dan slip. Tampil besar untuk picker dan packer; packer mengetiknya untuk cek slip.",
         "The short number on Live Orders and the slip. Shown big to picker and packer; the packer types it to check the slip.")},
     "hiryu_store_id": {"meaning": T(
-        "Nomor toko di Hiryu (Labore - Cawang #903). Menentukan hub dan merek; toko tak dikenal atau tidak aktif dijawab 422.",
-        "Hiryu's store number (Labore - Cawang is #903). Finds hub and brand; an unknown or inactive store answers 422.")},
+        "Nomor toko di Hiryu (Labore - Cawang #903). Menentukan dark store dan merek; toko tak dikenal atau tidak aktif dijawab 422.",
+        "Hiryu's store number (Labore - Cawang is #903). Finds the dark store and brand; an unknown or inactive store answers 422.")},
     "order_time": {"allowed": TIME_NOTE, "meaning": T(
-        "Saat pelanggan memesan di Grab. Jam mulai dihitung dari sini, bukan dari Accept: siap paling lambat order_time + 10 menit.",
+        "Saat pelanggan memesan di Grab. Jam mulai dihitung dari sini, bukan dari Terima: siap paling lambat order_time + 10 menit.",
         "When the customer ordered on Grab. The clock starts here, not at Accept: ready-by is order_time plus 10 minutes.")},
     "scheduled_time": {"allowed": TIME_OR_NULL, "meaning": T(
         "Waktu terjadwal dari Grab; null untuk pesanan sekarang. Pesanan menunggu di Terjadwal dan masuk ke picker 20 menit sebelumnya.",
@@ -332,18 +332,18 @@ ANN_CATALOGUE = {
     "request_id": {"meaning": T(
         "request_id dari catalogue_request yang dijawab; null bila Hiryu mengirim sendiri. Menandai Sinkron ulang selesai.",
         "The request_id of the catalogue_request this answers; null when Hiryu sends on its own. Marks Sinkron ulang as done.")},
-    "dark_stores": {"meaning": T("Dark store di Hiryu, satu hub WMS per dark store.",
-                                "Hiryu's dark stores, one WMS hub per dark store.")},
+    "dark_stores": {"meaning": T("Dark store di Hiryu. Setiap dark store Hiryu adalah satu dark store di WMS.",
+                                "Hiryu's dark stores. Each one is one dark store in the WMS.")},
     "dark_stores[].hiryu_dark_store_id": {"meaning": T(
-        "Nomor dark store di Hiryu, kunci hub. Nomor baru membuat hub (Baru dari Hiryu); Ops HQ hanya menambah data WMS.",
-        "The dark store's number in Hiryu, the hub's key. A new one creates the hub (Baru dari Hiryu); Ops HQ adds only the WMS data.")},
-    "dark_stores[].name": {"meaning": T("Nama dark store. Nama hub, hanya baca di WMS.",
-                                        "The dark store's name. The hub name, read-only in the WMS.")},
-    "dark_stores[].address": {"meaning": T("Alamat dark store. Hanya baca di Hub & mulai operasi.",
-                                           "The dark store's address. Read-only on Hub & mulai operasi.")},
+        "Nomor dark store di Hiryu, kuncinya di WMS. Nomor baru membuat dark store baru di WMS (Baru dari Hiryu); Ops HQ hanya menambah data WMS.",
+        "The dark store's number in Hiryu, its key in the WMS. A new one creates the dark store in the WMS (Baru dari Hiryu); Ops HQ adds only the WMS data.")},
+    "dark_stores[].name": {"meaning": T("Nama dark store, hanya baca di WMS.",
+                                        "The dark store's name, read-only in the WMS.")},
+    "dark_stores[].address": {"meaning": T("Alamat dark store. Hanya baca di Dark store & mulai operasi.",
+                                           "The dark store's address. Read-only on Dark store & mulai operasi.")},
     "dark_stores[].opening_hours": {"meaning": T(
-        "Jam buka di Hiryu, yang juga tampil di Grab. Jam buka hub, untuk mulai hari, laporan akhir hari dan peringatan.",
-        "The hours set in Hiryu, the ones Grab shows. The hub's open hours, for the day's start, end-of-day report and alerts.")},
+        "Jam buka di Hiryu, yang juga tampil di Grab. Jam buka dark store, untuk mulai hari, laporan akhir hari dan peringatan.",
+        "The hours set in Hiryu, the ones Grab shows. The dark store's open hours, for the day's start, end-of-day report and alerts.")},
     "dark_stores[].opening_hours.{mon,tue,wed,thu,fri,sat,sun}": {"meaning": T(
         "Satu isi per jam buka, WIB, 24 jam; [] berarti tutup hari itu. Ketujuh hari wajib ada.",
         "One entry per opening period, WIB, 24 h; [] means closed that day. All seven days must be there.")},
@@ -357,8 +357,8 @@ ANN_CATALOGUE = {
         "The store's number, its key. A new store waits on Menu & toko Hiryu until Ops HQ picks its brand and Grab merchant account.")},
     "stores[].name": {"meaning": T("Nama toko. Tampil di Menu & toko Hiryu.", "The store's name. Shown on Menu & toko Hiryu.")},
     "stores[].hiryu_dark_store_id": {"meaning": T(
-        "Dark store tempat toko berada. Menaruh toko di hub itu; dark store tak dikenal masuk problems.",
-        "The dark store the store belongs to. Puts the store on that hub; an unknown dark store goes to problems.")},
+        "Dark store tempat toko berada. Toko ditaruh di dark store itu; nomor yang tak dikenal masuk problems.",
+        "The dark store the store belongs to. Puts the store on that dark store; an unknown number goes to problems.")},
     "stores[].status": {"allowed": T("active | inactive", "active | inactive"), "meaning": T(
         "active atau inactive (huruf besar kecil bebas). inactive: stok tidak dikirim dan pesanannya ditolak.",
         "active or inactive (any capitals). inactive: no stock is sent and its orders are refused.")},
@@ -402,7 +402,7 @@ INBOUND = [
         "example": EX_ORDER, "ann": ANN_ORDER,
         "triggers": [
             {"side": "hiryu", "h": ["H1"], "text": T(
-                "Staf menekan Accept di Hiryu. Sekali per pesanan, saat itu juga.",
+                "Staf menekan Terima di Hiryu. Sekali per pesanan, saat itu juga.",
                 "Staff press Accept in Hiryu. Once per order, at that moment.")},
             {"side": "hiryu", "h": ["H9"], "text": T(
                 "Setiap baris membawa pilihan pelanggan bila barang habis (oos_instruction), atau null.",
@@ -549,8 +549,8 @@ INBOUND = [
         ],
         "next": [
             {"side": "wms", "text": T(
-                "Dark store baru jadi hub Baru dari Hiryu; Ops HQ melengkapi kode hub, bin dan keranjang di Hub & mulai operasi.",
-                "A new dark store becomes a hub marked Baru dari Hiryu; Ops HQ completes its hub code, bins and baskets on Hub & mulai operasi.")},
+                "Dark store baru muncul dengan tanda Baru dari Hiryu; Ops HQ melengkapi kode dark store, bin dan keranjang di Dark store & mulai operasi.",
+                "A new dark store shows up marked Baru dari Hiryu; Ops HQ completes its dark store code, bins and baskets on Dark store & mulai operasi.")},
             {"side": "wms", "text": T(
                 "Toko baru menunggu Ops HQ memilih merek dan akun merchant Grab; sampai itu tidak ada yang dikirim untuknya. SKU baru dibuat untuk merek toko yang memakainya; Ops HQ melengkapinya (Lengkapi data SKU).",
                 "A new store waits for Ops HQ to pick its brand and Grab merchant account; until then nothing is sent for it. A new SKU is made for the brand of the store that uses it; Ops HQ completes it (Lengkapi data SKU).")},
@@ -591,8 +591,8 @@ OUTBOUND = [
                              "as_of": "2026-10-01T02:15:03Z", "is_snapshot": False}},
         "ann": {
             "data.hiryu_store_id": {"meaning": T(
-                "Toko Hiryu yang aktif untuk merek ini di hub ini, dengan sambungan menyala (Kahf - Cawang #902). Stok toko mana yang disetel.",
-                "The active Hiryu store for this brand at this hub, with its link on (Kahf - Cawang is #902). Which store's stock to set.")},
+                "Toko Hiryu yang aktif untuk merek ini di dark store ini, dengan sambungan menyala (Kahf - Cawang #902). Stok toko mana yang disetel.",
+                "The active Hiryu store for this brand at this dark store, with its link on (Kahf - Cawang is #902). Which store's stock to set.")},
             "data.sku_code": {"allowed": CAPS, "meaning": T("Kode SKU Hiryu. SKU mana yang disetel.",
                                                             "The SKU's Hiryu code. Which SKU to set.")},
             "data.available": {"allowed": T("0 atau lebih", "0 or more"), "meaning": T(
@@ -607,8 +607,8 @@ OUTBOUND = [
         },
         "triggers": [
             {"side": "wms", "h": ["H3"], "text": T(
-                "Setiap gerakan stok untuk toko dan SKU itu: barang masuk ditaruh di bin, unit ditahan untuk pesanan baru, tahanan dilepas saat batal, dikembalikan ke rak, keluar dari hub, koreksi barang masuk.",
-                "Every stock move for that store and SKU: delivery put away, units held for a new order, holds released on a cancel, units returned to the rack, units leaving the hub, a delivery corrected.")},
+                "Setiap gerakan stok untuk toko dan SKU itu: barang masuk ditaruh di bin, unit ditahan untuk pesanan baru, tahanan dilepas saat batal, dikembalikan ke rak, keluar dari dark store, koreksi barang masuk.",
+                "Every stock move for that store and SKU: delivery put away, units held for a new order, holds released on a cancel, units returned to the rack, units leaving the dark store, a delivery corrected.")},
             {"side": "wms", "h": ["H3", "H5"], "text": T(
                 "Barang tidak ada: bin disetel ke jumlah yang ditemukan.",
                 "Missing item: the bin is set to what was found.")},
@@ -632,7 +632,7 @@ OUTBOUND = [
                 "Setel Units on hand toko dan SKU itu ke available, lalu teruskan ke Grab seperti sekarang. Abaikan bila as_of lebih tua dari angka yang ada.",
                 "Set Units on hand for that store and SKU to available, then pass it on to Grab as today. Ignore it when as_of is older than the number you have.")},
             {"side": "hiryu", "text": T(
-                "Setelah sambungan toko menyala (H8): tidak ada pengurangan sendiri saat Mark ready dan tidak ada penambahan setelah batal.",
+                "Setelah sambungan toko menyala (H8): tidak ada pengurangan sendiri saat Tandai siap dan tidak ada penambahan setelah batal.",
                 "Once the store's link is on (H8): no own deduction at Mark ready and no restore after a cancel.")},
         ],
     },
@@ -660,7 +660,7 @@ OUTBOUND = [
               "Only for orders that came by message 1. Never for a cancelled order, a pasted order, a UJI test order or the training site."),
         ],
         "next": [
-            {"side": "hiryu", "text": T("Tandai pesanan siap di Grab (MarkOrderReady). Staf tidak lagi menekan Mark ready.",
+            {"side": "hiryu", "text": T("Tandai pesanan siap di Grab (MarkOrderReady). Staf tidak lagi menekan Tandai siap.",
                                         "Mark the order ready on Grab (MarkOrderReady). Staff no longer press Mark ready.")},
             {"side": "wms", "text": T("Driver mengambil: serah terima dicek di WMS, tidak ada pesan yang dikirim.",
                                       "The driver collects: the handover is checked in the WMS, no message is sent.")},
@@ -731,7 +731,7 @@ OUTBOUND = [
         "example": {"message_id": "wms-40400", "type": "catalogue_request", "sent_at": "2026-10-01T02:40:01Z",
                     "data": {"request_id": "wms-cat-3-1790822400", "requested_at": "2026-10-01T02:40:00Z"}},
         "ann": {
-            "data.request_id": {"allowed": T("wms-cat-<hub>-<detik unix>", "wms-cat-<hub>-<unix seconds>"), "meaning": T(
+            "data.request_id": {"allowed": T("wms-cat-<id dark store>-<detik unix>", "wms-cat-<dark store id>-<unix seconds>"), "meaning": T(
                 "WMS membuatnya, unik per permintaan. Kembalikan di request_id pesan 6.",
                 "The WMS makes it, unique per request. Echo it in request_id of message 6.")},
             "data.requested_at": {"allowed": UTC_Z, "meaning": T("Saat tombol ditekan. Untuk log Hiryu.",
@@ -739,8 +739,8 @@ OUTBOUND = [
         },
         "triggers": [
             {"side": "wms", "h": ["H6"], "text": T(
-                "Siapa pun di hub menekan Sinkron ulang dari Hiryu di Menu & toko Hiryu. Semua peran, sekali tiap 5 menit per hub; nama penekan dicatat.",
-                "Anyone at the hub presses Sinkron ulang dari Hiryu on Menu & toko Hiryu. Any role, once every 5 minutes per hub; the name is logged.")},
+                "Siapa pun di dark store menekan Sinkron ulang dari Hiryu di Menu & toko Hiryu. Semua peran, sekali tiap 5 menit per dark store; nama penekan dicatat.",
+                "Anyone at the dark store presses Sinkron ulang dari Hiryu on Menu & toko Hiryu. Any role, once every 5 minutes per dark store; the name is logged.")},
         ],
         "rules": [
             T("Terlalu cepat: tombol mendapat 429 (Bisa lagi 09:45 WIB) dan tidak ada yang diantrekan. Batas ini di aplikasi WMS, bukan jawaban untuk Hiryu.",

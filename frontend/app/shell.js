@@ -74,12 +74,12 @@
 
   const RANK = { staff: 0, hub_operator: 1, supervisor: 2, hq: 3, ops_head: 4, superadmin: 5 };
   const ROLE_NAME = {
-    staff: ['Staf', 'Staff'], hub_operator: ['Operator hub', 'Hub operator'], supervisor: ['SPV', 'SPV'],
+    staff: ['Staf', 'Staff'], hub_operator: ['Operator dark store', 'Dark store operator'], supervisor: ['SPV', 'SPV'],
     hq: ['Ops HQ', 'Ops HQ'], ops_head: ['Ops Head', 'Ops Head'], superadmin: ['Superadmin', 'Superadmin'],
   };
   const ROLE_CHIP = { staff: 'staff', hub_operator: 'staff', supervisor: 'spv', hq: 'hq', ops_head: 'head', superadmin: 'head' };
   const LOCK_WHO = {
-    hub_operator: ['Hanya operator hub', 'Hub operator only'], supervisor: ['Hanya SPV', 'SPV only'],
+    hub_operator: ['Hanya operator dark store', 'Dark store operator only'], supervisor: ['Hanya SPV', 'SPV only'],
     hq: ['Hanya Ops HQ', 'Ops HQ only'], ops_head: ['Hanya Ops Head', 'Ops Head only'],
     superadmin: ['Hanya superadmin', 'Superadmin only'],
   };
@@ -193,7 +193,7 @@
     return ds.length ? ds : all;
   }
   const shortCode = (code) => { const p = String(code || '').split('-'); return p.length > 1 ? p[p.length - 1] : String(code || ''); };
-  const siteLabel = (s) => (s ? shortCode(s.code) + (s.name ? ' · ' + s.name : '') + (s.is_training ? ' · LATIHAN' : '') : t('Semua hub', 'All hubs'));
+  const siteLabel = (s) => (s ? shortCode(s.code) + (s.name ? ' · ' + s.name : '') + (s.is_training ? ' · LATIHAN' : '') : t('Semua dark store', 'All dark stores'));
   function pickSite() {
     let saved = store.get('njw.site');
     if (!saved) { try { saved = JSON.parse(sessionStorage.getItem('njw.site')); } catch (e) { saved = null; } }
@@ -218,8 +218,8 @@
     if (sites.length < 2 && !(OPTS.allSites && sites.length > 1)) {
       return '<span class="k-hubsel" style="display:inline-flex;align-items:center;border:0;padding:0" id="' + id + '">' + esc(siteLabel(SITE)) + '</span>';
     }
-    return '<select class="k-hubsel" id="' + id + '" aria-label="Hub">' +
-      (OPTS.allSites ? '<option value="all"' + (ALL ? ' selected' : '') + ' ' + biAttr('Semua hub', 'All hubs') + '>' + esc(t('Semua hub', 'All hubs')) + '</option>' : '') +
+    return '<select class="k-hubsel" id="' + id + '" aria-label="Dark store">' +
+      (OPTS.allSites ? '<option value="all"' + (ALL ? ' selected' : '') + ' ' + biAttr('Semua dark store', 'All dark stores') + '>' + esc(t('Semua dark store', 'All dark stores')) + '</option>' : '') +
       sites.map((s) => '<option value="' + s.id + '"' + (SITE && s.id === SITE.id ? ' selected' : '') + '>' + esc(siteLabel(s)) + '</option>').join('') +
       '</select>';
   }
@@ -257,7 +257,7 @@
           '<a class="k-todopill" id="k-ptodo" href="perlu-tindakan.html" hidden>' + icon('bell', 16, 2.4) + '<span data-todo-count></span></a>' +
         '</header>' +
         '<header class="k-top">' +
-          '<label class="k-top__label" for="k-hub" ' + biAttr('Hub', 'Hub') + '>Hub</label><span id="k-hubslot"></span>' +
+          '<label class="k-top__label" for="k-hub" ' + biAttr('Dark store', 'Dark store') + '>Dark store</label><span id="k-hubslot"></span>' +
           '<span class="k-grow"></span>' +
           '<span id="k-linkpill"></span>' +
           '<span class="k-top__clock" id="k-clock"></span>' +
@@ -302,7 +302,7 @@
   }
   function paintUser() {
     const r = roleName(ME.role);
-    const code = SITE ? shortCode(SITE.code) : t('Semua hub', 'All hubs');
+    const code = SITE ? shortCode(SITE.code) : t('Semua dark store', 'All dark stores');
     $('#k-usercard').innerHTML =
       '<div class="k-usercard__who"><span class="k-avatar k-avatar--' + (ROLE_CHIP[ME.role] || 'head') + '">' + esc(initials(ME.name)) + '</span>' +
       '<div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span class="k-usercard__name">' + esc(ME.name) + '</span>' +
@@ -331,11 +331,11 @@
       '<div class="k-sheet__head"><div class="k-brand"><span class="k-brand__mark">NINJA</span><span class="k-brand__name">SatSet WMS</span></div>' +
       '<button type="button" class="k-iconbtn k-sheet__close" data-close ' + 'data-aria-id="Tutup menu" data-aria-en="Close the menu" aria-label="Tutup menu">' + icon('close', 24, 2.2) + '</button></div>' +
       '<div class="k-sheet__user"><span class="k-avatar k-avatar--' + (ROLE_CHIP[ME.role] || 'head') + '">' + esc(initials(ME.name)) + '</span>' +
-      '<div class="k-sheet__who"><span class="k-sheet__name">' + esc(ME.name) + '</span><span class="k-sheet__role"><span ' + biAttr(r[0], r[1]) + '></span> · Hub ' +
+      '<div class="k-sheet__who"><span class="k-sheet__name">' + esc(ME.name) + '</span><span class="k-sheet__role"><span ' + biAttr(r[0], r[1]) + '></span> · Dark store ' +
       esc(SITE ? shortCode(SITE.code) : t('semua', 'all')) + '</span></div>' +
       '<button type="button" class="k-navbtn" data-lang-toggle style="height:40px">ID</button>' +
       '<a class="k-navbtn" style="height:40px" href="' + NJW.shell.SIGN_OUT + '"><span ' + biAttr('Keluar', 'Sign out') + '></span></a></div>' +
-      (visibleSites().length > 1 ? '<div class="k-sheet__hub"><label for="k-hub2">Hub</label>' + hubSelectHtml('k-hub2') + '</div>' : '') +
+      (visibleSites().length > 1 ? '<div class="k-sheet__hub"><label for="k-hub2">Dark store</label>' + hubSelectHtml('k-hub2') + '</div>' : '') +
       navHtml(true);
     document.body.appendChild(SHEET);
     document.body.style.overflow = 'hidden';
@@ -536,7 +536,11 @@
     paintTabs(tab);
     markCurrent(document);
     const body = $('#k-body');
-    if (tab) { body.innerHTML = ''; $('#k-actions').innerHTML = ''; }
+    if (tab) {
+      body.innerHTML = ''; $('#k-actions').innerHTML = '';
+      // A tab's own subtitle must not stay on the next tab: back to the page's.
+      if (OPTS.sub) setSub(pair(OPTS.sub)[0], pair(OPTS.sub)[1]); else setSub(null);
+    }
     let fn = tab ? TAB_FNS[tab] : null;
     const def = tab ? OPTS.tabs.find((x) => x.id === tab) : null;
     if (!fn && def && def.script) {

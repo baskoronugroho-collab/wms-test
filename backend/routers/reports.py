@@ -505,7 +505,7 @@ async def _returns_list(brand_id: int, site_ids: list[int], start_utc: datetime,
             f"WHERE rn.brand_id = %s AND rn.site_id IN ({_in(site_ids)}) AND rn.status = 'handed_over' "
             "AND rn.handed_over_at >= %s AND rn.handed_over_at < %s ORDER BY rn.handed_over_at",
             [brand_id] + site_ids + [start_utc, end_utc]):
-        reason = {"old_stock": f"Old stock (over {old_days} days in the hub), sent back",
+        reason = {"old_stock": f"Old stock (over {old_days} days in the dark store), sent back",
                   "rejected": f"Rejected at inbound ({REASON_EN.get(r['reason'], 'other').lower()}), sent back",
                   }.get(r["origin"], f"{REASON_EN.get(r['reason'], 'Other')}, sent back")
         d = (r["at"] + WIB).date()
@@ -521,7 +521,7 @@ async def _returns_list(brand_id: int, site_ids: list[int], start_utc: datetime,
             "      AND q.reported_at >= %s AND q.reported_at < %s)) ORDER BY at",
             [brand_id] + site_ids + [start_utc, end_utc, start_utc, end_utc]):
         bearer = "Ninja's" if r["cost_bearer"] == "ninja" else "the brand's"
-        where = {"hub": "in the hub", "inbound": "at inbound", "inbound_rejected": "at inbound",
+        where = {"hub": "in the dark store", "inbound": "at inbound", "inbound_rejected": "at inbound",
                  "driver_return": "back from the driver"}.get(r["origin"], "")
         reason = f"{REASON_EN.get(r['reason'], 'Other')} {where}, {bearer} cost".replace("  ", " ")
         d = (r["at"] + WIB).date()
@@ -827,7 +827,7 @@ async def end_of_day_csv(site_id: int, day: str | None = None, user: auth.User =
     d = await end_of_day_data(site, _parse_start(day))
     buf = io.StringIO()
     w = csv.writer(buf)
-    w.writerow(["Hub", d["site_code"], "Tanggal", d["day"]])
+    w.writerow(["Dark store", d["site_code"], "Tanggal", d["day"]])
     w.writerow([])
     w.writerow(["Status", "Jumlah"])
     for k, label in (("handed_over", "Diserahkan ke driver"), ("ready", "Siap, menunggu driver"),
@@ -996,7 +996,7 @@ CATEGORIES = (
     ("rejected_back", "Rejected at inbound, sent back", "Inbound differences"),
     ("count_short", "Count differences (short)", "Count differences"),
     ("count_extra", "Count differences (extra)", "Count differences"),
-    ("damaged_hub", "Damaged in the hub", "Damage and write-off"),
+    ("damaged_hub", "Damaged in the dark store", "Damage and write-off"),
     ("rejected_written_off", "Rejected at inbound, written off", "Damage and write-off"),
     ("returned", "Returned to brand", "Returns to brand"),
 )

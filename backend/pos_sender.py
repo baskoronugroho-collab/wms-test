@@ -216,7 +216,7 @@ _MOVE_WORDS = {
     "return_in": ("Barang dikembalikan ke rak", "Units returned to the rack"),
     "relocate_in": ("Barang dipindah antar bin", "Units moved between bins"),
     "relocate_out": ("Barang dipindah antar bin", "Units moved between bins"),
-    "transfer_out": ("Barang keluar dari hub", "Units left the hub"),
+    "transfer_out": ("Barang keluar dari dark store", "Units left the dark store"),
     "receipt_adjust": ("Koreksi barang masuk", "Delivery corrected"),
     "receipt_undo": ("Koreksi barang masuk", "Delivery corrected"),
 }
@@ -275,8 +275,8 @@ async def _build_stock(row: dict) -> tuple[list[tuple[str, dict]], int, dict]:
         (row["site_id"], sku["brand_id"]))
     if not stores:
         raise Suppress("Tidak ada toko Hiryu aktif dengan sambungan menyala untuk merek ini "
-                       "di hub ini / No active Hiryu store with its link on for this brand "
-                       "at this hub")
+                       "di dark store ini / No active Hiryu store with its link on for this brand "
+                       "at this dark store")
 
     # A snapshot row, or any pending snapshot row this one answers, makes the
     # message part of the snapshot (is_snapshot, message 3).

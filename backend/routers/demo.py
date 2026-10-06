@@ -149,8 +149,8 @@ async def put_settings(body: DemoSettingsIn, user: auth.User = Depends(auth.requ
     messages 3 to 5 of this hub go to the Hiryu stand-in, not to Hiryu."""
     site = await _site(user, body.site_id)
     if site["is_training"] or site["site_type"] != "darkstore":
-        raise HTTPException(422, "Mode demo hanya untuk hub darkstore, bukan lokasi latihan. / "
-                                 "Mode demo is for a darkstore hub, not the training site.")
+        raise HTTPException(422, "Mode demo hanya untuk dark store, bukan lokasi latihan. / "
+                                 "Mode demo is for a dark store, not the training site.")
     await db.execute("UPDATE sites SET demo_mode = %s WHERE id = %s",
                      (1 if body.demo_mode else 0, body.site_id))
     async with db.tx() as cur:
@@ -242,13 +242,13 @@ async def demo_order(body: DemoOrderIn, user: auth.User = Depends(auth.require("
     handler's answer, as Hiryu would see it."""
     site = await _site(user, body.site_id)
     if not site["demo_mode"]:
-        raise HTTPException(409, "Mode demo belum menyala untuk hub ini (Pengaturan, Demo). / "
-                                 "Mode demo is not on for this hub (Pengaturan, Demo).")
+        raise HTTPException(409, "Mode demo belum menyala untuk dark store ini (Pengaturan, Demo). / "
+                                 "Mode demo is not on for this dark store (Pengaturan, Demo).")
     stores = await _stores_with_items(body.site_id, body.hiryu_store_id)
     stores = [s for s in stores if any(i["available"] for i in s["items"])]
     if not stores:
-        raise HTTPException(422, "Tidak ada toko Hiryu aktif dengan menu di hub ini. / "
-                                 "No active Hiryu store with a menu at this hub.")
+        raise HTTPException(422, "Tidak ada toko Hiryu aktif dengan menu di dark store ini. / "
+                                 "No active Hiryu store with a menu at this dark store.")
     store = stores[0] if body.hiryu_store_id else random.choice(stores)
     menu = [i for i in store["items"] if i["available"]]
     n_lines = body.lines or random.randint(3, 6)

@@ -72,7 +72,7 @@
     "en": "Hiryu first"
    },
    "text": {
-    "id": "Untuk setiap alur yang menyentuh dua sistem, Hiryu melakukan langkahnya dulu, lalu WMS. Pesanan masuk ke WMS hanya setelah Accept di Hiryu. WMS memberi tahu Hiryu, dan hanya Hiryu yang bicara dengan Grab.",
+    "id": "Untuk setiap alur yang menyentuh dua sistem, Hiryu melakukan langkahnya dulu, lalu WMS. Pesanan masuk ke WMS hanya setelah staf menekan Terima di Hiryu. WMS memberi tahu Hiryu, dan hanya Hiryu yang bicara dengan Grab.",
     "en": "In any flow that touches both systems, Hiryu does its step first, then the WMS. An order reaches the WMS only after Accept in Hiryu. The WMS tells Hiryu, and only Hiryu talks to Grab."
    }
   },
@@ -127,8 +127,8 @@
     "en": "Mode demo"
    },
    "text": {
-    "id": "Hub dalam Mode demo mengirim ke stand-in Hiryu di dalam WMS, bukan ke POS_WEBHOOK_URL. Stand-in menjawab 200 {\"ok\": true, \"standin\": true}, lalu berlaku seperti Hiryu: setelah item_short dengan cancel_order ia mengirim pesan 2 (merchant, 2001), setelah catalogue_request ia mengirim pesan 6 penuh. Di log tampil sebagai Demo atau Stand-in.",
-    "en": "A hub in Mode demo sends to the Hiryu stand-in inside the WMS instead of POS_WEBHOOK_URL. The stand-in answers 200 {\"ok\": true, \"standin\": true}, then acts like Hiryu: after item_short with cancel_order it sends message 2 (merchant, 2001), after catalogue_request it sends a full message 6. The log shows these as Demo or Stand-in."
+    "id": "Dark store dalam Mode demo mengirim ke stand-in Hiryu di dalam WMS, bukan ke POS_WEBHOOK_URL. Stand-in menjawab 200 {\"ok\": true, \"standin\": true}, lalu berlaku seperti Hiryu: setelah item_short dengan cancel_order ia mengirim pesan 2 (merchant, 2001), setelah catalogue_request ia mengirim pesan 6 penuh. Di log tampil sebagai Demo atau Stand-in.",
+    "en": "A dark store in Mode demo sends to the Hiryu stand-in inside the WMS instead of POS_WEBHOOK_URL. The stand-in answers 200 {\"ok\": true, \"standin\": true}, then acts like Hiryu: after item_short with cancel_order it sends message 2 (merchant, 2001), after catalogue_request it sends a full message 6. The log shows these as Demo or Stand-in."
    }
   },
   {
@@ -152,7 +152,7 @@
    ],
    "grab": [],
    "text": {
-    "id": "Staf menekan Accept di Hiryu: Hiryu mengirim pesan 1, pesanan untuk diambil.",
+    "id": "Staf menekan Terima di Hiryu: Hiryu mengirim pesan 1, pesanan untuk diambil.",
     "en": "Staff press Accept in Hiryu: Hiryu sends message 1, the order to pick."
    }
   },
@@ -340,7 +340,7 @@
       "H1"
      ],
      "text": {
-      "id": "Staf menekan Accept di Hiryu. Sekali per pesanan, saat itu juga.",
+      "id": "Staf menekan Terima di Hiryu. Sekali per pesanan, saat itu juga.",
       "en": "Staff press Accept in Hiryu. Once per order, at that moment."
      }
     },
@@ -436,8 +436,8 @@
      "pattern": null,
      "example": "903",
      "meaning": {
-      "id": "Nomor toko di Hiryu (Labore - Cawang #903). Menentukan hub dan merek; toko tak dikenal atau tidak aktif dijawab 422.",
-      "en": "Hiryu's store number (Labore - Cawang is #903). Finds hub and brand; an unknown or inactive store answers 422."
+      "id": "Nomor toko di Hiryu (Labore - Cawang #903). Menentukan dark store dan merek; toko tak dikenal atau tidak aktif dijawab 422.",
+      "en": "Hiryu's store number (Labore - Cawang is #903). Finds the dark store and brand; an unknown or inactive store answers 422."
      }
     },
     {
@@ -459,7 +459,7 @@
      "pattern": null,
      "example": "\"2026-10-01T09:41:00+07:00\"",
      "meaning": {
-      "id": "Saat pelanggan memesan di Grab. Jam mulai dihitung dari sini, bukan dari Accept: siap paling lambat order_time + 10 menit.",
+      "id": "Saat pelanggan memesan di Grab. Jam mulai dihitung dari sini, bukan dari Terima: siap paling lambat order_time + 10 menit.",
       "en": "When the customer ordered on Grab. The clock starts here, not at Accept: ready-by is order_time plus 10 minutes."
      }
     },
@@ -1265,8 +1265,8 @@
       "H3"
      ],
      "text": {
-      "id": "Setiap gerakan stok untuk toko dan SKU itu: barang masuk ditaruh di bin, unit ditahan untuk pesanan baru, tahanan dilepas saat batal, dikembalikan ke rak, keluar dari hub, koreksi barang masuk.",
-      "en": "Every stock move for that store and SKU: delivery put away, units held for a new order, holds released on a cancel, units returned to the rack, units leaving the hub, a delivery corrected."
+      "id": "Setiap gerakan stok untuk toko dan SKU itu: barang masuk ditaruh di bin, unit ditahan untuk pesanan baru, tahanan dilepas saat batal, dikembalikan ke rak, keluar dari dark store, koreksi barang masuk.",
+      "en": "Every stock move for that store and SKU: delivery put away, units held for a new order, holds released on a cancel, units returned to the rack, units leaving the dark store, a delivery corrected."
      }
     },
     {
@@ -1383,8 +1383,8 @@
      "pattern": null,
      "example": "902",
      "meaning": {
-      "id": "Toko Hiryu yang aktif untuk merek ini di hub ini, dengan sambungan menyala (Kahf - Cawang #902). Stok toko mana yang disetel.",
-      "en": "The active Hiryu store for this brand at this hub, with its link on (Kahf - Cawang is #902). Which store's stock to set."
+      "id": "Toko Hiryu yang aktif untuk merek ini di dark store ini, dengan sambungan menyala (Kahf - Cawang #902). Stok toko mana yang disetel.",
+      "en": "The active Hiryu store for this brand at this dark store, with its link on (Kahf - Cawang is #902). Which store's stock to set."
      }
     },
     {
@@ -1524,7 +1524,7 @@
     {
      "side": "hiryu",
      "text": {
-      "id": "Setelah sambungan toko menyala (H8): tidak ada pengurangan sendiri saat Mark ready dan tidak ada penambahan setelah batal.",
+      "id": "Setelah sambungan toko menyala (H8): tidak ada pengurangan sendiri saat Tandai siap dan tidak ada penambahan setelah batal.",
       "en": "Once the store's link is on (H8): no own deduction at Mark ready and no restore after a cancel."
      }
     }
@@ -1773,7 +1773,7 @@
     {
      "side": "hiryu",
      "text": {
-      "id": "Tandai pesanan siap di Grab (MarkOrderReady). Staf tidak lagi menekan Mark ready.",
+      "id": "Tandai pesanan siap di Grab (MarkOrderReady). Staf tidak lagi menekan Tandai siap.",
       "en": "Mark the order ready on Grab (MarkOrderReady). Staff no longer press Mark ready."
      }
     },
@@ -2315,8 +2315,8 @@
      "pattern": null,
      "example": null,
      "meaning": {
-      "id": "Dark store di Hiryu, satu hub WMS per dark store.",
-      "en": "Hiryu's dark stores, one WMS hub per dark store."
+      "id": "Dark store di Hiryu. Setiap dark store Hiryu adalah satu dark store di WMS.",
+      "en": "Hiryu's dark stores. Each one is one dark store in the WMS."
      }
     },
     {
@@ -2334,8 +2334,8 @@
      "pattern": null,
      "example": "13",
      "meaning": {
-      "id": "Nomor dark store di Hiryu, kunci hub. Nomor baru membuat hub (Baru dari Hiryu); Ops HQ hanya menambah data WMS.",
-      "en": "The dark store's number in Hiryu, the hub's key. A new one creates the hub (Baru dari Hiryu); Ops HQ adds only the WMS data."
+      "id": "Nomor dark store di Hiryu, kuncinya di WMS. Nomor baru membuat dark store baru di WMS (Baru dari Hiryu); Ops HQ hanya menambah data WMS.",
+      "en": "The dark store's number in Hiryu, its key in the WMS. A new one creates the dark store in the WMS (Baru dari Hiryu); Ops HQ adds only the WMS data."
      }
     },
     {
@@ -2353,8 +2353,8 @@
      "pattern": "^[^<>{}\\\\\\r\\n\\t]{1,255}$",
      "example": "\"Cawang\"",
      "meaning": {
-      "id": "Nama dark store. Nama hub, hanya baca di WMS.",
-      "en": "The dark store's name. The hub name, read-only in the WMS."
+      "id": "Nama dark store, hanya baca di WMS.",
+      "en": "The dark store's name, read-only in the WMS."
      }
     },
     {
@@ -2372,8 +2372,8 @@
      "pattern": "^[^<>{}\\\\\\r\\n\\t]{1,255}$",
      "example": "\"Jl. Raya Kalibata No. 4, Jakarta Timur\"",
      "meaning": {
-      "id": "Alamat dark store. Hanya baca di Hub & mulai operasi.",
-      "en": "The dark store's address. Read-only on Hub & mulai operasi."
+      "id": "Alamat dark store. Hanya baca di Dark store & mulai operasi.",
+      "en": "The dark store's address. Read-only on Dark store & mulai operasi."
      }
     },
     {
@@ -2386,8 +2386,8 @@
      "pattern": null,
      "example": null,
      "meaning": {
-      "id": "Jam buka di Hiryu, yang juga tampil di Grab. Jam buka hub, untuk mulai hari, laporan akhir hari dan peringatan.",
-      "en": "The hours set in Hiryu, the ones Grab shows. The hub's open hours, for the day's start, end-of-day report and alerts."
+      "id": "Jam buka di Hiryu, yang juga tampil di Grab. Jam buka dark store, untuk mulai hari, laporan akhir hari dan peringatan.",
+      "en": "The hours set in Hiryu, the ones Grab shows. The dark store's open hours, for the day's start, end-of-day report and alerts."
      }
     },
     {
@@ -2519,8 +2519,8 @@
      "pattern": null,
      "example": "13",
      "meaning": {
-      "id": "Dark store tempat toko berada. Menaruh toko di hub itu; dark store tak dikenal masuk problems.",
-      "en": "The dark store the store belongs to. Puts the store on that hub; an unknown dark store goes to problems."
+      "id": "Dark store tempat toko berada. Toko ditaruh di dark store itu; nomor yang tak dikenal masuk problems.",
+      "en": "The dark store the store belongs to. Puts the store on that dark store; an unknown number goes to problems."
      }
     },
     {
@@ -2984,8 +2984,8 @@
     {
      "side": "wms",
      "text": {
-      "id": "Dark store baru jadi hub Baru dari Hiryu; Ops HQ melengkapi kode hub, bin dan keranjang di Hub & mulai operasi.",
-      "en": "A new dark store becomes a hub marked Baru dari Hiryu; Ops HQ completes its hub code, bins and baskets on Hub & mulai operasi."
+      "id": "Dark store baru muncul dengan tanda Baru dari Hiryu; Ops HQ melengkapi kode dark store, bin dan keranjang di Dark store & mulai operasi.",
+      "en": "A new dark store shows up marked Baru dari Hiryu; Ops HQ completes its dark store code, bins and baskets on Dark store & mulai operasi."
      }
     },
     {
@@ -3060,8 +3060,8 @@
       "H6"
      ],
      "text": {
-      "id": "Siapa pun di hub menekan Sinkron ulang dari Hiryu di Menu & toko Hiryu. Semua peran, sekali tiap 5 menit per hub; nama penekan dicatat.",
-      "en": "Anyone at the hub presses Sinkron ulang dari Hiryu on Menu & toko Hiryu. Any role, once every 5 minutes per hub; the name is logged."
+      "id": "Siapa pun di dark store menekan Sinkron ulang dari Hiryu di Menu & toko Hiryu. Semua peran, sekali tiap 5 menit per dark store; nama penekan dicatat.",
+      "en": "Anyone at the dark store presses Sinkron ulang dari Hiryu on Menu & toko Hiryu. Any role, once every 5 minutes per dark store; the name is logged."
      }
     }
    ],
@@ -3145,8 +3145,8 @@
      "when": null,
      "allowed": [
       {
-       "id": "wms-cat-<hub>-<detik unix>",
-       "en": "wms-cat-<hub>-<unix seconds>"
+       "id": "wms-cat-<id dark store>-<detik unix>",
+       "en": "wms-cat-<dark store id>-<unix seconds>"
       }
      ],
      "pattern": null,

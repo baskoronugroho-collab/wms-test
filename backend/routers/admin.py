@@ -35,7 +35,7 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 # WMS records that it was ("Login Hiryu sudah dibuat", required). Everyone may
 # look at the list; who may change whom is the ladder above.
 
-ROLE_TEXT = {"staff": "Staf", "hub_operator": "Operator hub", "supervisor": "SPV",
+ROLE_TEXT = {"staff": "Staf", "hub_operator": "Operator dark store", "supervisor": "SPV",
              "hq": "Ops HQ", "ops_head": "Ops Head", "superadmin": "Superadmin"}
 
 
@@ -181,8 +181,8 @@ async def _check_manage(user: auth.User, row: dict) -> None:
         mine = await _site_ids_of(user.id)
         if not (await _site_ids_of(row["id"])) & mine:
             raise HTTPException(
-                403, "Orang ini tidak bekerja di hub Anda. / This person does not work at "
-                     "your hubs.")
+                403, "Orang ini tidak bekerja di dark store Anda. / This person does not work at "
+                     "your dark stores.")
 
 
 async def _allowed_sites(user: auth.User, site_ids) -> None:
@@ -191,8 +191,8 @@ async def _allowed_sites(user: auth.User, site_ids) -> None:
         return
     if set(site_ids) - await _site_ids_of(user.id):
         raise HTTPException(
-            403, "SPV hanya bisa memberi akses ke hub sendiri. / An SPV can only give access "
-                 "to their own hubs.")
+            403, "SPV hanya bisa memberi akses ke dark store miliknya. / An SPV can only give access "
+                 "to their own dark stores.")
 
 
 _USER_COLS = ("id, email, name, role, default_site_id, locale, active, created_at, "
@@ -271,7 +271,7 @@ async def create_user(
         # Staff registered by an SPV must land on that SPV's hub, never nowhere.
         if not site_ids:
             raise HTTPException(
-                422, "Pilih minimal satu hub Anda. / Choose at least one of your hubs.")
+                422, "Pilih minimal satu dark store Anda. / Choose at least one of your dark stores.")
         await _allowed_sites(user, site_ids)
         default_site_id = default_site_id or site_ids[0]
 
@@ -280,7 +280,7 @@ async def create_user(
         raise HTTPException(409, f"{email} sudah terdaftar. / {email} is already registered.")
 
     if auth.rank(body.role) < auth.rank("hq") and not site_ids:
-        raise HTTPException(422, "Pilih hub orang ini. / Choose this person's hub.")
+        raise HTTPException(422, "Pilih dark store orang ini. / Choose this person's dark store.")
     await db.execute(
         "INSERT INTO users (email, name, role, default_site_id, locale, active, hiryu_login) "
         "VALUES (%s,%s,%s,%s,%s,1,1)",
@@ -335,8 +335,8 @@ async def update_user(
         site_ids = sorted(keep | set(site_ids))
         if not site_ids:
             raise HTTPException(
-                422, "Staf harus punya minimal satu hub. Nonaktifkan akunnya kalau ia berhenti. / "
-                     "Staff need at least one hub. Deactivate the account if they have left.")
+                422, "Staf harus punya minimal satu dark store. Nonaktifkan akunnya kalau ia berhenti. / "
+                     "Staff need at least one dark store. Deactivate the account if they have left.")
     if body.default_site_id is not None and _hub_scoped(user):
         await _allowed_sites(user, [body.default_site_id])
 

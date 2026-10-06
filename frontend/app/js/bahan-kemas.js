@@ -29,7 +29,7 @@
   const pencil = (attrs) => (S.atLeast('hq') ? '<button type="button" class="k-iconbtn bk-pen" ' + attrs + ' data-aria-id="Ubah" data-aria-en="Change" aria-label="' + esc(t('Ubah', 'Change')) + '">' + icon('edit', 15) + '</button>' : '');
   const needHub = (ctx) => {
     if (ctx.siteId) return false;
-    ctx.body.innerHTML = '<div class="k-note k-note--info">' + icon('info', 20) + sp('Pilih satu hub di atas.', 'Choose one hub above.') + '</div>';
+    ctx.body.innerHTML = '<div class="k-note k-note--info">' + icon('info', 20) + sp('Pilih satu dark store di atas.', 'Choose one dark store above.') + '</div>';
     return true;
   };
 
@@ -128,8 +128,8 @@
       '<span class="bk-sub">' + esc(t('· logika: Ops HQ', '· logic: Ops HQ')) + '</span>' + pencil('data-settings') + '</span>' +
       '<button type="button" class="k-btn k-btn--outline" data-add data-min-role="hq">' + icon('plus', 18) + sp('Tambah bahan kemas', 'Add a consumable') + ' <span class="k-chip k-chip--hq">Ops HQ</span></button></div>' +
       reqHtml + '<div class="k-laptop-only">' + table + '</div><div class="k-phone-only">' + cards + '</div>' +
-      '<p class="k-caption">' + esc(t('Minimum = ' + d.settings.min_days + ' hari pada target Grab ' + d.settings.orders_per_month + ' pesanan per bulan per hub (usulan, bisa diubah Ops HQ). Garis tegak pada batang = minimum. Ikon pensil: hanya Ops HQ yang mengubah minimum, pemakaian per pesanan dan logikanya.',
-        'Minimum = ' + d.settings.min_days + ' days at Grab\'s target of ' + d.settings.orders_per_month + ' orders per hub per month (a proposal Ops HQ can change). The tick on the bar = the minimum. Pencil: only Ops HQ changes minimums, usage per order and the logic.')) + '</p></div>';
+      '<p class="k-caption">' + esc(t('Minimum = ' + d.settings.min_days + ' hari pada target Grab ' + d.settings.orders_per_month + ' pesanan per bulan per dark store (usulan, bisa diubah Ops HQ). Garis tegak pada batang = minimum. Ikon pensil: hanya Ops HQ yang mengubah minimum, pemakaian per pesanan dan logikanya.',
+        'Minimum = ' + d.settings.min_days + ' days at Grab\'s target of ' + d.settings.orders_per_month + ' orders per dark store per month (a proposal Ops HQ can change). The tick on the bar = the minimum. Pencil: only Ops HQ changes minimums, usage per order and the logic.')) + '</p></div>';
     const root = $('#bk-s', ctx.body);
     root.addEventListener('click', async (e) => {
       const ed = e.target.closest('[data-edit]'), ra = e.target.closest('[data-raise]'), pr = e.target.closest('[data-pr]');
@@ -164,7 +164,7 @@
         BASIS.map((b) => '<option value="' + b[0] + '"' + ((x ? x.usage_basis : 'order') === b[0] ? ' selected' : '') + '>' + esc(t(b[1], b[2])) + '</option>').join('') + '</select></label></div>' +
         '<label class="k-field"><span class="k-field__label">Minimum</span><input class="k-input k-input--num" id="bk-min" type="number" min="0" step="any" value="' + (x && x.min_qty != null ? x.min_qty : '') + '">' +
         (sugg ? '<span class="k-field__hint">' + esc(t('Usulan dari target: ' + sugg, 'Proposed from the target: ' + sugg)) + '</span>' : '') + '</label>' +
-        (x ? '' : '<label class="k-check"><input type="checkbox" id="bk-all"> <span ' + biAttr('Tambahkan di semua hub', 'Add at every hub') + '></span></label>') +
+        (x ? '' : '<label class="k-check"><input type="checkbox" id="bk-all"> <span ' + biAttr('Tambahkan di semua dark store', 'Add at every dark store') + '></span></label>') +
         '<p class="k-caption" ' + biAttr('Dipakai mulai pesanan berikutnya yang dikemas.', 'Used from the next packed order on.') + '></p></div>',
       actions: [].concat(x ? [{ label: ['Nonaktifkan', 'Switch off'], kind: 'ghost', minRole: 'hq', onClick: async () => { await api().put('/consumables/' + x.id, { active: false }); S.rerender(); } }] : [],
         [{ label: ['Batal', 'Cancel'], kind: 'secondary' }, {
@@ -186,7 +186,7 @@
   function settingsModal(cfg) {
     S.modal({
       title: ['Logika minimum', 'Minimum logic'],
-      body: '<div class="k-stack"><label class="k-field"><span class="k-field__label" ' + biAttr('Target Grab: pesanan per hub per bulan', 'Grab target: orders per hub per month') + '></span><input class="k-input k-input--num" id="bk-opm" type="number" min="1" value="' + cfg.orders_per_month + '"></label>' +
+      body: '<div class="k-stack"><label class="k-field"><span class="k-field__label" ' + biAttr('Target Grab: pesanan per dark store per bulan', 'Grab target: orders per dark store per month') + '></span><input class="k-input k-input--num" id="bk-opm" type="number" min="1" value="' + cfg.orders_per_month + '"></label>' +
         '<label class="k-field"><span class="k-field__label" ' + biAttr('Minimum = berapa hari pemakaian', 'Minimum = how many days of use') + '></span><input class="k-input k-input--num" id="bk-md" type="number" min="1" value="' + cfg.min_days + '"></label>' +
         '<p class="k-caption" ' + biAttr('Dipakai untuk usulan minimum setiap barang. Minimum yang sudah diisi tidak berubah sendiri.', 'Used for each item\'s proposed minimum. Minimums already set do not change by themselves.') + '></p></div>',
       actions: [{ label: ['Batal', 'Cancel'], kind: 'secondary' }, {
@@ -208,7 +208,7 @@
       api().get('/consumables/receipts/pending' + api().qs({ site_id: ctx.siteId })),
       api().get('/consumables/counts' + api().qs({ site_id: ctx.siteId, status: 'pending' })),
     ]);
-    if (!d.items.length) { ctx.body.innerHTML = '<div class="k-card k-empty">' + bis('Belum ada bahan kemas di hub ini.', 'No consumable at this hub yet.', 'k-empty__title') + '</div>'; return; }
+    if (!d.items.length) { ctx.body.innerHTML = '<div class="k-card k-empty">' + bis('Belum ada bahan kemas di dark store ini.', 'No consumable at this dark store yet.', 'k-empty__title') + '</div>'; return; }
     let item = d.items.find((x) => x.request && x.request.kind === 'pr_submitted') || d.items[0];
     let packs = 1, per = item.last_per_pack || item.pack_size || 1;
     ctx.body.innerHTML = '<div class="k-stack bk-wrap" id="bk-t"></div>';

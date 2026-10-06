@@ -276,8 +276,8 @@
     const rack = ctx.params.get('rack');
     if (view !== 'cek') S.fullScreen(false);
     S.setTitle('Rak & bin', 'Racks & bins');
-    S.setSub('Daftarkan rak persis seperti yang berdiri di hub.', 'Register each rack exactly as it stands in the hub.');
-    if (!siteId()) { ctx.body.innerHTML = '<div class="k-note k-note--info">' + bis('Pilih satu hub di atas.', 'Choose one hub above.') + '</div>'; return; }
+    S.setSub('Daftarkan rak persis seperti yang berdiri di dark store.', 'Register each rack exactly as it stands in the dark store.');
+    if (!siteId()) { ctx.body.innerHTML = '<div class="k-note k-note--info">' + bis('Pilih satu dark store di atas.', 'Choose one dark store above.') + '</div>'; return; }
     if (view === 'new' || (view === 'edit' && rack)) return builder(ctx, view === 'edit' ? +rack : null);
     if (view === 'detail' && rack) return rackDetail(ctx, +rack);
     if (view === 'labels' && rack) return rackLabels(ctx, +rack);
@@ -298,7 +298,7 @@
     if (!d.racks.length) {
       h += '<div class="k-card k-empty"><span class="k-empty__icon">' + icon('rack', 28) + '</span>' +
         bis('Belum ada rak', 'No racks yet', 'k-empty__title') +
-        bis('Tambah rak persis seperti yang berdiri di hub. Rak bisa ditambah kapan saja.', 'Add each rack exactly as it stands. Racks can be added any time.', 'k-empty__text') +
+        bis('Tambah rak persis seperti yang berdiri di dark store. Rak bisa ditambah kapan saja.', 'Add each rack exactly as it stands. Racks can be added any time.', 'k-empty__text') +
         '<button type="button" class="k-btn k-btn--primary" data-new2 data-min-role="supervisor">' + icon('plus') + bis('Tambah rak', 'Add rack') + '</button></div>';
     } else {
       h += '<div class="rb-racks">' + d.racks.map(rackCard).join('') + '</div>';
@@ -604,13 +604,13 @@
   /* ================= tab: Bin khusus (3d) ================= */
   S.tab('khusus', async function (ctx) {
     S.fullScreen(false);
-    S.setSub('Bin khusus bukan bagian dari rak. Kodenya memakai kode hub.', 'Special bins are not part of a rack. Their codes carry the hub code.');
-    if (!siteId()) { ctx.body.innerHTML = '<div class="k-note k-note--info">' + bis('Pilih satu hub di atas.', 'Choose one hub above.') + '</div>'; return; }
+    S.setSub('Bin khusus bukan bagian dari rak. Kodenya memakai kode dark store.', 'Special bins are not part of a rack. Their codes carry the dark store code.');
+    if (!siteId()) { ctx.body.innerHTML = '<div class="k-note k-note--info">' + bis('Pilih satu dark store di atas.', 'Choose one dark store above.') + '</div>'; return; }
     loadOverview().catch(() => null);
     const d = await api().get('/sites/' + siteId() + '/special-bins');
     const TITLE_EN = { IN: 'Temporary inbound bins', QR: 'Quarantine trays (QR)', OUT: 'Order baskets' };
     const ADD = { IN: ['Tambah bin sementara', 'Add a temporary bin'], QR: ['Tambah baki', 'Add a tray'], OUT: ['Tambah keranjang', 'Add a basket'] };
-    let h = d.hub_ready ? '' : '<div class="k-note k-note--caution">' + icon('warn', 20) + '<span><span ' + biAttr('Lengkapi hub dulu (kode hub) di Pengaturan.', 'Complete the hub (hub code) in Settings first.') + '></span> <a href="pengaturan.html?tab=hub">' + esc(t('Buka Pengaturan', 'Open Settings')) + '</a></span></div>';
+    let h = d.hub_ready ? '' : '<div class="k-note k-note--caution">' + icon('warn', 20) + '<span><span ' + biAttr('Lengkapi dark store dulu (kode dark store) di Pengaturan.', 'Complete the dark store (dark store code) in Settings first.') + '></span> <a href="pengaturan.html?tab=hub">' + esc(t('Buka Pengaturan', 'Open Settings')) + '</a></span></div>';
     h += '<div class="k-grid3">' + d.cards.map((c) => '<div class="k-card k-card--pad k-stack" data-kind="' + c.kind + '">' +
       '<h2 class="k-h2" ' + biAttr(c.title, TITLE_EN[c.kind]) + '></h2><p class="k-p k-muted">' + esc(c.purpose) + '</p>' +
       '<div class="k-line k-line--between"><span class="k-field__label">' + bis('Jumlah', 'Count') + '</span><span class="rb-count">' + c.count + '</span></div>' +
@@ -652,7 +652,7 @@
   S.tab('perlu', async function (ctx) {
     S.fullScreen(false);
     S.setSub('Satu produk per bin. Pilih bin kosong dengan ukuran yang sama.', 'One product per bin. Pick a free bin of the same size.');
-    if (!siteId()) { ctx.body.innerHTML = '<div class="k-note k-note--info">' + bis('Pilih satu hub di atas.', 'Choose one hub above.') + '</div>'; return; }
+    if (!siteId()) { ctx.body.innerHTML = '<div class="k-note k-note--info">' + bis('Pilih satu dark store di atas.', 'Choose one dark store above.') + '</div>'; return; }
     loadOverview().catch(() => null);
     const d = await api().get('/sites/' + siteId() + '/needs-bin');
     S.tabCount('perlu', d.total || null, d.total ? 'caution' : null);

@@ -54,18 +54,18 @@
   const guideHref = (g) => 'panduan.html?s=' + (parseInt(String(g || '').replace(/\D/g, ''), 10) || 2);
 
   S.tab('hub', async function (ctx) {
-    S.setSub('Hub dibuat di Hiryu dan muncul di sini sendiri. Di WMS Anda hanya melengkapi data gudang.',
-      'A hub is made in Hiryu and shows up here by itself. In the WMS you only complete the warehouse data.');
+    S.setSub('Dark store dibuat di Hiryu dan muncul di sini sendiri. Di WMS Anda hanya melengkapi data gudang.',
+      'A dark store is made in Hiryu and shows up here by itself. In the WMS you only complete the warehouse data.');
     const list = await api().get('/hubs');
     const pick = +(ctx.params.get('hub') || 0);
     const fresh = list.hubs.filter((h) => h.new_from_hiryu);
     let hub = list.hubs.find((h) => h.id === pick) || list.hubs.find((h) => h.id === S.siteId()) || fresh[0] || list.hubs[0];
-    if (!hub) { ctx.body.innerHTML = '<div class="k-card k-empty"><span class="k-empty__title">' + esc(t('Belum ada hub', 'No hubs yet')) + '</span></div>'; return; }
+    if (!hub) { ctx.body.innerHTML = '<div class="k-card k-empty"><span class="k-empty__title">' + esc(t('Belum ada dark store', 'No dark stores yet')) + '</span></div>'; return; }
 
     let h = fresh.filter((x) => x.id !== hub.id).map((x) => '<div class="k-note k-note--caution">' + icon('info', 20) +
       '<span class="k-grow"><b>' + esc(x.banner) + '</b></span><a class="k-btn k-btn--sm k-btn--secondary" href="?tab=hub&hub=' + x.id + '">' + esc(t('Lengkapi', 'Complete')) + '</a></div>').join('');
     if (list.hubs.length > 1) {
-      h += '<label class="k-field" style="max-width:340px"><span class="k-field__label">' + bis('Hub', 'Hub') + '</span><select class="k-select" id="ph-pick">' +
+      h += '<label class="k-field" style="max-width:340px"><span class="k-field__label">' + bis('Dark store', 'Dark store') + '</span><select class="k-select" id="ph-pick">' +
         list.hubs.map((x) => '<option value="' + x.id + '"' + (x.id === hub.id ? ' selected' : '') + '>' + esc(S.shortCode(x.code) + ' · ' + x.name + (x.new_from_hiryu ? ' (' + t('baru dari Hiryu', 'new from Hiryu') + ')' : '')) + '</option>').join('') + '</select></label>';
     }
     h += '<div id="ph-hub"></div><div id="ph-ko"></div>';
@@ -87,30 +87,30 @@
     if (isNew) {
       h += '<div class="k-note k-note--caution" style="margin-bottom:12px">' + icon('info', 20) + '<span><b>' + esc(hub.banner) + '</b><br>' +
         esc(t('Masuk ', 'Arrived ')) + esc(S.fmt.dt(hub.hiryu_received_at)) + '. ' +
-        esc(t('Lengkapi 4 data WMS di bawah, lalu tekan Simpan hub.', 'Complete the 4 WMS fields below, then press Simpan hub.')) + '</span></div>';
+        esc(t('Lengkapi 4 data WMS di bawah, lalu tekan Simpan dark store.', 'Complete the 4 WMS fields below, then press Simpan dark store.')) + '</span></div>';
     }
     h += '<div class="ph-hub"><div class="k-card k-card--pad k-stack k-stack--tight"><div class="k-line k-line--between"><h2 class="k-h2">' + bis('Dari Hiryu', 'From Hiryu') + '</h2>' +
       (hub.from_hiryu ? S.sysChip('Hiryu') : '') + '</div>' +
       (hub.from_hiryu ? '<p class="k-caption">' + bis('Tidak bisa diubah di sini. Ubah di Hiryu, WMS ikut berubah.', 'Cannot be changed here. Change it in Hiryu and the WMS follows.') + '</p>'
-        : '<div class="k-note">' + bis('Hub ini belum tersambung ke dark store Hiryu.', 'This hub is not linked to a Hiryu dark store yet.') + '</div>') +
+        : '<div class="k-note">' + bis('Dark store ini belum tersambung ke Hiryu.', 'This dark store is not linked to Hiryu yet.') + '</div>') +
       '<dl class="ph-ro"><dt>' + esc(t('Nama', 'Name')) + '</dt><dd>' + esc(hub.name) + (hub.hiryu_dark_store_id ? ' <span class="k-muted">(dark store #' + hub.hiryu_dark_store_id + ')</span>' : '') + '</dd>' +
       '<dt>' + esc(t('Jam buka', 'Opening hours')) + '</dt><dd>' + esc(hub.opening_hours_text || '-') + '</dd>' +
       '<dt>' + esc(t('Alamat', 'Address')) + '</dt><dd>' + esc(hub.address || '-') + '</dd></dl></div>' +
       '<form class="k-card k-card--pad k-stack" id="ph-form" autocomplete="off"><div class="k-line k-line--between"><h2 class="k-h2">' + bis('Khusus WMS', 'WMS only') + '</h2>' + S.sysChip('WMS') + '</div>' +
-      '<p class="k-caption">' + bis('Wajib diisi sebelum hub bisa dipakai.', 'Required before the hub can be used.') + '</p><div class="ph-form">' +
-      field('code', 'Kode hub', 'Hub code', t('Dipakai di awal kode bin khusus.', 'Starts every special-bin code.'), isNew && /^HY/.test(hub.code) ? '' : S.shortCode(hub.code),
+      '<p class="k-caption">' + bis('Wajib diisi sebelum dark store bisa dipakai.', 'Required before the dark store can be used.') + '</p><div class="ph-form">' +
+      field('code', 'Kode dark store', 'Dark store code', t('Dipakai di awal kode bin khusus.', 'Starts every special-bin code.'), isNew && /^HY/.test(hub.code) ? '' : S.shortCode(hub.code),
         ' maxlength="8" style="text-transform:uppercase"' + (hub.code_editable ? '' : ' disabled')) +
       field('inbound_bins', 'Bin barang masuk sementara', 'Temporary inbound bins', t('Barang dari truk menunggu di sini sebelum ke rak.', 'Goods off the truck wait here before the rack.'), isNew ? 6 : hub.inbound_bins, ' type="number" min="1" max="99" inputmode="numeric"') +
       field('quarantine_trays', 'Baki karantina', 'Quarantine trays', t('Barang rusak atau ditahan, menunggu keputusan SPV.', 'Damaged or held goods wait for the SPV.'), isNew ? 1 : hub.quarantine_trays, ' type="number" min="1" max="99" inputmode="numeric"') +
       field('outbound_baskets', 'Keranjang pesanan', 'Order baskets', t('Satu keranjang untuk satu pesanan yang diambil.', 'One basket for one order being picked.'), isNew ? 6 : hub.outbound_baskets, ' type="number" min="1" max="99" inputmode="numeric"') +
       '</div><div class="k-note k-note--navy" id="ph-codes">' + esc(hub.special_codes_text || '') + '</div>' +
-      (!hub.code_editable ? '<p class="k-caption">' + bis('Kode hub sudah dipakai di kode bin, jadi tetap.', 'The hub code is on bin labels already, so it stays.') + '</p>' : '') +
+      (!hub.code_editable ? '<p class="k-caption">' + bis('Kode dark store sudah dipakai di kode bin, jadi tetap.', 'The dark store code is on bin labels already, so it stays.') + '</p>' : '') +
       '<div class="k-line" style="gap:10px"><button type="button" class="k-btn k-btn--secondary" id="ph-cancel">' + bis('Batal', 'Cancel') + '</button>' +
-      '<button type="submit" class="k-btn k-btn--primary k-grow" data-min-role="hq">' + icon('check') + bis('Simpan hub', 'Save hub') + '</button></div></form></div>';
+      '<button type="submit" class="k-btn k-btn--primary k-grow" data-min-role="hq">' + icon('check') + bis('Simpan dark store', 'Save dark store') + '</button></div></form></div>';
     if (isNew && hub.link_targets && hub.link_targets.length) {
-      h += '<div class="k-card k-card--pad k-stack" style="margin-top:16px"><h2 class="k-h2">' + bis('Atau: sambungkan ke hub yang sudah ada', 'Or: link to a hub that already exists') + '</h2>' +
-        '<p class="k-caption">' + bis('Pakai ini bila dark store ini adalah hub yang sudah jalan di WMS. Hub itu mengambil nama, alamat dan jam buka dari Hiryu; toko dari Hiryu pindah ke sana.',
-          'Use this when the dark store is a hub the WMS already runs. That hub takes the name, address and hours from Hiryu; the stores from Hiryu move to it.') + '</p>' +
+      h += '<div class="k-card k-card--pad k-stack" style="margin-top:16px"><h2 class="k-h2">' + bis('Atau: sambungkan ke dark store yang sudah ada', 'Or: link to a dark store that already exists') + '</h2>' +
+        '<p class="k-caption">' + bis('Pakai ini bila dark store dari Hiryu ini sudah jalan di WMS. Dark store di WMS itu mengambil nama, alamat dan jam buka dari Hiryu; toko dari Hiryu pindah ke sana.',
+          'Use this when this Hiryu dark store already runs in the WMS. That WMS dark store takes the name, address and hours from Hiryu; the stores from Hiryu move to it.') + '</p>' +
         '<div class="k-line" style="gap:10px;flex-wrap:wrap"><select class="k-select" id="ph-target" style="max-width:280px">' +
         hub.link_targets.map((x) => '<option value="' + x.id + '">' + esc(S.shortCode(x.code) + ' · ' + x.name) + '</option>').join('') + '</select>' +
         '<button type="button" class="k-btn k-btn--secondary" id="ph-link" data-min-role="hq">' + icon('link') + bis('Sambungkan', 'Link') + '</button></div></div>';

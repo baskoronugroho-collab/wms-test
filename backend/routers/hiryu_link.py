@@ -502,7 +502,7 @@ async def handle_order(body: OrderMessage, caller: str, *, is_test: bool = False
     `via` is hiryu (Hiryu's call), demo (Buat pesanan dummy) or test (the
     simulator); only the log and the order's demo mark differ."""
     h = "H1 H9" if any(l.oos_instruction is not None for l in body.lines) else "H1"
-    trigger = trigger or ("Staf menekan Accept di Hiryu", "Staff pressed Accept in Hiryu")
+    trigger = trigger or ("Staf menekan Terima di Hiryu", "Staff pressed Accept in Hiryu")
     common = dict(mtype="order", no=1, h=h, body=_dump(body), message_id=body.message_id,
                   via=via, grab_order_id=body.grab_order_id, trigger=trigger)
     seen = await _replay(body.message_id)
@@ -786,15 +786,15 @@ async def _handle_catalogue(body: CatalogueMessage, caller: str) -> tuple[int, d
             continue
         code = f"HY{ds.hiryu_dark_store_id}"
         if await db.fetch_one("SELECT id FROM sites WHERE code = %s", (code,)):
-            problems.append(f"Dark store #{ds.hiryu_dark_store_id}: kode {code} sudah dipakai hub "
-                            f"lain / code {code} already used by another hub")
+            problems.append(f"Dark store #{ds.hiryu_dark_store_id}: kode {code} sudah dipakai dark store "
+                            f"lain / code {code} already used by another dark store")
             continue
         await db.execute(
             "INSERT INTO sites (code, name, address, site_type, hiryu_dark_store_id, "
             "opening_hours_json, hiryu_received_at) "
             "VALUES (%s,%s,%s,'darkstore',%s,%s,UTC_TIMESTAMP())",
             (code, ds.name[:160], ds.address[:255], ds.hiryu_dark_store_id, hours))
-        warnings.append(f"Hub baru dari Hiryu: {ds.name} (dark store #{ds.hiryu_dark_store_id})")
+        warnings.append(f"Dark store baru dari Hiryu: {ds.name} (#{ds.hiryu_dark_store_id})")
     if body.full and body.dark_stores:
         listed = [d.hiryu_dark_store_id for d in body.dark_stores]
         await db.execute(
@@ -1363,10 +1363,10 @@ async def assign_store(store_no: int, body: StoreAssignIn,
         "SELECT hiryu_store_no, store_name FROM hiryu_stores WHERE site_id = %s AND brand_id = %s "
         "AND hiryu_store_no <> %s AND hiryu_active = 1", (store["site_id"], body.brand_id, store_no))
     if other:
-        raise HTTPException(409, f"Hub ini sudah punya toko {brand['name']}: {other['store_name']} "
-                                 f"(#{other['hiryu_store_no']}). Satu toko per merek per hub. / "
-                                 f"This hub already has a {brand['name']} store. One store per "
-                                 "brand per hub.")
+        raise HTTPException(409, f"Dark store ini sudah punya toko {brand['name']}: {other['store_name']} "
+                                 f"(#{other['hiryu_store_no']}). Satu toko per merek per dark store. / "
+                                 f"This dark store already has a {brand['name']} store. One store per "
+                                 "brand per dark store.")
     account = body.grab_account or brand["grab_account"]
     if not account:
         raise HTTPException(422, "Pilih akun merchant Grab. / Choose the Grab merchant account.")
@@ -1591,7 +1591,7 @@ async def messages(site_id: int | None = None, since: str | None = None,
         where.append("(site_id = %s OR site_id IS NULL)")
         params.append(site_id)
     elif not user.at_least("hq"):
-        raise HTTPException(422, "Pilih hub. / Choose a hub.")
+        raise HTTPException(422, "Pilih dark store. / Choose a dark store.")
     if since:
         ts = _utc(since, "since")
         where.append("updated_at >= %s")

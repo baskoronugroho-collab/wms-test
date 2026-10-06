@@ -303,7 +303,7 @@ def _filters(brand_id: int | None, status: str, q: str | None,
         where.append("NOT " + INCOMPLETE_SQL + " AND NOT " + MISSING_DATA_SQL)
     elif status == "needs_bin":
         if not site_id:
-            raise HTTPException(422, "Pilih hub untuk Perlu bin. / Choose a hub for Perlu bin.")
+            raise HTTPException(422, "Pilih dark store untuk Perlu bin. / Choose a dark store for Perlu bin.")
         where.append("s.id IN (SELECT s.id " + racks.needs_bin_from() + ")")
         params.append(site_id)
     if q:
@@ -707,7 +707,7 @@ async def update_sku(
     fresh = await _one(sku_id)
     msg = "Tersimpan." if changed or added else "Tidak ada perubahan."
     if moved:
-        msg += f" {moved} hub ikut angka baru."
+        msg += f" {moved} dark store ikut angka baru."
     return {"row": fresh, "hubs_updated": moved, "barcodes_added": added, "message": msg}
 
 
@@ -753,12 +753,12 @@ async def update_hub(
         "SELECT low_threshold FROM slot_assignments "
         "WHERE site_id = %s AND sku_id = %s AND slot_role = 'primary'", (site_id, sku_id))
     if not slot:
-        raise HTTPException(404, "SKU ini belum punya bin di hub ini. / This SKU has no bin "
-                                 "at this hub yet.")
+        raise HTTPException(404, "SKU ini belum punya bin di dark store ini. / This SKU has no bin "
+                                 "at this dark store yet.")
     p = body.fill_to
     if p is None or p < 1:
-        raise HTTPException(422, "Isi sampai per hub minimal 1. Untuk berhenti restock, isi 0 "
-                                 "di angka SKU. / Fill up to at a hub must be 1 or more. To stop "
+        raise HTTPException(422, "Isi sampai per dark store minimal 1. Untuk berhenti restock, isi 0 "
+                                 "di angka SKU. / Fill up to at a dark store must be 1 or more. To stop "
                                  "restocking, set 0 on the SKU's own numbers.")
     r = _pct_units(p, body.reorder_pct, 1) if body.reorder_pct is not None else body.reorder_at
     s = _pct_units(p, body.critical_pct, 0) if body.critical_pct is not None else body.critical_at
@@ -777,7 +777,7 @@ async def update_hub(
                           restock_point=r, safety_stock=s),
         user,
     )
-    return {"row": await _one(sku_id), "message": "Angka hub tersimpan."}
+    return {"row": await _one(sku_id), "message": "Angka dark store tersimpan."}
 
 
 # --- CSV (§2.6.1) -------------------------------------------------------------------

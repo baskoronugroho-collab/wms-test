@@ -123,10 +123,10 @@
   /* Pilih hub: Semua hub, one hub or several. Empty set = Semua hub. */
   function hubPicker(host, state, onChange, extra) {
     const sites = S.sites();
-    host.innerHTML = '<span class="k-strong" ' + biAttr('Pilih hub', 'Choose hubs') + '></span>' +
-      '<button type="button" class="lp-chip" data-hub="all">' + sp('Semua hub', 'All hubs') + '</button>' +
+    host.innerHTML = '<span class="k-strong" ' + biAttr('Pilih dark store', 'Choose dark stores') + '></span>' +
+      '<button type="button" class="lp-chip" data-hub="all">' + sp('Semua dark store', 'All dark stores') + '</button>' +
       sites.map((s) => '<button type="button" class="lp-chip" data-hub="' + s.id + '">' + esc(S.shortCode(s.code)) + '</button>').join('') +
-      '<span class="lp-sub" ' + biAttr('Semua hub, satu hub atau beberapa hub', 'All hubs, one hub or several') + '></span><span class="k-grow"></span><span class="lp-sub" id="lp-cmp"></span>' + (extra || '');
+      '<span class="lp-sub" ' + biAttr('Semua dark store, satu atau beberapa', 'All dark stores, one or several') + '></span><span class="k-grow"></span><span class="lp-sub" id="lp-cmp"></span>' + (extra || '');
     const paint = () => $$('[data-hub]', host).forEach((b) => {
       const on = b.dataset.hub === 'all' ? !state.hubs.size : state.hubs.has(+b.dataset.hub);
       b.setAttribute('aria-pressed', String(on));
@@ -225,7 +225,7 @@
       });
     }
     root.addEventListener('click', (e) => { const v = e.target.closest('[data-view]'); if (v) { view = v.dataset.view; load().catch(S.fail); } });
-    if (!siteId) { root.innerHTML = '<div class="k-note k-note--info">' + sp('Belum ada hub.', 'No hub yet.') + '</div>'; return; }
+    if (!siteId) { root.innerHTML = '<div class="k-note k-note--info">' + sp('Belum ada dark store.', 'No dark store yet.') + '</div>'; return; }
     await load();
   });
 
@@ -269,7 +269,7 @@
       const tot = pv.totals;
       $('#lp-prev', root).innerHTML = '<div class="k-line k-line--between" style="padding:14px 18px;gap:10px;flex-wrap:wrap"><strong style="font-size:17px" ' + biAttr('Pratinjau: sheet Sales by SKU', 'Preview: sheet Sales by SKU') + '></strong>' +
         '<span class="lp-sub">' + icon('report', 15) + ' <span class="k-mono k-strong">' + esc(info.file_name) + '</span> · ' + esc(info.sheets.length + ' sheet') + '</span></div>' +
-        (rows.length ? '<div class="k-tablewrap" style="box-shadow:none;border-radius:0"><table class="k-table lp-xl"><thead><tr><th>Hub</th><th>SKU code</th><th>Barcode</th><th>Product</th><th>Size</th><th class="k-num">Menu price</th>' +
+        (rows.length ? '<div class="k-tablewrap" style="box-shadow:none;border-radius:0"><table class="k-table lp-xl"><thead><tr><th>Dark store</th><th>SKU code</th><th>Barcode</th><th>Product</th><th>Size</th><th class="k-num">Menu price</th>' +
           '<th class="k-num">Units sold</th><th class="k-num">Sales value</th><th class="k-num">Stock at end</th><th class="k-num">Avg sold per week</th><th class="k-num">Weeks of cover</th><th>Notes</th></tr></thead><tbody>' +
           rows.map((r) => '<tr><td class="k-strong">' + esc(r.hub) + '</td><td class="k-mono">' + esc(r.sku_code || '') + '</td><td class="k-mono">' + esc(r.barcode || 'none yet') + '</td><td>' + esc(r.product || '') + '</td><td>' + esc(r.size || '') + '</td>' +
             '<td class="k-num">' + n(r.menu_price) + '</td><td class="k-num k-strong">' + n(r.units_sold) + '</td><td class="k-num">' + n(r.sales_value) + '</td><td class="k-num">' + n(r.stock_end) + '</td>' +
@@ -304,7 +304,7 @@
   S.tab('operasional', async function (ctx) {
     styles();
     S.setTitle('Laporan operasional', 'Operational report');
-    S.setSub('Untuk Grab dan manajemen. Mingguan atau bulanan, semua hub atau per hub. Unduh, lalu kirim lewat email.', 'For Grab and management. Weekly or monthly, all hubs or per hub. Download it, then email it.');
+    S.setSub('Untuk Grab dan manajemen. Mingguan atau bulanan, semua dark store atau per dark store. Unduh, lalu kirim lewat email.', 'For Grab and management. Weekly or monthly, all dark stores or per dark store. Download it, then email it.');
     if (hqOnly(ctx)) return;
     const W = weeks(), M = months();
     const st = { period: 'weekly', start: W[1].value, hubs: new Set() };
@@ -386,7 +386,7 @@
       if (my !== seq) return;
       const s = d.summary;
       const head = '<tr><th rowspan="2" ' + biAttr('Kategori', 'Category') + '></th><th rowspan="2" ' + biAttr('Beban', 'Borne by') + '></th>' +
-        s.pairs.map((p) => '<th colspan="2" style="text-align:center">' + esc(p.hub + ' · ' + p.brand) + '</th>').join('') + '<th colspan="2" style="text-align:center" ' + biAttr('Semua hub', 'All hubs') + '></th><th rowspan="2">Status</th></tr>' +
+        s.pairs.map((p) => '<th colspan="2" style="text-align:center">' + esc(p.hub + ' · ' + p.brand) + '</th>').join('') + '<th colspan="2" style="text-align:center" ' + biAttr('Semua dark store', 'All dark stores') + '></th><th rowspan="2">Status</th></tr>' +
         '<tr>' + s.pairs.concat([null]).map(() => '<th class="k-num">Unit</th><th class="k-num" ' + biAttr('Nilai', 'Value') + '></th>').join('') + '</tr>';
       const body = s.rows.map((r) => '<tr><td class="k-strong">' + esc(r.name) + '</td><td>' + esc(r.bearer === 'Brand' ? t('Merek', 'Brand') : 'Ninja') + '</td>' +
         r.cells.map((c) => '<td class="k-num">' + n(c.units) + '</td><td class="k-num">' + n(c.value) + '</td>').join('') +
@@ -402,7 +402,7 @@
         '<div class="k-tablewrap" style="box-shadow:none;border-radius:0"><table class="k-table lp-xl"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div></div>' +
         '<div class="k-card" style="overflow:hidden"><div style="padding:14px 18px"><strong ' + biAttr('Menurut siapa yang menanggung', 'By who bears the cost') + '></strong></div><table class="k-table lp-xl"><thead><tr><th ' + biAttr('Beban', 'Borne by') + '></th><th class="k-num">Unit</th><th class="k-num" ' + biAttr('Nilai', 'Value') + '></th><th ' + biAttr('Mencakup', 'Covers') + '></th></tr></thead><tbody>' +
         s.by_bearer.map((b) => '<tr><td class="k-strong">' + esc(b.bearer === 'Brand' ? t('Merek', 'Brand') : 'Ninja') + '</td><td class="k-num">' + n(b.units) + '</td><td class="k-num">' + n(b.value) + '</td><td class="lp-sub">' +
-          esc(b.bearer === 'Brand' ? t('Kurang dan lebih saat barang masuk, ditolak saat barang masuk, retur ke merek', b.covers) : t('Selisih hitung dan kerusakan setelah barang ditaruh, selama di hub', b.covers)) + '</td></tr>').join('') +
+          esc(b.bearer === 'Brand' ? t('Kurang dan lebih saat barang masuk, ditolak saat barang masuk, retur ke merek', b.covers) : t('Selisih hitung dan kerusakan setelah barang ditaruh, selama di dark store', b.covers)) + '</td></tr>').join('') +
         '<tr><td class="k-strong">Total</td><td class="k-num k-strong">' + n(s.total_units) + '</td><td class="k-num k-strong">' + n(s.total_value) + '</td><td></td></tr></tbody></table></div>' +
         '<p class="k-caption" ' + biAttr('Nilai = unit × harga menu. Klaim diselesaikan di luar WMS. Kerusakan yang dilaporkan pelanggan setelah serah terima adalah klaim Grab dan tidak ada di file ini.',
           'Value = units × menu price. Claims are settled outside the WMS. Damage a customer reports after handover is a Grab claim and is not in this file.') + '></p>';

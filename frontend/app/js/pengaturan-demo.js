@@ -29,7 +29,7 @@
   }
 
   const STEPS = [
-    [['Nyalakan Mode demo untuk hub ini.', 'Switch Mode demo on for this hub.'], null],
+    [['Nyalakan Mode demo untuk dark store ini.', 'Switch Mode demo on for this dark store.'], null],
     [['Tekan Buat pesanan dummy (di sini, atau di Pesanan: Papan antrean dan Ambil).', 'Press Buat pesanan dummy (here, or in Orders: Queue board and Pick).'], 'H1'],
     [['Pesanan masuk seperti pesan 1 dari Hiryu, dengan instruksi pelanggan bila ada barang yang tidak ada.', 'The order comes in like Hiryu\'s message 1, with the customer\'s instruction when an item is missing.'], 'H9'],
     [['Ambil, kemas dan serahkan seperti biasa. Pesan 3, 4 dan 5 dikirim ke stand-in Hiryu.', 'Pick, pack and hand over as usual. Messages 3, 4 and 5 go to the Hiryu stand-in.'], 'H3 H4 H5'],
@@ -41,7 +41,7 @@
     return '<div class="k-stack k-stack--loose">' +
       '<div class="k-card k-card--pad k-stack' + (on ? ' k-card--focus' : '') + '">' +
       '<div class="k-line k-line--between" style="flex-wrap:wrap;gap:12px">' +
-      '<div class="k-stack k-stack--tight"><span class="k-eyebrow">Hub ' + esc(S.shortCode(st.site_code)) + '</span>' +
+      '<div class="k-stack k-stack--tight"><span class="k-eyebrow">Dark store ' + esc(S.shortCode(st.site_code)) + '</span>' +
       '<span class="k-h2" style="font-size:22px">' + span(['Mode demo', 'Mode demo']) + '</span></div>' +
       '<div class="k-switchrow"><button type="button" class="k-switch" data-demo aria-checked="' + on + '" data-min-role="supervisor" ' +
       'data-aria-id="Mode demo" data-aria-en="Mode demo" aria-label="Mode demo"></button>' +
@@ -49,8 +49,8 @@
       '<p class="k-p" style="margin:0">' + span(['Untuk menunjukkan sambungan Hiryu dari awal sampai akhir sebelum Hiryu mengirim apa pun. Pesanan dummy masuk lewat jalur yang sama dengan pesanan Hiryu, dan semua pesan keluar diterima stand-in di dalam WMS.',
         'To show the Hiryu link end to end before Hiryu sends anything. Dummy orders come in the same way as Hiryu\'s orders, and every message out is taken by a stand-in inside the WMS.']) + '</p>' +
       (on
-        ? '<div class="k-note k-note--caution">' + icon('warn') + span(['Selama menyala, pesan 3, 4 dan 5 hub ini tidak sampai ke Hiryu yang asli. Matikan setelah demo.',
-          'While on, this hub\'s messages 3, 4 and 5 do not reach the real Hiryu. Switch it off after the demo.']) + '</div>'
+        ? '<div class="k-note k-note--caution">' + icon('warn') + span(['Selama menyala, pesan 3, 4 dan 5 dark store ini tidak sampai ke Hiryu yang asli. Matikan setelah demo.',
+          'While on, this dark store\'s messages 3, 4 and 5 do not reach the real Hiryu. Switch it off after the demo.']) + '</div>'
         : '') +
       '<div class="k-line" style="gap:10px;flex-wrap:wrap">' +
       '<button type="button" class="k-btn k-btn--primary" data-make data-min-role="supervisor"' + (on ? '' : ' disabled') + '>' + icon('plus') + span(['Buat pesanan dummy', 'Make a dummy order']) + '</button>' +
@@ -72,7 +72,7 @@
       S.onSiteChange(() => { if (S.currentTab() === 'demo') S.rerender(); });
     }
     if (!S.siteId()) {
-      body.innerHTML = '<div class="k-card k-card--pad">' + span(['Pilih satu hub untuk Mode demo.', 'Choose one hub for Mode demo.']) + '</div>';
+      body.innerHTML = '<div class="k-card k-card--pad">' + span(['Pilih satu dark store untuk Mode demo.', 'Choose one dark store for Mode demo.']) + '</div>';
       return;
     }
     let st = await api().get('/demo/settings' + api().qs({ site_id: S.siteId() }));

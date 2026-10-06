@@ -130,13 +130,13 @@ def build(data: dict) -> bytes:
     ws = wb.active
     ws.title = "Sales by SKU"
     _title(ws, 1, f"Sales by SKU: {brand}, {data['period_label']}")
-    _line(ws, 2, f"Hubs {hubs}. WMS numbers. Test and cancelled orders are not counted. "
+    _line(ws, 2, f"Dark stores {hubs}. WMS numbers. Test and cancelled orders are not counted. "
                  f"Made {data.get('made', '')}.")
     ws.cell(3, 1, "Weeks in period").font = _font(size=9, color=MUTED)
     ws.cell(3, 2, data.get("weeks") or 1).number_format = "0.00"
     weeks_cell = "$B$3"
     head = 5
-    _header_row(ws, head, ["Hub", "SKU code", "Barcode", "Product", "Size", "Menu price", "Units sold",
+    _header_row(ws, head, ["Dark store", "SKU code", "Barcode", "Product", "Size", "Menu price", "Units sold",
                            "Sales value", "Stock at end", "Avg sold per week", "Weeks of cover", "Notes"],
                 [7, 16, 16, 44, 9, 12, 10, 14, 11, 12, 11, 26])
     rows = sales_rows(data)
@@ -183,12 +183,12 @@ def build(data: dict) -> bytes:
 def _stock_sheet(st, data, brand, hubs):
     _title(st, 1, f"Stock and deliveries: {brand}, {data['period_label']}")
     approved = data.get("count_approved")
-    _line(st, 2, f"Hubs {hubs}. WMS numbers. " +
+    _line(st, 2, f"Dark stores {hubs}. WMS numbers. " +
                  (f"Month-end count approved by the SPV {approved}. " if approved
                   else "Month-end count not approved yet: Counted and Difference may be empty. ") +
                  "Test and cancelled orders are not in Sold.")
     head = 3
-    _header_row(st, head, ["Hub", "SKU code", "Product", "Opening", "Received", "Sold", "Returned to brand",
+    _header_row(st, head, ["Dark store", "SKU code", "Product", "Opening", "Received", "Sold", "Returned to brand",
                            "Written off", "Expected", "Counted at month end", "Difference"],
                 [7, 16, 44, 10, 10, 10, 12, 10, 10, 13, 11])
     r = head + 1
@@ -222,7 +222,7 @@ def _stock_sheet(st, data, brand, hubs):
     r += 1
     st.cell(r, 1, "Deliveries").font = _font(bold=True, size=11)
     r += 1
-    _header_row(st, r, ["Hub", "PO number", "Delivered on", "Units ordered", "Units received", "Damaged",
+    _header_row(st, r, ["Dark store", "PO number", "Delivered on", "Units ordered", "Units received", "Damaged",
                         "On time"])
     r += 1
     for d in data.get("deliveries") or []:
@@ -233,7 +233,7 @@ def _stock_sheet(st, data, brand, hubs):
     r += 1
     st.cell(r, 1, "Returns and write-offs").font = _font(bold=True, size=11)
     r += 1
-    _header_row(st, r, ["Hub", "SKU code", "Reason", "Date", "Units", "Type"])
+    _header_row(st, r, ["Dark store", "SKU code", "Reason", "Date", "Units", "Type"])
     r += 1
     for x in data.get("returns") or []:
         for c, v in enumerate([x.get("hub"), x.get("sku_code"), x.get("reason"), x.get("date"), x.get("units"),
@@ -267,7 +267,7 @@ def build_operational(data: dict) -> bytes:
     ws = wb.active
     ws.title = "Operational report"
     _title(ws, 1, f"Operational report, {data['label']}")
-    _line(ws, 2, f"Hubs {_join(data.get('hubs'))}. WMS numbers, not Hiryu's. Test orders are left out; "
+    _line(ws, 2, f"Dark stores {_join(data.get('hubs'))}. WMS numbers, not Hiryu's. Test orders are left out; "
                  "cancelled orders are not in sales. Compared with " + data["previous_label"] + ".")
     _line(ws, 3, "Ready within 10 minutes counts from Grab's order time to Selesai dikemas. "
                  f"Made {data.get('made', '')}.")
@@ -298,7 +298,7 @@ def build_operational(data: dict) -> bytes:
     r += 1
     ws.cell(r, 1, "Weeks of stock cover").font = _font(bold=True, size=11)
     r += 1
-    _header_row(ws, r, ["Brand", "Hub", "This period", "Previous period"])
+    _header_row(ws, r, ["Brand", "Dark store", "This period", "Previous period"])
     r += 1
     for x in data.get("cover") or []:
         _cell(ws, r, 1, x["brand"])
@@ -316,7 +316,7 @@ BEARER_OF = {"inbound_short": "Brand", "inbound_extra": "Brand", "rejected_back"
              "count_short": "Ninja", "count_extra": "Ninja", "damaged_hub": "Ninja",
              "rejected_written_off": "Brand", "returned": "Brand"}
 COVERS = {"Brand": "Inbound short and extra, units rejected at inbound, returns to brand",
-          "Ninja": "Count differences and any damage after putaway, while in the hub"}
+          "Ninja": "Count differences and any damage after putaway, while in the dark store"}
 
 
 def variance_summary(data: dict) -> dict:
@@ -354,7 +354,7 @@ def build_variance(data: dict) -> bytes:
     ws = wb.active
     ws.title = "Summary"
     _title(ws, 1, f"Variance and claims report, {data['label']}")
-    _line(ws, 2, f"Hubs {_join(data.get('hubs'))}. Brands {_join(data.get('brands'))}. Only differences approved "
+    _line(ws, 2, f"Dark stores {_join(data.get('hubs'))}. Brands {_join(data.get('brands'))}. Only differences approved "
                  "by the SPV, then reviewed by Ops HQ. Value at menu price, IDR.")
     fin = data.get("finalised")
     _line(ws, 3, (f"Finalised by Ops HQ on {fin['label']} ({fin.get('by_name') or fin['by']}). " if fin
@@ -364,8 +364,8 @@ def build_variance(data: dict) -> bytes:
     r = 5
     ws.cell(r, 1, "Summary").font = _font(bold=True, size=11)
     col = 3
-    for p in pairs + [{"hub": "All hubs", "brand": None}]:
-        c = ws.cell(r, col, f"{p['hub']} · {p['brand']}" if p["brand"] else "All hubs")
+    for p in pairs + [{"hub": "All dark stores", "brand": None}]:
+        c = ws.cell(r, col, f"{p['hub']} · {p['brand']}" if p["brand"] else "All dark stores")
         c.font = _font(bold=True, size=9)
         c.fill = GROUP_FILL
         ws.merge_cells(start_row=r, start_column=col, end_row=r, end_column=col + 1)
@@ -426,7 +426,7 @@ def build_variance(data: dict) -> bytes:
         keys = [c["key"] for c in data["categories"] if c["sheet"] == sheet]
         _title(sh, 1, f"{sheet}, {data['label']}", size=12)
         _line(sh, 2, "Every row is final: approved, then reviewed by Ops HQ.")
-        _header_row(sh, 4, ["Hub", "Brand", "Date", "Category", "Reference", "SKU code", "Product", "Units",
+        _header_row(sh, 4, ["Dark store", "Brand", "Date", "Category", "Reference", "SKU code", "Product", "Units",
                             "Menu price", "Value", "Cost borne by", "Note", "Approved by", "Reviewed by", "Status"],
                     [7, 10, 12, 30, 20, 16, 40, 8, 11, 12, 11, 36, 18, 18, 8])
         rr = 5

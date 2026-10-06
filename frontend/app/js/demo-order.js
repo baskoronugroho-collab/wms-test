@@ -93,17 +93,17 @@
     const sh = S();
     const { esc, biAttr, bis, icon, t } = sh;
     const siteId = o.siteId || sh.siteId();
-    if (!siteId) { sh.toast(['Pilih satu hub dulu.', 'Choose one hub first.'], 'caution'); return null; }
+    if (!siteId) { sh.toast(['Pilih satu dark store dulu.', 'Choose one dark store first.'], 'caution'); return null; }
     let data;
     try { data = await api().get('/demo/stores' + api().qs({ site_id: siteId })); }
     catch (e) { sh.fail(e); return null; }
     if (!data.demo_mode) {
-      sh.toast(['Mode demo belum menyala untuk hub ini (Pengaturan, Demo).', 'Mode demo is not on for this hub (Settings, Demo).'], 'caution');
+      sh.toast(['Mode demo belum menyala untuk dark store ini (Pengaturan, Demo).', 'Mode demo is not on for this dark store (Settings, Demo).'], 'caution');
       return null;
     }
     const stores = (data.stores || []).filter((s) => (s.items || []).some((i) => i.available));
     if (!stores.length) {
-      sh.toast(['Tidak ada toko Hiryu aktif dengan menu di hub ini.', 'No active Hiryu store with a menu at this hub.'], 'caution');
+      sh.toast(['Tidak ada toko Hiryu aktif dengan menu di dark store ini.', 'No active Hiryu store with a menu at this dark store.'], 'caution');
       return null;
     }
 

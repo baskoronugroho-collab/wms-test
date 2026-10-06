@@ -96,7 +96,7 @@
     S.setTitle('Hitung stok', 'Stock count');
     S.setSub('Rencana dibuat WMS setiap pagi: siklus wajib dari Ops HQ dan bin dengan barang tidak ada kemarin.',
       'The WMS makes the plan every morning: Ops HQ\'s mandatory cycles and bins with a missing item yesterday.');
-    if (!ctx.siteId) { ctx.body.innerHTML = '<div class="k-note k-note--info">' + icon('info', 20) + sp('Pilih satu hub di atas.', 'Choose one hub above.') + '</div>'; return; }
+    if (!ctx.siteId) { ctx.body.innerHTML = '<div class="k-note k-note--info">' + icon('info', 20) + sp('Pilih satu dark store di atas.', 'Choose one dark store above.') + '</div>'; return; }
     ctx.body.innerHTML = '<div class="k-loading" ' + biAttr('Memuat rencana…', 'Loading the plan…') + '></div>';
     const [plan, mine] = await Promise.all([
       api().get('/counts/plan' + api().qs({ site_id: ctx.siteId })),
@@ -151,7 +151,7 @@
         '<span class="k-row__sub' + (x.status === 'recount' ? ' k-row__sub--caution' : '') + '">' + esc(x.status === 'recount' ? t('Hitung ulang', 'Recount') : t(x.reason_id, x.reason_en)) + '</span></span>' +
         '<span class="k-row__chev">' + icon('chev', 22) + '</span></a>').join('') + '</div>'
         : '<p class="k-caption" ' + biAttr('Tidak ada bin untuk Anda saat ini.', 'No bin for you right now.') + '></p>') +
-      (S.atLeast('supervisor') ? bis('Rencana hub', 'Hub plan', 'k-eyebrow') + '<div class="k-list">' + plan.tasks.map((x) => '<div class="k-row' + (x.status === 'recount' ? ' k-row--caution' : '') + '">' +
+      (S.atLeast('supervisor') ? bis('Rencana dark store', 'Dark store plan', 'k-eyebrow') + '<div class="k-list">' + plan.tasks.map((x) => '<div class="k-row' + (x.status === 'recount' ? ' k-row--caution' : '') + '">' +
         '<span class="k-row__text"><span class="k-row__title"><span class="k-mono">' + esc(x.bin) + '</span> · ' + esc(x.sku_name || '') + '</span>' +
         '<span class="k-row__sub">' + esc(t(x.reason_id, x.reason_en)) + ' · ' + esc(first(x.assigned_name) || '-') + '</span></span>' + statusPill(x) + '</div>').join('') + '</div>' : '') +
       '</div>';
@@ -419,7 +419,7 @@
     styles();
     S.setTitle('Hitung stok', 'Stock count');
     S.setSub('Setujui hasil per bin. Setujui SPV langsung mengubah stok dan mengirimnya ke Hiryu.', 'Approve each bin\'s result. The SPV approval changes the stock and sends it to Hiryu at once.');
-    if (!ctx.siteId) { ctx.body.innerHTML = '<div class="k-note k-note--info">' + icon('info', 20) + sp('Pilih satu hub di atas.', 'Choose one hub above.') + '</div>'; return; }
+    if (!ctx.siteId) { ctx.body.innerHTML = '<div class="k-note k-note--info">' + icon('info', 20) + sp('Pilih satu dark store di atas.', 'Choose one dark store above.') + '</div>'; return; }
     const res = await api().get('/counts/results' + api().qs({ site_id: ctx.siteId, days: 3 }));
     const plan = await api().get('/counts/plan' + api().qs({ site_id: ctx.siteId })).catch(() => null);
     S.tabCount('hasil', res.tasks.length);

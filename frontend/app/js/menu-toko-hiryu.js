@@ -68,7 +68,7 @@
     const st = STATE.sync;
     let line;
     if (!sid) {
-      line = span(['Pilih satu hub untuk sinkron ulang.', 'Choose one hub to resync.'], 'k-strong');
+      line = span(['Pilih satu dark store untuk sinkron ulang.', 'Choose one dark store to resync.'], 'k-strong');
     } else if (st && st.requested_at) {
       const who = st.requested_by_name || '-';
       const ans = st.status === 'answered'
@@ -77,7 +77,7 @@
       line = '<span class="k-strong">' + span(['Sinkron ulang ' + S.fmt.time(st.requested_at) + ' oleh ' + who,
         'Resync ' + S.fmt.time(st.requested_at) + ' by ' + who]) + '</span>' + '<span class="k-muted">' + ans + '</span>';
     } else {
-      line = span(['Belum pernah sinkron ulang di hub ini.', 'No resync at this hub yet.'], 'k-strong');
+      line = span(['Belum pernah sinkron ulang di dark store ini.', 'No resync at this dark store yet.'], 'k-strong');
     }
     const mins = (st && st.cooldown_minutes) || 5;
     const wait = st && st.next_allowed_at;
@@ -87,8 +87,8 @@
         : '<button type="button" class="k-btn k-btn--secondary" data-sync>' + icon('refresh') + span(['Sinkron ulang dari Hiryu', 'Resync from Hiryu']) + '</button>';
     return '<div class="k-card k-card--pad mh-sync">' +
       '<div class="mh-sync__text"><div>' + line + '</div>' +
-      '<span class="k-caption">' + span(['Semua peran bisa. Sekali per ' + mins + ' menit per hub, tercatat dengan nama.',
-        'Any role. Once every ' + mins + ' minutes per hub, logged with your name.']) + '</span></div>' + btn + '</div>';
+      '<span class="k-caption">' + span(['Semua peran bisa. Sekali per ' + mins + ' menit per dark store, tercatat dengan nama.',
+        'Any role. Once every ' + mins + ' minutes per dark store, logged with your name.']) + '</span></div>' + btn + '</div>';
   }
 
   async function doSync(btn) {
@@ -123,8 +123,8 @@
       '<p class="k-p" style="margin:0">' + span(['Pilih merek toko ini dan akun merchant Grab-nya. Ditanya sekali saja.',
         'Choose this store\'s brand and its Grab merchant account. Asked once only.']) + '</p>' +
       '<span class="k-caption">' + span(['Masuk ' + S.fmt.dt(s.hiryu_received_at), 'Arrived ' + S.fmt.dt(s.hiryu_received_at)]) +
-      ' · hub ' + esc(S.shortCode(s.site_code)) + ' · ' + span(['terima pesanan ' + (s.order_acceptance || '-'), 'order acceptance ' + (s.order_acceptance || '-')]) + '</span>' +
-      (s.acceptance_warning ? '<div class="k-note k-note--caution">' + icon('warn') + span(['Terima pesanan bukan MANUAL. Ubah ke MANUAL di Hiryu: staf harus menekan Accept.',
+      ' · dark store ' + esc(S.shortCode(s.site_code)) + ' · ' + span(['terima pesanan ' + (s.order_acceptance || '-'), 'order acceptance ' + (s.order_acceptance || '-')]) + '</span>' +
+      (s.acceptance_warning ? '<div class="k-note k-note--caution">' + icon('warn') + span(['Terima pesanan bukan MANUAL. Ubah ke MANUAL di Hiryu: staf harus menekan Terima.',
         'Order acceptance is not MANUAL. Set it to MANUAL in Hiryu: staff must press Accept.']) + '</div>' : '') +
       '<div class="mh-grid2"><div class="k-field"><label class="k-field__label" ' + biAttr('Merek', 'Brand') + '>Merek</label>' +
       '<select class="k-select" data-brand' + (can ? '' : ' disabled') + '>' + opts + '</select>' +
@@ -226,7 +226,7 @@
   function storeTable(stores) {
     const showHub = S.allSites();
     return '<div class="k-tablewrap"><table class="k-table mh-table"><thead><tr>' +
-      '<th ' + biAttr('Toko', 'Store') + '></th>' + (showHub ? '<th ' + biAttr('Hub', 'Hub') + '></th>' : '') +
+      '<th ' + biAttr('Toko', 'Store') + '></th>' + (showHub ? '<th ' + biAttr('Dark store', 'Dark store') + '></th>' : '') +
       '<th ' + biAttr('Merek · akun merchant', 'Brand · merchant account') + '></th>' +
       '<th ' + biAttr('Menu', 'Menu') + '></th>' +
       '<th ' + biAttr('Status', 'Status') + '></th><th ' + biAttr('Sambungan · Grab', 'Link · Grab') + '></th>' +

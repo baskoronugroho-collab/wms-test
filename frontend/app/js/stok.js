@@ -49,7 +49,7 @@
     function paintKpis() {
       const c = st.data.counts;
       const k = (id, en, v, kind, foot) => '<div class="k-kpi' + (kind ? ' k-kpi--' + kind : '') + '">' + bis(id, en, 'k-kpi__label') + '<span class="k-kpi__num">' + S.fmt.n(v) + '</span>' + (foot ? '<span class="k-kpi__foot">' + foot + '</span>' : '') + '</div>';
-      $('#sk-kpis').innerHTML = k('Unit di hub', 'Units held', c.units) + k('Produk', 'Products', c.rows) +
+      $('#sk-kpis').innerHTML = k('Unit di dark store', 'Units held', c.units) + k('Produk', 'Products', c.rows) +
         k('Stok lama', 'Old stock', c.old, c.old ? 'caution' : null, st.data.stock_old_days ? esc(t('lebih dari ' + st.data.stock_old_days + ' hari', 'over ' + st.data.stock_old_days + ' days')) : esc(t('aturan mati', 'rule off'))) +
         k('Hampir habis', 'Running low', c.low, c.low ? 'caution' : null) + k('Habis', 'Out', c.out, c.out ? 'stop' : null);
     }
@@ -73,7 +73,7 @@
         return;
       }
       host.innerHTML = '<div class="k-laptop-only"><div class="k-tablewrap"><table class="k-table"><thead><tr>' +
-        '<th ' + biAttr('Produk', 'Product') + '></th>' + (multi ? '<th>Hub</th>' : '') + '<th>Bin</th>' +
+        '<th ' + biAttr('Produk', 'Product') + '></th>' + (multi ? '<th>Dark store</th>' : '') + '<th>Bin</th>' +
         '<th class="k-num" ' + biAttr('Di rak', 'In rack') + '></th><th class="k-num" ' + biAttr('Masuk sementara', 'Inbound bins') + '></th>' +
         '<th class="k-num" ' + biAttr('Karantina', 'Quarantine') + '></th><th class="k-num" ' + biAttr('Di keranjang', 'In baskets') + '></th>' +
         '<th class="k-num" ' + biAttr('Bisa dijual', 'Sellable') + '></th><th ' + biAttr('Umur', 'Age') + '></th><th ' + biAttr('Masuk terakhir', 'Last inbound') + '></th><th></th></tr></thead><tbody>' +

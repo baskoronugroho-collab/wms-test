@@ -784,7 +784,7 @@ async def confirm_pick(
     if not scanned_sku:
         return {"accepted": False, "outcome": "wrong_sku",
                 "expected_sku_name": line["name_display"],
-                "message": "Barcode tidak dikenal. Panggil supervisor."}
+                "message": "Barcode tidak dikenal. Panggil supervisor. / Unknown barcode. Call the supervisor."}
 
     if scanned_sku["id"] != line["sku_id"]:
         return {
@@ -803,7 +803,7 @@ async def confirm_pick(
         if not plate:
             return {"accepted": False, "outcome": "plate_error",
                     "expected_sku_name": line["name_display"],
-                    "message": "Scan label Ninja pada barangnya, bukan barcode lain."}
+                    "message": "Scan label Ninja pada barangnya, bukan barcode lain. / Scan the Ninja label on the item, not another barcode."}
         if plate["state"] != "in_stock":
             return {"accepted": False, "outcome": "plate_error",
                     "expected_sku_name": line["name_display"],
@@ -891,7 +891,8 @@ async def confirm_pick(
                 "qty_picked": nxt["qty_picked"], "status": nxt["status"],
                 "identity_mode": nxt["identity_mode"],
             } if nxt else None),
-            "message": "Sudah diambil." if done else f"{picked} dari {line['qty_required']}.",
+            "message": ("Sudah diambil. / Picked." if done
+                        else f"{picked} dari {line['qty_required']}. / {picked} of {line['qty_required']}."),
         }
         await ledger.remember(cur, body.idempotency_key, "pick_confirm", result)
 
@@ -1313,8 +1314,8 @@ async def reassign_task(
                 "SELECT 1 AS ok FROM user_sites WHERE user_id = %s AND site_id = %s",
                 (target["id"], task["site_id"]))
             if not member:
-                raise HTTPException(422, "Staf itu tidak terdaftar di hub ini. / "
-                                         "That person is not on this hub.")
+                raise HTTPException(422, "Staf itu tidak terdaftar di dark store ini. / "
+                                         "That person is not at this dark store.")
     try:
         moved = await assign.reassign(task_id, actor=user.email, reason=body.reason.strip(),
                                       to_email=body.to_email or None)
@@ -1852,7 +1853,7 @@ async def create_test_order(body: TestOrderIn,
         store = await db.fetch_one(
             "SELECT brand_id, site_id FROM hiryu_stores WHERE hiryu_store_no = %s", (store_no,))
         if not store or store["site_id"] != site["id"]:
-            raise HTTPException(422, "Toko itu bukan di hub ini. / That store is not at this hub.")
+            raise HTTPException(422, "Toko itu bukan di dark store ini. / That store is not at this dark store.")
         brand_id = store["brand_id"]
 
     if body.lines:

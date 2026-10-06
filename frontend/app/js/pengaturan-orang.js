@@ -43,10 +43,10 @@
     const d = await api().get('/admin/users' + api().qs({ site_id: scope }));
     const rows = d.users;
     ctx.actions.innerHTML = (S.atLeast('hq') ? '<a class="k-btn k-btn--ghost" href="?tab=orang' + (scope ? '&semua=1' : '') + '">' +
-      esc(scope ? t('Semua orang', 'Everyone') : t('Hub ini saja', 'This hub only')) + '</a>' : '') +
+      esc(scope ? t('Semua orang', 'Everyone') : t('Dark store ini saja', 'This dark store only')) + '</a>' : '') +
       '<button type="button" class="k-btn k-btn--primary k-phone-only" id="po-add" data-min-role="supervisor">' + icon('plus') + bis('Tambah orang', 'Add a person') + '</button>';
     ctx.body.innerHTML = '<div class="po-two"><div class="k-stack">' +
-      '<div class="k-laptop-only"><div class="k-tablewrap"><table class="k-table"><thead><tr><th>' + esc(t('Nama', 'Name')) + '</th><th>' + esc(t('Peran', 'Role')) + '</th><th>Hub</th><th>' +
+      '<div class="k-laptop-only"><div class="k-tablewrap"><table class="k-table"><thead><tr><th>' + esc(t('Nama', 'Name')) + '</th><th>' + esc(t('Peran', 'Role')) + '</th><th>Dark store</th><th>' +
       esc(t('Login Hiryu', 'Hiryu login')) + '</th><th></th></tr></thead><tbody>' + rows.map((u) => '<tr class="' + (u.active ? '' : 'po-off') + '">' +
         '<td><div class="k-cell2"><span class="k-cell2__main">' + esc(u.name || u.email) + '</span>' + subLine(u) + '</div></td><td>' + S.roleChip(u.role) + '</td>' +
         '<td class="k-mono k-strong">' + esc(hubText(u)) + '</td><td>' + hiryuText(u) + '</td><td class="k-table__actions">' +
@@ -54,7 +54,7 @@
       '</tbody></table></div></div>' +
       '<div class="k-phone-only k-list">' + rows.map((u) => '<div class="k-row"' + (u.can_edit ? ' data-edit="' + u.id + '" role="button" tabindex="0"' : '') + '>' +
         '<span class="k-row__text"><span class="k-row__title">' + esc(u.name || u.email) + ' ' + S.roleChip(u.role) + '</span>' + subLine(u) +
-        '<span class="k-row__sub">Hub ' + esc(hubText(u)) + ' · Hiryu: ' + esc(u.hiryu_text) + '</span></span>' +
+        '<span class="k-row__sub">Dark store ' + esc(hubText(u)) + ' · Hiryu: ' + esc(u.hiryu_text) + '</span></span>' +
         (u.can_edit ? '<span class="k-row__chev">' + icon('chev', 22) + '</span>' : '') + '</div>').join('') + '</div>' +
       '<div class="k-note k-note--info">' + icon('info', 20) + '<span>' + esc(d.note) + '</span></div></div>' +
       '<div class="k-laptop-only" id="po-formhost"></div></div>';
@@ -100,9 +100,9 @@
       '<label class="k-field"><span class="k-field__label">Email</span><input class="k-input" name="email" type="email" inputmode="email" placeholder="nama@ninjavan.co" required>' +
       '<span class="k-field__hint" ' + biAttr('Hanya email @ninjavan.co.', 'Only @ninjavan.co e-mails.') + '></span></label>' +
       '<label class="k-field"><span class="k-field__label" ' + biAttr('Nama', 'Name') + '></span><input class="k-input" name="name" required></label>' +
-      '<div class="k-field" data-hubfield><span class="k-field__label">Hub</span>' + hubOptions(false, here ? [here] : []) + '</div>' +
+      '<div class="k-field" data-hubfield><span class="k-field__label">Dark store</span>' + hubOptions(false, here ? [here] : []) + '</div>' +
       '<div class="k-field"><span class="k-field__label" ' + biAttr('Peran', 'Role') + '></span>' + roleSeg(d, 'staff') +
-      '<span class="k-field__hint" ' + biAttr('SPV hanya bisa menambah Staf di hubnya.', 'An SPV can only add staff at their own hub.') + '></span></div>' +
+      '<span class="k-field__hint" ' + biAttr('SPV hanya bisa menambah Staf di dark store miliknya.', 'An SPV can only add staff at their own dark store.') + '></span></div>' +
       '<label class="k-check"><input type="checkbox" name="hiryu_login"><span><b ' + biAttr('Login Hiryu sudah dibuat', 'The Hiryu login is made') + '></b><br>' +
       '<span class="k-caption" ' + biAttr('Di Hiryu: STAFF atau MANAGER. Wajib.', 'In Hiryu: STAFF or MANAGER. Required.') + '></span></span></label>' +
       '<div class="k-note k-note--info">' + icon('info', 20) + bis('Orang ini langsung bisa masuk dengan akun Google @ninjavan.co. Tidak ada undangan atau email yang dikirim.',
@@ -136,7 +136,7 @@
     const hq = ['hq', 'ops_head', 'superadmin'].includes(u.role);
     body.innerHTML = '<div><div class="k-strong">' + esc(u.name || '') + '</div><div class="po-sub">' + esc(u.email) + '</div></div>' +
       '<div class="k-field"><span class="k-field__label" ' + biAttr('Peran', 'Role') + '></span>' + roleSeg(d, u.role) + '</div>' +
-      '<div class="k-field" data-hubfield' + (hq ? ' hidden' : '') + '><span class="k-field__label">Hub</span>' + hubOptions(true, u.site_ids) + '</div>' +
+      '<div class="k-field" data-hubfield' + (hq ? ' hidden' : '') + '><span class="k-field__label">Dark store</span>' + hubOptions(true, u.site_ids) + '</div>' +
       '<label class="k-check"><input type="checkbox" name="hiryu_login"' + (u.hiryu_login ? ' checked' : '') + '><span ' + biAttr('Login Hiryu sudah dibuat', 'The Hiryu login is made') + '></span></label>' +
       (u.active ? '<div class="k-note k-note--caution">' + icon('warn', 20) + bis('Orang yang keluar: tutup akun WMS dan cabut login Hiryu di hari yang sama.', 'Someone who leaves: close the WMS account and revoke the Hiryu login the same day.') + '</div>' : '');
     const roleOf = wireRoles(body, (r) => { body.querySelector('[data-hubfield]').hidden = ['hq', 'ops_head', 'superadmin'].includes(r); });
