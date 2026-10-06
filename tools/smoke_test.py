@@ -50,7 +50,7 @@ def main():
     ap.add_argument("--base", default=BASE)
     BASE = ap.parse_args().base
 
-    print("\nNinja Kilat WMS — smoke test\n" + "=" * 46)
+    print("\nNinja SatSet WMS — smoke test\n" + "=" * 46)
 
     print("\n[0] Platform")
     st, health = call("GET", "/health")

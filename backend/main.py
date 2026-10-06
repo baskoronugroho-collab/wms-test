@@ -1,4 +1,4 @@
-"""Ninja Kilat WMS — backend.
+"""Ninja SatSet WMS — backend.
 
 Substrait upload-mode contract: listens on 8000, serves GET /health, and serves
 its API under /api. All DDL lives in Flyway migrations; nothing here creates a
@@ -117,7 +117,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Ninja Kilat WMS",
+    title="Ninja SatSet WMS",
     version="0.1.0",
     description=(
         "Warehouse management for Ninja Van's GrabMart Kilat fulfilment: inbound "

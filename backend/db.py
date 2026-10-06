@@ -1,4 +1,4 @@
-"""Database access for the Ninja Kilat WMS.
+"""Database access for the Ninja SatSet WMS.
 
 OceanBase speaks the MySQL wire protocol, so this is asyncmy with %s
 placeholders throughout. Never asyncpg, never $1.

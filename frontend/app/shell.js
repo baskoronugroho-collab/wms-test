@@ -59,7 +59,7 @@
   function setLang(l) {
     store.set('njw.lang', l === 'en' ? 'en' : 'id');
     applyLang(document);
-    if (CUR_TITLE) document.title = t(CUR_TITLE[0], CUR_TITLE[1]) + ' · Kilat WMS';
+    if (CUR_TITLE) document.title = t(CUR_TITLE[0], CUR_TITLE[1]) + ' · SatSet WMS';
     paintClock();
     document.dispatchEvent(new CustomEvent('njw:lang', { detail: lang() }));
   }
@@ -246,7 +246,7 @@
     frame.className = 'k-app';
     frame.innerHTML =
       '<aside class="k-side" aria-label="Menu">' +
-        '<div class="k-brand"><span class="k-brand__mark">NINJA</span><span class="k-brand__name">Kilat WMS</span></div>' +
+        '<div class="k-brand"><span class="k-brand__mark">NINJA</span><span class="k-brand__name">SatSet WMS</span></div>' +
         navHtml(false) +
         '<div class="k-usercard" id="k-usercard"></div>' +
       '</aside>' +
@@ -287,7 +287,7 @@
     const [a, b] = CUR_TITLE;
     bi($('#k-title'), a, b);
     if (!FULL) bi($('#k-ptitle'), a, b);
-    document.title = t(a, b) + ' · Kilat WMS';
+    document.title = t(a, b) + ' · SatSet WMS';
   }
   function setSub(id, en) {
     const el = $('#k-sub');
@@ -328,7 +328,7 @@
     SHEET.setAttribute('aria-modal', 'true');
     SHEET.setAttribute('aria-label', 'Menu');
     SHEET.innerHTML =
-      '<div class="k-sheet__head"><div class="k-brand"><span class="k-brand__mark">NINJA</span><span class="k-brand__name">Kilat WMS</span></div>' +
+      '<div class="k-sheet__head"><div class="k-brand"><span class="k-brand__mark">NINJA</span><span class="k-brand__name">SatSet WMS</span></div>' +
       '<button type="button" class="k-iconbtn k-sheet__close" data-close ' + 'data-aria-id="Tutup menu" data-aria-en="Close the menu" aria-label="Tutup menu">' + icon('close', 24, 2.2) + '</button></div>' +
       '<div class="k-sheet__user"><span class="k-avatar k-avatar--' + (ROLE_CHIP[ME.role] || 'head') + '">' + esc(initials(ME.name)) + '</span>' +
       '<div class="k-sheet__who"><span class="k-sheet__name">' + esc(ME.name) + '</span><span class="k-sheet__role"><span ' + biAttr(r[0], r[1]) + '></span> · Hub ' +

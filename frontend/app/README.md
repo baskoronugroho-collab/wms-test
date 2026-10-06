@@ -16,7 +16,7 @@ Every page is this file. Owners normally change only the `init` options; the vie
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Pesanan · Kilat WMS</title>
+<title>Pesanan · SatSet WMS</title>
 <meta name="theme-color" content="#13233A">
 <link rel="manifest" href="../manifest.json">
 <link rel="apple-touch-icon" href="../assets/app/apple-touch-icon.png">

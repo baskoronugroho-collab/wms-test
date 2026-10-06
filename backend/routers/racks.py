@@ -677,7 +677,7 @@ LABEL_TOP_NOTE = ("Kertas A4 biasa, printer apa saja. Tempel tiap label di depan
                   "bawah. Strip level di balok depan, paling kiri.")
 LABEL_CUT_NOTE = ("Cetak di kertas A4 biasa. Gunting di garis putus-putus, tempel dengan "
                   "selotip bening menutupi seluruh label.")
-LABEL_FOOTER = "Kilat WMS · Rak & bin · Cetak label"
+LABEL_FOOTER = "SatSet WMS · Rak & bin · Cetak label"
 LABEL_LOST_NOTE = "Label hilang? Cetak ulang dari bin itu di Rak & bin."
 
 SPECIAL_TEXT = {

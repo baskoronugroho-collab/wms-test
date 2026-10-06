@@ -1,4 +1,4 @@
-# Ninja Kilat WMS — front end (v2)
+# Ninja SatSet WMS — front end (v2)
 
 Static, framework-free. **No build step**: serve `frontend/` and it runs.
 

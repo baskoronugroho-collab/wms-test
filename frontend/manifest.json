@@ -1,6 +1,6 @@
 {
-  "name": "Ninja Kilat WMS",
-  "short_name": "Kilat WMS",
+  "name": "Ninja SatSet WMS",
+  "short_name": "SatSet WMS",
   "description": "Station app: inbound by AWB, picking, counting.",
   "start_url": "/index.html?station",
   "scope": "/",

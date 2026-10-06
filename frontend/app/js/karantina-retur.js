@@ -317,7 +317,7 @@
 
   function a4(note, me) {
     const printed = S.fmt.date(new Date().toISOString()).replace(/ \d{4}$/, '') + ' ' + new Date().getFullYear() + ' ' + S.fmt.time(new Date().toISOString());
-    return '<div class="kr-eyebrow">Ninja Van Indonesia · Kilat WMS</div>' +
+    return '<div class="kr-eyebrow">Ninja Van Indonesia · SatSet WMS</div>' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px"><div><h1>Nota retur <span style="font-family:var(--mono)">' + esc(note.reference) + '</span></h1>' +
       '<div>Barang yang dikembalikan dari dark store ke merek.</div></div><span class="kr-reff">' + esc(note.reference) + '</span></div>' +
       '<div class="kr-meta">' +
@@ -335,7 +335,7 @@
       '<li>Jumlah yang tidak sama ditulis di baris itu dan diparaf kedua pihak.</li><li>Cetak dua lembar: satu dibawa driver, satu disimpan SPV hub.</li></ol></div>' +
       '<div class="kr-sign"><div><span class="kr-eyebrow">Diserahkan oleh · Ninja</span><span>Nama: ......................................................<br><br>Tanggal dan jam: ......................................</span></div>' +
       '<div><span class="kr-eyebrow">Diterima oleh · Driver</span><span>Nama: ......................................................<br><br>No. polisi kendaraan: ..............................</span></div></div>' +
-      '<div style="display:flex;justify-content:space-between;border-top:1px solid #000;margin-top:20px;padding-top:8px;font-size:12px"><span>Dicetak dari Kilat WMS · ' + esc(printed + ' · ' + ((me && me.name) || '')) + '</span><span>Halaman 1 dari 1</span></div>';
+      '<div style="display:flex;justify-content:space-between;border-top:1px solid #000;margin-top:20px;padding-top:8px;font-size:12px"><span>Dicetak dari SatSet WMS · ' + esc(printed + ' · ' + ((me && me.name) || '')) + '</span><span>Halaman 1 dari 1</span></div>';
   }
 
   async function notePrint(ctx, id) {

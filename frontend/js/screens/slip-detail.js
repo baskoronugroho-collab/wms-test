@@ -34,7 +34,7 @@
       sheet.parentNode.insertBefore(box, sheet);
       applyLangTo(box);
       bi($('.page__title'), 'Slip putaway', 'Putaway slip');
-      document.title = 'Slip putaway — Ninja Kilat WMS';
+      document.title = 'Slip putaway — Ninja SatSet WMS';
       return;
     }
 
@@ -56,7 +56,7 @@
     const brand = brandId
       ? ((await api.brands().catch(() => [])).find(b => b.id === brandId) || {}).name : null;
 
-    document.title = s.slip_no + ' — Ninja Kilat WMS';
+    document.title = s.slip_no + ' — Ninja SatSet WMS';
     bi($('.page__title'), s.slip_no, s.slip_no);
 
     /* ---- head ---- */
