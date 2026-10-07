@@ -22,6 +22,12 @@ fixed products (GET /api/demo/presets shows each product's barcode, likely bin
 and stock), and Reset stok demo puts those products back to their dev-seed
 level in their rack bins, as audited stock corrections through the ledger.
 
+For the inbound part, Kiriman demo baru makes a fresh Labore restock request
+at the dark store, already confirmed by the brand with the fixed brand PO
+number PO/LBR/DEMO, so Barang masuk has something to receive at every
+rehearsal. An earlier demo delivery not received yet is cancelled first; one
+being received refuses it.
+
 A missing line at 0 stock: receive_order still gives it a pick line at the
 SKU's bin (common.pick_locations_for falls back to the slots, primary first
 when none is stocked), unallocated, so the picker goes there and presses
@@ -43,7 +49,7 @@ import daycolor
 import db
 import floor
 import ledger
-from routers import hiryu_link, opname
+from routers import hiryu_link, opname, replenishment
 
 log = logging.getLogger("wms.demo")
 # Preset C: the stand-in cancels as the customer this long after the order arrives,
@@ -648,6 +654,243 @@ async def reset_stock(body: ResetIn, user: auth.User = Depends(auth.require("sup
                          "Stok demo sudah sesuai, tidak ada yang diubah. / "
                          "Demo stock already matches, nothing changed."))
     return plan
+
+
+# --------------------------------------------------------------------------
+# Kiriman demo: a fresh confirmed Labore delivery for Barang masuk
+# --------------------------------------------------------------------------
+
+DELIVERY_BRAND = "LBR"
+# Fixed, so the printed run sheet can carry it as a barcode.
+DELIVERY_PO = "PO/LBR/DEMO"
+DELIVERY_LINES = [("LBR-0001", 3), ("LBR-0016", 2), ("LBR-0019", 2)]
+# The PO header as on the seed's RPL-MA5-2609-002 (tools/gen_dev_seed.py). A
+# dark store not in DELIVERY_TO gets the address Buat permintaan restock fills in.
+DELIVERY_HEADER = {"po_to": "PT Paragon Technology and Innovation",
+                   "po_brand_contact": "restock@paragon.example",
+                   "po_receiving_hours": "09:00 to 16:00 WIB",
+                   "po_created_by_name": "Andi Pratama"}
+DELIVERY_TO = {"MA5": "Ninja Xpress MA5 Cawang, Jl. Raya Kalibata No. 4, Kramat Jati, "
+                      "Jakarta Timur"}
+DELIVERY_NOTE = "Kiriman demo (Pengaturan, Demo). / Demo delivery (Settings, Demo)."
+# Not received yet, so a new demo delivery may cancel it ('receiving' refuses).
+_REPLACEABLE = ("draft", "raised", "po", "sent", "confirmed")
+
+
+class DeliveryIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    site_id: int
+
+
+class DemoDeliveryLine(BaseModel):
+    sku_code: str
+    name: str | None
+    qty_confirmed: int
+    qty_received: int | None = None
+
+
+class DemoDelivery(BaseModel):
+    id: int
+    reference: str
+    brand_po_number: str
+    brand_name: str
+    status: str
+    eta_date: str | None = None
+    receipt_open: bool = Field(description="A receipt is open on it (mid-receipt)")
+    created_by: str | None = None
+    created_at: str | None = None
+    lines: list[DemoDeliveryLine]
+    units: int
+
+
+class DemoDeliveryState(BaseModel):
+    site_id: int
+    demo_mode: bool
+    brand_po_number: str = DELIVERY_PO
+    planned: list[DemoDeliveryLine] = Field(description="What a new one carries")
+    delivery: DemoDelivery | None = Field(
+        default=None, description="The latest demo delivery at this dark store, not cancelled")
+    can_create: bool
+    problems: list[str] = Field(default_factory=list, description="Indonesian / English")
+    closed: list[str] = Field(default_factory=list,
+                              description="Earlier demo deliveries this press cancelled")
+    message: str | None = None
+
+
+async def _delivery_parts(site: dict) -> tuple[dict | None, list[dict], list[str]]:
+    """Labore, the three SKUs of the demo delivery, and what is missing."""
+    brand = await db.fetch_one("SELECT id, name FROM brands WHERE UPPER(code) = %s",
+                               (DELIVERY_BRAND,))
+    if not brand:
+        return None, [], ["Merek Labore (LBR) tidak ada di WMS. / "
+                          "The Labore brand (LBR) is not in the WMS."]
+    codes = [c for c, _ in DELIVERY_LINES]
+    rows = await db.fetch_all(
+        "SELECT id, brand_sku_code, name_display FROM skus WHERE brand_id = %s AND "
+        f"UPPER(brand_sku_code) IN ({db.placeholders(codes)})", [brand["id"], *codes])
+    by_code = {(r["brand_sku_code"] or "").upper(): r for r in rows}
+    absent = [c for c in codes if c not in by_code]
+    if absent:
+        a = ", ".join(absent)
+        return brand, [], [f"{a} tidak ada di WMS sebagai produk Labore. / "
+                           f"{a} is not in the WMS as a Labore product."]
+    lines = [{"sku_id": by_code[c]["id"], "sku_code": c, "name": by_code[c]["name_display"],
+              "qty_confirmed": q} for c, q in DELIVERY_LINES]
+    return brand, lines, []
+
+
+async def _demo_deliveries(site_id: int, brand_id: int, cur=None) -> list[dict]:
+    """Every demo delivery at this dark store (brand PO PO/LBR/DEMO of Labore),
+    newest first, with its open receipt if any. With `cur` the rows are locked."""
+    sql = ("SELECT rp.*, b.name AS brand_name, "
+           "  (SELECT ir.id FROM inbound_receipts ir WHERE ir.replenishment_id = rp.id "
+           "     AND ir.status = 'open' ORDER BY ir.id DESC LIMIT 1) AS open_receipt_id "
+           "FROM replenishments rp JOIN brands b ON b.id = rp.brand_id "
+           "WHERE rp.site_id = %s AND rp.brand_id = %s AND UPPER(rp.brand_po_number) = %s "
+           "ORDER BY rp.id DESC")
+    params = (site_id, brand_id, DELIVERY_PO)
+    if cur is not None:
+        return await db.many(cur, sql + " FOR UPDATE", params)
+    return await db.fetch_all(sql, params)
+
+
+def _mid_receipt(rp: dict) -> bool:
+    return rp["status"] == "receiving" or bool(rp.get("open_receipt_id"))
+
+
+def _mid_receipt_problem(rp: dict) -> str:
+    ref = rp["reference"]
+    return (f"Kiriman demo {ref} sedang diterima (penerimaan masih terbuka). Selesaikan dulu di "
+            f"Barang masuk. / Demo delivery {ref} is being received (a receipt is still open). "
+            "Finish it in Inbound first.")
+
+
+async def _delivery_out(rp: dict) -> dict:
+    lines = await db.fetch_all(
+        "SELECT rl.qty_confirmed, rl.qty_received, s.brand_sku_code, s.name_display "
+        "FROM replenishment_lines rl JOIN skus s ON s.id = rl.sku_id "
+        "WHERE rl.replenishment_id = %s ORDER BY rl.id", (rp["id"],))
+    out = [{"sku_code": (l["brand_sku_code"] or "").upper(), "name": l["name_display"],
+            "qty_confirmed": int(l["qty_confirmed"] or 0),
+            "qty_received": int(l["qty_received"]) if l["qty_received"] is not None else None}
+           for l in lines]
+    return {"id": rp["id"], "reference": rp["reference"],
+            "brand_po_number": rp["brand_po_number"], "brand_name": rp["brand_name"],
+            "status": rp["status"],
+            "eta_date": str(rp["eta_date"]) if rp.get("eta_date") else None,
+            "receipt_open": bool(rp.get("open_receipt_id")),
+            "created_by": rp.get("created_by"),
+            "created_at": str(rp["created_at"]) if rp.get("created_at") else None,
+            "lines": out, "units": sum(l["qty_confirmed"] for l in out)}
+
+
+async def _delivery_state(site: dict) -> dict:
+    brand, lines, problems = await _delivery_parts(site)
+    planned = lines or [{"sku_code": c, "name": None, "qty_confirmed": q}
+                        for c, q in DELIVERY_LINES]
+    current = None
+    if brand:
+        rows = [r for r in await _demo_deliveries(site["id"], brand["id"])
+                if r["status"] != "cancelled"]
+        if rows:
+            current = await _delivery_out(rows[0])
+        problems += [_mid_receipt_problem(r) for r in rows if _mid_receipt(r)]
+    if not site["demo_mode"]:
+        problems.insert(0, "Mode demo belum menyala untuk dark store ini. / "
+                           "Mode demo is not on for this dark store.")
+    return {"site_id": site["id"], "demo_mode": site["demo_mode"],
+            "planned": [{k: v for k, v in l.items() if k != "sku_id"} for l in planned],
+            "delivery": current, "can_create": not problems, "problems": problems}
+
+
+@router.get("/delivery", response_model=DemoDeliveryState)
+async def demo_delivery_state(site_id: int, user: auth.User = Depends(auth.require("supervisor"))):
+    """Kiriman demo: the latest demo delivery at this dark store (reference,
+    brand PO, lines, status) and whether a new one can be made now."""
+    site = await _site(user, site_id)
+    return await _delivery_state(site)
+
+
+@router.post("/delivery", response_model=DemoDeliveryState)
+async def new_demo_delivery(body: DeliveryIn, user: auth.User = Depends(auth.require("supervisor"))):
+    """Kiriman demo baru (SPV and above, only in Mode demo): a fresh Labore
+    restock request at this dark store, already confirmed, as if Ops HQ had
+    made the request, sent it and recorded the brand's answer. The reference
+    comes from the normal numbering (RPL-<hub>-<yymm>-<nnn>), the brand PO
+    number is always PO/LBR/DEMO, the lines are LBR-0001 x3, LBR-0016 x2 and
+    LBR-0019 x2 confirmed, arriving today.
+
+    Only one is open at a time: an earlier demo delivery here that is not
+    received yet is cancelled the normal way (it leaves the lists); one being
+    received (a receipt open on it) refuses this. No Hiryu message: a restock
+    request sends none."""
+    site = await _site(user, body.site_id)
+    if not site["demo_mode"]:
+        raise HTTPException(409, "Mode demo belum menyala untuk dark store ini (Pengaturan, Demo). / "
+                                 "Mode demo is not on for this dark store (Settings, Demo).")
+    brand, lines, problems = await _delivery_parts(site)
+    if problems:
+        raise HTTPException(422, problems[0])
+    nums = await replenishment._stock_and_fill(site["id"], [l["sku_id"] for l in lines])
+    today = daycolor.local_date()
+    hub = _hub_short(site)
+    deliver_to = DELIVERY_TO.get(hub)
+    if not deliver_to:
+        dflt = await replenishment._default_header(
+            {"brand_id": brand["id"], "site_id": site["id"]}, user)
+        deliver_to = dflt["po_deliver_to"]
+    closed = []
+    async with db.tx() as cur:
+        # The reference first: it locks the site row, so two presses at once queue.
+        reference = await replenishment.mint_reference(cur, site["id"])
+        earlier = await _demo_deliveries(site["id"], brand["id"], cur)
+        busy = [r for r in earlier if _mid_receipt(r)]
+        if busy:
+            raise HTTPException(409, _mid_receipt_problem(busy[0]))
+        for r in earlier:
+            if r["status"] in _REPLACEABLE:
+                await replenishment.mark_cancelled(
+                    cur, r, user.email, after={"status": "cancelled", "reason": "demo_delivery",
+                                               "replaced_by": reference})
+                closed.append(r["reference"])
+        rep_id = await db.run(
+            cur,
+            "INSERT INTO replenishments (reference, site_id, brand_id, status, note, created_by, "
+            "auto_created, po_saved_by, po_saved_at, sent_by, sent_at, confirmed_by, confirmed_at, "
+            "brand_po_number, eta_date, po_date, po_to, po_brand_contact, po_deliver_to, "
+            "po_receiving_hours, po_requested_date, po_created_by_name) "
+            "VALUES (%s,%s,%s,'confirmed',%s,%s,0,%s,NOW(),%s,NOW(),%s,NOW(),%s,%s,%s,%s,%s,%s,%s,"
+            "%s,%s)",
+            (reference, site["id"], brand["id"], DELIVERY_NOTE, user.email, user.email,
+             user.email, user.email, DELIVERY_PO, today, today, DELIVERY_HEADER["po_to"],
+             DELIVERY_HEADER["po_brand_contact"], deliver_to,
+             DELIVERY_HEADER["po_receiving_hours"], today, DELIVERY_HEADER["po_created_by_name"]))
+        for l in lines:
+            n = nums.get(l["sku_id"], {})
+            await db.run(
+                cur,
+                "INSERT INTO replenishment_lines (replenishment_id, sku_id, qty_requested, "
+                "qty_confirmed, stock_at_po, fill_to_at_po) VALUES (%s,%s,%s,%s,%s,%s)",
+                (rep_id, l["sku_id"], l["qty_confirmed"], l["qty_confirmed"],
+                 n.get("stock", 0), n.get("fill_to")))
+        await ledger.audit(
+            cur, actor_email=user.email, entity="replenishment", entity_id=rep_id,
+            action="demo_delivery",
+            after={"reason": "Kiriman demo", "reference": reference, "site": site["code"],
+                   "brand_po_number": DELIVERY_PO, "status": "confirmed", "eta": str(today),
+                   "lines": {l["sku_code"]: l["qty_confirmed"] for l in lines},
+                   "units": sum(l["qty_confirmed"] for l in lines), "cancelled": closed})
+    state = await _delivery_state(site)
+    units = sum(l["qty_confirmed"] for l in lines)
+    gone = ", ".join(closed)
+    state.update(
+        closed=closed,
+        message=(f"Kiriman demo {reference} siap diterima: {DELIVERY_PO}, {len(lines)} produk, "
+                 f"{units} pcs." + (f" {gone} dibatalkan." if closed else "") +
+                 f" / Demo delivery {reference} is ready to receive: {DELIVERY_PO}, "
+                 f"{len(lines)} products, {units} pcs." +
+                 (f" {gone} cancelled." if closed else "")))
+    return state
 
 
 def _grab_order_id() -> str:

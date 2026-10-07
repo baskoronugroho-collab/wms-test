@@ -11,6 +11,12 @@
  *   GET  /api/demo/reset-stock?site_id=  what it will change, and what refuses it
  *   POST /api/demo/reset-stock           {site_id}: the preset products back to
  *        their seed level, as stock corrections through the ledger
+ *
+ * Kiriman demo baru (SPV and above, Mode demo on), for the inbound part:
+ *   GET  /api/demo/delivery?site_id=     the latest demo delivery, and what refuses a new one
+ *   POST /api/demo/delivery              {site_id}: a fresh Labore restock request, already
+ *        confirmed, brand PO PO/LBR/DEMO, arriving today; an earlier one not received
+ *        yet is cancelled, one being received refuses it
  */
 (function () {
   'use strict';
@@ -41,7 +47,80 @@
     [['Lihat semuanya di Integrasi Hiryu, Pesan Hiryu: pemicu, nomor H dan JSON persis.', 'Watch it all under Hiryu integration, Hiryu messages: trigger, H number and exact JSON.'], null],
   ];
 
-  function html(st) {
+  /* Kiriman demo: a fresh confirmed Labore delivery for Inbound. */
+  const DV_STATUS = {
+    draft: ['Draf', 'Draft', 'info'], raised: ['Diajukan', 'Raised', 'info'], po: ['Permintaan', 'Request', 'info'],
+    sent: ['Terkirim, menunggu merek', 'Sent, waiting for the brand', 'info'],
+    confirmed: ['Dikonfirmasi, siap diterima', 'Confirmed, ready to receive', 'ok'],
+    receiving: ['Sedang diterima', 'Being received', 'info'],
+    variance_review: ['Selisih', 'Differences', 'caution'],
+    variance_signoff: ['Diterima, selisih menunggu Ops HQ', 'Received, differences waiting for Ops HQ', 'caution'],
+    received: ['Sudah diterima', 'Received', 'ok'], cancelled: ['Dibatalkan', 'Cancelled', 'stop'],
+  };
+  const REPLACEABLE = ['draft', 'raised', 'po', 'sent', 'confirmed'];
+
+  function deliveryCard(st, dv) {
+    const on = !!st.demo_mode;
+    const po = (dv && dv.brand_po_number) || 'PO/LBR/DEMO';
+    const planned = (dv && dv.planned) || [];
+    const units = planned.reduce((a, l) => a + (l.qty_confirmed || 0), 0);
+    const plan = planned.map((l) => l.sku_code + ' x' + l.qty_confirmed).join(', ');
+    const d = dv && dv.delivery;
+    /* "Mode demo is not on" is already said under the button. */
+    const problems = ((dv && dv.problems) || []).filter((x) => on || x.indexOf('Mode demo') !== 0);
+    const stp = d ? (DV_STATUS[d.status] || [d.status, d.status, 'info']) : null;
+    const lineRow = (l) => '<tr><td><div class="k-cell2"><span class="k-cell2__main k-mono">' + esc(l.sku_code) + '</span>' +
+      '<span class="k-cell2__sub">' + esc(l.name || '') + '</span></div></td>' +
+      '<td class="k-num">' + l.qty_confirmed + '</td><td class="k-num">' + (l.qty_received == null ? '-' : l.qty_received) + '</td></tr>';
+    const current = d
+      ? '<div class="k-stack k-stack--tight" style="margin-top:4px"><span class="k-eyebrow" ' + biAttr('Kiriman demo sekarang', 'Current demo delivery') + '></span>' +
+        '<div class="k-line" style="gap:10px;flex-wrap:wrap;align-items:center">' +
+        '<span class="k-mono k-strong">' + esc(d.reference) + '</span>' +
+        '<span class="k-tag k-mono">' + esc(d.brand_po_number) + '</span>' + S.pill(stp[2], stp[0], stp[1]) +
+        (d.eta_date ? '<span class="k-caption">' + span(['Tiba ' + S.fmt.date(d.eta_date), 'Arriving ' + S.fmt.date(d.eta_date)]) + '</span>' : '') + '</div>' +
+        '<div class="k-tablewrap"><table class="k-table"><thead><tr><th ' + biAttr('Produk', 'Product') + '></th>' +
+        '<th class="k-num" ' + biAttr('Dikonfirmasi', 'Confirmed') + '></th><th class="k-num" ' + biAttr('Diterima', 'Received') + '></th></tr></thead><tbody>' +
+        d.lines.map(lineRow).join('') +
+        '<tr><td class="k-strong">' + span(['Jumlah', 'Total']) + '</td><td class="k-num k-strong">' + d.units + '</td><td></td></tr>' +
+        '</tbody></table></div></div>'
+      : '<span class="k-caption">' + span(['Belum ada kiriman demo di dark store ini.', 'No demo delivery at this dark store yet.']) + '</span>';
+    return '<div class="k-card k-card--pad k-stack">' +
+      '<span class="k-h2" style="font-size:18px">' + span(['Kiriman demo', 'Demo delivery']) + '</span>' +
+      '<p class="k-p" style="margin:0">' + span([
+        'Membuat permintaan restock Labore baru di dark store ini yang sudah dikonfirmasi merek, dengan No. PO merek ' + po + ' dan tiba hari ini, supaya setiap latihan punya kiriman untuk diterima. Terima di Barang masuk dengan mengetik atau memindai nomor itu. Kiriman demo sebelumnya yang belum diterima dibatalkan.',
+        'Makes a new Labore restock request at this dark store, already confirmed by the brand, with brand PO ' + po + ' and arriving today, so every rehearsal has a delivery to receive. Receive it in Inbound by typing or scanning that number. An earlier demo delivery not received yet is cancelled.']) + '</p>' +
+      (plan ? '<span class="k-caption">' + span(['Isi: ' + plan + ' (' + units + ' pcs). Tidak ada pesan ke Hiryu.', 'Lines: ' + plan + ' (' + units + ' pcs). No message to Hiryu.']) + '</span>' : '') +
+      problems.map((x) => '<div class="k-note k-note--caution">' + icon('warn') + '<span>' + esc(S.pick(x)) + '</span></div>').join('') +
+      '<div class="k-line" style="gap:10px;flex-wrap:wrap">' +
+      '<button type="button" class="k-btn k-btn--secondary" data-delivery data-min-role="supervisor"' + (on && dv && dv.can_create ? '' : ' disabled') + '>' + icon('plus') + span(['Kiriman demo baru', 'New demo delivery']) + '</button>' +
+      '<a class="k-btn k-btn--secondary" href="barang-masuk.html">' + icon('inbound') + span(['Buka Barang masuk', 'Open Inbound']) + '</a>' +
+      (on ? '' : '<span class="k-caption">' + span(['Nyalakan Mode demo dulu.', 'Switch Mode demo on first.']) + '</span>') + '</div>' +
+      current + '</div>';
+  }
+
+  async function newDelivery(dv) {
+    const d = dv && dv.delivery;
+    if (d && REPLACEABLE.indexOf(d.status) >= 0) {
+      const ok = await S.confirm({
+        title: ['Kiriman demo baru', 'New demo delivery'],
+        text: [d.reference + ' belum diterima. Kiriman itu dibatalkan dan diganti kiriman demo baru.',
+          d.reference + ' has not been received. It is cancelled and replaced by a new demo delivery.'],
+        ok: ['Kiriman demo baru', 'New demo delivery'],
+      });
+      if (!ok) return null;
+    }
+    const r = await api().post('/demo/delivery', { site_id: S.siteId() });
+    S.toast(r.message || ['Kiriman demo siap diterima.', 'Demo delivery ready to receive.'], 'ok');
+    return r;
+  }
+
+  async function loadDelivery() {
+    if (!S.atLeast('supervisor')) return null;
+    try { return await api().get('/demo/delivery' + api().qs({ site_id: S.siteId() })); }
+    catch (e) { return null; }
+  }
+
+  function html(st, dv) {
     const on = !!st.demo_mode;
     return '<div class="k-stack k-stack--loose">' +
       '<div class="k-card k-card--pad k-stack' + (on ? ' k-card--focus' : '') + '">' +
@@ -68,6 +147,7 @@
       '<div class="k-line" style="gap:10px;flex-wrap:wrap">' +
       '<button type="button" class="k-btn k-btn--secondary" data-reset data-min-role="supervisor"' + (on ? '' : ' disabled') + '>' + icon('count') + span(['Reset stok demo', 'Reset demo stock']) + '</button>' +
       (on ? '' : '<span class="k-caption">' + span(['Nyalakan Mode demo dulu.', 'Switch Mode demo on first.']) + '</span>') + '</div></div>' +
+      deliveryCard(st, dv) +
       '<div class="k-card k-card--pad k-stack"><span class="k-eyebrow" ' + biAttr('Alur demo', 'Demo flow') + '></span><ol class="k-stack" style="margin:0;padding-left:22px">' +
       STEPS.map((x) => '<li>' + span(x[0]) + (x[1] ? ' ' + x[1].split(' ').map((h) => '<span class="k-tag">' + esc(h) + '</span>').join(' ') : '') + '</li>').join('') +
       '</ol></div>' +
@@ -135,18 +215,34 @@
       return;
     }
     let st = await api().get('/demo/settings' + api().qs({ site_id: S.siteId() }));
+    let dv = await loadDelivery();
     function paint() {
-      body.innerHTML = html(st);
+      body.innerHTML = html(st, dv);
       const sw = body.querySelector('[data-demo]');
       S.lockAll(body);
       if (sw && !sw.closest('.k-lockwrap')) S.toggle(sw, async (on) => {
         const r = await api().put('/demo/settings', { site_id: S.siteId(), demo_mode: on });
         st = Object.assign(st, r);
         S.toast(r.message || (on ? ['Mode demo menyala.', 'Mode demo on.'] : ['Mode demo mati.', 'Mode demo off.']), 'ok');
+        dv = await loadDelivery();
         paint();
       });
       const rs = body.querySelector('[data-reset]');
       if (rs) rs.addEventListener('click', () => resetStock().catch(S.fail));
+      const nd = body.querySelector('[data-delivery]');
+      if (nd) nd.addEventListener('click', async () => {
+        nd.disabled = true;
+        try {
+          const r = await newDelivery(dv);
+          if (r) { dv = r; paint(); return; }
+        } catch (e) {
+          S.fail(e);
+          dv = await loadDelivery();
+          paint();
+          return;
+        }
+        nd.disabled = false;
+      });
       const mk = body.querySelector('[data-make]');
       if (mk) mk.addEventListener('click', async () => {
         try { const d = await loadDemoOrder(); await d.open({ siteId: S.siteId() }); }

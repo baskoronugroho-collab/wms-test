@@ -1061,10 +1061,17 @@ async def cancel(rep_id: int, user: auth.User = Depends(auth.require("supervisor
     if row["status"] not in ("draft", "raised"):
         _need_hq(user, "membatalkan permintaan", "cancel a request")
     async with db.tx() as cur:
-        await db.run(cur, "UPDATE replenishments SET status='cancelled' WHERE id=%s", (rep_id,))
-        await ledger.audit(cur, actor_email=user.email, entity="replenishment",
-                           entity_id=rep_id, action="cancel", before={"status": row["status"]})
+        await mark_cancelled(cur, row, user.email)
     return await _payload(rep_id)
+
+
+async def mark_cancelled(cur, row: dict, actor: str, after: dict | None = None) -> None:
+    """Cancel a request nothing has arrived for yet: the Batalkan button above,
+    or a new demo delivery replacing an older one (routers/demo.py). It leaves
+    every open list and Barang masuk's Kiriman hari ini."""
+    await db.run(cur, "UPDATE replenishments SET status='cancelled' WHERE id=%s", (row["id"],))
+    await ledger.audit(cur, actor_email=actor, entity="replenishment", entity_id=row["id"],
+                       action="cancel", before={"status": row["status"]}, after=after)
 
 
 # --- differences: Ops HQ approves within 24 hours (step 7) ----------------------------
@@ -1280,19 +1287,40 @@ async def user_names(emails) -> dict[str, str]:
     return out
 
 
+RECEIVABLE_STATES = ("confirmed", "receiving")
+
+
 async def find_deliveries(site_id: int, code: str) -> list[dict]:
     """Open a delivery by our Ninja reference or the brand's PO number (board 5a).
-    A brand PO number can match two brands: every match is returned."""
+
+    A brand PO number can repeat: two brands may use the same number, and one
+    brand may reuse it once an earlier request is received or cancelled (the
+    demo delivery PO/LBR/DEMO is made again for every rehearsal). So the
+    deliveries still to receive (confirmed or receiving) at this dark store come
+    first, and when there is one, only those are returned: one per brand
+    normally, and the screen asks which brand when there are more. Received
+    ones are returned only when nothing is open, newest first and one per
+    brand, so the screen can say it was already received."""
     code = (code or "").strip()
     if not code:
         return []
-    return await db.fetch_all(
+    rows = await db.fetch_all(
         "SELECT rp.*, b.name AS brand_name FROM replenishments rp "
         "JOIN brands b ON b.id = rp.brand_id "
         "WHERE rp.site_id = %s AND (rp.reference = %s OR UPPER(rp.brand_po_number) = UPPER(%s)) "
         "AND rp.status IN ('confirmed','receiving','variance_review','variance_signoff',"
-        "'received') ORDER BY rp.id DESC LIMIT 5",
+        "'received') "
+        f"ORDER BY rp.status IN {_sql_in(RECEIVABLE_STATES)} DESC, rp.id DESC LIMIT 20",
         (site_id, code.upper(), code))
+    live = [r for r in rows if r["status"] in RECEIVABLE_STATES]
+    if live:
+        return live[:5]
+    out, brands = [], set()
+    for r in rows:
+        if r["brand_id"] not in brands:
+            brands.add(r["brand_id"])
+            out.append(r)
+    return out[:5]
 
 
 async def close_on_receipt(cur, receipt: dict, final: bool = True) -> None:

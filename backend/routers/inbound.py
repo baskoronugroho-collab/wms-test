@@ -648,8 +648,11 @@ async def lookup(site_id: int, code: str, user: auth.User = Depends(auth.current
     if not out:
         msg = (f"{code.strip()} tidak ada di WMS. Tetap terima, Ops HQ yang mencocokkan. / "
                f"{code.strip()} is not in the WMS. Receive it anyway; Ops HQ will match it.")
-    elif all(o["status"] not in ("confirmed", "receiving") for o in out):
-        msg = "Kiriman ini sudah diterima. / This delivery was already received."
+    elif all(o["status"] not in replenishment.RECEIVABLE_STATES for o in out):
+        # find_deliveries returns received ones only when none is open here.
+        refs = ", ".join(o["reference"] for o in out)
+        msg = (f"Kiriman ini sudah diterima ({refs}). / "
+               f"This delivery was already received ({refs}).")
     return {"code": code.strip(), "matches": out, "found": bool(out), "message": msg}
 
 
