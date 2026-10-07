@@ -2757,7 +2757,7 @@
           "inbound"
         ],
         "summary": "One unit: a scanned barcode, or a product picked from the list (no barcode)",
-        "description": "One unit: a scanned barcode, or a product picked from the list (no barcode).\nNever an error for a floor problem: the outcome says what to do.\n\n  counted     into the product's bin\n  new_bin     first unit of the product: take the bin named, scan its label\n  extra_bin   above the expected quantity: its own bin, waits for Ops HQ\n  damaged     *Rusak* on: to the quarantine tray or back to the driver;\n              take a photo (photo_needed) with /photos kind=damage\n  no_free_bin every temporary bin is taken: finish the batch, or the SPV adds one",
+        "description": "One unit: a scanned barcode, or a product picked from the list (no barcode).\nNever an error for a floor problem: the outcome says what to do.\n\n  counted     into the product's bin\n  new_bin     first unit of the product: take the bin named, scan its label\n  extra_bin   above the expected quantity: its own bin, waits for Ops HQ\n  damaged     *Rusak* on: to the quarantine tray or back to the driver;\n              take a photo (photo_needed) with /photos kind=damage\n  no_free_bin every temporary bin is taken: the SPV adds one (Tambah bin sementara)",
         "operationId": "count_unit_api_inbound_receipts__receipt_id__units_post",
         "parameters": [
           {
@@ -3234,9 +3234,84 @@
         "tags": [
           "inbound"
         ],
-        "summary": "*Selesai batch ini*, then the putaway list of this receipt",
-        "description": "*Selesai batch ini*, then the putaway list of this receipt.",
+        "summary": "The old *Selesai batch ini* (putaway in the middle of scanning)",
+        "description": "The old *Selesai batch ini* (putaway in the middle of scanning). The screen no\nlonger offers it since 7 Oct; kept so an old open tab does not fail.",
         "operationId": "close_batch_api_inbound_receipts__receipt_id__batch_post",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Receipt Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PutawayList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inbound/receipts/{receipt_id}/slips-printed": {
+      "post": {
+        "tags": [
+          "inbound"
+        ],
+        "summary": "*Sudah dicetak*: the putaway slips of a finished receipt are on paper, so",
+        "description": "*Sudah dicetak*: the putaway slips of a finished receipt are on paper, so\nevery temporary bin becomes its own putaway task (*Taruh di rak*, also on\nPerlu tindakan). Anyone receiving may confirm it. Pressing it again changes\nnothing.",
+        "operationId": "slips_printed_api_inbound_receipts__receipt_id__slips_printed_post",
         "parameters": [
           {
             "name": "receipt_id",
@@ -3309,8 +3384,8 @@
         "tags": [
           "inbound"
         ],
-        "summary": "*Taruh di rak* (board 5e): each temporary bin with its product, units and",
-        "description": "*Taruh di rak* (board 5e): each temporary bin with its product, units and\nrack bin, in walking order; bins waiting for Ops HQ listed apart with no rack\nbin (*Tunggu Ops HQ*). Accepted extras show here too.",
+        "summary": "*Taruh di rak*: the putaway tasks, one per temporary bin, with its product,",
+        "description": "*Taruh di rak*: the putaway tasks, one per temporary bin, with its product,\nunits and rack bin, in walking order; bins waiting for Ops HQ listed apart\nwith no rack bin (*Tunggu Ops HQ*). Accepted extras show here too. Without\nreceipt_id: every task at the hub (Barang masuk's list).",
         "operationId": "putaway_list_api_inbound_putaway_get",
         "parameters": [
           {
@@ -3877,8 +3952,8 @@
         "tags": [
           "inbound"
         ],
-        "summary": "*Semua barang sudah diterima* then *Selesai*: needs the three photos and a",
-        "description": "*Semua barang sudah diterima* then *Selesai*: needs the three photos and a\nphoto for every damaged product. Bins still being filled go on the putaway\nlist; differences wait for Ops HQ (24 h).",
+        "summary": "*Selesai & cetak slip*: needs the three photos and a photo for every damaged",
+        "description": "*Selesai & cetak slip*: needs the three photos and a photo for every damaged\nproduct. The bins wait for their putaway slips (/slips-printed makes them\ntasks); differences wait for Ops HQ (24 h).",
         "operationId": "finish_api_inbound_receipts__receipt_id__finish_post",
         "parameters": [
           {
@@ -4230,8 +4305,8 @@
         "tags": [
           "inbound"
         ],
-        "summary": "*Cetak slip putaway* (A4, board 5j): what went from which temporary bin to",
-        "description": "*Cetak slip putaway* (A4, board 5j): what went from which temporary bin to\nwhich rack bin with the divider colour, the differences waiting for Ops HQ,\nthe 24-hour claim deadline, and the signature boxes. The number\nPA-<hub>-<yymm>-<nnn> is issued on the first print and kept; the lines are\nrebuilt on every print so a later putaway (an accepted extra) appears.",
+        "summary": "*Cetak slip putaway* (thermal 80 mm, A4 without one)",
+        "description": "*Cetak slip putaway* (thermal 80 mm, A4 without one). Since 7 Oct staff\nprint it too, right after *Selesai*, before anything is on the rack:\n\n  tasks   one slip per temporary bin still to put away: product, units, from\n          the temporary bin, to the rack bin, today's divider colour\n  held    bins that stay where they are (extras waiting for Ops HQ, returns)\n  lines   what is already on the rack (the summary record the SPV signs),\n          with the differences waiting for Ops HQ, the 24-hour claim\n          deadline and the signature boxes\n\nThe number PA-<hub>-<yymm>-<nnn> is issued on the first print and kept; the\ncontent is rebuilt on every print so a later putaway (an accepted extra)\nappears.",
         "operationId": "putaway_slip_api_inbound_receipts__receipt_id__slip_get",
         "parameters": [
           {
@@ -7396,6 +7471,80 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CountAssignIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/counts/plan/assign-unassigned": {
+      "put": {
+        "tags": [
+          "stock opname"
+        ],
+        "summary": "Atur petugas untuk semua bin yang belum punya petugas hari ini",
+        "description": "Atur petugas untuk semua bin yang belum punya petugas hari ini. A recount\nnever goes to someone who already counted that bin; those bins are skipped\nand stay for the SPV to set one by one.",
+        "operationId": "assign_unassigned_api_counts_plan_assign_unassigned_put",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CountAssignAllIn"
               }
             }
           }
@@ -25674,7 +25823,7 @@
           "consumables"
         ],
         "summary": "Terima: packs and pieces per pack",
-        "description": "Terima: packs and pieces per pack. The stock does not change until Ops HQ\napproves.",
+        "description": "Terima: packs and pieces per pack. From staff it waits for the SPV first;\nfrom an SPV or above it goes to Ops HQ. The stock does not change until Ops\nHQ approves.",
         "operationId": "enter_receipt_api_consumables__item_id__receipts_post",
         "parameters": [
           {
@@ -25756,7 +25905,8 @@
         "tags": [
           "consumables"
         ],
-        "summary": "Pending Receipts",
+        "summary": "Receipts waiting (for the SPV or Ops HQ) or returned, newest last",
+        "description": "Receipts waiting (for the SPV or Ops HQ) or returned, newest last; with\nrecent_days, also those approved lately, so the page can show every state.",
         "operationId": "pending_receipts_api_consumables_receipts_pending_get",
         "parameters": [
           {
@@ -25773,6 +25923,93 @@
                 }
               ],
               "title": "Site Id"
+            }
+          },
+          {
+            "name": "recent_days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 31,
+              "minimum": 0,
+              "description": "Also the receipts Ops HQ approved in the last N days",
+              "default": 0,
+              "title": "Recent Days"
+            },
+            "description": "Also the receipts Ops HQ approved in the last N days"
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/consumables/receipts/{receipt_id}/spv-approve": {
+      "post": {
+        "tags": [
+          "consumables"
+        ],
+        "summary": "The SPV checks a staff receipt",
+        "description": "The SPV checks a staff receipt; it then waits for Ops HQ like the SPV's own.",
+        "operationId": "spv_approve_receipt_api_consumables_receipts__receipt_id__spv_approve_post",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Receipt Id"
             }
           },
           {
@@ -25808,6 +26045,89 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/consumables/receipts/{receipt_id}/spv-return": {
+      "post": {
+        "tags": [
+          "consumables"
+        ],
+        "summary": "Back to the staff member with a note",
+        "description": "Back to the staff member with a note. They enter it again.",
+        "operationId": "spv_return_receipt_api_consumables_receipts__receipt_id__spv_return_post",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Receipt Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteIn"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -25991,8 +26311,8 @@
         "tags": [
           "consumables"
         ],
-        "summary": "The SPV clears a receipt Ops HQ sent back, after entering it again",
-        "description": "The SPV clears a receipt Ops HQ sent back, after entering it again.",
+        "summary": "Clear a receipt from the list after entering it again: the SPV any open",
+        "description": "Clear a receipt from the list after entering it again: the SPV any open\none, staff only their own that the SPV returned.",
         "operationId": "withdraw_receipt_api_consumables_receipts__receipt_id__withdraw_post",
         "parameters": [
           {
@@ -26064,8 +26384,8 @@
         "tags": [
           "consumables"
         ],
-        "summary": "Hitung mingguan: every item on the shelf, sent to Ops HQ",
-        "description": "Hitung mingguan: every item on the shelf, sent to Ops HQ.",
+        "summary": "Hitung mingguan: every item on the shelf",
+        "description": "Hitung mingguan: every item on the shelf. From staff it waits for the SPV\nfirst; from an SPV or above it goes to Ops HQ. The system numbers are taken\nnow, when the shelf is counted.",
         "operationId": "submit_count_api_consumables_counts_post",
         "parameters": [
           {
@@ -26199,6 +26519,162 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/consumables/counts/{count_id}/spv-approve": {
+      "post": {
+        "tags": [
+          "consumables"
+        ],
+        "summary": "The SPV checks a staff count",
+        "description": "The SPV checks a staff count; it then waits for Ops HQ like the SPV's own.",
+        "operationId": "spv_approve_count_api_consumables_counts__count_id__spv_approve_post",
+        "parameters": [
+          {
+            "name": "count_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Count Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/consumables/counts/{count_id}/spv-return": {
+      "post": {
+        "tags": [
+          "consumables"
+        ],
+        "summary": "Back to the staff member with a note",
+        "description": "Back to the staff member with a note. They count again.",
+        "operationId": "spv_return_count_api_consumables_counts__count_id__spv_return_post",
+        "parameters": [
+          {
+            "name": "count_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Count Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteIn"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -29970,6 +30446,24 @@
         ],
         "title": "CountAnswer"
       },
+      "CountAssignAllIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "email"
+        ],
+        "title": "CountAssignAllIn"
+      },
       "CountAssignIn": {
         "properties": {
           "email": {
@@ -30787,6 +31281,18 @@
           "text": {
             "type": "string",
             "title": "Text"
+          },
+          "auto_cancel_in_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Cancel In Seconds",
+            "description": "Preset C: the stand-in cancels as the customer after this many seconds"
           }
         },
         "type": "object",
@@ -40348,6 +40854,17 @@
             "type": "string",
             "title": "Sku Name"
           },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          },
           "to_location_code": {
             "anyOf": [
               {
@@ -42143,6 +42660,29 @@
           "total_received": {
             "type": "integer",
             "title": "Total Received",
+            "default": 0
+          },
+          "stage": {
+            "type": "string",
+            "title": "Stage",
+            "description": "scan (open) | print (finished, putaway slips not printed yet) | putaway (tasks left) | done | refused",
+            "default": "scan"
+          },
+          "slip_pending": {
+            "type": "integer",
+            "title": "Slip Pending",
+            "description": "Temporary bins waiting for their slip",
+            "default": 0
+          },
+          "tasks_open": {
+            "type": "integer",
+            "title": "Tasks Open",
+            "description": "Putaway tasks (temporary bins) left",
+            "default": 0
+          },
+          "units_to_put": {
+            "type": "integer",
+            "title": "Units To Put",
             "default": 0
           }
         },

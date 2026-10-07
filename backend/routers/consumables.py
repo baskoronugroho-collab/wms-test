@@ -12,11 +12,22 @@ stock and never in a brand report.
 * **Minimum** = N days of use (14) at Grab's target (200 orders per hub per
   month). The figure on each item is a proposal Ops HQ can change.
 * **Need → PR → receipt**: the SPV raises a need (Ajukan ke Ops HQ); Ops HQ
-  submits the PR outside the WMS and records its number; the SPV enters what
-  arrived (packs x pieces per pack); Ops HQ approves, and only then the stock
-  goes up.
-* **Weekly count** by the SPV; when Ops HQ approves, the counted numbers
-  replace the computed ones and the difference is kept per item.
+  submits the PR outside the WMS and records its number; staff or the SPV
+  enter what arrived (packs x pieces per pack); Ops HQ approves, and only then
+  the stock goes up.
+* **Weekly count** by staff or the SPV; when Ops HQ approves, the counted
+  numbers replace the computed ones and the difference is kept per item.
+* **SPV step for staff entries** (user decision 7 Oct): a receipt or weekly
+  count entered below SPV starts as ``spv_pending``. The SPV approves it (on
+  to Ops HQ as ``pending``, exactly as an SPV entry) or returns it with a note
+  (``spv_returned``). An SPV or above starts at ``pending``. The stock moves
+  only at Ops HQ approval, as before.
+
+  Columns, no schema change (status is VARCHAR(16)): on a ``pending`` row,
+  ``decided_by``/``decided_at`` are the SPV who passed a staff entry on (NULL
+  for an SPV's own entry), and Ops HQ's decision overwrites them; on
+  ``spv_returned`` they are the SPV and ``hq_note`` holds the SPV's note. The
+  SPV's step is also in audit_log.
 """
 import math
 from datetime import timedelta
@@ -43,6 +54,9 @@ BASIS = {
 # history of its own (board 9, "Open for review": about 85% bag, 15% carton).
 DEFAULT_SHARE = {"bag": 0.85, "carton": 0.15, "order": 1.0}
 DELIVERIES_PER_WEEK = 2
+# Receipt and count states (both tables): waiting, then decided.
+WAITING = ("spv_pending", "pending")
+OPEN = ("spv_pending", "pending", "spv_returned", "returned")
 
 
 def _num(v) -> float:
@@ -235,14 +249,15 @@ async def list_items(site_id: int, user: auth.User = Depends(auth.current_user))
         reqs.setdefault(r["consumable_id"], r)
     rcpts: dict = {}
     for r in await db.fetch_all("SELECT * FROM consumable_receipts WHERE site_id = %s AND status IN "
-                                "('pending','returned') ORDER BY entered_at", (site_id,)):
+                                f"({db.placeholders(OPEN)}) ORDER BY entered_at", (site_id, *OPEN)):
         rcpts.setdefault(r["consumable_id"], []).append(r)
     last_pp = {r["consumable_id"]: r["per_pack"] for r in await db.fetch_all(
         "SELECT r.consumable_id, r.per_pack FROM consumable_receipts r JOIN ("
         "  SELECT consumable_id, MAX(id) AS id FROM consumable_receipts WHERE site_id = %s "
         "  AND status = 'approved' GROUP BY consumable_id) x ON x.id = r.id", (site_id,))}
     names = await names_for([r["raised_by"] for r in reqs.values()] + [r["pr_by"] for r in reqs.values()] +
-                            [x["entered_by"] for lst in rcpts.values() for x in lst])
+                            [x["entered_by"] for lst in rcpts.values() for x in lst] +
+                            [x["decided_by"] for lst in rcpts.values() for x in lst])
     shares = await _shares(site_id)
     per_day_target = cfg["orders_per_month"] / 30.0
     out = []
@@ -288,18 +303,20 @@ async def list_items(site_id: int, user: auth.User = Depends(auth.current_user))
             "receipts": [{"id": x["id"], "status": x["status"], "packs": _num(x["packs"]),
                           "per_pack": _num(x["per_pack"]), "qty_total": _num(x["qty_total"]),
                           "entered_by": x["entered_by"], "entered_name": names.get(x["entered_by"]),
-                          "entered_at": iso(x["entered_at"]), "hq_note": x["hq_note"]}
+                          "entered_at": iso(x["entered_at"]), "hq_note": x["hq_note"], "note": x["hq_note"],
+                          "decided_by": x["decided_by"], "decided_name": names.get(x["decided_by"])}
                          for x in rcpts.get(it["id"], [])],
         })
     last_count = await db.fetch_one(
-        "SELECT id, status, counted_by, counted_at, decided_at FROM consumable_counts WHERE site_id = %s "
-        "ORDER BY counted_at DESC LIMIT 1", (site_id,))
+        "SELECT id, status, counted_by, counted_at, decided_at, hq_note FROM consumable_counts WHERE site_id = %s "
+        "ORDER BY counted_at DESC, id DESC LIMIT 1", (site_id,))
     return {
         "site_id": site_id, "site_code": hub_short(site["code"]),
         "packed_orders_7d": int(packed["n"] or 0), "settings": cfg, "shares": shares,
         "last_count": ({"id": last_count["id"], "status": last_count["status"],
                         "counted_by": last_count["counted_by"], "counted_at": iso(last_count["counted_at"]),
-                        "decided_at": iso(last_count["decided_at"])} if last_count else None),
+                        "decided_at": iso(last_count["decided_at"]), "note": last_count["hq_note"]}
+                       if last_count else None),
         "items": out,
     }
 
@@ -455,9 +472,10 @@ async def cancel_request(request_id: int, user: auth.User = Depends(auth.require
 # --- receipts (9b) -------------------------------------------------------------------------
 
 @router.post("/{item_id}/receipts", status_code=201)
-async def enter_receipt(item_id: int, body: ReceiptIn, user: auth.User = Depends(auth.require("supervisor"))):
-    """Terima: packs and pieces per pack. The stock does not change until Ops HQ
-    approves."""
+async def enter_receipt(item_id: int, body: ReceiptIn, user: auth.User = Depends(auth.require("staff"))):
+    """Terima: packs and pieces per pack. From staff it waits for the SPV first;
+    from an SPV or above it goes to Ops HQ. The stock does not change until Ops
+    HQ approves."""
     it = await db.fetch_one("SELECT * FROM consumables WHERE id = %s", (item_id,))
     if not it:
         raise HTTPException(404, "Bahan kemas tidak ditemukan. / Item not found.")
@@ -468,31 +486,46 @@ async def enter_receipt(item_id: int, body: ReceiptIn, user: auth.User = Depends
                                "'pr_submitted' ORDER BY pr_at LIMIT 1", (item_id,))
         req_id = r["id"] if r else None
     total = Decimal(str(body.packs)) * Decimal(str(body.per_pack))
+    status = "pending" if user.at_least("supervisor") else "spv_pending"
     rid = await db.execute(
         "INSERT INTO consumable_receipts (consumable_id, site_id, request_id, packs, per_pack, qty_total, "
-        "entered_by) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+        "status, entered_by) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
         (item_id, it["site_id"], req_id, Decimal(str(body.packs)), Decimal(str(body.per_pack)), total,
-         user.email))
+         status, user.email))
     stock = _num(it["stock_qty"])
-    return {"ok": True, "id": rid, "qty_total": float(total), "stock_now": stock,
+    who = ("Ops HQ", "Ops HQ") if status == "pending" else ("SPV", "the SPV")
+    return {"ok": True, "id": rid, "status": status, "qty_total": float(total), "stock_now": stock,
             "stock_after": stock + float(total),
-            "message": f"Total diterima {_fmt(total)} {it['unit']}. Menunggu persetujuan Ops HQ. / "
-                       f"{_fmt(total)} {it['unit']} received. Waiting for Ops HQ."}
+            "message": f"Total diterima {_fmt(total)} {it['unit']}. Menunggu persetujuan {who[0]}. / "
+                       f"{_fmt(total)} {it['unit']} received. Waiting for {who[1]}."}
 
 
 @router.get("/receipts/pending")
-async def pending_receipts(site_id: int | None = None, user: auth.User = Depends(auth.current_user)):
+async def pending_receipts(site_id: int | None = None,
+                           recent_days: int = Query(default=0, ge=0, le=31,
+                                                    description="Also the receipts Ops HQ approved in the last N days"),
+                           user: auth.User = Depends(auth.current_user)):
+    """Receipts waiting (for the SPV or Ops HQ) or returned, newest last; with
+    recent_days, also those approved lately, so the page can show every state."""
     if site_id:
         await auth.assert_site_access(user, site_id)
     elif not user.at_least("hq"):
         raise HTTPException(422, "Pilih dark store. / Choose a dark store.")
+    where = f"(x.status IN ({db.placeholders(OPEN)})"
+    params: list = list(OPEN)
+    if recent_days:
+        where += " OR (x.status = 'approved' AND x.decided_at >= UTC_TIMESTAMP() - INTERVAL %s DAY)"
+        params.append(recent_days)
+    where += ")"
+    if site_id:
+        where += " AND x.site_id = %s"
+        params.append(site_id)
     rows = await db.fetch_all(
         "SELECT x.*, c.name, c.unit, c.stock_qty, st.code AS site_code, r.pr_number, r.pr_qty "
         "FROM consumable_receipts x JOIN consumables c ON c.id = x.consumable_id "
         "JOIN sites st ON st.id = x.site_id LEFT JOIN consumable_requests r ON r.id = x.request_id "
-        "WHERE x.status IN ('pending','returned')" + (" AND x.site_id = %s" if site_id else "") +
-        " ORDER BY x.entered_at", (site_id,) if site_id else ())
-    names = await names_for([r["entered_by"] for r in rows])
+        f"WHERE {where} ORDER BY x.entered_at", params)
+    names = await names_for([r["entered_by"] for r in rows] + [r["decided_by"] for r in rows])
     return {"receipts": [{
         "id": r["id"], "consumable_id": r["consumable_id"], "name": r["name"], "unit": r["unit"],
         "site_id": r["site_id"], "site_code": hub_short(r["site_code"]), "status": r["status"],
@@ -500,8 +533,42 @@ async def pending_receipts(site_id: int | None = None, user: auth.User = Depends
         "stock_now": _num(r["stock_qty"]), "pr_number": r["pr_number"],
         "pr_qty": _num(r["pr_qty"]) if r["pr_qty"] is not None else None,
         "entered_by": r["entered_by"], "entered_name": names.get(r["entered_by"]),
-        "entered_at": iso(r["entered_at"]), "hq_note": r["hq_note"],
+        "entered_at": iso(r["entered_at"]), "hq_note": r["hq_note"], "note": r["hq_note"],
+        "decided_by": r["decided_by"], "decided_name": names.get(r["decided_by"]),
+        "decided_at": iso(r["decided_at"]), "mine": r["entered_by"] == user.email,
     } for r in rows]}
+
+
+async def _spv_step(table: str, row_id: int, user: auth.User, ok: bool, note: str | None):
+    """The SPV's step on a staff entry: on to Ops HQ ('pending'), or back to the
+    staff member with a note ('spv_returned'). The stock does not move here."""
+    note = (note or "").strip() or None
+    if not ok and not note:
+        raise HTTPException(422, "Tulis catatan untuk staf. / Write a note for the staff member.")
+    async with db.tx() as cur:
+        r = await db.one(cur, f"SELECT id, site_id, status FROM {table} WHERE id = %s FOR UPDATE", (row_id,))
+        if not r or r["status"] != "spv_pending":
+            raise HTTPException(409, "Tidak menunggu SPV. / Not waiting for the SPV.")
+        await auth.assert_site_access(user, r["site_id"])
+        status = "pending" if ok else "spv_returned"
+        await db.run(cur, f"UPDATE {table} SET status = %s, decided_by = %s, decided_at = UTC_TIMESTAMP(), "
+                          "hq_note = %s WHERE id = %s", (status, user.email, note, row_id))
+        await ledger.audit(cur, actor_email=user.email, entity=table, entity_id=row_id,
+                           action="spv_approve" if ok else "spv_return",
+                           before={"status": "spv_pending"}, after={"status": status, "note": note})
+    return {"ok": True, "status": status}
+
+
+@router.post("/receipts/{receipt_id}/spv-approve")
+async def spv_approve_receipt(receipt_id: int, user: auth.User = Depends(auth.require("supervisor"))):
+    """The SPV checks a staff receipt; it then waits for Ops HQ like the SPV's own."""
+    return await _spv_step("consumable_receipts", receipt_id, user, True, None)
+
+
+@router.post("/receipts/{receipt_id}/spv-return")
+async def spv_return_receipt(receipt_id: int, body: NoteIn, user: auth.User = Depends(auth.require("supervisor"))):
+    """Back to the staff member with a note. They enter it again."""
+    return await _spv_step("consumable_receipts", receipt_id, user, False, body.note)
 
 
 @router.post("/receipts/{receipt_id}/approve")
@@ -535,11 +602,15 @@ async def return_receipt(receipt_id: int, body: NoteIn, user: auth.User = Depend
 
 
 @router.post("/receipts/{receipt_id}/withdraw")
-async def withdraw_receipt(receipt_id: int, user: auth.User = Depends(auth.require("supervisor"))):
-    """The SPV clears a receipt Ops HQ sent back, after entering it again."""
-    r = await db.fetch_one("SELECT site_id, status FROM consumable_receipts WHERE id = %s", (receipt_id,))
-    if not r or r["status"] not in ("pending", "returned"):
+async def withdraw_receipt(receipt_id: int, user: auth.User = Depends(auth.require("staff"))):
+    """Clear a receipt from the list after entering it again: the SPV any open
+    one, staff only their own that the SPV returned."""
+    r = await db.fetch_one("SELECT site_id, status, entered_by FROM consumable_receipts WHERE id = %s",
+                           (receipt_id,))
+    if not r or r["status"] not in OPEN:
         raise HTTPException(409, "Sudah diputuskan. / Already decided.")
+    if not user.at_least("supervisor") and (r["status"] != "spv_returned" or r["entered_by"] != user.email):
+        raise HTTPException(403, "Hanya SPV. / SPV only.")
     await auth.assert_site_access(user, r["site_id"])
     await db.execute("UPDATE consumable_receipts SET status = 'withdrawn' WHERE id = %s", (receipt_id,))
     return {"ok": True}
@@ -548,18 +619,23 @@ async def withdraw_receipt(receipt_id: int, user: auth.User = Depends(auth.requi
 # --- weekly count ------------------------------------------------------------------------
 
 @router.post("/counts", status_code=201)
-async def submit_count(body: CountIn, user: auth.User = Depends(auth.require("supervisor"))):
-    """Hitung mingguan: every item on the shelf, sent to Ops HQ."""
+async def submit_count(body: CountIn, user: auth.User = Depends(auth.require("staff"))):
+    """Hitung mingguan: every item on the shelf. From staff it waits for the SPV
+    first; from an SPV or above it goes to Ops HQ. The system numbers are taken
+    now, when the shelf is counted."""
     await auth.assert_site_access(user, body.site_id)
     if not body.lines:
         raise HTTPException(422, "Isi jumlah setiap barang. / Enter every item's count.")
+    status = "pending" if user.at_least("supervisor") else "spv_pending"
     async with db.tx() as cur:
-        if await db.one(cur, "SELECT id FROM consumable_counts WHERE site_id = %s AND status = 'pending'",
-                        (body.site_id,)):
-            raise HTTPException(409, "Hitung mingguan sebelumnya masih menunggu Ops HQ. / The previous weekly "
-                                     "count is still waiting for Ops HQ.")
-        cid = await db.run(cur, "INSERT INTO consumable_counts (site_id, counted_by) VALUES (%s,%s)",
-                           (body.site_id, user.email))
+        prev = await db.one(cur, "SELECT id, status FROM consumable_counts WHERE site_id = %s AND status IN "
+                                 f"({db.placeholders(WAITING)}) LIMIT 1", (body.site_id, *WAITING))
+        if prev:
+            who = ("SPV", "the SPV") if prev["status"] == "spv_pending" else ("Ops HQ", "Ops HQ")
+            raise HTTPException(409, f"Hitung mingguan sebelumnya masih menunggu {who[0]}. / The previous weekly "
+                                     f"count is still waiting for {who[1]}.")
+        cid = await db.run(cur, "INSERT INTO consumable_counts (site_id, status, counted_by) VALUES (%s,%s,%s)",
+                           (body.site_id, status, user.email))
         for ln in body.lines:
             it = await db.one(cur, "SELECT stock_qty FROM consumables WHERE id = %s AND site_id = %s",
                               (ln.consumable_id, body.site_id))
@@ -568,7 +644,7 @@ async def submit_count(body: CountIn, user: auth.User = Depends(auth.require("su
             await db.run(cur, "INSERT INTO consumable_count_lines (count_id, consumable_id, qty_counted, "
                               "qty_system) VALUES (%s,%s,%s,%s)",
                          (cid, ln.consumable_id, Decimal(str(ln.qty)), it["stock_qty"]))
-    return {"ok": True, "id": cid}
+    return {"ok": True, "id": cid, "status": status}
 
 
 async def _count_out(c: dict) -> dict:
@@ -581,7 +657,7 @@ async def _count_out(c: dict) -> dict:
             "counted_by": c["counted_by"], "counted_name": names.get(c["counted_by"]),
             "counted_at": iso(c["counted_at"]), "decided_by": c["decided_by"],
             "decided_name": names.get(c["decided_by"]), "decided_at": iso(c["decided_at"]),
-            "hq_note": c["hq_note"],
+            "hq_note": c["hq_note"], "note": c["hq_note"],
             "lines": [{"consumable_id": l["consumable_id"], "name": l["name"], "unit": l["unit"],
                        "qty_counted": _num(l["qty_counted"]), "qty_system": _num(l["qty_system"]),
                        "difference": _num(l["qty_counted"]) - _num(l["qty_system"]),
@@ -599,12 +675,26 @@ async def list_counts(site_id: int | None = None, status: str = Query(default="a
     if site_id:
         where.append("k.site_id = %s")
         params.append(site_id)
-    if status == "pending":
-        where.append("k.status = 'pending'")
+    if status == "pending":  # waiting for the SPV or for Ops HQ
+        where.append(f"k.status IN ({db.placeholders(WAITING)})")
+        params.extend(WAITING)
     rows = await db.fetch_all(
         "SELECT k.*, st.code AS site_code FROM consumable_counts k JOIN sites st ON st.id = k.site_id " +
-        ("WHERE " + " AND ".join(where) if where else "") + " ORDER BY k.counted_at DESC LIMIT 20", params)
+        ("WHERE " + " AND ".join(where) if where else "") + " ORDER BY k.counted_at DESC, k.id DESC LIMIT 20",
+        params)
     return {"counts": [await _count_out(r) for r in rows]}
+
+
+@router.post("/counts/{count_id}/spv-approve")
+async def spv_approve_count(count_id: int, user: auth.User = Depends(auth.require("supervisor"))):
+    """The SPV checks a staff count; it then waits for Ops HQ like the SPV's own."""
+    return await _spv_step("consumable_counts", count_id, user, True, None)
+
+
+@router.post("/counts/{count_id}/spv-return")
+async def spv_return_count(count_id: int, body: NoteIn, user: auth.User = Depends(auth.require("supervisor"))):
+    """Back to the staff member with a note. They count again."""
+    return await _spv_step("consumable_counts", count_id, user, False, body.note)
 
 
 @router.post("/counts/{count_id}/approve")
@@ -640,6 +730,7 @@ async def due_counts(site_ids: list[int]) -> dict[int, object]:
         return {}
     rows = await db.fetch_all(
         f"SELECT site_id, MAX(counted_at) AS at FROM consumable_counts WHERE site_id IN "
-        f"({db.placeholders(site_ids)}) AND status IN ('pending','approved') GROUP BY site_id", site_ids)
+        f"({db.placeholders(site_ids)}) AND status IN ('spv_pending','pending','approved') GROUP BY site_id",
+        site_ids)
     have = {r["site_id"]: r["at"] for r in rows}
     return {sid: have.get(sid) for sid in site_ids}

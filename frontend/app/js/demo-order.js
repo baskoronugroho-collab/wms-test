@@ -336,6 +336,12 @@
         '<span>' + esc(t('Saat mengambil, tekan Barang tidak ada di produk ini. Instruksi pelanggan: ', 'When picking, press Item missing on this product. Customer\'s instruction: ')) +
         '<b>' + esc(t(word[0], word[1])) + '</b>' + (ml.replace_name ? esc(t(' dengan ', ' with ')) + '<b>' + esc(ml.replace_name) + '</b>' : '') + '.</span></div></div>';
     }
+    if (res.auto_cancel_in_seconds) {
+      const s = res.auto_cancel_in_seconds;
+      missHtml += '<div class="k-note">' + icon('clock') + '<span>' +
+        esc(t('Dalam ' + s + ' detik pelanggan membatalkan di Grab: stand-in Hiryu mengirim pesan 2 (2004) sendiri. Tidak perlu menekan apa pun.',
+          'In ' + s + ' seconds the customer cancels on Grab: the Hiryu stand-in sends message 2 (2004) by itself. Nothing to press.')) + '</span></div>';
+    }
     const p = /^(.{6,}?) \/ (.{6,})$/.exec(res.text || '') || [null, res.text, res.text];
     m.body.innerHTML = '<div class="k-stack">' +
       (ok

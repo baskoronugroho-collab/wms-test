@@ -794,10 +794,10 @@ async def ensure_plan(site_id: int, day: date | None = None) -> int:
                                                "note": None, "ref_type": None, "ref_id": None})
 
     new = [(loc, w) for loc, w in want.items() if loc not in have]
-    staff = await _staff(site_id)
+    # No counter yet: the SPV sets who counts each bin (decided 7 Oct); To do reminds them.
     added = 0
     async with db.tx() as cur:
-        for i, (loc, w) in enumerate(new):
+        for loc, w in new:
             added += 1 if await db.run(
                 cur,
                 "INSERT INTO count_tasks (site_id, plan_date, is_full, location_id, sku_id, reason, "
@@ -805,7 +805,7 @@ async def ensure_plan(site_id: int, day: date | None = None) -> int:
                 "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending') "
                 "ON DUPLICATE KEY UPDATE count_tasks.id = count_tasks.id",
                 (site_id, day, 1 if full else 0, loc, w["sku_id"], w["reason"], w["note"],
-                 w["ref_type"], w["ref_id"], staff[i % len(staff)] if staff else None)) else 0
+                 w["ref_type"], w["ref_id"], None)) else 0
         if full:
             await db.run(cur, "UPDATE count_tasks SET is_full = 1 WHERE site_id = %s "
                               "AND plan_date = %s", (site_id, day))
@@ -857,6 +857,11 @@ class CountAddIn(BaseModel):
 
 class CountAssignIn(BaseModel):
     email: str | None = None
+
+
+class CountAssignAllIn(BaseModel):
+    site_id: int
+    email: str
 
 
 class CountIdsIn(BaseModel):
@@ -1155,6 +1160,30 @@ async def assign_counter(task_id: int, body: CountAssignIn,
     return {"ok": True}
 
 
+@router.put("/counts/plan/assign-unassigned")
+async def assign_unassigned(body: CountAssignAllIn,
+                            user: auth.User = Depends(auth.require("supervisor"))):
+    """Atur petugas untuk semua bin yang belum punya petugas hari ini. A recount
+    never goes to someone who already counted that bin; those bins are skipped
+    and stay for the SPV to set one by one."""
+    await auth.assert_site_access(user, body.site_id)
+    today = wib_today()
+    rows = await db.fetch_all(
+        "SELECT id, status FROM count_tasks WHERE site_id = %s AND plan_date <= %s "
+        "AND status IN ('pending','recount') AND assigned_to IS NULL", (body.site_id, today))
+    attempts = await _attempts_for([r["id"] for r in rows]) if rows else {}
+    done, skipped = 0, 0
+    for r in rows:
+        prior = {a["counted_by"] for a in attempts.get(r["id"], [])}
+        if r["status"] == "recount" and body.email in prior:
+            skipped += 1
+            continue
+        await db.execute("UPDATE count_tasks SET assigned_to = %s WHERE id = %s AND assigned_to IS NULL",
+                         (body.email, r["id"]))
+        done += 1
+    return {"ok": True, "assigned": done, "skipped": skipped}
+
+
 # --- staff: count a bin (8b) -------------------------------------------------------
 
 async def _attempt(attempt_id: int, user: auth.User) -> dict:
@@ -1198,6 +1227,13 @@ async def start_count(body: CountStartIn, user: auth.User = Depends(auth.current
         if not t:
             raise HTTPException(404, "Bin ini tidak ada di rencana hitung. Minta SPV menambahkannya. / "
                                      "This bin is not in the count plan. Ask the SPV to add it.")
+        if not user.at_least("supervisor") and t["status"] != "counting":
+            if not t["assigned_to"]:
+                raise HTTPException(409, "SPV belum menetapkan petugas untuk bin ini. / "
+                                         "The SPV has not assigned a counter to this bin yet.")
+            if t["assigned_to"] != user.email:
+                who = (await names_for([t["assigned_to"]])).get(t["assigned_to"]) or t["assigned_to"]
+                raise HTTPException(409, f"Bin ini untuk {who}. / This bin is for {who}.")
         attempts = await db.many(cur, "SELECT * FROM count_attempts WHERE task_id = %s "
                                       "ORDER BY attempt_no", (t["id"],))
         live = [a for a in attempts if a["status"] == "counting"]
@@ -1345,9 +1381,7 @@ async def finish_count(attempt_id: int, body: CountFinishIn,
             msg = "Cocok. Selesai. / Matches. Done."
             state = "closed"
         elif diff != 0 and first:
-            prior = {a["counted_by"]}
-            other = await _other_counter(t["site_id"], prior)
-            sets.update(status="recount", assigned_to=other)
+            sets.update(status="recount", assigned_to=None)
             msg = ("Hasil dicatat. Bin ini dihitung ulang oleh orang lain. / "
                    "Result saved. Another person will recount this bin.")
             state = "recount"

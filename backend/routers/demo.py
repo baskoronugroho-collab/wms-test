@@ -27,6 +27,8 @@ SKU's bin (common.pick_locations_for falls back to the slots, primary first
 when none is stocked), unallocated, so the picker goes there and presses
 Barang tidak ada as usual. Nothing in the order handler needs changing.
 """
+import asyncio
+import logging
 import random
 import secrets
 from datetime import datetime, timedelta
@@ -42,6 +44,12 @@ import db
 import floor
 import ledger
 from routers import hiryu_link, opname
+
+log = logging.getLogger("wms.demo")
+# Preset C: the stand-in cancels as the customer this long after the order arrives,
+# the way Grab and then Hiryu would. Tasks are kept so they are not collected early.
+AUTO_CANCEL_SECONDS = 20
+_AUTO_CANCELS: set = set()
 
 router = APIRouter(prefix="/api/demo", tags=["demo"])
 
@@ -140,6 +148,8 @@ class DemoOrderAnswer(BaseModel):
     message: dict = Field(description="The exact message 1 passed to the handler")
     missing_line: DemoMissingLine | None
     text: str
+    auto_cancel_in_seconds: int | None = Field(
+        default=None, description="Preset C: the stand-in cancels as the customer after this many seconds")
 
 
 class Bilingual(BaseModel):
@@ -346,8 +356,8 @@ PRESETS = [
          items=[("KHF-0005", 2), ("KHF-0007", 2), ("KHF-0062", 2)], missing=None),
     dict(key="C", brand="KHF",
          title=("Pelanggan membatalkan di Grab", "Customer cancels on Grab"),
-         say=("Batalkan dari Hiryu di Papan antrean sebelum diambil.",
-              "Cancel it from Hiryu on the queue board before picking."),
+         say=("Pelanggan membatalkan di Grab sekitar 20 detik kemudian; stand-in Hiryu mengirim pesan 2 sendiri.",
+              "The customer cancels on Grab about 20 seconds later; the Hiryu stand-in sends message 2 by itself."),
          items=[("KHF-0006", 1), ("KHF-0010", 1)], missing=None),
     dict(key="D", brand="LBR",
          title=("Barang tidak ada, pelanggan memilih batal", "Missing item, customer chose Cancel"),
@@ -810,9 +820,34 @@ async def demo_order(body: DemoOrderIn, user: auth.User = Depends(auth.require("
     units = sum(l["units"] for l in lines)
     text = (f"{gm}: {len(lines)} produk, {units} unit, {store['name']}. / "
             f"{gm}: {len(lines)} products, {units} units, {store['name']}.")
+    auto_cancel = None
+    if body.preset == "C" and 200 <= code < 300:
+        auto_cancel = AUTO_CANCEL_SECONDS
+        task = asyncio.create_task(_customer_cancels_later(gid, gm, AUTO_CANCEL_SECONDS))
+        _AUTO_CANCELS.add(task)
+        task.add_done_callback(_AUTO_CANCELS.discard)
     return {"http_status": code, "answer": answer, "grab_order_id": gid, "gm_number": gm,
             "preset": body.preset, "message": message, "missing_line": missing_line,
-            "text": text}
+            "text": text, "auto_cancel_in_seconds": auto_cancel}
+
+
+async def _customer_cancels_later(grab_order_id: str, gm: str, seconds: int) -> None:
+    """Preset C: what Grab and Hiryu do when the customer cancels. After a few
+    seconds the stand-in sends message 2 (cancelled_by customer, 2004) through
+    the same handler Hiryu's call runs. An order already handed over or
+    cancelled answers as it would to Hiryu."""
+    await asyncio.sleep(seconds)
+    try:
+        msg = hiryu_link.CancelMessage.model_validate({
+            "message_id": f"demo-can-auto-{secrets.token_hex(4)}",
+            "reason_code": "2004", "reason": hiryu_link.REASONS.get("2004"),
+            "cancelled_by": "customer", "cancelled_at": _wib_now()})
+        await hiryu_link.handle_cancel(
+            grab_order_id, msg, "demo:hiryu-standin", via="demo",
+            trigger=(f"Pelanggan membatalkan {gm} di Grab (stand-in Hiryu, preset C)",
+                     f"The customer cancels {gm} on Grab (Hiryu stand-in, preset C)"))
+    except Exception:
+        log.exception("preset C auto-cancel of %s failed", grab_order_id)
 
 
 @router.post("/orders/{grab_order_id}/cancel", response_model=DemoCancelAnswer)

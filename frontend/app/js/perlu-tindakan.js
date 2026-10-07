@@ -33,7 +33,11 @@
     [/^my_pick|^to_pack/, ['Lanjutkan', 'Continue'], 'bag', true],
     [/^await_driver|^late_orders|^not_started|^requeued|^missing_item/, ['Lihat', 'View'], 'bag', false],
   ];
-  const kindOf = (k) => (KIND.find((x) => x[0].test(k || '')) || [null, ['Buka', 'Open'], 'todo', true]);
+  // The icon and weight come from KIND; the button word from the server's action when it sends one.
+  const kindOf = (row) => {
+    const k = KIND.find((x) => x[0].test(row.kind || '')) || [null, ['Buka', 'Open'], 'todo', true];
+    return row.action_id ? [k[0], [row.action_id, row.action_en || row.action_id], k[2], k[3]] : k;
+  };
 
   function dueCell(x) {
     const d = S.fmt.due(x.due_at);
@@ -49,7 +53,7 @@
       (showHub ? '<th style="width:80px" ' + biAttr('Dark store', 'Dark store') + '></th>' : '') +
       '<th ' + biAttr('Apa', 'What') + '></th><th style="width:150px" ' + biAttr('Batas', 'Due') + '></th><th style="width:140px"></th>' +
       '</tr></thead><tbody>' + items.map((x) => {
-        const k = kindOf(x.kind);
+        const k = kindOf(x);
         const href = S.route(x.link);
         return '<tr' + (x.overdue ? ' class="is-caution"' : '') + '><td>' + statusPill(x) + '</td>' +
           (showHub ? '<td class="k-mono k-strong">' + esc(S.shortCode(x.site_code || '-')) + '</td>' : '') +
@@ -64,7 +68,7 @@
 
   function rowsHtml(items, showHub) {
     return '<div class="k-list">' + items.map((x) => {
-      const k = kindOf(x.kind);
+      const k = kindOf(x);
       const href = S.route(x.link);
       const d = S.fmt.due(x.due_at);
       const sub = [];

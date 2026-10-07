@@ -41,7 +41,7 @@
         p('Printer struk USB di meja kemas, yang sama dengan printer slip kemas Hiryu (Posmac/Birch CP-Q1T, ESC/POS). Satu printer dipakai bersama oleh Hiryu dan WMS. Kertas 80 mm, 48 karakter per baris.',
           'The USB receipt printer at the packing counter, the same one Hiryu prints its packing slips on (Posmac/Birch CP-Q1T, ESC/POS). Hiryu and the WMS share one printer. 80 mm paper, 48 characters a line.') +
         '<ol class="pp-docs">' +
-          doc('Slip putaway', 'Putaway slip', 'Barang masuk, tanda terima: Cetak slip putaway (atau cetak otomatis saat penerimaan selesai).', 'Inbound, the receipt: Cetak slip putaway (or auto-print when the receipt is finished).') +
+          doc('Slip putaway', 'Putaway slip', 'Barang masuk, langkah Cetak slip: satu slip per bin sementara (atau cetak otomatis saat penerimaan selesai).', 'Inbound, the Print slips step: one slip per temporary bin (or auto-print when the receipt is finished).') +
           doc('Slip kemas pesanan', 'Order packing slip', 'Dicetak oleh Hiryu, bukan oleh WMS, di printer yang sama.', 'Printed by Hiryu, not by the WMS, on the same printer.') +
           doc('Slip lain nanti', 'Other slips later', 'Slip baru di WMS memakai printer ini juga.', 'New WMS slips use this printer too.') +
         '</ol></div>' +
@@ -80,8 +80,8 @@
         '<div class="pp-set' + (th ? '' : ' is-off') + '"><div class="k-switchrow"><button type="button" class="k-switch" data-auto aria-checked="' + !!s.autoSlip + '"' + (th ? '' : ' disabled') +
           ' data-aria-id="Cetak slip putaway otomatis" data-aria-en="Auto-print the putaway slip" aria-label="' + esc(t('Cetak slip putaway otomatis', 'Auto-print the putaway slip')) + '"></button>' +
           sp('Cetak slip putaway otomatis saat penerimaan selesai', 'Auto-print the putaway slip when a receipt is finished', 'pp-set__label') + '</div>' +
-          '<span class="k-caption" ' + biAttr('Seperti cetak otomatis slip kemas di Hiryu: sekali per penerimaan, dari perangkat ini. Nyalakan di satu profil saja, kalau tidak slip tercetak dua kali. Slip putaway hanya untuk SPV ke atas, jadi slip tercetak saat SPV yang menekan Selesai.',
-            'Like Hiryu\'s packing slip auto-print: once per receipt, from this device. Switch it on in one profile only, or every slip prints twice. The putaway slip is SPV and up, so it prints when an SPV presses Selesai.') + '></span></div>' +
+          '<span class="k-caption" ' + biAttr('Seperti cetak otomatis slip kemas di Hiryu: sekali per penerimaan, dari perangkat ini. Nyalakan di satu profil saja, kalau tidak slip tercetak dua kali. Perangkat lain menampilkan tombol Cetak slip.',
+            'Like Hiryu\'s packing slip auto-print: once per receipt, from this device. Switch it on in one profile only, or every slip prints twice. Other devices show the Print slips button instead.') + '></span></div>' +
       '</div></div>';
   }
 

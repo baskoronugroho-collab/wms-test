@@ -3,15 +3,21 @@
  * Tabs: stok (9a: usage per order, stock with the minimum tick, use per day,
  * days left, the last 7 days, the need, PR and receipt state; Ops HQ edits
  * items, minimums and usage, adds items and records the PR), terima (9b:
- * packs x pieces per pack, sent to Ops HQ; Ops HQ approves or sends back) and
- * mingguan (the SPV's weekly count, approved by Ops HQ).
+ * packs x pieces per pack; Ops HQ approves or sends back) and mingguan (the
+ * weekly count, approved by Ops HQ).
+ * Since 7 Oct staff may also enter a receipt or the weekly count; theirs waits
+ * for the SPV first (spv_pending: the SPV approves, on to Ops HQ as pending, or
+ * returns it with a note, spv_returned). An SPV's entry goes straight to Ops HQ.
+ * The stock moves only when Ops HQ approves.
  * Consumables are Ninja's own stock and never appear in brand reports.
  *
  * API (backend/routers/consumables.py, /api/consumables):
  *   GET  ?site_id   GET|PUT /settings   POST / (add)   PUT /{id}
  *   POST /{id}/request   GET /requests/open   POST /requests/{id}/pr {pr_number, qty}
- *   POST /{id}/receipts {packs, per_pack}   GET /receipts/pending   POST /receipts/{id}/approve|return|withdraw
- *   POST /counts {site_id, lines}   GET /counts?site_id   POST /counts/{id}/approve|return
+ *   POST /{id}/receipts {packs, per_pack}   GET /receipts/pending?site_id&recent_days
+ *   POST /receipts/{id}/spv-approve|spv-return {note}   POST /receipts/{id}/approve|return|withdraw
+ *   POST /counts {site_id, lines}   GET /counts?site_id
+ *   POST /counts/{id}/spv-approve|spv-return {note}   POST /counts/{id}/approve|return
  */
 (function () {
   'use strict';
@@ -27,6 +33,20 @@
     ['order', 'per pesanan dikemas', 'per order packed'], ['delivery', 'per kiriman diterima', 'per delivery received'], ['none', 'tidak otomatis', 'not automatic']];
   /* Only Ops HQ sees the pencil icons (board 9a). */
   const pencil = (attrs) => (S.atLeast('hq') ? '<button type="button" class="k-iconbtn bk-pen" ' + attrs + ' data-aria-id="Ubah" data-aria-en="Change" aria-label="' + esc(t('Ubah', 'Change')) + '">' + icon('edit', 15) + '</button>' : '');
+  /* Where a staff or SPV entry stands (receipts and weekly counts). */
+  const STATE = {
+    spv_pending: ['caution', 'clock', 'Menunggu SPV', 'Waiting for the SPV'],
+    pending: ['caution', 'clock', 'Menunggu Ops HQ', 'Waiting for Ops HQ'],
+    approved: ['ok', 'check', 'Disetujui', 'Approved'],
+    spv_returned: ['stop', 'undo', 'Dikembalikan SPV', 'Returned by the SPV'],
+    returned: ['stop', 'undo', 'Dikembalikan Ops HQ', 'Returned by Ops HQ'],
+    withdrawn: ['', 'close', 'Dihapus', 'Removed'],
+  };
+  const statePill = (status) => { const s = STATE[status] || STATE.pending; return '<span class="k-pill' + (s[0] ? ' k-pill--' + s[0] : '') + '">' + icon(s[1], 14) + sp(s[2], s[3]) + '</span>'; };
+  /* Who decided a finished entry, by its state. */
+  const DONE = { spv_returned: ['dikembalikan SPV ', 'returned by the SPV '], returned: ['dikembalikan Ops HQ ', 'sent back by Ops HQ '], approved: ['disetujui Ops HQ ', 'approved by Ops HQ '] };
+  /* Staff send to the SPV; an SPV or above sends straight to Ops HQ. */
+  const sendTo = () => (S.atLeast('supervisor') ? ['Kirim ke Ops HQ', 'Send to Ops HQ'] : ['Kirim ke SPV', 'Send to the SPV']);
   const needHub = (ctx) => {
     if (ctx.siteId) return false;
     ctx.body.innerHTML = '<div class="k-note k-note--info">' + icon('info', 20) + sp('Pilih satu dark store di atas.', 'Choose one dark store above.') + '</div>';
@@ -95,8 +115,11 @@
       api().get('/consumables/requests/open' + api().qs({ site_id: ctx.siteId })),
     ]);
     const lc = d.last_count;
-    const lcText = lc ? [' Hitung mingguan terakhir: ' + S.fmt.day(lc.counted_at) + (lc.status === 'pending' ? ', menunggu persetujuan Ops HQ.' : lc.status === 'returned' ? ', dikembalikan Ops HQ.' : ', disetujui.'),
-      ' Last weekly count: ' + S.fmt.day(lc.counted_at) + (lc.status === 'pending' ? ', waiting for Ops HQ.' : lc.status === 'returned' ? ', sent back by Ops HQ.' : ', approved.')] : [' Belum pernah dihitung mingguan.', ' Never counted weekly.'];
+    const LC = { spv_pending: [', menunggu persetujuan SPV.', ', waiting for the SPV.'], pending: [', menunggu persetujuan Ops HQ.', ', waiting for Ops HQ.'],
+      spv_returned: [', dikembalikan SPV.', ', returned by the SPV.'], returned: [', dikembalikan Ops HQ.', ', sent back by Ops HQ.'], approved: [', disetujui.', ', approved.'] };
+    const lcs = lc ? (LC[lc.status] || LC.approved) : null;
+    const lcText = lc ? [' Hitung mingguan terakhir: ' + S.fmt.day(lc.counted_at) + lcs[0], ' Last weekly count: ' + S.fmt.day(lc.counted_at) + lcs[1]]
+      : [' Belum pernah dihitung mingguan.', ' Never counted weekly.'];
     S.setSub('Stok kemasan milik Ninja di ' + d.site_code + '. Pembelian di luar sistem, lewat PR dari Ops HQ.' + lcText[0],
       'Ninja\'s own packing stock at ' + d.site_code + '. Bought outside the system, through a PR from Ops HQ.' + lcText[1]);
     ctx.actions.innerHTML = '<a class="k-btn k-btn--secondary" href="bahan-kemas.html?tab=mingguan">' + sp('Hitung mingguan', 'Weekly count') + '</a>' +
@@ -200,12 +223,12 @@
 
   S.tab('terima', async function (ctx) {
     styles();
-    S.setSub('Saat kiriman bahan kemas sampai: pilih barang, isi jumlah pak dan isi per pak, kirim ke Ops HQ. Stok baru naik setelah Ops HQ menyetujui.',
-      'When consumables arrive: choose the item, enter packs and pieces per pack, send to Ops HQ. The stock rises only after Ops HQ approves.');
+    S.setSub('Saat kiriman bahan kemas sampai: pilih barang, isi jumlah pak dan isi per pak, lalu kirim. Kiriman staf disetujui SPV dulu, lalu Ops HQ. Stok baru naik setelah Ops HQ menyetujui.',
+      'When packing supplies arrive: choose the item, enter packs and pieces per pack, then send. A staff entry goes to the SPV first, then to Ops HQ. The stock rises only after Ops HQ approves.');
     if (needHub(ctx)) return;
     const [d, rc, cnt] = await Promise.all([
       api().get('/consumables' + api().qs({ site_id: ctx.siteId })),
-      api().get('/consumables/receipts/pending' + api().qs({ site_id: ctx.siteId })),
+      api().get('/consumables/receipts/pending' + api().qs({ site_id: ctx.siteId, recent_days: 7 })),
       api().get('/consumables/counts' + api().qs({ site_id: ctx.siteId, status: 'pending' })),
     ]);
     if (!d.items.length) { ctx.body.innerHTML = '<div class="k-card k-empty">' + bis('Belum ada bahan kemas di dark store ini.', 'No consumable at this dark store yet.', 'k-empty__title') + '</div>'; return; }
@@ -213,13 +236,38 @@
     let packs = 1, per = item.last_per_pack || item.pack_size || 1;
     ctx.body.innerHTML = '<div class="k-stack bk-wrap" id="bk-t"></div>';
     const root = $('#bk-t', ctx.body);
-    const pending = rc.receipts.filter((r) => r.status === 'pending');
-    const back = rc.receipts.filter((r) => r.status === 'returned');
-    const waitList = pending.map((r) => esc(r.name + ' · ' + q(r.qty_total) + ' ' + r.unit + ' · ' + t('diterima ', 'received ') + S.fmt.dt(r.entered_at)))
-      .concat(cnt.counts.map((c) => esc(t('Hitung mingguan · ', 'Weekly count · ') + S.fmt.day(c.counted_at))));
+    const spv = S.atLeast('supervisor');
+    const entries = rc.receipts.slice().reverse();
+    /* One receipt: what, who, where it stands, and the buttons for that step. */
+    function entryRow(r) {
+      const s = r.status;
+      let sub = t('Dimasukkan ', 'Entered by ') + (r.entered_name || r.entered_by) + ', ' + S.fmt.dt(r.entered_at);
+      if (s === 'pending' && r.decided_by) sub += ' · ' + t('disetujui SPV ', 'approved by the SPV ') + (r.decided_name || r.decided_by);
+      if (DONE[s]) sub += ' · ' + t(DONE[s][0], DONE[s][1]) + (r.decided_name || r.decided_by || '') + ', ' + S.fmt.dt(r.decided_at);
+      if (r.pr_number) sub = 'PR ' + r.pr_number + (r.pr_qty != null ? ' (' + q(r.pr_qty) + ')' : '') + ' · ' + sub;
+      let acts = '';
+      if (s === 'spv_pending') {
+        acts = btn('k-btn--primary k-btn--sm', 'Setujui', 'Approve', 'data-spv-ok="' + r.id + '" data-min-role="supervisor"', 'check') +
+          btn('k-btn--secondary k-btn--sm', 'Kembalikan', 'Send back', 'data-spv-no="' + r.id + '" data-min-role="supervisor"');
+      } else if (s === 'pending') {
+        acts = btn('k-btn--primary k-btn--sm', 'Setujui', 'Approve', 'data-ok="' + r.id + '" data-min-role="hq"', 'check') +
+          btn('k-btn--secondary k-btn--sm', 'Kembalikan', 'Send back', 'data-no="' + r.id + '" data-min-role="hq"');
+      } else if (s === 'returned' || (s === 'spv_returned' && (r.mine || spv))) {
+        acts = '<button type="button" class="k-linkbtn" data-withdraw="' + r.id + '"' + (s === 'returned' ? ' data-min-role="supervisor"' : '') + ' ' + biAttr('Sudah dimasukkan lagi: hapus dari daftar', 'Entered again: remove from the list') + '></button>';
+      }
+      return '<div class="k-stack k-stack--tight" style="border-top:1px solid var(--rule);padding-top:10px">' +
+        '<div class="k-line k-line--between" style="gap:8px;flex-wrap:wrap"><span><b>' + esc(r.name) + '</b> · <span class="bk-num">' + esc(q(r.packs) + ' × ' + q(r.per_pack) + ' = ' + q(r.qty_total)) + '</span> ' + esc(r.unit) + '</span>' + statePill(s) + '</div>' +
+        '<div class="bk-sub">' + esc(sub) + '</div>' +
+        ((s === 'returned' || s === 'spv_returned') && r.note ? '<div class="k-note k-note--stop">' + icon('undo', 18) + '<span>' + esc(t('Catatan: ', 'Note: ') + r.note) + '</span></div>' : '') +
+        (acts ? '<div class="k-line" style="gap:6px;justify-content:flex-end;flex-wrap:wrap">' + acts + '</div>' : '') + '</div>';
+    }
+    const countWait = cnt.counts.map((c) => '<div class="k-note k-note--caution">' + icon('clock', 20) + '<span>' +
+      esc(t('Hitung mingguan ', 'Weekly count ') + S.fmt.day(c.counted_at) + ': ' + (c.status === 'spv_pending' ? t('menunggu SPV.', 'waiting for the SPV.') : t('menunggu Ops HQ.', 'waiting for Ops HQ.'))) +
+      ' <a class="k-linkbtn" href="bahan-kemas.html?tab=mingguan" ' + biAttr('Lihat', 'View') + '></a></span></div>').join('');
     function paint() {
       const tot = packs * per;
       const pr = item.request && item.request.kind === 'pr_submitted' ? item.request.pr_number : null;
+      const to = sendTo();
       root.innerHTML =
         '<div class="k-card k-card--pad k-stack k-stack--tight"><span class="bk-step">1 · ' + esc(t('Barang', 'Item')) + '</span>' +
         '<div class="k-line" style="gap:12px"><span class="k-row__icon">' + icon('box', 24) + '</span><div class="k-grow"><div class="k-strong" style="font-size:17px">' + esc(item.name) + '</div>' +
@@ -232,15 +280,12 @@
         '<span class="k-line" style="gap:8px"><input class="k-input k-input--num" id="bk-per" type="number" min="0" step="any" style="width:100px;font-size:22px;font-weight:800;text-align:center" value="' + per + '"><span class="k-strong">' + esc(item.unit) + '</span></span></div>' +
         '<div class="k-card k-card--pad"><span class="bk-step" ' + biAttr('Total diterima', 'Total received') + '></span><div class="k-line" style="gap:8px;align-items:baseline"><span class="bk-total">' + q(tot) + '</span><span class="k-strong">' + esc(item.unit) + '</span></div>' +
         '<div>' + esc(t(packs + ' pak × ' + q(per) + ' ' + item.unit + '. Stok sekarang ' + q(item.stock) + ' ' + item.unit + '. Jadi ', packs + ' packs × ' + q(per) + ' ' + item.unit + '. Stock now ' + q(item.stock) + ' ' + item.unit + '. Becomes ')) +
-        '<b>' + esc(q(item.stock + tot) + ' ' + item.unit) + '</b>' + esc(t(' setelah Ops HQ menyetujui.', ' after Ops HQ approves.')) + '</div></div>' +
-        (back.length ? back.map((r) => '<div class="k-note k-note--stop">' + icon('undo', 20) + '<span>' + esc(t('Dikembalikan Ops HQ: ', 'Sent back by Ops HQ: ') + r.name + ' · ' + q(r.qty_total) + ' ' + r.unit + (r.hq_note ? ' · ' + r.hq_note : '')) +
-          ' <button type="button" class="k-linkbtn" data-withdraw="' + r.id + '" ' + biAttr('Hapus dari daftar', 'Remove from the list') + '></button></span></div>').join('') : '') +
-        (waitList.length ? '<div class="k-note k-note--caution">' + icon('clock', 20) + '<span><b ' + biAttr('Menunggu persetujuan Ops HQ', 'Waiting for Ops HQ') + '></b><br>' + waitList.join('<br>') + '</span></div>' : '') +
-        (pending.length ? '<div class="k-card k-card--pad k-stack k-stack--tight"><strong ' + biAttr('Penerimaan untuk disetujui', 'Receipts to approve') + '></strong>' + pending.map((r) =>
-          '<div class="k-line k-line--between" style="border-top:1px solid var(--rule);padding-top:8px;gap:8px;flex-wrap:wrap"><span><b>' + esc(r.name) + '</b> · ' + esc(q(r.packs) + ' × ' + q(r.per_pack) + ' = ' + q(r.qty_total) + ' ' + r.unit) +
-          '<span class="bk-sub"> · ' + esc((r.pr_number ? 'PR ' + r.pr_number + (r.pr_qty != null ? ' (' + q(r.pr_qty) + ')' : '') + ' · ' : '') + (r.entered_name || r.entered_by)) + '</span></span><span class="k-line" style="gap:6px">' +
-          btn('k-btn--primary k-btn--sm', 'Setujui', 'Approve', 'data-ok="' + r.id + '" data-min-role="hq"', 'check') + btn('k-btn--secondary k-btn--sm', 'Kembalikan', 'Send back', 'data-no="' + r.id + '" data-min-role="hq"') + '</span></div>').join('') + '</div>' : '') +
-        '<div class="k-actionbar">' + btn('k-btn--primary k-btn--lg k-btn--block', 'Kirim ke Ops HQ', 'Send to Ops HQ', 'id="bk-send" data-min-role="supervisor"', 'check') + '</div>';
+        '<b>' + esc(q(item.stock + tot) + ' ' + item.unit) + '</b>' + esc(spv ? t(' setelah Ops HQ menyetujui.', ' after Ops HQ approves.') : t(' setelah SPV lalu Ops HQ menyetujui.', ' after the SPV, then Ops HQ, approve.')) + '</div></div>' +
+        '<div class="k-actionbar">' + btn('k-btn--primary k-btn--lg k-btn--block', to[0], to[1], 'id="bk-send"', 'check') + '</div>' +
+        countWait +
+        (entries.length ? '<div class="k-card k-card--pad k-stack k-stack--tight"><strong ' + biAttr('Penerimaan yang dimasukkan', 'Receipts entered') + '></strong>' +
+          '<div class="bk-sub" ' + biAttr('Yang menunggu, yang dikembalikan, dan yang disetujui 7 hari terakhir.', 'Waiting, returned, and approved in the last 7 days.') + '></div>' +
+          entries.map(entryRow).join('') + '</div>' : '');
       S.stepper($('#bk-packs', root), { value: packs, min: 1, max: 999, onChange: (v) => { packs = v; paint(); } });
       $('#bk-per', root).addEventListener('change', (e) => { per = +e.target.value || 0; paint(); });
       $('#bk-chg', root).addEventListener('click', () => { const sel = $('#bk-item', root); sel.hidden = false; sel.focus(); });
@@ -251,13 +296,16 @@
     root.addEventListener('click', async (e) => {
       if (e.target.closest('[aria-disabled="true"]')) return;
       const ok = e.target.closest('[data-ok]'), no = e.target.closest('[data-no]'), wd = e.target.closest('[data-withdraw]');
+      const sok = e.target.closest('[data-spv-ok]'), sno = e.target.closest('[data-spv-no]');
       try {
         if (e.target.closest('#bk-send')) {
           if (!(packs > 0 && per > 0)) { S.toast(['Isi jumlah pak dan isi per pak.', 'Enter packs and pieces per pack.'], 'caution'); return; }
           const r = await api().post('/consumables/' + item.id + '/receipts', { packs, per_pack: per });
           S.toast(r.message, 'ok');
           S.rerender();
-        } else if (ok) { await api().post('/consumables/receipts/' + ok.dataset.ok + '/approve', {}); S.toast(['Disetujui. Stok naik.', 'Approved. The stock rises.'], 'ok'); S.rerender(); }
+        } else if (sok) { await api().post('/consumables/receipts/' + sok.dataset.spvOk + '/spv-approve', {}); S.toast(['Disetujui SPV. Diteruskan ke Ops HQ.', 'Approved by the SPV. Sent on to Ops HQ.'], 'ok'); S.rerender(); }
+        else if (sno) sendBack('/consumables/receipts/' + sno.dataset.spvNo + '/spv-return', true);
+        else if (ok) { await api().post('/consumables/receipts/' + ok.dataset.ok + '/approve', {}); S.toast(['Disetujui. Stok naik.', 'Approved. The stock rises.'], 'ok'); S.rerender(); }
         else if (no) sendBack('/consumables/receipts/' + no.dataset.no + '/return');
         else if (wd) { await api().post('/consumables/receipts/' + wd.dataset.withdraw + '/withdraw', {}); S.rerender(); }
       } catch (err) { S.fail(err); }
@@ -265,13 +313,22 @@
     paint();
   });
 
-  function sendBack(path) {
+  /* Send back with a note: Ops HQ to the SPV, or the SPV to the staff member
+   * (toStaff; the note is required there). */
+  function sendBack(path, toStaff) {
     S.modal({
-      title: ['Kembalikan ke SPV', 'Send back to the SPV'],
-      body: '<label class="k-field"><span class="k-field__label" ' + biAttr('Catatan', 'Note') + '></span><textarea class="k-textarea" id="bk-why" rows="3"></textarea></label>',
+      title: toStaff ? ['Kembalikan ke staf', 'Send back to the staff member'] : ['Kembalikan ke SPV', 'Send back to the SPV'],
+      body: '<label class="k-field"><span class="k-field__label" ' + biAttr('Catatan', 'Note') + '></span><textarea class="k-textarea" id="bk-why" rows="3"></textarea>' +
+        (toStaff ? '<span class="k-field__hint" ' + biAttr('Tulis apa yang harus diperbaiki. Staf melihatnya di Perlu tindakan.', 'Write what to fix. The staff member sees it in To do.') + '></span>' : '') + '</label>',
       actions: [{ label: ['Batal', 'Cancel'], kind: 'secondary' }, {
-        label: ['Kembalikan', 'Send back'], kind: 'primary', minRole: 'hq',
-        onClick: async () => { await api().post(path, { note: $('#bk-why').value.trim() || null }); S.rerender(); },
+        label: ['Kembalikan', 'Send back'], kind: 'primary', minRole: toStaff ? 'supervisor' : 'hq',
+        onClick: async () => {
+          const note = $('#bk-why').value.trim();
+          if (toStaff && !note) { S.toast(['Tulis catatan untuk staf.', 'Write a note for the staff member.'], 'caution'); return false; }
+          await api().post(path, { note: note || null });
+          S.toast(['Dikembalikan.', 'Sent back.'], 'ok');
+          S.rerender();
+        },
       }],
     });
   }
@@ -280,44 +337,55 @@
 
   S.tab('mingguan', async function (ctx) {
     styles();
-    S.setSub('Sekali seminggu: hitung setiap barang di rak, ketik jumlahnya, kirim ke Ops HQ. Saat disetujui, angka hitung menggantikan angka sistem.',
-      'Once a week: count every item on the shelf, type the number and send it to Ops HQ. When approved, the counted numbers replace the computed ones.');
+    S.setSub('Sekali seminggu: hitung setiap barang di rak, ketik jumlahnya, lalu kirim. Hitungan staf disetujui SPV dulu, lalu Ops HQ. Saat Ops HQ menyetujui, angka hitung menggantikan angka sistem.',
+      'Once a week: count every item on the shelf, type the number, then send. A staff count goes to the SPV first, then to Ops HQ. When Ops HQ approves, the counted numbers replace the computed ones.');
     if (needHub(ctx)) return;
     const [d, cs] = await Promise.all([
       api().get('/consumables' + api().qs({ site_id: ctx.siteId })),
       api().get('/consumables/counts' + api().qs({ site_id: ctx.siteId })),
     ]);
-    const pend = cs.counts.find((c) => c.status === 'pending');
+    const pend = cs.counts.find((c) => c.status === 'pending' || c.status === 'spv_pending');
     const last = cs.counts[0];
     ctx.body.innerHTML = '<div class="k-stack bk-wrap" id="bk-m"></div>';
     const root = $('#bk-m', ctx.body);
+    const counted = (c) => t('Dihitung ', 'Counted by ') + (c.counted_name || c.counted_by) + ', ' + S.fmt.dt(c.counted_at);
     if (pend) {
-      root.innerHTML = '<div class="k-note k-note--caution">' + icon('clock', 20) + '<span>' + esc(t('Menunggu persetujuan Ops HQ · dihitung ', 'Waiting for Ops HQ · counted by ') + (pend.counted_name || pend.counted_by) + ', ' + S.fmt.dt(pend.counted_at)) + '</span></div>' +
+      const bySpv = pend.status === 'spv_pending';
+      root.innerHTML = '<div class="k-card k-card--pad k-stack k-stack--tight"><div class="k-line" style="gap:8px;flex-wrap:wrap">' + statePill(pend.status) + '</div>' +
+        '<div class="bk-sub">' + esc(counted(pend) + (!bySpv && pend.decided_by ? ' · ' + t('disetujui SPV ', 'approved by the SPV ') + (pend.decided_name || pend.decided_by) : '')) + '</div></div>' +
         '<div class="k-tablewrap"><table class="k-table"><thead><tr><th ' + biAttr('Barang', 'Item') + '></th><th class="k-num" ' + biAttr('Sistem', 'System') + '></th><th class="k-num" ' + biAttr('Dihitung', 'Counted') + '></th><th class="k-num" ' + biAttr('Selisih', 'Difference') + '></th></tr></thead><tbody>' +
         pend.lines.map((l) => '<tr class="' + (l.difference ? 'is-caution' : '') + '"><td class="k-strong">' + esc(l.name) + '</td><td class="k-num">' + q(l.qty_system) + '</td><td class="k-num k-strong">' + q(l.qty_counted) + '</td>' +
           '<td class="k-num" style="' + (l.difference ? 'color:var(--stop);font-weight:800' : '') + '">' + (l.difference > 0 ? '+' : '') + q(l.difference) + '</td></tr>').join('') + '</tbody></table></div>' +
-        '<div class="k-line" style="gap:8px;justify-content:flex-end">' + btn('k-btn--secondary', 'Kembalikan', 'Send back', 'data-no="' + pend.id + '" data-min-role="hq"') +
-        btn('k-btn--primary', 'Setujui hitungan', 'Approve the count', 'data-ok="' + pend.id + '" data-min-role="hq"', 'check') + '</div>';
+        '<div class="k-line" style="gap:8px;justify-content:flex-end">' +
+        (bySpv ? btn('k-btn--secondary', 'Kembalikan', 'Send back', 'data-spv-no="' + pend.id + '" data-min-role="supervisor"') +
+          btn('k-btn--primary', 'Setujui hitungan', 'Approve the count', 'data-spv-ok="' + pend.id + '" data-min-role="supervisor"', 'check')
+          : btn('k-btn--secondary', 'Kembalikan', 'Send back', 'data-no="' + pend.id + '" data-min-role="hq"') +
+          btn('k-btn--primary', 'Setujui hitungan', 'Approve the count', 'data-ok="' + pend.id + '" data-min-role="hq"', 'check')) + '</div>';
     } else {
-      root.innerHTML = (last && last.status === 'returned' ? '<div class="k-note k-note--stop">' + icon('undo', 20) + '<span>' + esc(t('Hitungan terakhir dikembalikan Ops HQ', 'The last count was sent back by Ops HQ') + (last.hq_note ? ': ' + last.hq_note : '.')) + '</span></div>' : '') +
-        (last && last.status === 'approved' ? '<p class="k-caption">' + esc(t('Terakhir disetujui: ', 'Last approved: ') + S.fmt.day(last.counted_at)) + '</p>' : '') +
+      const to = sendTo();
+      root.innerHTML = (last ? '<div class="k-card k-card--pad k-stack k-stack--tight"><div class="k-line" style="gap:8px;flex-wrap:wrap"><span class="k-strong" ' + biAttr('Hitungan terakhir', 'Last count') + '></span>' + statePill(last.status) + '</div>' +
+          '<div class="bk-sub">' + esc(counted(last) + (DONE[last.status] && last.decided_at ? ' · ' + t(DONE[last.status][0], DONE[last.status][1]) + (last.decided_name || last.decided_by || '') + ', ' + S.fmt.dt(last.decided_at) : '')) + '</div>' +
+          ((last.status === 'returned' || last.status === 'spv_returned') ? '<div class="k-note k-note--stop">' + icon('undo', 18) + '<span>' + esc((last.note ? t('Catatan: ', 'Note: ') + last.note + ' ' : '') + t('Hitung lagi dan kirim.', 'Count again and send.')) + '</span></div>' : '') + '</div>' : '') +
         '<div class="k-card" style="padding:4px 0">' + d.items.map((x) => '<label class="k-line k-line--between" style="padding:12px 16px;border-top:1px solid var(--rule);gap:12px"><span><span class="k-strong">' + esc(x.name) + '</span>' +
           '<span class="bk-sub" style="display:block">' + esc(t('Menurut sistem: ', 'System: ') + q(x.stock) + ' ' + x.unit) + '</span></span>' +
           '<span class="k-line" style="gap:6px"><input class="k-input k-input--num" type="number" min="0" step="any" data-cnt="' + x.id + '" style="width:100px;text-align:right"><span class="bk-sub">' + esc(x.unit) + '</span></span></label>').join('') + '</div>' +
         '<p class="k-caption" ' + biAttr('Sistem sudah mengurangi pemakaian per pesanan; hitungan ini menangkap yang terlewat (terbuang, rusak, takaran salah).', 'The system already deducts usage per order; this count catches what it misses (waste, damage, a wrong rate).') + '></p>' +
-        '<div class="k-actionbar">' + btn('k-btn--primary k-btn--lg k-btn--block', 'Kirim ke Ops HQ', 'Send to Ops HQ', 'id="bk-cs" data-min-role="supervisor"', 'check') + '</div>';
+        '<div class="k-actionbar">' + btn('k-btn--primary k-btn--lg k-btn--block', to[0], to[1], 'id="bk-cs"', 'check') + '</div>';
     }
     root.addEventListener('click', async (e) => {
       if (e.target.closest('[aria-disabled="true"]')) return;
       const ok = e.target.closest('[data-ok]'), no = e.target.closest('[data-no]');
+      const sok = e.target.closest('[data-spv-ok]'), sno = e.target.closest('[data-spv-no]');
       try {
-        if (ok) { await api().post('/consumables/counts/' + ok.dataset.ok + '/approve', {}); S.toast(['Disetujui. Angka hitung jadi stok.', 'Approved. The counts are now the stock.'], 'ok'); S.rerender(); }
+        if (sok) { await api().post('/consumables/counts/' + sok.dataset.spvOk + '/spv-approve', {}); S.toast(['Disetujui SPV. Diteruskan ke Ops HQ.', 'Approved by the SPV. Sent on to Ops HQ.'], 'ok'); S.rerender(); }
+        else if (sno) sendBack('/consumables/counts/' + sno.dataset.spvNo + '/spv-return', true);
+        else if (ok) { await api().post('/consumables/counts/' + ok.dataset.ok + '/approve', {}); S.toast(['Disetujui. Angka hitung jadi stok.', 'Approved. The counts are now the stock.'], 'ok'); S.rerender(); }
         else if (no) sendBack('/consumables/counts/' + no.dataset.no + '/return');
         else if (e.target.closest('#bk-cs')) {
           const inputs = $$('[data-cnt]', root);
           if (inputs.some((i) => i.value === '')) { S.toast(['Isi jumlah setiap barang.', 'Enter every item\'s count.'], 'caution'); return; }
-          await api().post('/consumables/counts', { site_id: ctx.siteId, lines: inputs.map((i) => ({ consumable_id: +i.dataset.cnt, qty: +i.value })) });
-          S.toast(['Dikirim ke Ops HQ.', 'Sent to Ops HQ.'], 'ok');
+          const r = await api().post('/consumables/counts', { site_id: ctx.siteId, lines: inputs.map((i) => ({ consumable_id: +i.dataset.cnt, qty: +i.value })) });
+          S.toast(r.status === 'spv_pending' ? ['Dikirim ke SPV.', 'Sent to the SPV.'] : ['Dikirim ke Ops HQ.', 'Sent to Ops HQ.'], 'ok');
           S.rerender();
         }
       } catch (err) { S.fail(err); }

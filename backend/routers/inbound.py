@@ -1,26 +1,36 @@
-"""Inbound: receive a brand delivery unit by unit into temporary bins, put it away
-in batches, and leave every difference to Ops HQ (canvas section 5, decisions of
-1 and 5 Oct 2026).
+"""Inbound: receive a brand delivery unit by unit into temporary bins, print the
+putaway slips, put every temporary bin away as its own task, and leave every
+difference to Ops HQ (canvas section 5, decisions of 1 and 5 Oct 2026, flow
+reordered 7 Oct 2026).
 
-  1  At the door: open the delivery by our Ninja reference or the brand's PO number
-     (or tap it under *Kiriman hari ini*) and count the cartons. A count that
-     differs from the Surat Jalan waits for the SPV: *Terima & tulis ulang*
-     (raised to Ops HQ at once) or *Tolak*. A number the WMS does not know is a
-     delivery with no PO: photo of the Surat Jalan, brand, cartons, *Kirim ke
-     Ops HQ, lalu hitung*.
-  2  Scan every unit. One product per temporary bin, chosen by the WMS: the first
-     unit of a product gets an empty bin, whose label is scanned once; the same
-     product keeps going there; *Bin penuh* gives the next one; when none is
-     free, new products stop until the batch is put away or the SPV adds a bin.
-     A unit above the expected quantity goes to a bin of its own and waits for
-     Ops HQ. A product with no barcode is picked from the list (logged, seen by
-     the SPV). *Rusak*: the unit goes to the quarantine tray or back to the
-     driver, with a photo; either way it waits for Ops HQ.
-  3  *Selesai batch ini*, then *Taruh di rak*: each bin to its rack bin, scan the
-     rack label. The units are stock, sellable and sent to Hiryu from that scan
-     (ledger receipt_in), never before.
-  4  *Semua barang sudah diterima*: three photos, then every difference (short,
-     extra, damaged) waits for Ops HQ's approval within 24 hours.
+  1  Open the delivery by our Ninja reference or the brand's PO number (or tap it
+     under *Kiriman hari ini*) and count the cartons. A count that differs from
+     the Surat Jalan waits for the SPV: *Terima & tulis ulang* (raised to Ops HQ
+     at once) or *Tolak*. A number the WMS does not know is a delivery with no
+     PO: photo of the Surat Jalan, brand, cartons, *Kirim ke Ops HQ, lalu hitung*.
+  2  Scan every unit, in one go. One product per temporary bin, chosen by the
+     WMS: the first unit of a product gets an empty bin, whose label is scanned
+     once; the same product keeps going there; *Bin penuh* gives the next one;
+     when none is free, new products stop until the SPV adds a bin. A unit above
+     the expected quantity goes to a bin of its own and waits for Ops HQ. A
+     product with no barcode is picked from the list (logged, seen by the SPV).
+     *Rusak*: the unit goes to the quarantine tray or back to the driver, with a
+     photo; either way it waits for Ops HQ.
+  3  Check the differences (expected against scanned, per product).
+  4  Paperwork: write the received quantities on the Surat Jalan / Faktur, sign,
+     then the three photos. *Selesai*: the receipt closes, every difference
+     (short, extra, damaged) waits for Ops HQ's approval within 24 hours, and
+     the temporary bins wait for their putaway slips (status 'full').
+  5  The putaway slips are printed, one per temporary bin. *Sudah dicetak*
+     (/slips-printed) turns every bin into a putaway task (status 'batched');
+     extra units and an unlinked no-PO delivery are held for Ops HQ instead.
+  6  Each task: go to the temporary bin, scan the rack bin (wrong bin refused),
+     confirm the units. The units are stock, sellable and sent to Hiryu from
+     that scan (ledger receipt_in), never before.
+  7  The receipt is done when no task is left.
+
+Receipts from before 7 Oct may have bins already 'batched' while still open (the
+old *Selesai batch ini*): they stay putaway tasks and can be put away any time.
 
 Units in a temporary bin are not stock: they are counted in inbound_bin_loads
 and inbound_units, not in the ledger. Nobody types a date; stock age counts from
@@ -197,6 +207,12 @@ class ReceiptOut(BaseModel):
     faktur_uploaded_at: str | None = None
     total_expected: int | None = None
     total_received: int = 0
+    stage: str = Field(default="scan", description="scan (open) | print (finished, putaway slips "
+                                                    "not printed yet) | putaway (tasks left) "
+                                                    "| done | refused")
+    slip_pending: int = Field(default=0, description="Temporary bins waiting for their slip")
+    tasks_open: int = Field(default=0, description="Putaway tasks (temporary bins) left")
+    units_to_put: int = 0
 
 
 class UnitIn(BaseModel):
@@ -246,6 +262,7 @@ class RackFullIn(BaseModel):
 class PutawayItem(BaseModel):
     load: LoadOut
     sku_name: str
+    reference: str | None = None
     to_location_code: str | None = None
     to_location_label: str | None = None
     waiting_ops_hq: bool = False
@@ -376,6 +393,40 @@ def carton_state(r: dict) -> str:
 
 def _can_scan(r: dict) -> bool:
     return r["status"] == "open" and carton_state(r) in ("match", "accepted_rewrite")
+
+
+def _unlinked(r: dict) -> bool:
+    """A no-PO delivery Ops HQ has not linked to a request yet: nothing may go to the rack."""
+    return bool(r.get("no_po")) and not r.get("replenishment_id")
+
+
+def _left(l: dict) -> int:
+    return int(l["qty"]) - int(l["qty_put"]) - int(l["qty_hold"])
+
+
+def _puttable(l: dict, r: dict) -> bool:
+    """A temporary bin with units that will go to the rack once its slip is printed."""
+    return (l["status"] in ("filling", "full") and not l["is_extra"] and not _unlinked(r)
+            and _left(l) > 0)
+
+
+def _stage(r: dict, loads: list[dict]) -> dict:
+    """Where a receipt is in the 7 Oct flow. 'print': finished, slips not printed
+    yet; 'putaway': tasks left; 'done': nothing left to put away."""
+    tasks = [l for l in loads if l["status"] == "batched" and _left(l) > 0]
+    waiting = [l for l in loads if r["status"] == "completed" and _puttable(l, r)]
+    if r["status"] == "refused":
+        stage = "refused"
+    elif r["status"] == "open":
+        stage = "scan"
+    elif waiting:
+        stage = "print"
+    elif tasks:
+        stage = "putaway"
+    else:
+        stage = "done"
+    return {"stage": stage, "slip_pending": len(waiting), "tasks_open": len(tasks),
+            "units_to_put": sum(_left(l) for l in tasks + waiting)}
 
 
 def _load_out(l: dict, target: str | None = None) -> dict:
@@ -526,6 +577,7 @@ async def receipt_view(r: dict) -> dict:
         "faktur_uploaded_at": _ts(r.get("faktur_uploaded_at")),
         "total_expected": sum(expected) if expected else None,
         "total_received": sum(l["qty_received"] for l in lines),
+        **_stage(r, loads),
     }
 
 
@@ -772,7 +824,13 @@ async def list_receipts(
         "       (SELECT COALESCE(SUM(rl.qty_received), 0) FROM receipt_lines rl "
         "         WHERE rl.receipt_id = ir.id) AS units, "
         "       (SELECT COUNT(*) FROM inbound_differences d WHERE d.receipt_id = ir.id "
-        "         AND d.status = 'pending' AND d.qty > 0) AS pending_differences "
+        "         AND d.status = 'pending' AND d.qty > 0) AS pending_differences, "
+        "       ir.replenishment_id, "
+        "       (SELECT COUNT(*) FROM inbound_bin_loads x WHERE x.receipt_id = ir.id "
+        "         AND x.status = 'batched' AND x.qty - x.qty_put - x.qty_hold > 0) AS tasks_open, "
+        "       (SELECT COUNT(*) FROM inbound_bin_loads x WHERE x.receipt_id = ir.id "
+        "         AND x.status IN ('filling','full') AND x.is_extra = 0 "
+        "         AND x.qty - x.qty_put - x.qty_hold > 0) AS slip_bins "
         "FROM inbound_receipts ir LEFT JOIN replenishments rp ON rp.id = ir.replenishment_id "
         "LEFT JOIN brands b ON b.id = ir.brand_id WHERE " + " AND ".join(where) +
         " ORDER BY ir.opened_at DESC, ir.id DESC LIMIT %s", (*params, limit))
@@ -784,7 +842,17 @@ async def list_receipts(
         "completed_at": _ts(r["completed_at"]), "units": int(r["units"] or 0),
         "faktur_uploaded_at": _ts(r["faktur_uploaded_at"]), "decide_by": _ts(r["decide_by"]),
         "pending_differences": int(r["pending_differences"] or 0),
+        **_list_stage(r),
     } for r in rows]}
+
+
+def _list_stage(r: dict) -> dict:
+    """The same stage as _stage, from list_receipts' counts."""
+    tasks = int(r["tasks_open"] or 0)
+    slip = int(r["slip_bins"] or 0) if (r["status"] == "completed" and not _unlinked(r)) else 0
+    stage = ("refused" if r["status"] == "refused" else "scan" if r["status"] == "open"
+             else "print" if slip else "putaway" if tasks else "done")
+    return {"stage": stage, "tasks_open": tasks, "slip_pending": slip}
 
 
 # --- 2. count every unit into temporary bins -----------------------------------------
@@ -807,7 +875,7 @@ async def count_unit(receipt_id: int, body: UnitIn, user: auth.User = Depends(au
       extra_bin   above the expected quantity: its own bin, waits for Ops HQ
       damaged     *Rusak* on: to the quarantine tray or back to the driver;
                   take a photo (photo_needed) with /photos kind=damage
-      no_free_bin every temporary bin is taken: finish the batch, or the SPV adds one
+      no_free_bin every temporary bin is taken: the SPV adds one (Tambah bin sementara)
     """
     replayed = await ledger.replay(body.idempotency_key, "inbound_unit")
     if replayed:
@@ -896,9 +964,9 @@ async def count_unit(receipt_id: int, body: UnitIn, user: auth.User = Depends(au
             if not load:
                 bin_code = await _allocate_bin(cur, site)
                 if not bin_code:
-                    return no("no_free_bin", "Semua bin sementara terisi: selesaikan batch ini dulu "
-                                             "(taruh di rak), atau SPV tambah bin sementara. / Every "
-                                             "temporary bin is taken.", sku=common.sku_dict(sku))
+                    return no("no_free_bin", "Semua bin sementara terisi. Panggil SPV untuk tambah "
+                                             "bin sementara. / Every temporary bin is taken. Ask the "
+                                             "SPV to add a temporary bin.", sku=common.sku_dict(sku))
                 lid = await db.run(
                     cur,
                     "INSERT INTO inbound_bin_loads (site_id, receipt_id, sku_id, bin_code, "
@@ -1109,12 +1177,12 @@ async def add_temp_bin(site_id: int, user: auth.User = Depends(auth.require("sup
     return await temp_bins(site_id, user)
 
 
-# --- 3. batch and putaway ------------------------------------------------------------
+# --- 3. putaway slips and putaway tasks ------------------------------------------------
 
 async def _close_batch(cur, r: dict) -> int | None:
-    """*Selesai batch ini*: every bin of the receipt still filling or full goes on
-    the putaway list. Extra bins, and every bin of a no-PO delivery not linked yet,
-    wait for Ops HQ instead."""
+    """The putaway slips are printed (*Sudah dicetak*): every bin of the receipt
+    still filling or full becomes a putaway task (batched). Extra bins, and every
+    bin of a no-PO delivery not linked yet, wait for Ops HQ instead (held)."""
     loads = await db.many(cur, "SELECT * FROM inbound_bin_loads WHERE receipt_id = %s "
                                "AND status IN ('filling','full') FOR UPDATE", (r["id"],))
     if not loads:
@@ -1137,12 +1205,32 @@ async def _close_batch(cur, r: dict) -> int | None:
 
 @router.post("/inbound/receipts/{receipt_id}/batch", response_model=PutawayList)
 async def close_batch(receipt_id: int, user: auth.User = Depends(auth.current_user)):
-    """*Selesai batch ini*, then the putaway list of this receipt."""
+    """The old *Selesai batch ini* (putaway in the middle of scanning). The screen no
+    longer offers it since 7 Oct; kept so an old open tab does not fail."""
     r = await _receipt(receipt_id, user)
     async with db.tx() as cur:
         await db.one(cur, "SELECT id FROM inbound_receipts WHERE id = %s FOR UPDATE",
                      (receipt_id,))
         await _close_batch(cur, r)
+    return await putaway_list(r["site_id"], receipt_id, user)
+
+
+@router.post("/inbound/receipts/{receipt_id}/slips-printed", response_model=PutawayList)
+async def slips_printed(receipt_id: int, user: auth.User = Depends(auth.current_user)):
+    """*Sudah dicetak*: the putaway slips of a finished receipt are on paper, so
+    every temporary bin becomes its own putaway task (*Taruh di rak*, also on
+    Perlu tindakan). Anyone receiving may confirm it. Pressing it again changes
+    nothing."""
+    r = await _receipt(receipt_id, user)
+    if r["status"] != "completed":
+        raise HTTPException(409, "Selesaikan penerimaan dulu. / Finish the receipt first.")
+    async with db.tx() as cur:
+        await db.one(cur, "SELECT id FROM inbound_receipts WHERE id = %s FOR UPDATE",
+                     (receipt_id,))
+        batch = await _close_batch(cur, r)
+        if batch:
+            await ledger.audit(cur, actor_email=user.email, entity="receipt", entity_id=receipt_id,
+                               action="slips_printed", after={"batch_no": batch})
     return await putaway_list(r["site_id"], receipt_id, user)
 
 
@@ -1159,9 +1247,10 @@ def _short_code(code: str | None, site_code: str) -> str | None:
 @router.get("/inbound/putaway", response_model=PutawayList)
 async def putaway_list(site_id: int, receipt_id: int | None = None,
                        user: auth.User = Depends(auth.current_user)):
-    """*Taruh di rak* (board 5e): each temporary bin with its product, units and
-    rack bin, in walking order; bins waiting for Ops HQ listed apart with no rack
-    bin (*Tunggu Ops HQ*). Accepted extras show here too."""
+    """*Taruh di rak*: the putaway tasks, one per temporary bin, with its product,
+    units and rack bin, in walking order; bins waiting for Ops HQ listed apart
+    with no rack bin (*Tunggu Ops HQ*). Accepted extras show here too. Without
+    receipt_id: every task at the hub (Barang masuk's list)."""
     site = await auth.assert_site_access(user, site_id)
     site = await _site(site["id"])
     where, params = ["l.site_id = %s"], [site_id]
@@ -1169,7 +1258,10 @@ async def putaway_list(site_id: int, receipt_id: int | None = None,
         where.append("l.receipt_id = %s")
         params.append(receipt_id)
     rows = await db.fetch_all(
-        "SELECT l.*, s.name_display FROM inbound_bin_loads l JOIN skus s ON s.id = l.sku_id "
+        "SELECT l.*, s.name_display, COALESCE(rp.reference, ir.no_po_code) AS reference "
+        "FROM inbound_bin_loads l JOIN skus s ON s.id = l.sku_id "
+        "LEFT JOIN inbound_receipts ir ON ir.id = l.receipt_id "
+        "LEFT JOIN replenishments rp ON rp.id = ir.replenishment_id "
         "WHERE " + " AND ".join(where) + " AND l.status IN ('batched','held','return') "
         "ORDER BY l.id", params)
     items, held = [], []
@@ -1178,12 +1270,13 @@ async def putaway_list(site_id: int, receipt_id: int | None = None,
             t = await _target(site_id, l["sku_id"])
             items.append(({
                 "load": _load_out(l, t["location_code"] if t else None),
-                "sku_name": l["name_display"],
+                "sku_name": l["name_display"], "reference": l["reference"],
                 "to_location_code": t["location_code"] if t else None,
                 "to_location_label": _short_code(t["location_code"], site["code"]) if t else None,
             }, (t["rack_code"], t["level_no"], t["location_code"]) if t else ("~", 0, "")))
         if l["status"] in ("held", "return") or int(l["qty_hold"]) > 0:
             held.append({"load": _load_out(l), "sku_name": l["name_display"],
+                         "reference": l["reference"],
                          "waiting_ops_hq": l["status"] != "return",
                          "returning": l["status"] == "return"})
     items.sort(key=lambda x: x[1])
@@ -1221,8 +1314,9 @@ async def put_away(load_id: int, body: PutawayIn, user: auth.User = Depends(auth
         return replayed
     l = await _load(load_id, user)
     if l["status"] != "batched":
-        raise HTTPException(409, "Bin ini belum siap ditaruh (selesaikan batch, atau tunggu Ops HQ). "
-                                 "/ This bin is not ready to put away.")
+        raise HTTPException(409, "Bin ini belum siap ditaruh: cetak slip putaway dulu, atau tunggu "
+                                 "Ops HQ. / This bin is not ready to put away: print the putaway "
+                                 "slips first, or wait for Ops HQ.")
     site = await _site(l["site_id"])
     loc = await _location(l["site_id"], body.location_code)
     allowed = {x["location_id"] for x in await _sku_locations(l["site_id"], l["sku_id"])}
@@ -1485,12 +1579,26 @@ async def _after_finish(cur, r: dict, actor: str) -> None:
         await replenishment.close_billing(cur, rep_id, actor, decided=False)
 
 
+async def _close_scanning(cur, r: dict) -> None:
+    """*Selesai*: no bin is filled any more. Bins with units for the rack wait for
+    their putaway slip (status full) and become tasks at *Sudah dicetak*. When no
+    bin has anything for the rack (only extras, or a no-PO delivery not linked
+    yet) they are settled at once (held or done): there is no slip to print."""
+    await db.run(cur, "UPDATE inbound_bin_loads SET status = 'full', "
+                      "full_at = COALESCE(full_at, NOW()) WHERE receipt_id = %s "
+                      "AND status = 'filling'", (r["id"],))
+    loads = await db.many(cur, "SELECT * FROM inbound_bin_loads WHERE receipt_id = %s "
+                               "AND status = 'full'", (r["id"],))
+    if not any(_puttable(l, r) for l in loads):
+        await _close_batch(cur, r)
+
+
 @router.post("/inbound/receipts/{receipt_id}/finish", response_model=ReceiptOut)
 async def finish(receipt_id: int, body: FinishIn | None = None,
                  user: auth.User = Depends(auth.current_user)):
-    """*Semua barang sudah diterima* then *Selesai*: needs the three photos and a
-    photo for every damaged product. Bins still being filled go on the putaway
-    list; differences wait for Ops HQ (24 h)."""
+    """*Selesai & cetak slip*: needs the three photos and a photo for every damaged
+    product. The bins wait for their putaway slips (/slips-printed makes them
+    tasks); differences wait for Ops HQ (24 h)."""
     r = await _receipt(receipt_id, user)
     view = await receipt_view(r)
     if not view["can_finish"]:
@@ -1500,7 +1608,7 @@ async def finish(receipt_id: int, body: FinishIn | None = None,
     async with db.tx() as cur:
         await db.one(cur, "SELECT id FROM inbound_receipts WHERE id = %s FOR UPDATE",
                      (receipt_id,))
-        await _close_batch(cur, r)
+        await _close_scanning(cur, r)
         await db.run(
             cur,
             "UPDATE inbound_receipts SET status = 'completed', completed_at = NOW(), "
@@ -1598,7 +1706,9 @@ async def link_no_po(receipt_id: int, body: LinkIn, user: auth.User = Depends(au
                 excess -= hold
                 status = l["status"]
                 if status == "held":
-                    status = "batched" if int(l["qty"]) - hold > 0 else "held"
+                    # Back to waiting for its putaway slip (7 Oct flow): printing
+                    # the slips makes it a task.
+                    status = "full" if int(l["qty"]) - hold > 0 else "held"
                 await db.run(cur, "UPDATE inbound_bin_loads SET qty_hold = %s, status = %s "
                                   "WHERE id = %s", (hold, status, l["id"]))
         await db.run(
@@ -1652,12 +1762,20 @@ async def _slip_no(cur, site_code: str, receipt_id: int) -> str:
 
 
 @router.get("/inbound/receipts/{receipt_id}/slip")
-async def putaway_slip(receipt_id: int, user: auth.User = Depends(auth.require("supervisor"))):
-    """*Cetak slip putaway* (A4, board 5j): what went from which temporary bin to
-    which rack bin with the divider colour, the differences waiting for Ops HQ,
-    the 24-hour claim deadline, and the signature boxes. The number
-    PA-<hub>-<yymm>-<nnn> is issued on the first print and kept; the lines are
-    rebuilt on every print so a later putaway (an accepted extra) appears."""
+async def putaway_slip(receipt_id: int, user: auth.User = Depends(auth.current_user)):
+    """*Cetak slip putaway* (thermal 80 mm, A4 without one). Since 7 Oct staff
+    print it too, right after *Selesai*, before anything is on the rack:
+
+      tasks   one slip per temporary bin still to put away: product, units, from
+              the temporary bin, to the rack bin, today's divider colour
+      held    bins that stay where they are (extras waiting for Ops HQ, returns)
+      lines   what is already on the rack (the summary record the SPV signs),
+              with the differences waiting for Ops HQ, the 24-hour claim
+              deadline and the signature boxes
+
+    The number PA-<hub>-<yymm>-<nnn> is issued on the first print and kept; the
+    content is rebuilt on every print so a later putaway (an accepted extra)
+    appears."""
     r = await _receipt(receipt_id, user)
     if r["status"] == "open":
         raise HTTPException(409, "Selesaikan penerimaan dulu. / Finish the receipt first.")
@@ -1676,6 +1794,33 @@ async def putaway_slip(receipt_id: int, user: auth.User = Depends(auth.require("
     span = await db.fetch_one("SELECT MIN(created_at) AS a, MAX(created_at) AS b FROM inbound_units "
                               "WHERE receipt_id = %s", (receipt_id,))
     diffs = await _differences(receipt_id)
+    loads = await db.fetch_all(
+        "SELECT l.*, s.name_display, s.brand_sku_code FROM inbound_bin_loads l "
+        "JOIN skus s ON s.id = l.sku_id WHERE l.receipt_id = %s ORDER BY l.id", (receipt_id,))
+    today = daycolor.for_moment()
+    today_name = COLOUR_NAME.get(today["key"], ("", ""))
+    tasks, held = [], []
+    for l in loads:
+        if (l["status"] == "batched" and _left(l) > 0) or _puttable(l, r):
+            t = await _target(r["site_id"], l["sku_id"])
+            tasks.append(({
+                "load_id": l["id"], "sku_id": l["sku_id"], "sku_name": l["name_display"],
+                "brand_sku_code": l["brand_sku_code"], "qty": _left(l),
+                "from_bin": l["bin_code"],
+                "to_bin": _short_code(t["location_code"], site["code"]) if t else None,
+                "to_location_code": t["location_code"] if t else None,
+                "divider": {"key": today["key"], "hex": today["hex"], "colour_id": today_name[0],
+                            "colour_en": today_name[1], "week_parity": today["week_parity"],
+                            "date": today["date"],
+                            "written": daycolor.local_date().strftime("%d/%m")},
+                "status": l["status"],
+            }, (t["rack_code"], t["level_no"], t["location_code"]) if t else ("~", 0, "")))
+        elif l["status"] in ("held", "return", "filling", "full") and int(l["qty"]) > int(l["qty_put"]):
+            held.append({"load_id": l["id"], "sku_name": l["name_display"], "from_bin": l["bin_code"],
+                         "qty": int(l["qty"]) - int(l["qty_put"]), "is_extra": bool(l["is_extra"]),
+                         "returning": l["status"] == "return"})
+    tasks.sort(key=lambda x: x[1])
+    tasks = [dict(x[0], n=i + 1, of=len(tasks)) for i, x in enumerate(tasks)]
     names = await replenishment.user_names(
         [r.get("opened_by"), r.get("sj_signed_by")] + [p["actor_email"] for p in puts])
     spv = None
@@ -1713,6 +1858,7 @@ async def putaway_slip(receipt_id: int, user: auth.User = Depends(auth.require("
         "receiver": names.get(r.get("opened_by")), "sj_signed_by": names.get(r.get("sj_signed_by")),
         "lines": lines, "total_put": sum(x["qty"] for x in lines),
         "differences": diffs, "pending_differences": len(pending),
+        "tasks": tasks, "held": held,
         "claim_deadline": _ts(r.get("decide_by")),
         "signatures": {"put_by": sorted({x["put_by"] for x in lines if x["put_by"]}),
                        "spv": spv},

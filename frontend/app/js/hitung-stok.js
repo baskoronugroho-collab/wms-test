@@ -94,8 +94,8 @@
   S.tab('rencana', async function (ctx) {
     styles();
     S.setTitle('Hitung stok', 'Stock count');
-    S.setSub('Rencana dibuat WMS setiap pagi: siklus wajib dari Ops HQ dan bin dengan barang tidak ada kemarin.',
-      'The WMS makes the plan every morning: Ops HQ\'s mandatory cycles and bins with a missing item yesterday.');
+    S.setSub('Rencana dibuat WMS setiap pagi: siklus wajib dari Ops HQ dan bin dengan barang tidak ada kemarin. SPV menetapkan petugas tiap bin.',
+      'The WMS makes the plan every morning: Ops HQ\'s mandatory cycles and bins with a missing item yesterday. The SPV assigns a counter to each bin.');
     if (!ctx.siteId) { ctx.body.innerHTML = '<div class="k-note k-note--info">' + icon('info', 20) + sp('Pilih satu dark store di atas.', 'Choose one dark store above.') + '</div>'; return; }
     ctx.body.innerHTML = '<div class="k-loading" ' + biAttr('Memuat rencana…', 'Loading the plan…') + '></div>';
     const [plan, mine] = await Promise.all([
@@ -106,7 +106,9 @@
     S.tabCount('rencana', plan.total);
     const pending = plan.tasks.filter((x) => x.status !== 'closed').length;
 
+    const unassigned = plan.tasks.filter((x) => !x.assigned_to && (x.status === 'pending' || x.status === 'recount'));
     ctx.actions.innerHTML = '<span class="k-pill k-pill--ok k-pill--lg">' + esc(t(plan.done + ' dari ' + plan.total + ' selesai', plan.done + ' of ' + plan.total + ' done')) + '</span>' +
+      (unassigned.length ? btn('k-btn--primary', 'Tetapkan petugas (' + unassigned.length + ')', 'Assign counters (' + unassigned.length + ')', 'data-act="assign-all" data-min-role="supervisor"', 'count') : '') +
       btn('k-btn--secondary', 'Tambah bin', 'Add a bin', 'data-act="add" data-min-role="supervisor"', 'plus');
 
     const fc = plan.full_count;
@@ -150,10 +152,12 @@
         '<span class="k-row__text"><span class="k-row__title"><span class="k-mono">' + esc(x.bin) + '</span> · ' + esc(x.sku_name || '') + '</span>' +
         '<span class="k-row__sub' + (x.status === 'recount' ? ' k-row__sub--caution' : '') + '">' + esc(x.status === 'recount' ? t('Hitung ulang', 'Recount') : t(x.reason_id, x.reason_en)) + '</span></span>' +
         '<span class="k-row__chev">' + icon('chev', 22) + '</span></a>').join('') + '</div>'
-        : '<p class="k-caption" ' + biAttr('Tidak ada bin untuk Anda saat ini.', 'No bin for you right now.') + '></p>') +
+        : '<p class="k-caption" ' + biAttr('Tidak ada bin untuk Anda saat ini. SPV yang menetapkan petugas tiap bin.', 'No bin for you right now. The SPV assigns a counter to each bin.') + '></p>') +
       (S.atLeast('supervisor') ? bis('Rencana dark store', 'Dark store plan', 'k-eyebrow') + '<div class="k-list">' + plan.tasks.map((x) => '<div class="k-row' + (x.status === 'recount' ? ' k-row--caution' : '') + '">' +
         '<span class="k-row__text"><span class="k-row__title"><span class="k-mono">' + esc(x.bin) + '</span> · ' + esc(x.sku_name || '') + '</span>' +
-        '<span class="k-row__sub">' + esc(t(x.reason_id, x.reason_en)) + ' · ' + esc(first(x.assigned_name) || '-') + '</span></span>' + statusPill(x) + '</div>').join('') + '</div>' : '') +
+        '<span class="k-row__sub">' + esc(t(x.reason_id, x.reason_en)) + ' · ' + esc(first(x.assigned_name) || t('Belum ada petugas', 'No counter yet')) + '</span></span>' + statusPill(x) +
+        ((x.status === 'pending' || x.status === 'recount') ? '<button type="button" class="k-linkbtn" data-assign="' + x.id + '" data-min-role="supervisor">' + esc(x.assigned_name ? t('Ganti', 'Change') : t('Atur', 'Set')) + '</button>' : '') +
+        '</div>').join('') + '</div>' : '') +
       '</div>';
 
     ctx.body.innerHTML = phone +
@@ -168,6 +172,8 @@
     void z;
     $$('[data-start]', ctx.body).forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); labelStep(ctx, a.dataset.start); }));
     $('[data-act="add"]', ctx.actions).addEventListener('click', () => addBin(ctx));
+    const all = $('[data-act="assign-all"]', ctx.actions);
+    if (all) all.addEventListener('click', () => assignAllModal(ctx, unassigned.length));
     $$('[data-cycle]', ctx.body).forEach((b) => b.addEventListener('click', () => cycleModal(ctx, plan.cycles.find((c) => String(c.id) === b.dataset.cycle))));
     const ca = $('[data-act="cycle-add"]', ctx.body);
     if (ca) ca.addEventListener('click', () => cycleModal(ctx, null));
@@ -319,6 +325,30 @@
       actions: [{ label: ['Batal', 'Cancel'], kind: 'secondary' }, {
         label: ['Simpan', 'Save'], kind: 'primary', minRole: 'supervisor',
         onClick: async () => { await api().put('/counts/tasks/' + task.id + '/assign', { email: $('#hs-who').value }); S.rerender(); },
+      }],
+    });
+  }
+
+  /* Give every bin without a counter today to one person (the SPV can still
+     change single bins after). A recount never goes to someone who counted it. */
+  async function assignAllModal(ctx, n) {
+    let people = [];
+    try { people = (await api().get('/admin/users' + api().qs({ site_id: ctx.siteId }))).users.filter((u) => u.active && (u.role === 'staff' || u.role === 'hub_operator')); }
+    catch (e) { S.fail(e); return; }
+    if (!people.length) { S.toast(['Belum ada staf di dark store ini.', 'No staff at this dark store yet.'], 'caution'); return; }
+    S.modal({
+      title: ['Tetapkan petugas untuk ' + n + ' bin', 'Assign a counter to ' + n + ' bin(s)'],
+      body: '<div class="k-stack"><select class="k-select" id="hs-who-all">' + people.map((u) => '<option value="' + esc(u.email) + '">' + esc(u.name || u.email) + '</option>').join('') + '</select>' +
+        '<p class="k-caption" ' + biAttr('Semua bin tanpa petugas hari ini diberikan ke orang ini. Bin tetap bisa diganti satu per satu. Hitung ulang tidak diberikan ke orang yang sudah menghitungnya.',
+          'Every bin without a counter today goes to this person. You can still change single bins. A recount never goes to someone who already counted it.') + '></p></div>',
+      actions: [{ label: ['Batal', 'Cancel'], kind: 'secondary' }, {
+        label: ['Tetapkan', 'Assign'], kind: 'primary', minRole: 'supervisor',
+        onClick: async () => {
+          const r = await api().put('/counts/plan/assign-unassigned', { site_id: ctx.siteId, email: $('#hs-who-all').value });
+          S.toast(r.skipped ? [r.assigned + ' bin ditetapkan; ' + r.skipped + ' hitung ulang perlu orang lain.', r.assigned + ' bin(s) assigned; ' + r.skipped + ' recount(s) need another person.']
+            : [r.assigned + ' bin ditetapkan.', r.assigned + ' bin(s) assigned.'], 'ok');
+          S.rerender();
+        },
       }],
     });
   }

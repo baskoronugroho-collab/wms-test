@@ -83,6 +83,7 @@ ACTIONS = {
     "tinjau": ("Tinjau", "Review"), "hitung": ("Hitung", "Count"), "taruh": ("Taruh", "Put away"),
     "serahkan": ("Serahkan", "Hand over"), "unduh": ("Unduh", "Download"), "buat": ("Buat", "Make"),
     "kerjakan": ("Kerjakan", "Do it"), "lengkapi": ("Lengkapi", "Complete"),
+    "cetak": ("Cetak", "Print"), "atur": ("Atur", "Assign"),
 }
 
 
@@ -301,16 +302,42 @@ async def rows_inbound(R: _Rows, ids, rule, user):
             R.add("inbound_differences_info", "ops_head", r["site_id"], title, detail, r["since"], None, None,
                   link, "lihat", due=r["due"])
     if await table_exists("inbound_bin_loads"):
+        # Inbound, 7 Oct flow: a finished receipt first waits for its putaway slips
+        # (bins 'full'), then each temporary bin is a putaway task ('batched').
+        # Same rule as routers/inbound.py _stage.
         for r in await db.fetch_all(
-                "SELECT site_id, receipt_id, SUM(qty - qty_put - qty_hold) AS units, COUNT(*) AS bins, "
-                "       MIN(batched_at) AS since FROM inbound_bin_loads "
-                f"WHERE site_id IN ({ph}) AND status = 'batched' AND qty - qty_put - qty_hold > 0 "
-                "GROUP BY site_id, receipt_id", ids):
+                "SELECT ir.id AS receipt_id, ir.site_id, ir.completed_at AS since, "
+                "       COALESCE(rp.reference, ir.no_po_code) AS reference, COUNT(*) AS bins "
+                "FROM inbound_receipts ir JOIN inbound_bin_loads l ON l.receipt_id = ir.id "
+                "LEFT JOIN replenishments rp ON rp.id = ir.replenishment_id "
+                f"WHERE ir.site_id IN ({ph}) AND ir.status = 'completed' "
+                "  AND NOT (ir.no_po = 1 AND ir.replenishment_id IS NULL) "
+                "  AND l.status IN ('filling','full') AND l.is_extra = 0 "
+                "  AND l.qty - l.qty_put - l.qty_hold > 0 "
+                "GROUP BY ir.id, ir.site_id, ir.completed_at, rp.reference, ir.no_po_code", ids):
+            what = r["reference"] or f"#{r['receipt_id']}"
             for role in ("staff", "supervisor"):
-                R.add("putaway", role, r["site_id"], ("Taruh di rak", "Put away"),
-                      (f"{int(r['units'])} unit di {r['bins']} bin sementara.",
-                       f"{int(r['units'])} unit(s) in {r['bins']} temporary bin(s)."),
-                      r["since"], None, None, f"barang-masuk.html?tab=taruh&receipt={r['receipt_id']}", "taruh")
+                R.add("putaway_slip", role, r["site_id"],
+                      (f"Cetak slip putaway: {what}", f"Print the putaway slips: {what}"),
+                      (f"{r['bins']} bin sementara menunggu slipnya.",
+                       f"{r['bins']} temporary bin(s) waiting for their slip."),
+                      r["since"], None, None,
+                      f"barang-masuk.html?receipt={r['receipt_id']}&step=print", "cetak")
+        for r in await db.fetch_all(
+                "SELECT l.site_id, l.receipt_id, COALESCE(rp.reference, ir.no_po_code) AS reference, "
+                "       SUM(l.qty - l.qty_put - l.qty_hold) AS units, COUNT(*) AS bins, "
+                "       MIN(l.batched_at) AS since FROM inbound_bin_loads l "
+                "LEFT JOIN inbound_receipts ir ON ir.id = l.receipt_id "
+                "LEFT JOIN replenishments rp ON rp.id = ir.replenishment_id "
+                f"WHERE l.site_id IN ({ph}) AND l.status = 'batched' AND l.qty - l.qty_put - l.qty_hold > 0 "
+                "GROUP BY l.site_id, l.receipt_id, rp.reference, ir.no_po_code", ids):
+            what = r["reference"] or f"#{r['receipt_id']}"
+            for role in ("staff", "supervisor"):
+                R.add("putaway", role, r["site_id"], (f"Taruh di rak: {what}", f"Put away: {what}"),
+                      (f"{r['bins']} tugas, {int(r['units'])} unit di bin sementara.",
+                       f"{r['bins']} task(s), {int(r['units'])} unit(s) in temporary bins."),
+                      r["since"], None, None,
+                      f"barang-masuk.html?receipt={r['receipt_id']}&step=putaway", "taruh")
     # Faktur to upload after an inbound: SPV within 24 h, Ops HQ's list after 48 h.
     for r in await db.fetch_all(
             "SELECT ir.id, ir.site_id, ir.completed_at, rp.reference, b.name AS brand FROM inbound_receipts ir "
@@ -320,7 +347,7 @@ async def rows_inbound(R: _Rows, ids, rule, user):
         since = r["completed_at"]
         what = r["reference"] or f"#{r['id']}"
         title = (f"Unggah Faktur bertanda tangan: {what}", f"Upload the signed Faktur: {what}")
-        link = f"barang-masuk.html?receipt={r['id']}"
+        link = f"barang-masuk.html?receipt={r['id']}&step=detail"
         brand = r["brand"] or ""
         R.add("faktur_upload", "supervisor", r["site_id"], title,
               (f"Barang masuk selesai · {brand}".strip(" ·"), f"Inbound finished · {brand}".strip(" ·")),
@@ -562,10 +589,21 @@ async def rows_counts(R: _Rows, ids, rule, user):
         if sid:
             await opname.ensure_plan(sid, today)
     for r in await db.fetch_all(
-            "SELECT site_id, COUNT(*) AS n, SUM(status = 'closed') AS done, MIN(created_at) AS since "
+            "SELECT site_id, COUNT(*) AS n, SUM(status = 'closed') AS done, MIN(created_at) AS since, "
+            "       SUM(assigned_to IS NULL AND status IN ('pending','recount')) AS unassigned "
             f"FROM count_tasks WHERE site_id IN ({ph}) AND plan_date = %s GROUP BY site_id", [*ids, today]):
         left = int(r["n"]) - int(r["done"] or 0)
-        if left > 0:
+        free = int(r["unassigned"] or 0)
+        if free > 0:
+            # The SPV sets who counts each bin (decided 7 Oct): due by 10:00 WIB, then Ops HQ sees it.
+            R.add("count_assign", "supervisor", r["site_id"],
+                  (f"Tetapkan petugas hitung: {free} bin belum ada petugas",
+                   f"Assign counters: {free} bin(s) have no counter yet"),
+                  ("Staf hanya bisa menghitung bin yang ditetapkan SPV.",
+                   "Staff can only count the bins the SPV gives them."),
+                  r["since"], None, "hq", "hitung-stok.html?tab=rencana", "atur",
+                  due=wib_day_start_utc(today) + timedelta(hours=10))
+        elif left > 0:
             R.add("count_plan", "supervisor", r["site_id"],
                   (f"Rencana hitung hari ini: {r['n']} bin", f"Today's count plan: {r['n']} bin(s)"),
                   ("Dibuat WMS pagi ini · cek petugas tiap bin", "Made by the WMS this morning · check each counter"),
@@ -716,37 +754,71 @@ async def rows_consumables(R: _Rows, ids, rule, user):
               ("Ajukan PR di luar WMS, lalu catat nomornya.", "Submit the PR outside the WMS, then record its number."),
               r["raised_at"], timedelta(hours=ph_h), "ops_head", "bahan-kemas.html", "ajukan")
     ah = rule.get("consumable_approve_hours", 24)
+    # Staff entries wait for the SPV first (7 Oct): 'spv_pending', then 'pending'
+    # for Ops HQ, or 'spv_returned' with the SPV's note. On a 'pending' row
+    # decided_at is when the SPV passed a staff entry on (NULL for the SPV's own),
+    # so Ops HQ's clock starts there. See routers/consumables.py.
+    from_staff: dict[int, list] = {}
     for r in await db.fetch_all(
-            "SELECT x.site_id, c.name, x.entered_at, x.status, x.hq_note FROM consumable_receipts x "
-            "JOIN consumables c ON c.id = x.consumable_id "
-            f"WHERE x.site_id IN ({ph}) AND x.status IN ('pending','returned')", ids):
-        if r["status"] == "pending":
+            "SELECT x.site_id, c.name, x.entered_by, x.entered_at, x.decided_at, x.status, x.hq_note "
+            "FROM consumable_receipts x JOIN consumables c ON c.id = x.consumable_id "
+            f"WHERE x.site_id IN ({ph}) AND x.status IN ('spv_pending','pending','returned','spv_returned')", ids):
+        if r["status"] == "spv_pending":
+            from_staff.setdefault(r["site_id"], []).append(r)
+        elif r["status"] == "pending":
             R.add("consumable_receipt", "hq", r["site_id"],
                   (f"Bahan kemas diterima: {r['name']}", f"Consumables received: {r['name']}"),
                   ("Cocokkan dengan PR, lalu setujui.", "Check against the PR, then approve."),
-                  r["entered_at"], timedelta(hours=ah), "ops_head", "bahan-kemas.html?tab=terima", "setujui")
-        else:
+                  r["decided_at"] or r["entered_at"], timedelta(hours=ah), "ops_head",
+                  "bahan-kemas.html?tab=terima", "setujui")
+        elif r["status"] == "returned":
             R.add("consumable_receipt_back", "supervisor", r["site_id"],
                   (f"Penerimaan dikembalikan Ops HQ: {r['name']}", f"Receipt sent back by Ops HQ: {r['name']}"),
                   (r["hq_note"], r["hq_note"]) if r["hq_note"] else None,
                   r["entered_at"], None, None, "bahan-kemas.html?tab=terima", "periksa")
+        elif r["entered_by"] == user.email:
+            R.add("consumable_receipt_spv_back", "staff", r["site_id"],
+                  (f"Penerimaan dikembalikan SPV: {r['name']}", f"Receipt returned by the SPV: {r['name']}"),
+                  (r["hq_note"], r["hq_note"]) if r["hq_note"] else None,
+                  r["decided_at"] or r["entered_at"], None, None, "bahan-kemas.html?tab=terima", "periksa")
+    for sid, rs in from_staff.items():
+        what = ", ".join(sorted({r["name"] for r in rs}))
+        R.add("consumable_staff", "supervisor", sid,
+              ("Bahan kemas dari staf: setujui", "Packing supplies from staff: approve"),
+              (f"Terima: {what}", f"Receive: {what}"),
+              min(r["entered_at"] for r in rs), timedelta(hours=ah), "default", "bahan-kemas.html?tab=terima",
+              "setujui")
+    # Only the newest count per dark store: a returned count stops showing once
+    # it is counted again.
     for r in await db.fetch_all(
-            "SELECT site_id, status, counted_at, hq_note FROM consumable_counts "
-            f"WHERE site_id IN ({ph}) AND status IN ('pending','returned') "
-            "AND counted_at >= UTC_TIMESTAMP() - INTERVAL 14 DAY", ids):
-        if r["status"] == "pending":
+            "SELECT k.site_id, k.status, k.counted_by, k.counted_at, k.decided_at, k.hq_note FROM consumable_counts k "
+            f"WHERE k.site_id IN ({ph}) AND k.status IN ('spv_pending','pending','returned','spv_returned') "
+            "AND k.counted_at >= UTC_TIMESTAMP() - INTERVAL 14 DAY "
+            "AND NOT EXISTS (SELECT 1 FROM consumable_counts n WHERE n.site_id = k.site_id AND n.id > k.id)", ids):
+        if r["status"] == "spv_pending":
+            R.add("consumable_staff", "supervisor", r["site_id"],
+                  ("Bahan kemas dari staf: setujui", "Packing supplies from staff: approve"),
+                  ("Hitung mingguan", "Weekly count"),
+                  r["counted_at"], timedelta(hours=ah), "default", "bahan-kemas.html?tab=mingguan", "setujui")
+        elif r["status"] == "pending":
             R.add("consumable_count", "hq", r["site_id"],
                   ("Hitung mingguan bahan kemas: setujui", "Weekly consumables count: approve"),
-                  None, r["counted_at"], timedelta(hours=ah), "ops_head", "bahan-kemas.html?tab=mingguan", "setujui")
-        else:
+                  None, r["decided_at"] or r["counted_at"], timedelta(hours=ah), "ops_head",
+                  "bahan-kemas.html?tab=mingguan", "setujui")
+        elif r["status"] == "returned":
             R.add("consumable_count_back", "supervisor", r["site_id"],
                   ("Hitung mingguan dikembalikan Ops HQ", "Weekly count sent back by Ops HQ"),
                   (r["hq_note"], r["hq_note"]) if r["hq_note"] else None,
                   r["counted_at"], None, None, "bahan-kemas.html?tab=mingguan", "hitung")
+        elif r["counted_by"] == user.email:
+            R.add("consumable_count_spv_back", "staff", r["site_id"],
+                  ("Hitung mingguan dikembalikan SPV", "Weekly count returned by the SPV"),
+                  (r["hq_note"], r["hq_note"]) if r["hq_note"] else None,
+                  r["decided_at"] or r["counted_at"], None, None, "bahan-kemas.html?tab=mingguan", "hitung")
     days = rule.get("consumable_count_days", 7)
     have = {r["site_id"]: r["at"] for r in await db.fetch_all(
         f"SELECT site_id, MAX(counted_at) AS at FROM consumable_counts WHERE site_id IN ({ph}) "
-        "AND status IN ('pending','approved') GROUP BY site_id", ids)}
+        "AND status IN ('spv_pending','pending','approved') GROUP BY site_id", ids)}
     with_items = {r["site_id"] for r in await db.fetch_all(
         f"SELECT DISTINCT site_id FROM consumables WHERE site_id IN ({ph}) AND active = 1", ids)}
     for sid in with_items:
