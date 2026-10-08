@@ -14,6 +14,9 @@ Two generations live here:
   approval changes the stock through the ledger (so Hiryu hears it at once);
   Ops HQ reviews every approved difference afterwards, without holding it.
   A bin being counted is locked against picking (``is_bin_locked``).
+  Mode manual (V32, routers/manual_mode.py): the count starts by a tap on the
+  bin (``manual``), is typed blind and always waits for the SPV; the start and
+  the finish are marked manual in the audit log.
 """
 import json
 from datetime import date, datetime, timedelta, timezone
@@ -50,7 +53,7 @@ async def create_plan(
 async def _plan_baskets(plan_id: int) -> list[dict]:
     plan = await db.fetch_one("SELECT * FROM opname_plans WHERE id = %s", (plan_id,))
     if not plan:
-        raise HTTPException(404, "Plan not found")
+        raise HTTPException(404, "Rencana tidak ditemukan. / Plan not found.")
     scope = json.loads(plan["scope_json"] or "{}")
 
     sql = (
@@ -76,15 +79,15 @@ async def _plan_baskets(plan_id: int) -> list[dict]:
     if scope.get("expiry_tier"):
         sql += " AND s.expiry_tier = %s"
         params.append(scope["expiry_tier"])
-    # Walking order, same as the pick path.
-    sql += " ORDER BY r.code, lv.level_no, l.position_no"
+    # Walking order, same as the pick path; in a stack the bottom bin first.
+    sql += " ORDER BY r.code, lv.level_no, l.position_no, l.bin_row"
     return await db.fetch_all(sql, params)
 
 
 async def _plan_summary(plan_id: int) -> dict:
     plan = await db.fetch_one("SELECT * FROM opname_plans WHERE id = %s", (plan_id,))
     if not plan:
-        raise HTTPException(404, "Plan not found")
+        raise HTTPException(404, "Rencana tidak ditemukan. / Plan not found.")
     baskets = await _plan_baskets(plan_id)
     counted = sum(1 for b in baskets if b["session_status"] == "finished")
     variances = sum(1 for b in baskets if (b["variance"] or 0) != 0
@@ -152,7 +155,7 @@ async def claim_basket(
     plan = await db.fetch_one("SELECT * FROM opname_plans WHERE id = %s",
                              (body.plan_id,))
     if not plan:
-        raise HTTPException(404, "Plan not found")
+        raise HTTPException(404, "Rencana tidak ditemukan. / Plan not found.")
     await auth.assert_site_access(user, plan["site_id"])
 
     basket = await db.fetch_one(
@@ -164,7 +167,7 @@ async def claim_basket(
         (body.basket_id,),
     )
     if not basket:
-        raise HTTPException(404, "Basket not found")
+        raise HTTPException(404, "Keranjang tidak ditemukan. / Basket not found.")
 
     existing = await db.fetch_one(
         "SELECT * FROM opname_sessions WHERE plan_id = %s AND basket_id = %s",
@@ -172,10 +175,11 @@ async def claim_basket(
     )
     if existing:
         if existing["status"] == "finished":
-            raise HTTPException(409, "This basket has already been counted.")
+            raise HTTPException(409, "Keranjang ini sudah dihitung. / This basket has already been counted.")
         if existing["claimed_by"] != user.email:
             raise HTTPException(
-                409, f"{existing['claimed_by']} is counting this basket."
+                409, f"{existing['claimed_by']} sedang menghitung keranjang ini. / "
+                    f"{existing['claimed_by']} is counting this basket."
             )
         session_id = existing["id"]
         counted_so_far = int(existing["qty_counted"] or 0)
@@ -198,7 +202,7 @@ async def claim_basket(
                      basket["sku_id"], user.email, expected),
                 )
             except Exception:
-                raise HTTPException(409, "Someone else just claimed this basket.")
+                raise HTTPException(409, "Orang lain baru saja mengambil keranjang ini. / Someone else just claimed this basket.")
 
     # No expected plate count either: it is the expected quantity by another
     # name, and a blind count is only blind if nothing on screen knows it.
@@ -216,7 +220,7 @@ async def _session_at_site(session_id: int, user: auth.User) -> dict:
     session = await db.fetch_one("SELECT * FROM opname_sessions WHERE id = %s",
                                  (session_id,))
     if not session:
-        raise HTTPException(404, "Session not found")
+        raise HTTPException(404, "Sesi hitung tidak ditemukan. / Count session not found.")
     await auth.assert_site_access(user, session["site_id"])
     return session
 
@@ -230,9 +234,10 @@ async def release_basket(session_id: int, user: auth.User = Depends(auth.current
     """
     session = await _session_at_site(session_id, user)
     if session["claimed_by"] != user.email and not user.at_least("supervisor"):
-        raise HTTPException(409, f"{session['claimed_by']} is counting this basket.")
+        raise HTTPException(409, f"{session['claimed_by']} sedang menghitung keranjang ini. / "
+                                 f"{session['claimed_by']} is counting this basket.")
     if session["status"] == "finished":
-        raise HTTPException(409, "This basket is already counted.")
+        raise HTTPException(409, "Keranjang ini sudah dihitung. / This basket is already counted.")
     async with db.tx() as cur:
         await db.run(cur, "DELETE FROM opname_foreign WHERE session_id = %s", (session_id,))
         await db.run(cur, "DELETE FROM opname_sessions WHERE id = %s", (session_id,))
@@ -270,7 +275,7 @@ async def count_scan(
 ):
     """Scan a unit into the count.
 
-    A foreign SKU is recorded, not rejected — finding the wrong product in a
+    A foreign SKU is recorded, not rejected: finding the wrong product in a
     basket is a real and common outcome, and a system that refuses to hear it
     just loses the information (M6.2.5).
     """
@@ -282,17 +287,18 @@ async def count_scan(
         "SELECT * FROM opname_sessions WHERE id = %s", (session_id,)
     )
     if not session:
-        raise HTTPException(404, "Session not found")
+        raise HTTPException(404, "Sesi hitung tidak ditemukan. / Count session not found.")
     if session["status"] == "finished":
-        raise HTTPException(409, "This count is already finished.")
+        raise HTTPException(409, "Hitungan ini sudah selesai. / This count is already finished.")
     if session["claimed_by"] != user.email:
-        raise HTTPException(409, f"{session['claimed_by']} is counting this basket.")
+        raise HTTPException(409, f"{session['claimed_by']} sedang menghitung keranjang ini. / "
+                                 f"{session['claimed_by']} is counting this basket.")
 
     code = body.code.strip()
     scanned = await common.sku_by_barcode(code)
     plate = None
     outcome = "counted"
-    message = "OK."
+    message = "Pindaian dicatat. / Scan recorded."
 
     if not scanned:
         plate = await common.plate_by_code(code)
@@ -308,7 +314,7 @@ async def count_scan(
             )
             result = {"accepted": True, "outcome": "unknown",
                       "qty_counted": session["qty_counted"],
-                      "message": "Barcode tidak dikenal — dicatat."}
+                      "message": "Barcode tidak dikenal, dicatat. / Unknown barcode, noted."}
         elif scanned["id"] != session["sku_id"]:
             await db.run(
                 cur,
@@ -318,7 +324,8 @@ async def count_scan(
             )
             result = {"accepted": True, "outcome": "foreign_item",
                       "qty_counted": session["qty_counted"],
-                      "message": f"Barang lain: {scanned['name_display']} — dicatat."}
+                      "message": f"Barang lain: {scanned['name_display']}, dicatat. / "
+                                 f"Another product: {scanned['name_display']}, noted."}
         else:
             counted = session["qty_counted"] + 1
             out_of_place = bool(
@@ -339,8 +346,9 @@ async def count_scan(
                 "accepted": True,
                 "outcome": "out_of_place" if out_of_place else "counted",
                 "qty_counted": counted,
-                "message": ("Tercatat di keranjang lain — dihitung, tapi dicatat."
-                            if out_of_place else "OK."),
+                "message": ("Tercatat di keranjang lain: dihitung, tapi dicatat. / "
+                            "Listed in another basket: counted, but noted."
+                            if out_of_place else "Pindaian cocok. / Scan matches."),
             }
         await ledger.remember(cur, body.idempotency_key, "opname_scan", result)
     return result
@@ -353,7 +361,7 @@ async def finish_session(
     body: models.OpnameFinishIn,
     user: auth.User = Depends(auth.current_user),
 ):
-    """Reveal expected vs counted — but a mismatch is recounted first.
+    """Reveal expected vs counted, but a mismatch is recounted first.
 
     PRD 11.2.5: on a first mismatch the counter is told only that the count does
     not match; the tally resets and they count the basket again. The system
@@ -363,12 +371,13 @@ async def finish_session(
     session = await db.fetch_one("SELECT * FROM opname_sessions WHERE id = %s",
                                  (session_id,))
     if not session:
-        raise HTTPException(404, "Session not found")
+        raise HTTPException(404, "Sesi hitung tidak ditemukan. / Count session not found.")
     if session["claimed_by"] != user.email and not user.at_least("supervisor"):
-        raise HTTPException(409, f"{session['claimed_by']} is counting this basket.")
+        raise HTTPException(409, f"{session['claimed_by']} sedang menghitung keranjang ini. / "
+                                 f"{session['claimed_by']} is counting this basket.")
 
     if session["status"] == "finished":
-        raise HTTPException(409, "This count is already finished.")
+        raise HTTPException(409, "Hitungan ini sudah selesai. / This count is already finished.")
     counted = body.manual_qty if body.manual_qty is not None else session["qty_counted"]
     method = "manual" if body.manual_qty is not None else "scan"
     expected = session["qty_expected"] or 0
@@ -429,7 +438,7 @@ async def variance_report(plan_id: int, user: auth.User = Depends(auth.current_u
     than reading all 118 rows (M6.3.2)."""
     plan = await db.fetch_one("SELECT * FROM opname_plans WHERE id = %s", (plan_id,))
     if not plan:
-        raise HTTPException(404, "Plan not found")
+        raise HTTPException(404, "Rencana tidak ditemukan. / Plan not found.")
     await auth.assert_site_access(user, plan["site_id"])
 
     rows = await db.fetch_all(
@@ -495,7 +504,7 @@ async def approve_adjustments(
                                after={"variance": s["variance"],
                                       "reason": body.reason_code})
             applied += 1
-    return {"ok": True, "message": f"{applied} adjustment(s) applied."}
+    return {"ok": True, "message": f"{applied} penyesuaian diterapkan. / {applied} adjustment(s) applied."}
 
 
 # =============================================================================
@@ -507,7 +516,8 @@ _TABLES: dict[str, bool] = {}
 
 REASONS = {
     "cycle": ("Siklus wajib", "Mandatory cycle"),
-    "missing_item": ("Barang tidak ada kemarin", "Missing item yesterday"),
+    "missing_item": ("Barang tidak ada saat ambil", "Item missing at picking"),
+    "damaged_pick": ("Rusak saat ambil", "Damaged at picking"),
     "spv_added": ("Ditambah SPV", "Added by the SPV"),
     "monthly_full": ("Hitung penuh bulanan", "Monthly full count"),
 }
@@ -768,7 +778,9 @@ async def ensure_plan(site_id: int, day: date | None = None) -> int:
             continue
         want[f["location_id"]] = {
             "sku_id": f["sku_id"] or (by_loc.get(f["location_id"]) or {}).get("sku_id"),
-            "reason": "missing_item", "note": await _flag_note(f),
+            "reason": f.get("reason") if f.get("reason") in ("missing_item", "damaged_pick")
+            else "missing_item",
+            "note": await _flag_note(f),
             "ref_type": "bin_count_flag" if f.get("id") else f.get("ref_type"),
             "ref_id": f.get("id") or f.get("ref_id")}
 
@@ -823,6 +835,92 @@ async def ensure_plans_all() -> None:
             logging.getLogger("wms.counts").exception("count plan failed for site %s", s["id"])
 
 
+async def add_missing_check(site_id: int, location_id: int, sku_id: int | None,
+                            ref_id: int | None) -> int | None:
+    """A missing item at picking: the bin is counted the same day, not only on
+    tomorrow's plan. Called by outbound after a shortfall (ref_id: the shortfall).
+
+    Puts the bin on today's plan as *missing_item* with no counter, so the SPV's
+    *Tetapkan petugas hitung* reminder fires. Idempotent: a bin waiting or being
+    counted today keeps its task. A result waiting for the SPV was counted
+    against the stock before this write-off, so approving it would adjust the
+    bin twice: that task goes back to recount, unassigned, for a fresh count.
+
+    A bin counted and closed earlier today keeps its closed task: reopening it
+    would wipe the approved difference and Ops HQ's review, and one bin has one
+    task per day. Its open bin_count_flags row (written with the shortfall,
+    after the close) puts it on the next plan instead. Returns the task id
+    either way; the caller reads the status to know if it is counted today.
+    When today's count closes, _close_flags closes the open flag of this bin
+    too, so tomorrow's plan does not count it again. Never raises: a bad input
+    is logged and gives None."""
+    import logging
+    log = logging.getLogger("wms.counts")
+    try:
+        site_id, location_id = int(site_id), int(location_id)
+        loc = await db.fetch_one("SELECT id FROM locations WHERE id = %s AND site_id = %s",
+                                 (location_id, site_id))
+        if not loc:
+            log.warning("missing check: location %s is not at site %s", location_id, site_id)
+            return None
+        await ensure_plan(site_id)
+        day = wib_today()
+        note = None
+        if ref_id:
+            try:
+                note = await _flag_note({"ref_type": "pick_shortfall", "ref_id": ref_id,
+                                         "created_at": utcnow()})
+            except Exception:  # the note is a nicety
+                note = None
+        async with db.tx() as cur:
+            t = await db.one(cur, "SELECT * FROM count_tasks WHERE site_id = %s "
+                                  "AND plan_date = %s AND location_id = %s FOR UPDATE",
+                             (site_id, day, location_id))
+            if t and t["status"] in ("pending", "recount", "counting"):
+                # A recount takes the expected number again when it finishes,
+                # so it already sees this write-off.
+                return t["id"]
+            if t and t["status"] == "awaiting_spv":
+                # Counted before the write-off: a fresh count by someone else.
+                await db.run(cur, "UPDATE count_tasks SET status = 'recount', assigned_to = NULL, "
+                                  "qty_final = NULL, qty_expected = NULL, "
+                                  "reason_note = LEFT(CONCAT_WS(' · ', reason_note, %s), 255) "
+                                  "WHERE id = %s",
+                             ("hitung lagi, ada barang tidak ada sesudah hitungan", t["id"]))
+                await ledger.audit(cur, actor_email="wms", entity="count_task", entity_id=t["id"],
+                                   action="missing_check_recount",
+                                   before={"status": t["status"], "qty_final": t["qty_final"],
+                                           "qty_expected": t["qty_expected"],
+                                           "assigned_to": t["assigned_to"]},
+                                   after={"status": "recount", "ref_type": "pick_shortfall",
+                                          "ref_id": ref_id})
+                return t["id"]
+            if t:
+                # Closed earlier today: left as it is (see above). The open
+                # flag takes the bin to the next plan.
+                await ledger.audit(cur, actor_email="wms", entity="count_task", entity_id=t["id"],
+                                   action="missing_check_next_plan",
+                                   after={"location_id": location_id, "sku_id": sku_id,
+                                          "ref_type": "pick_shortfall", "ref_id": ref_id,
+                                          "outcome": t["outcome"], "hq_review": t["hq_review"]})
+                return t["id"]
+            else:
+                task_id = await db.run(
+                    cur, "INSERT INTO count_tasks (site_id, plan_date, location_id, sku_id, reason, "
+                         "reason_note, reason_ref_type, reason_ref_id, assigned_to, status) "
+                         "VALUES (%s,%s,%s,%s,'missing_item',%s,'pick_shortfall',%s,NULL,'pending')",
+                    (site_id, day, location_id, sku_id, note, ref_id))
+            await ledger.audit(cur, actor_email="wms", entity="count_task", entity_id=task_id,
+                               action="missing_check_added",
+                               after={"location_id": location_id, "sku_id": sku_id,
+                                      "ref_id": ref_id, "reopened": bool(t)})
+        return task_id
+    except Exception:
+        log.exception("missing check failed: site %s, location %s, sku %s, ref %s",
+                      site_id, location_id, sku_id, ref_id)
+        return None
+
+
 async def _close_flags(cur, task: dict, actor: str) -> None:
     if not await table_exists("bin_count_flags"):
         return
@@ -836,10 +934,17 @@ async def _close_flags(cur, task: dict, actor: str) -> None:
 class CountStartIn(BaseModel):
     site_id: int
     bin_code: str = Field(..., description="The bin label as scanned or typed (A-1-02 or MA5-A-1-02)")
+    manual: bool = Field(default=False, description="Mode manual: the bin tapped in Bin saya, no label "
+                                                    "scan. Only while Mode manual is on; the count is "
+                                                    "typed (blind) and waits for the SPV.")
 
 
 class CountScanIn(BaseModel):
     code: str
+    idempotency_key: str | None = None
+
+
+class CountUndoIn(BaseModel):
     idempotency_key: str | None = None
 
 
@@ -933,7 +1038,8 @@ def _task_out(t: dict, site_code: str, names: dict, *, show_expected: bool,
                 out["variance"] = fin[-1]["qty_counted"] - exp
     if attempts is not None:
         out["attempts"] = [{
-            "attempt_no": a["attempt_no"], "counted_by": a["counted_by"],
+            "attempt_id": a["id"], "attempt_no": a["attempt_no"], "counted_by": a["counted_by"],
+            "started_at": iso(a.get("started_at")),
             "counted_name": names.get(a["counted_by"]), "method": a["method"],
             "status": a["status"],
             "qty_counted": a["qty_counted"] if (show_expected or a["status"] != "counting") else None,
@@ -984,7 +1090,8 @@ async def count_plan(site_id: int, day: str | None = None,
         "SELECT location_id, MAX(plan_date) AS d FROM count_tasks WHERE site_id = %s "
         "AND status = 'closed' AND plan_date < %s GROUP BY location_id", (site_id, d))}
     attempts = await _attempts_for([r["id"] for r in rows])
-    names = await names_for([r["assigned_to"] for r in rows] + [r["approved_by"] for r in rows])
+    names = await names_for([r["assigned_to"] for r in rows] + [r["approved_by"] for r in rows] +
+                            [a["counted_by"] for lst in attempts.values() for a in lst])
     show = user.at_least("supervisor")
     tasks = [_task_out(r, site["code"], names, show_expected=show,
                        attempts=attempts.get(r["id"], []), last=last.get(r["location_id"]))
@@ -1124,6 +1231,12 @@ async def add_bin(body: CountAddIn, user: auth.User = Depends(auth.require("supe
         if existing and existing["status"] != "closed":
             raise HTTPException(409, "Bin ini sudah ada di rencana hari ini. / This bin is already in today's plan.")
         if existing:
+            rv = await db.one(cur, "SELECT hq_review FROM count_tasks WHERE id = %s", (existing["id"],))
+            if rv and rv["hq_review"] == "pending":
+                raise HTTPException(409, "Bin ini sudah dihitung hari ini dan masih menunggu tinjauan Ops HQ. "
+                                         "Tambahkan besok. / This bin was counted today and still waits for "
+                                         "Ops HQ's review. Add it tomorrow.")
+        if existing:
             # Counted already today: count it again.
             await db.run(cur, "UPDATE count_tasks SET status = 'pending', outcome = NULL, reason = "
                               "'spv_added', reason_note = %s, added_by = %s, assigned_to = %s, "
@@ -1216,8 +1329,15 @@ async def _attempt_view(a: dict, t: dict, site: dict, user: auth.User) -> dict:
 @router.post("/counts/start", status_code=201)
 async def start_count(body: CountStartIn, user: auth.User = Depends(auth.current_user)):
     """Scan the bin label: the count starts and the bin is locked for picking.
-    The expected number is never returned."""
+    The expected number is never returned. Mode manual (manual=true): the bin is
+    tapped instead, the attempt starts as a count without scanning (method
+    'blind') and the start is recorded as manual."""
     site = await auth.assert_site_access(user, body.site_id)
+    if body.manual:
+        from routers import manual_mode
+        if not await manual_mode.active(body.site_id):
+            raise HTTPException(409, "Mode manual tidak aktif di dark store ini. Pindai label bin. / "
+                                     "Manual mode is not on at this dark store. Scan the bin label.")
     await ensure_plan(body.site_id)
     loc = await _resolve_bin(site, body.bin_code)
     async with db.tx() as cur:
@@ -1250,10 +1370,15 @@ async def start_count(body: CountStartIn, user: auth.User = Depends(auth.current
             no = (max([a["attempt_no"] for a in attempts]) + 1) if attempts else 1
             attempt_id = await db.run(
                 cur, "INSERT INTO count_attempts (task_id, site_id, location_id, attempt_no, counted_by, "
-                     "method, status) VALUES (%s,%s,%s,%s,%s,'scan','counting')",
-                (t["id"], t["site_id"], t["location_id"], no, user.email))
+                     "method, status) VALUES (%s,%s,%s,%s,%s,%s,'counting')",
+                (t["id"], t["site_id"], t["location_id"], no, user.email,
+                 "blind" if body.manual else "scan"))
             await db.run(cur, "UPDATE count_tasks SET status = 'counting', assigned_to = %s "
                               "WHERE id = %s", (user.email, t["id"]))
+            if body.manual:
+                await ledger.audit(cur, actor_email=user.email, entity="count_task", entity_id=t["id"],
+                                   action="count_started_manual",
+                                   after={"attempt": no, "bin": loc["code"], "manual": True})
     a = await db.fetch_one("SELECT * FROM count_attempts WHERE id = %s", (attempt_id,))
     t = await db.fetch_one(_TASK_SQL + "WHERE t.id = %s", (a["task_id"],))
     return await _attempt_view(a, t, site, user)
@@ -1312,8 +1437,14 @@ async def count_unit(attempt_id: int, body: CountScanIn, user: auth.User = Depen
 
 
 @router.post("/counts/attempts/{attempt_id}/undo")
-async def undo_last_scan(attempt_id: int, user: auth.User = Depends(auth.current_user)):
-    """Batalkan pindaian terakhir."""
+async def undo_last_scan(attempt_id: int, body: CountUndoIn | None = None,
+                         user: auth.User = Depends(auth.current_user)):
+    """Batalkan pindaian terakhir. Sent again after a lost connection, the same key
+    replays the first answer instead of taking back a second scan."""
+    key = body.idempotency_key if body else None
+    replayed = await ledger.replay(key, "count_undo")
+    if replayed:
+        return replayed
     a = await _attempt(attempt_id, user)
     if a["status"] != "counting" or a["counted_by"] != user.email:
         raise HTTPException(409, "Tidak ada hitungan berjalan. / No count in progress.")
@@ -1327,8 +1458,10 @@ async def undo_last_scan(attempt_id: int, user: auth.User = Depends(auth.current
             await db.run(cur, "UPDATE count_attempts SET qty_counted = GREATEST(0, qty_counted - 1) "
                               "WHERE id = %s", (attempt_id,))
         row = await db.one(cur, "SELECT qty_counted FROM count_attempts WHERE id = %s", (attempt_id,))
-    return {"ok": True, "qty_counted": row["qty_counted"],
-            "message": "Pindaian terakhir dibatalkan. / Last scan undone."}
+        result = {"ok": True, "qty_counted": row["qty_counted"],
+                  "message": "Pindaian terakhir dibatalkan. / Last scan undone."}
+        await ledger.remember(cur, key, "count_undo", result)
+    return result
 
 
 @router.post("/counts/attempts/{attempt_id}/abandon")
@@ -1344,6 +1477,10 @@ async def abandon_count(attempt_id: int, user: auth.User = Depends(auth.current_
                           "WHERE id = %s", (attempt_id,))
         await db.run(cur, "UPDATE count_tasks SET status = IF(%s > 1, 'recount', 'pending') "
                           "WHERE id = %s AND status = 'counting'", (a["attempt_no"], a["task_id"]))
+        if a["counted_by"] != user.email:
+            await ledger.audit(cur, actor_email=user.email, entity="count_task", entity_id=a["task_id"],
+                               action="spv_released",
+                               after={"attempt": a["attempt_no"], "counted_by": a["counted_by"]})
     return {"ok": True, "message": "Bin dilepas. / Bin released."}
 
 
@@ -1356,6 +1493,8 @@ async def finish_count(attempt_id: int, body: CountFinishIn,
     a = await _attempt(attempt_id, user)
     if a["counted_by"] != user.email:
         raise HTTPException(409, "Ini hitungan orang lain. / This is someone else's count.")
+    from routers import manual_mode
+    manual_on = await manual_mode.active(a["site_id"])
     async with db.tx() as cur:
         a = await db.one(cur, "SELECT * FROM count_attempts WHERE id = %s FOR UPDATE", (attempt_id,))
         if a["status"] != "counting":
@@ -1363,6 +1502,9 @@ async def finish_count(attempt_id: int, body: CountFinishIn,
         t = await db.one(cur, "SELECT * FROM count_tasks WHERE id = %s FOR UPDATE", (a["task_id"],))
         method = "blind" if body.blind_qty is not None else "scan"
         counted = body.blind_qty if body.blind_qty is not None else a["qty_counted"]
+        # Mode manual: started by a tap (the attempt began as 'blind'), or typed while it is on.
+        started_by_tap = a["method"] == "blind"
+        manual = started_by_tap or (method == "blind" and manual_on)
         exp_row = await db.one(cur, "SELECT COALESCE(SUM(qty_on_hand),0) AS q FROM inventory_balances "
                                     "WHERE site_id = %s AND location_id = %s AND sku_id = %s",
                                (t["site_id"], t["location_id"], t["sku_id"] or 0))
@@ -1375,7 +1517,8 @@ async def finish_count(attempt_id: int, body: CountFinishIn,
         sets = {"qty_expected": expected}
         if first:
             sets["first_match"] = 1 if diff == 0 else 0
-        if diff == 0 and method == "scan":
+        # A count started by a tap (Mode manual) always waits for the SPV.
+        if diff == 0 and method == "scan" and not started_by_tap:
             sets.update(status="closed", outcome="auto_closed", qty_final=counted, variance=0,
                         hq_review="not_needed")
             msg = "Cocok. Selesai. / Matches. Done."
@@ -1398,7 +1541,8 @@ async def finish_count(attempt_id: int, body: CountFinishIn,
         await ledger.audit(cur, actor_email=user.email, entity="count_task", entity_id=t["id"],
                            action="count_finished",
                            after={"attempt": a["attempt_no"], "method": method, "counted": counted,
-                                  "state": state})
+                                  "state": state, "manual": manual,
+                                  "started_by_tap": started_by_tap})
     return {"ok": True, "state": state, "method": method, "qty_counted": counted, "message": msg}
 
 

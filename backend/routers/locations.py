@@ -1,4 +1,4 @@
-"""M2 — Sites, racks, baskets and slot assignment."""
+"""M2: sites, racks, baskets and slot assignment."""
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 import auth
@@ -64,7 +64,8 @@ async def create_site(
                  1 if body.is_training else 0),
             )
         except Exception:
-            raise HTTPException(409, f"Site code {body.code} already exists")
+            raise HTTPException(409, f"Kode dark store {body.code} sudah ada. / "
+                                     f"Dark store code {body.code} already exists.")
         await ledger.audit(cur, actor_email=user.email, entity="site",
                            entity_id=sid, action="create", after=body.model_dump())
     return dict(body.model_dump(), id=sid, active=True)
@@ -79,15 +80,17 @@ async def generate_racks(
     """Build the standard layout in one action, so opening station 8 takes a
     minute rather than an afternoon (M2.1.5)."""
     site = await auth.assert_site_access(user, site_id)
-    if body.bin_rows not in (1, 2):
-        raise HTTPException(422, "1 atau 2 bin per posisi.")
+    if not 1 <= body.bin_rows <= racks.MAX_STACK:
+        raise HTTPException(422, f"1 sampai {racks.MAX_STACK} bin bertumpuk per posisi. / "
+                                 f"1 to {racks.MAX_STACK} stacked bins per position.")
     existing = await db.fetch_one(
         "SELECT COUNT(*) AS n FROM racks WHERE site_id = %s", (site_id,)
     )
     if existing["n"]:
         raise HTTPException(
-            409, f"{site['code']} already has {existing['n']} racks. "
-                 "Remove them first, or add racks individually."
+            409, f"{site['code']} sudah punya {existing['n']} rak. Hapus dulu, atau tambah rak "
+                 f"satu per satu. / {site['code']} already has {existing['n']} racks. Remove them "
+                 "first, or add racks one by one."
         )
 
     made = {"racks": 0, "locations": 0, "baskets": 0}
@@ -110,8 +113,9 @@ async def generate_racks(
                 )
                 positions = [0] if is_open else range(1, body.positions_per_level + 1)
                 rows = 1 if is_open else body.bin_rows
-                if rows == 2:
-                    await db.run(cur, "UPDATE levels SET bin_rows = 2 WHERE id = %s", (level_id,))
+                if rows > 1:
+                    await db.run(cur, "UPDATE levels SET bin_rows = %s WHERE id = %s",
+                                 (rows, level_id))
                 for p in positions:
                     for row in range(1, rows + 1):
                         await racks.add_bin_row(
@@ -123,7 +127,8 @@ async def generate_racks(
         await ledger.audit(cur, actor_email=user.email, entity="site",
                            entity_id=site_id, action="generate_racks", after=made)
     return {"ok": True,
-            "message": f"{made['racks']} racks, {made['baskets']} baskets created."}
+            "message": f"{made['racks']} rak, {made['baskets']} keranjang dibuat. / "
+                       f"{made['racks']} racks, {made['baskets']} baskets created."}
 
 
 @router.get("/sites/{site_id}/rack-map", response_model=models.RackMap)
@@ -133,7 +138,7 @@ async def rack_map(site_id: int, user: auth.User = Depends(auth.current_user)):
     rows = await db.fetch_all(
         "SELECT r.id AS rack_id, r.code AS rack_code, r.sort_order, "
         "       lv.id AS level_id, lv.level_no, lv.is_open_shelf, "
-        "       l.id AS location_id, l.code AS location_code, l.position_no, "
+        "       l.id AS location_id, l.code AS location_code, l.position_no, l.bin_row, "
         "       bk.id AS basket_id, bk.basket_size, "
         "       sa.sku_id, s.name_display AS sku_name, s.expiry_tier, "
         "       COALESCE(ib.qty_on_hand, 0) AS qty_on_hand "
@@ -146,7 +151,8 @@ async def rack_map(site_id: int, user: auth.User = Depends(auth.current_user)):
         "LEFT JOIN inventory_balances ib "
         "       ON ib.location_id = l.id AND ib.sku_id = sa.sku_id "
         "WHERE r.site_id = %s "
-        "ORDER BY r.sort_order, r.code, lv.level_no, l.position_no",
+        # Walking order: left to right, and in a stack the bottom bin first.
+        "ORDER BY r.sort_order, r.code, lv.level_no, l.position_no, l.bin_row",
         (site_id,),
     )
 
@@ -172,7 +178,8 @@ async def rack_map(site_id: int, user: auth.User = Depends(auth.current_user)):
             free += 1
         level["positions"].append({
             "location_id": r["location_id"], "code": r["location_code"],
-            "position_no": r["position_no"], "basket_id": r["basket_id"],
+            "position_no": r["position_no"], "bin_row": int(r["bin_row"] or 1),
+            "basket_id": r["basket_id"],
             "basket_size": r["basket_size"], "sku_id": r["sku_id"],
             "sku_name": r["sku_name"], "expiry_tier": r["expiry_tier"],
             "qty_on_hand": int(r["qty_on_hand"] or 0), "state": state,
@@ -205,7 +212,7 @@ async def suggest_slot(
     await auth.assert_site_access(user, site_id)
     sku = await common.sku_by_id(sku_id)
     if not sku:
-        raise HTTPException(404, "SKU not found")
+        raise HTTPException(404, "SKU tidak ditemukan. / SKU not found.")
 
     size, reason = common.recommend_basket(sku.get("unit_cube_cm3"))
     free = await db.fetch_one(
@@ -232,11 +239,11 @@ async def suggest_slot(
 async def assign_slot(
     body: models.SlotIn, user: auth.User = Depends(auth.current_user)
 ):
-    """Bind a SKU to a basket. One SKU per basket, one slot per SKU per site —
+    """Bind a SKU to a basket. One SKU per basket, one slot per SKU per site:
     both enforced by unique constraint, not only by this check (M2.2.2).
 
     Racking a SKU is an SPV decision. Staff may do it only from the inbound flow,
-    for a known SKU that arrived at a hub where it has no rack yet — the audit
+    for a known SKU that arrived at a hub where it has no rack yet: the audit
     row marks it, so the SPV can move it later.
     """
     if not user.at_least("supervisor") and not body.created_during_inbound:
@@ -245,13 +252,14 @@ async def assign_slot(
     await auth.assert_site_access(user, body.site_id)
     sku = await common.sku_by_id(body.sku_id)
     if not sku:
-        raise HTTPException(404, "SKU not found")
+        raise HTTPException(404, "SKU tidak ditemukan. / SKU not found.")
 
     basket_id = body.basket_id
     if basket_id is None:
         suggestion = await suggest_slot(body.site_id, body.sku_id, user)
         if not suggestion["location_id"]:
-            raise HTTPException(409, "No free basket at this site.")
+            raise HTTPException(409, "Tidak ada keranjang kosong di dark store ini. / "
+                                     "No free basket at this dark store.")
         row = await db.fetch_one(
             "SELECT id FROM baskets WHERE location_id = %s", (suggestion["location_id"],)
         )
@@ -264,10 +272,11 @@ async def assign_slot(
     )
     if occupied:
         raise HTTPException(
-            409, f"That basket already holds {occupied['name_display']}."
+            409, f"Keranjang itu sudah berisi {occupied['name_display']}. / "
+                 f"That basket already holds {occupied['name_display']}."
         )
     role = body.slot_role if body.slot_role in ("primary", "overflow") else "primary"
-    # A SKU may hold one pick face AND one overflow — that is the whole point of
+    # A SKU may hold one pick face AND one overflow: that is the whole point of
     # the role. What it may not do is hold two of either (PRD 7.5).
     same_role = await db.fetch_one(
         "SELECT l.code FROM slot_assignments sa "
@@ -279,8 +288,9 @@ async def assign_slot(
     if same_role:
         raise HTTPException(
             409,
-            f"{sku['name_display']} already has a {role} basket at "
-            f"{same_role['code']}. Use relocate to move it.",
+            f"{sku['name_display']} sudah punya keranjang {role} di {same_role['code']}. "
+            f"Pakai pindah untuk memindahkannya. / {sku['name_display']} already has a {role} "
+            f"basket at {same_role['code']}. Use relocate to move it.",
         )
     if role == "overflow":
         primary = await db.fetch_one(
@@ -291,8 +301,9 @@ async def assign_slot(
         if not primary:
             raise HTTPException(
                 409,
-                "Give this product a pick face before an overflow — overflow only "
-                "ever feeds a primary rack.",
+                "Beri produk ini tempat ambil utama dulu sebelum tempat cadangan: cadangan "
+                "hanya mengisi rak utama. / Give this product a pick face before an overflow: "
+                "an overflow only ever feeds a primary rack.",
             )
 
     # A new pick face starts from the thresholds HQ set when registering the SKU;
@@ -338,7 +349,7 @@ async def relocate_slot(
         (slot_id,),
     )
     if not slot:
-        raise HTTPException(404, "Slot not found")
+        raise HTTPException(404, "Tempat tidak ditemukan. / Slot not found.")
     await auth.assert_site_access(user, slot["site_id"])
 
     target = await db.fetch_one(
@@ -346,10 +357,10 @@ async def relocate_slot(
         "JOIN locations l ON l.id = bk.location_id WHERE bk.id = %s", (basket_id,)
     )
     if not target:
-        raise HTTPException(404, "Target basket not found")
+        raise HTTPException(404, "Keranjang tujuan tidak ditemukan. / Target basket not found.")
     if await db.fetch_one("SELECT 1 AS x FROM slot_assignments WHERE basket_id = %s",
                           (basket_id,)):
-        raise HTTPException(409, "Target basket is already occupied.")
+        raise HTTPException(409, "Keranjang tujuan sudah terisi. / Target basket is already occupied.")
 
     qty = await common.qty_at(slot["site_id"], slot["sku_id"], slot["location_id"])
     async with db.tx() as cur:
@@ -400,17 +411,19 @@ async def add_rack(
     rack without tearing down the layout it already has.
     """
     site = await auth.assert_site_access(user, site_id)
-    if body.bin_rows not in (1, 2):
-        raise HTTPException(422, "1 atau 2 bin per posisi.")
+    if not 1 <= body.bin_rows <= racks.MAX_STACK:
+        raise HTTPException(422, f"1 sampai {racks.MAX_STACK} bin bertumpuk per posisi. / "
+                                 f"1 to {racks.MAX_STACK} stacked bins per position.")
     code = body.code.strip().upper()
     if not code:
-        raise HTTPException(422, "A rack needs a code.")
+        raise HTTPException(422, "Rak perlu kode. / A rack needs a code.")
 
     clash = await db.fetch_one(
         "SELECT id FROM racks WHERE site_id = %s AND code = %s", (site_id, code)
     )
     if clash:
-        raise HTTPException(409, f"{site['code']} already has a rack {code}.")
+        raise HTTPException(409, f"{site['code']} sudah punya rak {code}. / "
+                                 f"{site['code']} already has a rack {code}.")
 
     order_row = await db.fetch_one(
         "SELECT COALESCE(MAX(sort_order), 0) AS n FROM racks WHERE site_id = %s",
@@ -443,7 +456,8 @@ async def add_rack(
                            entity_id=site_id, action="add_rack",
                            after={"code": code, **made})
     return {"ok": True,
-            "message": f"Rack {code} added with {made['baskets']} baskets."}
+            "message": f"Rak {code} ditambahkan dengan {made['baskets']} keranjang. / "
+                       f"Rack {code} added with {made['baskets']} baskets."}
 
 
 # --- special bins (canvas 3d): <HUB>-IN-NN, <HUB>-QR-NN, <HUB>-OUT-NN ---------------
@@ -599,8 +613,9 @@ async def remove_last_special_bin(site_id: int, kind: str, actor_email: str) -> 
                             else "Tidak ada bin untuk dikurangi. / Nothing to take away.")
     why = await special_bin_busy(site_id, kind, last["code"], last["location_id"])
     if why:
-        raise HTTPException(409, "Mengurangi hanya bisa bila yang terakhir kosong. "
-                                 "/ Only an empty last bin can be taken away. " + why)
+        w_id, _, w_en = why.partition(" / ")
+        raise HTTPException(409, "Mengurangi hanya bisa bila yang terakhir kosong. " + w_id +
+                                 " / Only an empty last bin can be taken away. " + (w_en or w_id))
     async with db.tx() as cur:
         await db.run(cur, "UPDATE special_bins SET active = 0 WHERE id = %s", (last["id"],))
         await _sync_special_count(cur, site_id, kind)

@@ -15,6 +15,7 @@ import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -35,6 +36,7 @@ from routers import (
     inbound,
     inventory,
     locations,
+    manual_mode,
     master,
     opname,
     outbound,
@@ -167,12 +169,12 @@ async def whoami(user: auth.User = Depends(auth.current_user)):
     """The frontend asks "who am I?" here — the browser never sees the SSO headers."""
     if user.at_least("hq"):
         sites = await db.fetch_all(
-            "SELECT id, code, name, site_type, is_training FROM sites "
+            "SELECT id, code, name, site_type, is_training, manual_mode, manual_mode_until FROM sites "
             "WHERE active = 1 ORDER BY is_training, code"
         )
     else:
         sites = await db.fetch_all(
-            "SELECT s.id, s.code, s.name, s.site_type, s.is_training FROM sites s "
+            "SELECT s.id, s.code, s.name, s.site_type, s.is_training, s.manual_mode, s.manual_mode_until FROM sites s "
             "JOIN user_sites us ON us.site_id = s.id "
             "WHERE us.user_id = %s AND s.active = 1 ORDER BY s.is_training, s.code",
             (user.id,),
@@ -185,7 +187,12 @@ async def whoami(user: auth.User = Depends(auth.current_user)):
         "viewing_as": user.viewing_as,
         "locale": user.locale,
         "default_site_id": user.default_site_id,
-        "sites": [dict(s, is_training=bool(s["is_training"])) for s in sites],
+        # Mode manual (V32): on while the flag is set and its end time has not passed.
+        "sites": [dict(s, is_training=bool(s["is_training"]),
+                       manual_mode=bool(s["manual_mode"]) and not (
+                           s["manual_mode_until"] and s["manual_mode_until"] <= datetime.utcnow()),
+                       manual_mode_until=(s["manual_mode_until"].isoformat() + "Z") if s["manual_mode_until"] else None)
+                  for s in sites],
     }
 
 
@@ -199,7 +206,7 @@ async def unhandled(request: Request, exc: Exception):
     log.exception("Unhandled error on %s", request.url.path)
     return JSONResponse(
         status_code=500,
-        content={"detail": "Sistem sedang bermasalah. Panggil supervisor."},
+        content={"detail": "Sistem sedang bermasalah. Panggil supervisor. / Something went wrong in the system. Call your supervisor."},
     )
 
 
@@ -208,6 +215,7 @@ for module in (
     stock_upload, product_master, slips, admin, registry, flow, training,
     returns, racks, requests, replenishment, reminders, hiryu, faktur,
     sku_complete, reports, todo, pickers, demo, pengaturan, stok, quarantine, consumables,
+    manual_mode,
 ):
     app.include_router(module.router)
 app.include_router(hiryu_link.router)      # /api/hiryu/v1, Hiryu only (shared secret)

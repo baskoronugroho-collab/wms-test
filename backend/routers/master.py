@@ -36,10 +36,10 @@ async def update_brand(
     the owner it was written with, which is what an audit needs.
     """
     if body.default_stock_owner is not None and body.default_stock_owner not in ("grab", "brand", "ninja"):
-        raise HTTPException(400, "default_stock_owner must be grab, brand or ninja")
+        raise HTTPException(400, "Pemilik stok harus grab, brand atau ninja. / default_stock_owner must be grab, brand or ninja.")
     before = await db.fetch_one("SELECT * FROM brands WHERE id = %s", (brand_id,))
     if not before:
-        raise HTTPException(404, "Brand not found")
+        raise HTTPException(404, "Merek tidak ditemukan. / Brand not found.")
     sets, params = [], []
     for col in ("name", "default_stock_owner"):
         val = getattr(body, col)
@@ -67,9 +67,9 @@ async def create_brand(
     body: models.BrandIn, user: auth.User = Depends(auth.require("hq"))
 ):
     if body.identity_mode not in ("sku_barcode", "unit_label"):
-        raise HTTPException(400, "identity_mode must be sku_barcode or unit_label")
+        raise HTTPException(400, "Mode identitas harus sku_barcode atau unit_label. / identity_mode must be sku_barcode or unit_label.")
     if body.default_stock_owner not in ("grab", "brand", "ninja"):
-        raise HTTPException(400, "default_stock_owner must be grab, brand or ninja")
+        raise HTTPException(400, "Pemilik stok harus grab, brand atau ninja. / default_stock_owner must be grab, brand or ninja.")
     async with db.tx() as cur:
         try:
             bid = await db.run(
@@ -79,7 +79,7 @@ async def create_brand(
                 (body.code, body.name, body.identity_mode, body.default_stock_owner),
             )
         except Exception:
-            raise HTTPException(409, f"Brand code {body.code} already exists")
+            raise HTTPException(409, f"Kode merek {body.code} sudah ada. / Brand code {body.code} already exists.")
         await ledger.audit(
             cur, actor_email=user.email, entity="brand", entity_id=bid,
             action="create", after=body.model_dump(),
@@ -134,8 +134,8 @@ async def create_sku(
     if body.default_restock_point is None:
         body.default_restock_point = await reminders.default_restock(body.default_full_threshold)
     if body.default_restock_point is None or body.default_restock_point < 0:
-        raise HTTPException(422, "Isi batas penuh (P) -- titik restock otomatis 25% darinya -- "
-                                 "atau isi titik restock (R). / Enter the full level P (the "
+        raise HTTPException(422, "Isi batas penuh (P), titik restock otomatis 25% darinya. "
+                                 "Atau isi titik restock (R). / Enter the full level P (the "
                                  "restock point defaults to 25% of it) or the restock point R.")
     if (body.default_full_threshold is not None
             and body.default_full_threshold <= body.default_restock_point):
@@ -150,15 +150,15 @@ async def create_sku(
     code = (body.brand_sku_code or "").strip()
     name = (body.name_display or "").strip()
     if not code or not name:
-        raise HTTPException(422, "Kode SKU dan nama produk wajib diisi.")
+        raise HTTPException(422, "Kode SKU dan nama produk wajib diisi. / The SKU code and product name are required.")
     if await db.fetch_one("SELECT id FROM skus WHERE brand_id = %s AND brand_sku_code = %s",
                           (body.brand_id, code)):
-        raise HTTPException(409, f"Kode SKU {code} sudah ada untuk brand ini.")
+        raise HTTPException(409, f"Kode SKU {code} sudah ada untuk merek ini. / SKU code {code} already exists for this brand.")
     brand = await db.fetch_one(
         "SELECT id, identity_mode FROM brands WHERE id = %s", (body.brand_id,)
     )
     if not brand:
-        raise HTTPException(404, "Brand not found")
+        raise HTTPException(404, "Merek tidak ditemukan. / Brand not found.")
     mode = body.identity_mode or brand["identity_mode"]
     async with db.tx() as cur:
         sku_id = await db.run(
@@ -231,10 +231,12 @@ async def import_skus(
         })
 
     if not parsed:
-        raise HTTPException(400, "No usable rows found in the file.")
+        raise HTTPException(400, "Tidak ada baris yang bisa dipakai di file ini. / No usable rows found in the file.")
     if not commit:
         return {"ok": True,
-                "message": f"Preview: {len(parsed)} rows ready, {len(errors)} errors. "
+                "message": f"Pratinjau: {len(parsed)} baris siap, {len(errors)} salah. "
+                           f"Kirim lagi dengan commit=true untuk impor. / "
+                           f"Preview: {len(parsed)} rows ready, {len(errors)} errors. "
                            f"Re-send with commit=true to import."}
 
     inserted = 0
@@ -242,7 +244,7 @@ async def import_skus(
         brand = await db.one(cur, "SELECT identity_mode FROM brands WHERE id = %s",
                              (brand_id,))
         if not brand:
-            raise HTTPException(404, "Brand not found")
+            raise HTTPException(404, "Merek tidak ditemukan. / Brand not found.")
         for p in parsed:
             await db.run(
                 cur,
@@ -261,7 +263,7 @@ async def import_skus(
         await ledger.audit(cur, actor_email=user.email, entity="sku", entity_id=None,
                            action="bulk_import", after={"brand_id": brand_id,
                                                         "rows": inserted})
-    return {"ok": True, "message": f"Imported {inserted} SKUs."}
+    return {"ok": True, "message": f"{inserted} SKU diimpor. / Imported {inserted} SKUs."}
 
 
 # --- barcode registration (M1.3) -------------------------------------------
@@ -306,7 +308,7 @@ async def register_barcodes(
     """
     sku = await common.sku_by_id(body.sku_id)
     if not sku:
-        raise HTTPException(404, "SKU not found")
+        raise HTTPException(404, "SKU tidak ditemukan. / SKU not found.")
 
     checks, to_add = [], []
     seen = set()
@@ -353,14 +355,14 @@ async def unbind_barcode(
         "SELECT id, sku_id FROM barcodes WHERE barcode = %s", (barcode,)
     )
     if not row:
-        raise HTTPException(404, "Barcode not registered")
+        raise HTTPException(404, "Barcode belum terdaftar. / Barcode not registered.")
     async with db.tx() as cur:
         await db.run(cur, "DELETE FROM barcodes WHERE id = %s", (row["id"],))
         await ledger.audit(
             cur, actor_email=user.email, entity="barcode", entity_id=row["sku_id"],
             action="unbind", before=dict(row), after={"reason": reason},
         )
-    return {"ok": True, "message": f"{barcode} unbound."}
+    return {"ok": True, "message": f"Barcode {barcode} dilepas. / Barcode {barcode} unbound."}
 
 
 # --- Produk, tab Merek (canvas 2d) -----------------------------------------------------
@@ -464,7 +466,9 @@ async def catalog_brands(user: auth.User = Depends(auth.current_user)):
             "can_edit": user.at_least("hq"),
             "note": "Tambah merek sebelum tokonya dibuat di Hiryu. Satu toko untuk satu merek. "
                     "Saat toko baru masuk dari Hiryu, WMS bertanya sekali mereknya; akun "
-                    "merchant Grab terisi dari merek."}
+                    "merchant Grab terisi dari merek. / Add the brand before its store is created in Hiryu. "
+                    "One store per brand. When a new store arrives from Hiryu, the WMS asks "
+                    "for its brand once; the Grab merchant account fills in from the brand."}
 
 
 @router.post("/catalog/brands", response_model=CatalogBrand, status_code=201, tags=["produk"])

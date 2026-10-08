@@ -79,10 +79,10 @@ async def complete_replenishment(
     task = await db.fetch_one("SELECT * FROM replenishment_tasks WHERE id = %s",
                               (task_id,))
     if not task:
-        raise HTTPException(404, "Replenishment task not found")
+        raise HTTPException(404, "Tugas isi ulang tidak ditemukan. / Replenishment task not found.")
     await auth.assert_site_access(user, task["site_id"])
     if task["status"] == "done":
-        return {"ok": True, "message": "Already done."}
+        return {"ok": True, "message": "Sudah selesai. / Already done."}
 
     qty = max(1, body.qty_moved)
     site = await db.fetch_one("SELECT is_training FROM sites WHERE id = %s",
@@ -108,7 +108,7 @@ async def complete_replenishment(
             "UPDATE replenishment_tasks SET status='done', qty_moved=%s, "
             "completed_at=NOW() WHERE id=%s", (qty, task_id),
         )
-    return {"ok": True, "message": f"{qty} unit(s) moved to the pick face."}
+    return {"ok": True, "message": f"{qty} unit dipindah ke rak ambil. / {qty} units moved to the pick face."}
 
 
 # --- restock ----------------------------------------------------------------
@@ -141,13 +141,13 @@ async def send_restock(
     req = await db.fetch_one("SELECT * FROM restock_requests WHERE id = %s",
                              (request_id,))
     if not req:
-        raise HTTPException(404, "Restock request not found")
+        raise HTTPException(404, "Permintaan restock tidak ditemukan. / Restock request not found.")
     await auth.assert_site_access(user, req["site_id"])
     await db.execute(
         "UPDATE restock_requests SET status='sent', qty_requested=%s, "
         "sent_at=NOW() WHERE id=%s", (max(1, qty), request_id),
     )
-    return {"ok": True, "message": f"Requested {qty} unit(s) from the hub."}
+    return {"ok": True, "message": f"Minta {qty} unit dari gudang pusat. / Requested {qty} units from the main warehouse."}
 
 
 # --- transfers: hub to darkstore --------------------------------------------
@@ -159,7 +159,7 @@ async def _transfer_payload(transfer_id: int) -> dict:
         "WHERE tr.id = %s", (transfer_id,),
     )
     if not t:
-        raise HTTPException(404, "Transfer not found")
+        raise HTTPException(404, "Transfer tidak ditemukan. / Transfer not found.")
     lines = await db.fetch_all(
         "SELECT tl.*, s.name_display FROM transfer_lines tl "
         "JOIN skus s ON s.id = tl.sku_id WHERE tl.transfer_id = %s "
@@ -200,9 +200,9 @@ async def create_transfer(
     src = await auth.assert_site_access(user, body.from_site_id)
     dest = await db.fetch_one("SELECT * FROM sites WHERE id = %s", (body.to_site_id,))
     if not dest:
-        raise HTTPException(404, "Destination site not found")
+        raise HTTPException(404, "Dark store tujuan tidak ditemukan. / Destination dark store not found.")
     if not body.lines:
-        raise HTTPException(422, "A transfer needs at least one line.")
+        raise HTTPException(422, "Transfer butuh minimal satu baris. / A transfer needs at least one line.")
 
     ref = body.reference or f"TRF-{src['code']}-{datetime.now():%y%m%d%H%M%S}"
     async with db.tx() as cur:
@@ -290,8 +290,9 @@ async def outbox_health(
         "lanes": list(lanes.values()),
         "oldest_pending_seconds": _age(oldest["t"]) if oldest and oldest["t"] else None,
         "note": (
-            "Live: messages are being delivered to the POS." if enabled else
-            "SHADOW MODE — every number is computed and nothing is sent. This is "
+            "Aktif: pesan dikirim ke POS. / Live: messages are being delivered to the POS." if enabled else
+            "MODE BAYANGAN: semua angka dihitung tapi tidak ada yang dikirim. Ini cara kerja pilot, "
+            "bukan masalah. / SHADOW MODE: every number is computed and nothing is sent. This is "
             "the pilot posture, not a fault."
         ),
     }

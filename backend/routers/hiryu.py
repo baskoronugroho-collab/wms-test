@@ -95,6 +95,7 @@ class PackLine(BaseModel):
     is_replacement: bool = False
     replaces_sku_name: str | None = None
     replaces_units: int | None = None
+    manual_units: int = Field(default=0, description="Units picked by a tap (Mode manual)")
 
 
 class PackSuggestion(BaseModel):
@@ -131,6 +132,15 @@ class PackDetail(BaseModel):
     work_seconds: int | None = Field(default=None, description="Packer's stopwatch")
     packed_at: str | None = None
     change_reasons: list[str]
+    ready_by: str | None = Field(
+        default=None, description="Grab order time + grab_ready_minutes (the 10-minute target)")
+    order_time: str | None = Field(default=None, description="Grab's order time (UTC)")
+    has_changes: bool = Field(
+        default=False, description="A line was replaced, removed or is short of what was "
+                                   "ordered: no Semua cocok tick, each line checked by hand")
+    manual_units: int = Field(
+        default=0, description="Units picked by a tap, not a scan (Mode manual): the packer "
+                               "checks those with extra care")
     server_time: str
 
 
@@ -534,6 +544,7 @@ async def _pack_detail(order_id: int) -> dict:
         (order_id,))
     sug, lines, row = await _suggest(order)
     r = await floor.pack_rules()
+    manual = await floor.manual_units(order_id)
     out_lines = []
     for ln in lines:
         u = floor.unit_pack(ln, r["large_ml"])
@@ -546,9 +557,15 @@ async def _pack_detail(order_id: int) -> dict:
             "is_replacement": bool(ln["replacement_for_line_id"]),
             "replaces_sku_name": ln["replaces_sku_name"],
             "replaces_units": ln["replaces_units"],
+            "manual_units": manual.get(ln["order_line_id"], 0),
         })
     started = row.get("pack_started_at")
     packed_at = row.get("packed_at")
+    # Anything the customer's instruction or a missing unit changed.
+    changed = await db.fetch_one(
+        "SELECT COUNT(*) AS n FROM order_lines WHERE order_id = %s AND "
+        "(replacement_for_line_id IS NOT NULL OR status = 'short' OR qty_picked <> qty_ordered)",
+        (order_id,))
     return {
         "order_id": order["id"], "short_no": order["hiryu_short_no"] or order["external_ref"],
         "grab_order_id": order["external_ref"], "store_name": order.get("store_name"),
@@ -566,6 +583,10 @@ async def _pack_detail(order_id: int) -> dict:
                          if started else None),
         "packed_at": str(packed_at) if packed_at else None,
         "change_reasons": PACK_CHANGE_REASONS,
+        "ready_by": str(order["promised_at"]) if order.get("promised_at") else None,
+        "order_time": str(order["placed_at"]) if order.get("placed_at") else None,
+        "has_changes": bool(changed and changed["n"]),
+        "manual_units": sum(manual.values()),
         "server_time": str(datetime.now(timezone.utc)),
     }
 
@@ -723,7 +744,7 @@ async def handed_over(order_id: int, user: auth.User = Depends(auth.current_user
 
 @router.post("/orders/{order_id}/back-to-bench", response_model=HandoverOrderV2)
 async def back_to_bench(order_id: int, user: auth.User = Depends(auth.current_user)):
-    """Sudah dibawa kembali ke meja packing (§7.2.4, §8.2 step 3): a bag (or a
+    """Sudah dibawa kembali ke meja kemas (§7.2.4, §8.2 step 3): a bag (or a
     basket at the bench) whose order was cancelled is back at the pack bench to
     be unpacked. Clears its red row; its units are already on Kembalikan ke rak."""
     order = await _order_for(order_id, user)
@@ -854,7 +875,7 @@ async def active_orders(site_id: int, user: auth.User = Depends(auth.current_use
         its wait, its pack (1 kantong kertas) and amber past the limit;
       * cancelled: a basket at the bench or a packed bag whose order was
         cancelled before it left. Red, until someone taps
-        Sudah dibawa kembali ke meja packing (`back-to-bench`).
+        Sudah dibawa kembali ke meja kemas (`back-to-bench`).
 
     Handed-over orders drop off. Two days back at most, so orders from before
     this screen existed do not linger."""
@@ -978,7 +999,7 @@ async def driver_return(order_id: int, body: DriverReturnIn,
         "ok": True, "units_to_rack": to_rack, "units_to_quarantine": to_q,
         "quarantine_booked": booked_all or not to_q,
         "message": (f"{to_rack} unit ke Kembalikan ke rak, {to_q} unit ke karantina. / "
-                    f"{to_rack} unit(s) to Kembalikan ke rak, {to_q} to quarantine."),
+                    f"{to_rack} unit(s) to Put back to rack, {to_q} to quarantine."),
     }
 
 
@@ -993,7 +1014,7 @@ async def elsewhere(line_id: int, user: auth.User = Depends(auth.current_user)):
         "SELECT pl.*, pt.site_id FROM pick_lines pl "
         "JOIN pick_tasks pt ON pt.id = pl.pick_task_id WHERE pl.id = %s", (line_id,))
     if not line:
-        raise HTTPException(404, "Pick line not found")
+        raise HTTPException(404, "Baris pesanan tidak ditemukan. / Order line not found.")
     await auth.assert_site_access(user, line["site_id"])
     rows = await db.fetch_all(
         "SELECT ib.location_id, l.code AS location_code, "
@@ -1016,7 +1037,7 @@ async def move_line(line_id: int, body: models.MoveLineIn,
         "SELECT pl.*, pt.site_id, pt.status AS task_status, pt.claimed_by FROM pick_lines pl "
         "JOIN pick_tasks pt ON pt.id = pl.pick_task_id WHERE pl.id = %s", (line_id,))
     if not line:
-        raise HTTPException(404, "Pick line not found")
+        raise HTTPException(404, "Baris pesanan tidak ditemukan. / Order line not found.")
     await auth.assert_site_access(user, line["site_id"])
     if line["status"] != "pending" or line["task_status"] in ("completed", "cancelled"):
         raise HTTPException(409, "Baris ini sudah ditutup. / This line is closed.")
@@ -1058,7 +1079,7 @@ async def menu_import(brand_id: int = Query(...), file: UploadFile = File(...),
     time the menu changes in Hiryu."""
     brand = await db.fetch_one("SELECT id FROM brands WHERE id = %s", (brand_id,))
     if not brand:
-        raise HTTPException(404, "Brand not found")
+        raise HTTPException(404, "Merek tidak ditemukan. / Brand not found.")
     raw = (await file.read()).decode("utf-8-sig", errors="replace")
     reader = csv.DictReader(io.StringIO(raw))
     if not reader.fieldnames or "item_id" not in [f.strip().lower() for f in reader.fieldnames]:
@@ -1148,13 +1169,13 @@ async def map_item(item_pk: int, body: models.HiryuItemMapIn,
     if body.sku_id is not None:
         sku = await db.fetch_one("SELECT id FROM skus WHERE id = %s", (body.sku_id,))
         if not sku:
-            raise HTTPException(404, "SKU not found")
+            raise HTTPException(404, "Produk tidak ditemukan. / Product not found.")
     n = await db.execute(
         "UPDATE hiryu_items SET sku_id=%s, units_per_sale=%s, mapped_by=%s, "
         "mapped_at=UTC_TIMESTAMP() WHERE id=%s",
         (body.sku_id, body.units_per_sale, user.email, item_pk))
     if not n:
-        raise HTTPException(404, "Item not found")
+        raise HTTPException(404, "Item Hiryu tidak ditemukan. / Hiryu item not found.")
     return {"ok": True, "message": "Terhubung. / Connected."}
 
 

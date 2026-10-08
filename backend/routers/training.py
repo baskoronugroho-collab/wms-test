@@ -29,7 +29,7 @@ SCENARIOS = [
     {"key": "variance", "name_id": "Selisih stok", "name_en": "Count variances",
      "teaches": "Opname counting and the variance reveal."},
     {"key": "short_pick", "name_id": "Keranjang kosong", "name_en": "Empty basket",
-     "teaches": "E8 — the most expensive real failure."},
+     "teaches": "E8: the most expensive real failure."},
     {"key": "wrong_shade", "name_id": "Salah warna", "name_en": "Wrong shade in basket",
      "teaches": "The pick scan gate, and why it exists."},
     {"key": "unknown_barcode", "name_id": "Barcode baru", "name_en": "Unregistered barcode",
@@ -115,7 +115,7 @@ async def reset(
     return {
         "ok": True, "site_code": site["code"], "scenario": "reset",
         "fixture": {"baskets_restocked": n, "qty_each": BASE_QTY},
-        "message": f"{site['code']} direset: {n} keranjang, {BASE_QTY} unit each.",
+        "message": f"{site['code']} direset: {n} keranjang, masing-masing {BASE_QTY} unit. / {site['code']} reset: {n} bins, {BASE_QTY} units each.",
     }
 
 
@@ -161,7 +161,9 @@ async def load_scenario(
                     "location": slot["location_code"], "sku": slot["name_display"],
                     "physical_minus_system": delta,
                 })
-            fixture["note"] = ("System now believes MORE (or less) than the shelf "
+            fixture["note"] = ("Sistem mengira stok lebih banyak (atau lebih sedikit) dari isi rak. "
+                               "Hitung stok harus menemukan selisih ini. / "
+                               "System now believes MORE (or less) than the shelf "
                                "holds. Counting should find exactly these.")
 
         elif scenario == "short_pick":
@@ -171,7 +173,8 @@ async def load_scenario(
                          (site_id, slot["sku_id"], slot["location_id"]))
             fixture["empty_basket"] = {"location": slot["location_code"],
                                        "sku": slot["name_display"]}
-            fixture["note"] = "Order this SKU and the picker will find nothing there."
+            fixture["note"] = ("Pesan SKU ini, dan picker tidak akan menemukan barangnya. / "
+                               "Order this SKU and the picker will find nothing there.")
 
         elif scenario == "wrong_shade":
             a, b = slots[0], slots[1]
@@ -181,7 +184,8 @@ async def load_scenario(
                 "expected_name": a["name_display"],
                 "actual_name": b["name_display"],
             }
-            fixture["note"] = ("Physically place the wrong shade in the first "
+            fixture["note"] = ("Taruh warna yang salah di keranjang pertama. Scan ambil harus menolaknya. / "
+                               "Physically place the wrong shade in the first "
                                "basket. The pick scan must block it.")
 
         elif scenario == "no_slot":
@@ -191,11 +195,14 @@ async def load_scenario(
             await db.run(cur, "DELETE FROM slot_assignments WHERE site_id=%s "
                               "AND sku_id=%s", (site_id, slot["sku_id"]))
             fixture["unslotted_sku"] = slot["name_display"]
-            fixture["note"] = "Receive this SKU and the app must offer a new basket."
+            fixture["note"] = ("Terima SKU ini, dan aplikasi harus menawarkan keranjang baru. / "
+                               "Receive this SKU and the app must offer a new basket.")
 
         elif scenario == "unknown_barcode":
             fixture["unknown_barcode"] = "2999999999994"
-            fixture["note"] = ("Scan this at inbound. It resolves to nothing and "
+            fixture["note"] = ("Scan ini saat penerimaan. Barcode tidak dikenal, jadi aplikasi harus "
+                               "menawarkan pendaftaran, bukan error. / "
+                               "Scan this at inbound. It resolves to nothing and "
                                "must offer registration, not an error.")
 
         elif scenario == "mode_b":
@@ -225,11 +232,15 @@ async def load_scenario(
                      "AND state='unbound'", (site_id,),
             )
             fixture["unbound_plates"] = int(plates["n"])
-            fixture["note"] = ("Label these products one unit at a time. If there "
+            fixture["note"] = ("Beri label produk ini satu unit demi satu unit. Kalau belum ada label, "
+                               "buat satu rentang label dulu. / "
+                               "Label these products one unit at a time. If there "
                                "are no plates, issue a range first.")
 
         elif scenario == "contention":
-            fixture["note"] = ("Two orders and an opname plan are ready. Open the "
+            fixture["note"] = ("Dua pesanan dan satu rencana opname sudah siap. Buka aplikasi di dua "
+                               "perangkat dan coba ambil pekerjaan yang sama. / "
+                               "Two orders and an opname plan are ready. Open the "
                                "app on two devices and try to claim the same work.")
 
         await db.run(cur, "INSERT INTO training_fixtures (site_id, scenario, "
@@ -244,7 +255,7 @@ async def load_scenario(
         fixture["orders"] = made["created"]
 
     return {"ok": True, "site_code": site["code"], "scenario": scenario,
-            "fixture": fixture, "message": f"Skenario '{scenario}' siap."}
+            "fixture": fixture, "message": f"Skenario '{scenario}' siap. / Scenario '{scenario}' is ready."}
 
 
 @router.post("/orders/generate", response_model=models.GeneratedOrders)
@@ -265,7 +276,7 @@ async def generate_orders(
         "WHERE sa.site_id = %s AND ib.qty_on_hand > 0", (body.site_id,),
     )
     if not slotted:
-        return {"created": [], "message": "No stock to order. Reset the site first."}
+        return {"created": [], "message": "Tidak ada stok untuk dipesan. Reset lokasi latihan dulu. / No stock to order. Reset the site first."}
 
     created = []
     for _ in range(max(1, body.count)):
@@ -279,7 +290,7 @@ async def generate_orders(
         ))
         created.append(ref)
     return {"created": created,
-            "message": f"{len(created)} test order(s) at {site['code']}."}
+            "message": f"{len(created)} pesanan uji di {site['code']}. / {len(created)} test orders at {site['code']}."}
 
 
 @router.get("/barcode-sheet", response_model=models.BarcodeSheet)
@@ -305,7 +316,7 @@ async def barcode_sheet(
         "rows": [{"sku_id": r["id"], "sku_name": r["name_display"],
                   "barcode": r["barcode"], "location_code": r["location_code"]}
                  for r in rows],
-        "note": "BAHAN LATIHAN — jangan dipakai di jalur penerimaan asli.",
+        "note": "BAHAN LATIHAN, jangan dipakai di jalur penerimaan asli. / TRAINING MATERIAL, do not use it on the real receiving line.",
     }
 
 
@@ -345,7 +356,7 @@ async def compose_order(
     """
     site = await auth.assert_training_site(body.site_id)
     if not body.lines:
-        raise HTTPException(422, "Pilih minimal satu barang.")
+        raise HTTPException(422, "Pilih minimal satu barang. / Select at least one item.")
 
     ref = body.external_ref or f"TEST-{uuid.uuid4().hex[:10].upper()}"
     channel = body.channel if body.channel in ("grab", "whatsapp", "web", "instagram") else "grab"
@@ -377,7 +388,7 @@ async def cancel_test_order(
     order = await db.fetch_one(
         "SELECT site_id FROM orders WHERE external_ref = %s", (external_ref,))
     if not order:
-        raise HTTPException(404, "Order not found")
+        raise HTTPException(404, "Pesanan tidak ditemukan. / Order not found.")
     await auth.assert_training_site(order["site_id"])
     await auth.assert_site_access(user, order["site_id"])
     return await outbound.cancel_order(external_ref, site_id=order["site_id"])

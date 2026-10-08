@@ -25,8 +25,10 @@ async def day_colors(user: auth.User = Depends(auth.current_user)):
         "today": daycolor.for_moment(),
         "week": daycolor.legend(),
         "note": (
-            "Warna menandai HARI barang masuk. Selalu tulis tanggalnya juga — "
-            "warna berulang tiap 7 hari, sedangkan stok disimpan sampai 14 hari."
+            "Warna menandai HARI barang masuk. Selalu tulis tanggalnya juga: "
+            "warna berulang tiap 7 hari, sedangkan stok disimpan sampai 14 hari. / "
+            "The colour marks the DAY the goods came in. Always write the date too: "
+            "colours repeat every 7 days, while stock is kept up to 14 days."
         ),
     }
 
@@ -182,11 +184,11 @@ async def receipt_slip(
         "SELECT * FROM inbound_receipts WHERE id = %s", (receipt_id,)
     )
     if not receipt:
-        raise HTTPException(404, "Receipt not found")
+        raise HTTPException(404, "Penerimaan tidak ditemukan. / Receipt not found.")
     await auth.assert_site_access(user, receipt["site_id"])
     if receipt["status"] == "open":
         raise HTTPException(
-            409, "Selesaikan penerimaan dulu sebelum mencetak slip."
+            409, "Selesaikan penerimaan dulu sebelum mencetak slip. / Finish the receipt before printing the slip."
         )
     row = await _issue(receipt, user.email)
     return _hydrate(row)
@@ -239,6 +241,6 @@ async def list_slips(
 async def get_slip(slip_id: int, user: auth.User = Depends(auth.current_user)):
     row = await db.fetch_one("SELECT * FROM putaway_slips WHERE id = %s", (slip_id,))
     if not row:
-        raise HTTPException(404, "Slip not found")
+        raise HTTPException(404, "Slip tidak ditemukan. / Slip not found.")
     await auth.assert_site_access(user, row["site_id"])
     return _hydrate(row)

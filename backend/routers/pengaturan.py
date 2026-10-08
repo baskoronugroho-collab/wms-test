@@ -91,16 +91,20 @@ async def _hub(site_id: int) -> dict:
 
 
 def _codes_text(code: str, n_in: int, n_qr: int, n_out: int) -> str:
-    def span(kind, n):
+    def span(kind, n, to):
         if n <= 0:
             return None
         first = locations.special_bin_code(code, kind, 1)
-        return first if n == 1 else f"{first} sampai {locations.special_bin_code(code, kind, n)}"
-    parts = [p for p in (span("IN", n_in), span("QR", n_qr), span("OUT", n_out)) if p]
-    if not parts:
+        return first if n == 1 else f"{first} {to} {locations.special_bin_code(code, kind, n)}"
+    kinds = (("IN", n_in), ("QR", n_qr), ("OUT", n_out))
+    parts_id = [p for p in (span(k, n, "sampai") for k, n in kinds) if p]
+    parts_en = [p for p in (span(k, n, "to") for k, n in kinds) if p]
+    if not parts_id:
         return ""
-    joined = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " dan " + parts[-1]
-    return f"Setelah disimpan, WMS membuat {joined}. Labelnya dicetak di Rak & bin."
+    joined_id = parts_id[0] if len(parts_id) == 1 else ", ".join(parts_id[:-1]) + " dan " + parts_id[-1]
+    joined_en = parts_en[0] if len(parts_en) == 1 else ", ".join(parts_en[:-1]) + " and " + parts_en[-1]
+    return (f"Setelah disimpan, WMS membuat {joined_id}. Labelnya dicetak di Rak & bin. / "
+            f"After saving, the WMS creates {joined_en}. The labels are printed under Rak & bin.")
 
 
 async def hub_payload(row: dict) -> dict:
@@ -149,7 +153,8 @@ async def list_hubs(user: auth.User = Depends(auth.current_user)):
         rows = [r for r in rows if int(r["id"]) in mine]
     return {"hubs": [await hub_payload(r) for r in rows], "can_edit": user.at_least("hq"),
             "intro": "Dark store dibuat di Hiryu dan muncul di sini sendiri. Di WMS Anda hanya "
-                     "melengkapi data gudang."}
+                     "melengkapi data gudang. / A dark store is created in Hiryu and shows up here "
+                     "by itself. In the WMS you only complete the warehouse details."}
 
 
 @router.get("/hubs/{site_id}")
@@ -185,17 +190,18 @@ async def complete_hub(site_id: int, body: HubCompleteIn,
             code == row["code"] and row["setup_completed_at"] is None:
         raise HTTPException(422, "Isi kode dark store yang dipakai di gudang, misalnya MA5. / "
                                  "Enter the dark store's real code, e.g. MA5.")
-    for label, v, lo in (("Bin barang masuk sementara", body.inbound_bins, 1),
-                         ("Baki karantina", body.quarantine_trays, 1),
-                         ("Keranjang pesanan", body.outbound_baskets, 1)):
+    for label, label_en, v, lo in (
+            ("Bin barang masuk sementara", "Temporary inbound bins", body.inbound_bins, 1),
+            ("Baki karantina", "Quarantine trays", body.quarantine_trays, 1),
+            ("Keranjang pesanan", "Order baskets", body.outbound_baskets, 1)):
         if not lo <= v <= locations.SPECIAL_MAX:
             raise HTTPException(422, f"{label}: isi {lo} sampai {locations.SPECIAL_MAX}. / "
-                                     f"{label}: {lo} to {locations.SPECIAL_MAX}.")
+                                     f"{label_en}: {lo} to {locations.SPECIAL_MAX}.")
     if code != row["code"]:
         if await db.fetch_one("SELECT 1 AS x FROM locations WHERE site_id = %s LIMIT 1",
                               (site_id,)):
             raise HTTPException(409, f"Kode dark store {row['code']} sudah dipakai di kode bin, jadi "
-                                     "tidak bisa diganti. / The dark store code is already on bin labels.")
+                                     "tidak bisa diganti. / The dark store code is already used on bin codes, so it cannot be changed.")
         if await db.fetch_one("SELECT id FROM sites WHERE code = %s AND id <> %s",
                               (code, site_id)):
             raise HTTPException(409, f"Kode dark store {code} sudah dipakai dark store lain. / Dark store code "
@@ -222,9 +228,13 @@ async def complete_hub(site_id: int, body: HubCompleteIn,
                 problems.append(str(e.detail))
                 break
     payload = await hub_payload(await _hub(site_id))
-    msg = f"Dark store {code} tersimpan."
-    if problems:
-        msg += " " + " ".join(problems)
+    msg_id, msg_en = f"Dark store {code} tersimpan.", f"Dark store {code} saved."
+    for p in problems:
+        # Each problem is already "Indonesian / English": keep the halves apart.
+        p_id, _, p_en = p.partition(" / ")
+        msg_id += " " + p_id
+        msg_en += " " + (p_en or p_id)
+    msg = f"{msg_id} / {msg_en}"
     return {"ok": True, "message": msg, "hub": payload}
 
 
@@ -295,7 +305,7 @@ async def link_hub(site_id: int, body: HubLinkIn,
                            after={"hiryu_dark_store_id": dark_id, "placeholder_site_id": site_id,
                                   "placeholder_code": new["code"]})
     return {"ok": True, "hub": await hub_payload(await _hub(target["id"])),
-            "message": f"Dark store #{dark_id} tersambung ke {target['code']}."}
+            "message": f"Dark store #{dark_id} tersambung ke {target['code']}. / Dark store #{dark_id} linked to {target['code']}."}
 
 
 # =============================================================================
@@ -665,7 +675,8 @@ async def kickoff_payload(site_id: int, user: auth.User) -> dict:
         "site": {"id": site["id"], "code": site["code"], "name": site["name"]},
         "title": f"Mulai operasi {site['code']}",
         "intro": "Sampai dark store siap menerima pesanan Grab. WMS mencentang sendiri langkah yang "
-                 "bisa dilihatnya.",
+                 "bisa dilihatnya. / Until the dark store is ready for Grab orders. The WMS ticks "
+                 "the steps it can see by itself.",
         "done": done_all, "total": len(steps),
         "progress_text": f"{done_all} dari {len(steps)} langkah selesai",
         "phases": phases, "steps": steps,
@@ -882,7 +893,8 @@ async def rules_payload(user: auth.User) -> dict:
                           "updated_at": _iso(r["updated_at"]) if r else None})
         groups.append({"key": "lain", "title": "Lainnya", "title_en": "Other", "rules": extra})
     return {"groups": groups, "can_edit": user.at_least("hq") and user.real_role == user.role,
-            "note": "Ops HQ menulis SOP; angka di sini hanya menentukan kapan WMS mengingatkan."}
+            "note": "Ops HQ menulis SOP; angka di sini hanya menentukan kapan WMS mengingatkan. / "
+                    "Ops HQ writes the SOP; the numbers here only set when the WMS sends a reminder."}
 
 
 @router.get("/settings/rules")

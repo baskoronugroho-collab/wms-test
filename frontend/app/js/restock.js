@@ -31,6 +31,8 @@
   const statusPill = (s) => { const x = STATUS[s] || [s, s, 'info']; return S.pill(x[2], x[0], x[1]); };
   const who = (e) => String(e || '').split('@')[0].split('.').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   const xlsx = (id) => '../api/replenishments/' + id + '/po.xlsx';
+  /* A barcode the brand has not given yet; the brand fills it in the Excel. */
+  const missing = () => S.pill('stop', 'Belum ada', 'Missing');
 
   function styles() {
     if ($('#rs-style')) return;
@@ -46,7 +48,6 @@
       '.rs-info dt{font-size:13px;color:var(--muted);font-weight:700}.rs-info dd{margin:2px 0 0;font-weight:600}',
       '.rs-qty{width:96px;text-align:right}',
       '#k-body .k-table td.k-mono,.rs-nw{white-space:nowrap}',
-      '.rs-missing{color:var(--stop);font-weight:800;font-family:var(--mono)}',
       '.rs-dec{display:flex;gap:6px;flex-wrap:wrap}',
       '.rs-dec .k-btn[aria-pressed="true"]{background:var(--action);color:#FFF}',
       '.rs-foot{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}',
@@ -89,7 +90,7 @@
     }
     const when = (r) => r.decide_by ? S.fmt.dt(r.decide_by) : r.confirmed_at && r.eta_date ? S.fmt.day(r.eta_date) : S.fmt.dt(r.sent_at || r.po_saved_at || r.raised_at || r.created_at);
     return '<div class="k-laptop-only"><div class="k-tablewrap"><table class="k-table"><thead><tr>' +
-      '<th ' + biAttr('Ninja reference', 'Ninja reference') + '></th><th ' + biAttr('Merek', 'Brand') + '></th><th ' + biAttr('Dark store', 'Dark store') + '></th>' +
+      '<th ' + biAttr('Nomor referensi Ninja', 'Ninja reference number') + '></th><th ' + biAttr('Merek', 'Brand') + '></th><th ' + biAttr('Dark store', 'Dark store') + '></th>' +
       '<th ' + biAttr('No. PO merek', 'Brand PO') + '></th><th class="k-num">SKU</th><th class="k-num" ' + biAttr('Unit', 'Units') + '></th>' +
       '<th ' + biAttr('Status', 'Status') + '></th><th ' + biAttr('Waktu', 'When') + '></th><th></th></tr></thead><tbody>' +
       rows.map((r) => '<tr' + (r.differences_pending ? ' class="is-caution"' : '') + '><td class="k-mono k-strong">' + (r.reference_is_final ? esc(r.reference) : '<span class="k-muted" ' + biAttr('(draf)', '(draft)') + '></span>') + '</td>' +
@@ -112,7 +113,7 @@
     box.className = 'k-stack';
     box.innerHTML = '<label class="k-field"><span class="k-field__label" ' + biAttr('Merek', 'Brand') + '></span><select class="k-select" id="rs-nb">' +
       brands.map((b) => '<option value="' + b.id + '">' + esc(b.name) + '</option>').join('') + '</select></label><div id="rs-nl"></div>' +
-      (S.atLeast('hq') ? '<label class="k-check"><input type="checkbox" id="rs-all"> <span ' + biAttr('Kiriman pertama: semua SKU merek ini, diisi sampai isi sampai', 'First delivery: every SKU of this brand, filled up to isi sampai') + '></span></label>' : '');
+      (S.atLeast('hq') ? '<label class="k-check"><input type="checkbox" id="rs-all"> <span ' + biAttr('Kiriman pertama: semua SKU merek ini, diisi sampai angka isi sampai', 'First delivery: every SKU of this brand, filled up to its fill-up number') + '></span></label>' : '');
     const lines = $('#rs-nl', box);
     let alerts = [];
     const load = async () => {
@@ -255,21 +256,21 @@
     ctx.actions.innerHTML = btn('k-btn--primary', 'Simpan permintaan', 'Save the request', 'id="rs-savereq" data-min-role="hq"', 'check');
     ctx.body.innerHTML = '<div class="k-caption">' + back + '</div>' +
       '<div class="k-card k-card--pad k-stack">' +
-        '<label class="k-field"><span class="k-field__label">' + p2('Ninja reference · internal, dibuat WMS', 'Ninja reference · internal, made by the WMS') + '</span>' +
+        '<label class="k-field"><span class="k-field__label">' + p2('Nomor referensi Ninja · internal, dibuat WMS', 'Ninja reference number · internal, made by the WMS') + '</span>' +
           '<input class="k-input k-mono" value="' + esc(d.reference_preview) + '" readonly></label>' +
         '<div class="rs-form">' +
-          field('po_date', 'PO date', 'PO date', 'date', h.po_date) + field('po_to', 'To (brand)', 'To (brand)', 'text', h.po_to) +
-          field('po_brand_contact', 'Brand contact', 'Brand contact', 'text', h.po_brand_contact) + field('po_deliver_to', 'Deliver to', 'Deliver to', 'text', h.po_deliver_to) +
-          field('po_requested_date', 'Requested delivery date', 'Requested delivery date', 'date', h.po_requested_date) +
+          field('po_date', 'Tanggal permintaan', 'Request date', 'date', h.po_date) + field('po_to', 'Kepada (merek)', 'To (brand)', 'text', h.po_to) +
+          field('po_brand_contact', 'Kontak merek', 'Brand contact', 'text', h.po_brand_contact) + field('po_deliver_to', 'Dikirim ke', 'Deliver to', 'text', h.po_deliver_to) +
+          field('po_requested_date', 'Tanggal kirim yang diminta', 'Requested delivery date', 'date', h.po_requested_date) +
           field('po_receiving_hours', 'Jam terima', 'Receiving hours', 'text', h.po_receiving_hours) +
-          field('po_created_by_name', 'Created by (Ops HQ)', 'Created by (Ops HQ)', 'text', h.po_created_by_name) + field('po_note', 'Note', 'Note', 'text', h.po_note) +
+          field('po_created_by_name', 'Dibuat oleh (Ops HQ)', 'Created by (Ops HQ)', 'text', h.po_created_by_name) + field('po_note', 'Catatan', 'Note', 'text', h.po_note) +
         '</div></div>' +
       '<div class="k-card k-card--pad k-stack"><div class="rs-head"><span class="k-h2" id="rs-sum"></span><span class="k-caption" ' +
         biAttr(d.saved ? 'Jumlah terkunci.' : 'Jumlah awal = isi sampai dikurangi stok, atau dari draf.', d.saved ? 'Quantities are locked.' : 'Start = fill up to minus stock, or from the draft.') + '></span></div>' +
         '<div class="k-tablewrap"><table class="k-table"><thead><tr><th>No</th><th ' + biAttr('Produk', 'Product') + '></th><th ' + biAttr('Kode merek', 'Brand code') + '></th>' +
           '<th>Barcode (EAN-13)</th><th class="k-num" ' + biAttr('Stok', 'Stock') + '></th><th class="k-num" ' + biAttr('Isi sampai', 'Fill up to') + '></th><th class="k-num" ' + biAttr('Jumlah', 'Quantity') + '></th></tr></thead><tbody>' +
           lines.map((l, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(l.sku_name) + '</td><td class="k-mono">' + esc(l.brand_sku_code || '') + '</td>' +
-            '<td class="k-mono">' + (l.barcode ? esc(l.barcode) : '<span class="rs-missing">MISSING</span> <span class="k-caption" ' + biAttr('diisi merek', 'brand fills') + '></span>') + '</td>' +
+            '<td class="k-mono">' + (l.barcode ? esc(l.barcode) : missing() + ' <span class="k-caption" ' + biAttr('diisi merek', 'brand fills') + '></span>') + '</td>' +
             '<td class="k-num">' + n(l.current_stock) + '</td><td class="k-num">' + n(l.fill_to) + '</td>' +
             '<td class="k-num"><input class="k-input k-input--sm k-input--num rs-qty" type="number" min="0" data-i="' + i + '" value="' + (l.qty_requested || 0) + '"' + (d.saved ? ' disabled' : '') +
               ' aria-label="' + esc(t('Jumlah, ', 'Quantity, ') + short(l.sku_name)) + '"></td></tr>').join('') +
@@ -309,13 +310,13 @@
     const hq = S.atLeast('hq');
     const conf = ['confirmed', 'receiving', 'received', 'variance_signoff', 'variance_review'].includes(r.status);
     const recv = ['receiving', 'received', 'variance_signoff', 'variance_review'].includes(r.status);
-    ctx.body.innerHTML = '<div class="k-caption"><a class="k-linkbtn" href="?tab=' + TAB_OF[r.status] + '">' + p2('Restock ke merek', 'Restock from brand') + '</a> / ' + p2(STATUS[r.status][0], STATUS[r.status][1]) + ' / Ninja reference</div>' +
+    ctx.body.innerHTML = '<div class="k-caption"><a class="k-linkbtn" href="?tab=' + TAB_OF[r.status] + '">' + p2('Restock ke merek', 'Restock from brand') + '</a> / ' + p2(STATUS[r.status][0], STATUS[r.status][1]) + ' / ' + p2('Nomor referensi Ninja', 'Ninja reference number') + '</div>' +
       '<div class="k-card k-card--pad k-stack"><div class="rs-head"><div class="k-stack k-stack--tight"><span class="rs-ref">' + esc(r.reference) + '</span>' +
         '<span class="k-caption">' + esc(r.brand_name + ' · ' + S.shortCode(r.site_code)) + '</span></div>' + statusPill(r.status) + '</div>' + infoHtml(r) +
         '<div class="k-tablewrap"><table class="k-table"><thead><tr><th ' + biAttr('Produk', 'Product') + '></th><th>Barcode</th><th class="k-num" ' + biAttr('Diminta', 'Requested') + '></th>' +
           (conf ? '<th class="k-num" ' + biAttr('Dikirim merek', 'Brand sends') + '></th>' : '') + (recv ? '<th class="k-num" ' + biAttr('Diterima', 'Received') + '></th>' : '') +
           (r.status === 'received' ? '<th class="k-num" ' + biAttr('Ditagih', 'Billed') + '></th>' : '') + '</tr></thead><tbody>' +
-          r.lines.map((l) => '<tr><td>' + esc(l.sku_name) + '</td><td class="k-mono">' + (l.barcode || l.brand_barcode ? esc(l.barcode || l.brand_barcode) : '<span class="rs-missing">MISSING</span>') + '</td>' +
+          r.lines.map((l) => '<tr><td>' + esc(l.sku_name) + '</td><td class="k-mono">' + (l.barcode || l.brand_barcode ? esc(l.barcode || l.brand_barcode) : missing()) + '</td>' +
             '<td class="k-num">' + n(l.qty_requested) + '</td>' + (conf ? '<td class="k-num">' + n(l.qty_confirmed) + '</td>' : '') +
             (recv ? '<td class="k-num">' + n(l.qty_received) + '</td>' : '') + (r.status === 'received' ? '<td class="k-num">' + n(l.qty_billed) + '</td>' : '') + '</tr>').join('') +
         '</tbody></table></div>' +

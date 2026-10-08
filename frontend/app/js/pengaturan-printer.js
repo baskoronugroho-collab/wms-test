@@ -150,7 +150,7 @@
       '',
       { b: 'Nama dibungkus (cara slip WMS):' },
       pr.wrap('1. ' + name, W, '   '),
-      pr.lr('   Jumlah', '2 pcs', W),
+      pr.lr('   Jumlah', '2 unit', W),
       pr.rule('-', W),
       pr.lr('Kiosk-printing', s.kiosk ? 'ya' : 'tidak', W),
       pr.lr('Dicetak', pr.when().both, W),

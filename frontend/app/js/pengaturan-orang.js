@@ -56,7 +56,7 @@
         '<span class="k-row__text"><span class="k-row__title">' + esc(u.name || u.email) + ' ' + S.roleChip(u.role) + '</span>' + subLine(u) +
         '<span class="k-row__sub">Dark store ' + esc(hubText(u)) + ' · Hiryu: ' + esc(u.hiryu_text) + '</span></span>' +
         (u.can_edit ? '<span class="k-row__chev">' + icon('chev', 22) + '</span>' : '') + '</div>').join('') + '</div>' +
-      '<div class="k-note k-note--info">' + icon('info', 20) + '<span>' + esc(d.note) + '</span></div></div>' +
+      '<div class="k-note k-note--info">' + icon('info', 20) + '<span>' + esc(S.pick(d.note)) + '</span></div></div>' +
       '<div class="k-laptop-only" id="po-formhost"></div></div>';
     const formHost = ctx.body.querySelector('#po-formhost');
     formHost.appendChild(addForm(d));

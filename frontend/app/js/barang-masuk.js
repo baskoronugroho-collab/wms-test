@@ -1,15 +1,18 @@
 /* barang-masuk.js: receive a brand delivery (canvas section 5, flow reordered 7 Oct 2026).
  *
  * One screen per step, a step bar on top, phone first. The URL picks the screen:
- *   (none)                              1  open the delivery: Ninja reference or brand PO number;
+ *   (none)                              1  open the delivery: Ninja reference number or brand PO number;
  *                                          also the *Taruh di rak* list of the dark store
  *   ?nopo=<code>                           a number the WMS does not know (no PO)
  *   ?receipt=<id>&step=door             1  the carton check (inline) and what is expected
  *   ?receipt=<id>&step=scan             2  scan every unit into temporary bins (damaged mode too)
  *   ?receipt=<id>&step=manual           2  pick a product with no barcode from the list
  *   ?receipt=<id>&step=review           3  differences: expected against scanned, per product
- *   ?receipt=<id>&step=docs             4  Surat Jalan / Faktur checklist and the three POD photos
- *   ?receipt=<id>&step=print            5  print the putaway slips, one per temporary bin
+ *   ?receipt=<id>&step=docs             4  Surat Jalan / Faktur checklist (ticks kept on the server)
+ *                                          and the three proof-of-delivery photos; an SPV may finish
+ *                                          without a photo that cannot be taken, with a reason
+ *   ?receipt=<id>&step=print            5  print the putaway slips, one per temporary bin (a phone
+ *                                          with no thermal printer: printed on the pack bench laptop)
  *   ?receipt=<id>&step=putaway[&load=]  6  the putaway tasks, one per temporary bin
  *   ?receipt=<id>&step=detail           7  the receipt (done, Faktur upload, reprint)
  *   ?receipt=<id>                          the step the receipt is at
@@ -21,6 +24,17 @@
  *
  * Photos: every camera button is a <label> around its own file input that stays
  * in the page, so one capture is enough (see photoSlot).
+ *
+ * Scans (units, the undo, putaway) use S.scanKey: one idempotency key per scan
+ * until the server answers, so a scan sent again after a lost connection is
+ * replayed by the server, never counted twice.
+ *
+ * Mode manual (S.manualMode(): the dark store's scanners or cameras are broken):
+ * step 2 is a typed, blind count per product (manualCountStep: photo, name and
+ * size, never the expected number; good and damaged units typed apart; the
+ * temporary bin confirmed by a tap), and a putaway task is confirmed by a tap
+ * on *Sudah ditaruh di bin*. Every replaced scan zone keeps *Masih bisa pindai?*
+ * (&scan=1 on step 2) for a person whose scanner works.
  */
 (function () {
   'use strict';
@@ -29,7 +43,18 @@
   const API = () => S.api();
   const $ = (sel, root) => (root || document).querySelector(sel);
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
-  const key = () => 'bm-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  /* POST a scan with S.scanKey: no answer (e.network) keeps the key for the same code. */
+  async function scanPost(scope, code, url, body) {
+    const k = S.scanKey(scope, code);
+    try {
+      const r = await API().post(url, Object.assign({}, body, { idempotency_key: k }));
+      S.scanDone(scope);
+      return r;
+    } catch (e) {
+      if (!e.network) S.scanDone(scope);
+      throw e;
+    }
+  }
   const n = (v) => S.fmt.n(v);
 
   /* ---------- page styles that kilat.css has no class for ---------- */
@@ -111,6 +136,13 @@
       '@media (min-width:768px){.bm-roll .njw-slip{zoom:1.3}}',
       '.bm-task{display:flex;flex-direction:column;gap:6px;text-align:left;width:100%;font:inherit;color:inherit;cursor:pointer}',
       '.bm-move{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:var(--mono);font-weight:700;font-size:20px}',
+      /* Mode manual: the typed count */
+      '.bm-prod{display:flex;gap:12px;align-items:center}',
+      '.bm-pthumb{width:56px;height:56px;flex-shrink:0;border-radius:12px;background:var(--sunk);display:flex;align-items:center;justify-content:center;color:var(--muted);overflow:hidden}',
+      '.bm-pthumb img{width:100%;height:100%;object-fit:cover}',
+      '.k-row .bm-pthumb{width:44px;height:44px;margin-right:4px}',
+      '.bm-qty{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}',
+      '.bm-numin{font-family:var(--mono);font-size:24px;font-weight:700;text-align:center;min-height:56px}',
     ].join('\n');
     document.head.appendChild(st);
   }
@@ -126,7 +158,7 @@
 
   function go(params, replace) {
     const u = new URL(location.href);
-    ['receipt', 'step', 'nopo', 'slip', 'i', 'load'].forEach((k) => u.searchParams.delete(k));
+    ['receipt', 'step', 'nopo', 'slip', 'i', 'load', 'scan'].forEach((k) => u.searchParams.delete(k));
     Object.entries(params || {}).forEach(([k, v]) => { if (v != null && v !== '') u.searchParams.set(k, v); });
     history[replace ? 'replaceState' : 'pushState'](null, '', u.pathname + u.search);
     S.rerender();
@@ -134,6 +166,11 @@
   window.addEventListener('popstate', () => S.rerender());
 
   const count = (l) => n(l.qty_received) + (l.qty_expected != null ? '/' + n(l.qty_expected) : '');
+  /* Mode manual: the count is blind until it is locked at step 3 (Cek selisih).
+   * Nothing on the counting screens may give an expected number away: no
+   * "x of y", no Pas / Kurang / Lebih, no total expected, no "more than the PO".
+   * The server leaves those numbers out too (R.blind) for roles below the SPV. */
+  const blindOf = (R) => !!R && R.status === 'open' && !R.count_locked && (!!R.blind || !!R.manual_mode || S.manualMode());
   const binShort = (code) => String(code || '').replace(/^[A-Z0-9]+-(?=IN-|QR-)/, '');
   function rackWords(code) {
     const m = /([A-Z]+)-(\d+)-(\d+)([TB])?$/.exec(String(code || ''));
@@ -161,13 +198,16 @@
   const isDiff = (l) => lineStates(l, false).some((s) => s[0] !== 'ok' && s[0] !== 'info');
   const pills = (l, scanning) => lineStates(l, scanning).map((s) => S.pill(s[0], s[1], s[2])).join('');
 
-  function linesHtml(R, scanning, curSku) {
+  /* blind: Mode manual before the lock, only "dipindai N" per product and the damaged pill. */
+  function linesHtml(R, scanning, curSku, blind) {
     if (!R.lines.length) return '<p class="k-caption" ' + biAttr('Belum ada produk dipindai.', 'No product scanned yet.') + '></p>';
     const rows = R.lines.slice().sort((a, b) => (scanning ? 0 : (isDiff(b) - isDiff(a))));
+    const bins = (l) => (l.bins && l.bins.length ? ' · ' + esc(l.bins.map(binShort).join(', ')) : '');
     return '<div class="bm-lines">' + rows.map((l) => '<div class="bm-line' + (curSku === l.sku_id ? ' is-cur' : '') + '">' +
       '<div style="min-width:0"><div class="bm-line__name">' + esc(short(l.sku_name)) + '</div>' +
-      '<div class="bm-line__sub">' + count(l) + ' pcs' + (l.bins && l.bins.length ? ' · ' + esc(l.bins.map(binShort).join(', ')) : '') + '</div></div>' +
-      '<div class="bm-line__pills">' + pills(l, scanning) + '</div></div>').join('') + '</div>';
+      '<div class="bm-line__sub">' + (blind ? p2('dipindai ' + n(l.qty_received), n(l.qty_received) + ' scanned') : count(l) + ' unit') + bins(l) + '</div></div>' +
+      '<div class="bm-line__pills">' + (blind ? (l.qty_damaged ? S.pill('stop', 'Rusak ' + l.qty_damaged, 'Damaged ' + l.qty_damaged) : '')
+        : pills(l, scanning)) + '</div></div>').join('') + '</div>';
   }
 
   /* ---------- the step bar ---------- */
@@ -182,8 +222,11 @@
   /* cur: index 0..5, or 6 when everything is done. Earlier steps of an open
    * receipt can be tapped to go back. */
   function stepBar(cur, R) {
-    const canGo = (i) => R && R.status === 'open' && i < cur && i <= 3 && (i === 0 || R.can_scan);
-    const segs = STEPS.map((s, i) => {
+    /* A locked Mode manual count (step 3 opened) cannot go back to counting. */
+    const canGo = (i) => R && R.status === 'open' && i < cur && i <= 3 && (i === 0 || R.can_scan) && !(i === 1 && R.count_locked);
+    /* Mode manual: step 2 is counted by hand, not scanned. */
+    const steps = S.manualMode() ? STEPS.map((s) => (s[0] === 'scan' ? ['scan', 'Hitung barang', 'Count items'] : s)) : STEPS;
+    const segs = steps.map((s, i) => {
       const cls = 'bm-bar__seg' + (i < cur ? ' is-done' : '') + (i === cur ? ' is-cur' : '');
       const lab = '<span class="bm-bar__lab">' + (i + 1) + '. ' + p2(s[1], s[2]) + '</span>';
       return canGo(i) ? '<li><button type="button" class="' + cls + '" data-gostep="' + s[0] + '">' + lab + '</button></li>'
@@ -191,7 +234,7 @@
     }).join('');
     const cap = cur >= STEPS.length
       ? '<span>' + p2('Selesai', 'Done') + '</span><b>' + p2('Semua sudah di rak', 'Everything is on the rack') + '</b>'
-      : '<span>' + p2('Langkah ' + (cur + 1) + ' dari 6', 'Step ' + (cur + 1) + ' of 6') + '</span><b>' + p2(STEPS[cur][1], STEPS[cur][2]) + '</b>';
+      : '<span>' + p2('Langkah ' + (cur + 1) + ' dari 6', 'Step ' + (cur + 1) + ' of 6') + '</span><b>' + p2(steps[cur][1], steps[cur][2]) + '</b>';
     return '<nav class="bm-bar" data-aria-id="Langkah barang masuk" data-aria-en="Inbound steps" aria-label="' + esc(t('Langkah barang masuk', 'Inbound steps')) + '">' +
       '<ol class="bm-bar__segs">' + segs + '</ol><div class="bm-bar__cap">' + cap + '</div></nav>';
   }
@@ -321,7 +364,8 @@
     const row = (d, today) => '<button type="button" class="k-row bm-dl" data-ref="' + esc(d.reference) + '" style="width:100%;text-align:left">' +
       '<span class="k-row__icon">' + icon('truck', 26) + '</span><span class="k-row__text">' +
       '<span class="k-row__title k-mono" style="white-space:nowrap">' + esc(d.reference) + '</span>' +
-      '<span class="k-row__sub">' + esc(d.brand_name) + ' · ' + n(d.sku_count) + ' SKU · ' + n(d.units) + ' unit' +
+      '<span class="k-row__sub">' + esc(d.brand_name) + ' · ' + p2(n(d.sku_count) + ' produk', n(d.sku_count) + ' product(s)') +
+      (S.manualMode() ? '' : ' · ' + n(d.units) + ' unit') +   /* Mode manual: the count is blind, no PO total */
       (d.brand_po_number ? ' · ' + esc(d.brand_po_number) : '') + '</span>' +
       '<span style="margin-top:4px">' + (d.receipt_id ? S.pill('info', 'Sedang diterima', 'Being received')
         : today ? S.pill('ok', 'Tiba hari ini', 'Arrives today')
@@ -333,12 +377,12 @@
     ctx.body.innerHTML = '<div class="bm-wrap">' +
       stepBar(0, null) +
       '<form class="k-card k-card--pad k-stack" id="bm-open">' +
-        '<label class="k-field"><span class="k-field__label" ' + biAttr('Ninja reference atau No. PO merek', 'Ninja reference or brand PO number') + '></span>' +
+        '<label class="k-field"><span class="k-field__label" ' + biAttr('Nomor referensi Ninja atau No. PO merek', 'Ninja reference number or brand PO number') + '></span>' +
         '<input class="k-input k-mono" id="bm-code" autocomplete="off" autocapitalize="characters" spellcheck="false" style="font-size:20px">' +
         '<span class="k-field__hint" ' + biAttr('Contoh: RPL-MA5-2609-002 atau PO/PRG/2610/0457', 'For example: RPL-MA5-2609-002 or PO/PRG/2610/0457') + '></span></label>' +
         btn('k-btn--primary k-btn--lg k-btn--block', 'Buka kiriman', 'Open delivery', 'id="bm-go"', 'arrow') +
       '</form>' +
-      (toPrint.length ? '<div class="k-stack k-stack--tight">' + bis('Slip putaway belum dicetak', 'Putaway slips not printed', 'k-eyebrow') +
+      (toPrint.length ? '<div class="k-stack k-stack--tight">' + bis('Slip taruh di rak belum dicetak', 'Putaway slips not printed', 'k-eyebrow') +
         '<div class="k-list">' + toPrint.map((r) => '<a class="k-row k-row--caution" href="?receipt=' + r.id + '&step=print">' +
           '<span class="k-row__icon k-row__icon--caution">' + icon('print', 26) + '</span><span class="k-row__text">' +
           '<span class="k-row__title k-mono">' + esc(r.reference || r.no_po_code || ('#' + r.id)) + '</span>' +
@@ -362,8 +406,10 @@
           '<span class="k-row__title k-mono">' + esc(r.no_po_code || ('#' + r.id)) + '</span>' +
           '<span class="k-row__sub">' + esc(r.brand_name || '') + ' · ' + n(r.units) + ' unit</span></span>' +
           '<span class="k-row__chev">' + icon('chev', 22) + '</span></a>').join('') + '</div></div>' : '') +
-      note('info', 'Di pintu: cocokkan jumlah karton dengan Surat Jalan saja. Barang dihitung per unit (pcs) saat dipindai. Jangan tanda tangan dulu.',
-        'At the door: only check the carton count against the Surat Jalan. Goods are counted per unit (pcs) when scanned. Do not sign yet.') +
+      (S.manualMode() ? note('info', 'Di pintu: cocokkan jumlah karton dengan Surat Jalan saja. Mode manual: barang dihitung dengan tangan per produk, lalu diketik. Jangan tanda tangan dulu.',
+        'At the door: only check the carton count against the Surat Jalan. Manual mode: goods are counted by hand per product, then typed. Do not sign yet.')
+        : note('info', 'Di pintu: cocokkan jumlah karton dengan Surat Jalan saja. Barang dihitung per unit saat dipindai. Jangan tanda tangan dulu.',
+          'At the door: only check the carton count against the Surat Jalan. Goods are counted per unit when scanned. Do not sign yet.')) +
       '<div class="k-laptop-only k-stack k-stack--tight" style="margin-top:8px">' + bis('Penerimaan terakhir', 'Recent receipts', 'k-eyebrow') + receiptTable(recent.receipts) + '</div>' +
       '</div>';
     const code = $('#bm-code', ctx.body);
@@ -494,13 +540,15 @@
   function oldTasksNote(R) {
     if (!R.tasks_open) return '';
     return '<div class="k-note k-note--info">' + icon('rack', 20) + '<span>' +
-      p2(R.tasks_open + ' bin sementara dari batch sebelumnya siap ditaruh di rak.', R.tasks_open + ' temporary bin(s) from an earlier batch are ready to put away.') +
+      p2(R.tasks_open + ' bin sementara dari tahap sebelumnya siap ditaruh di rak.', R.tasks_open + ' temporary bin(s) from an earlier round are ready to put away.') +
       ' <a class="k-linkbtn" href="?receipt=' + R.id + '&step=putaway" ' + biAttr('Taruh di rak', 'Put away') + '></a></span></div>';
   }
 
   async function door(ctx, R) {
     S.fullScreen(false);
-    S.setSub('Cek karton, lalu pindai per unit.', 'Check the cartons, then scan per unit.');
+    const manual = S.manualMode();
+    if (manual) S.setSub('Cek karton, lalu hitung per produk dan ketik jumlahnya.', 'Check the cartons, then count per product and type the number.');
+    else S.setSub('Cek karton, lalu pindai per unit.', 'Check the cartons, then scan per unit.');
     const cs = R.carton_state;
     const started = R.total_received > 0;
     let carton = '';
@@ -527,13 +575,19 @@
     }
     const exp = R.lines.filter((l) => l.qty_expected);
     const action = cs === 'refused' ? btn('k-btn--secondary k-btn--lg k-btn--block', 'Kembali', 'Back', 'id="bm-home"', 'back')
-      : cs === 'not_counted' ? btn('k-btn--primary k-btn--lg k-btn--block', 'Cek karton & mulai pindai', 'Check cartons and start scanning', 'id="bm-cc"', 'scan')
-        : btn('k-btn--primary k-btn--lg k-btn--block', started ? 'Lanjut pindai' : 'Mulai pindai', started ? 'Continue scanning' : 'Start scanning', 'id="bm-start"' + (R.can_scan ? '' : ' disabled'), 'scan');
+      : cs === 'not_counted' ? (manual ? btn('k-btn--primary k-btn--lg k-btn--block', 'Cek karton & mulai hitung', 'Check cartons and start counting', 'id="bm-cc"', 'count')
+        : btn('k-btn--primary k-btn--lg k-btn--block', 'Cek karton & mulai pindai', 'Check cartons and start scanning', 'id="bm-cc"', 'scan'))
+        : manual ? btn('k-btn--primary k-btn--lg k-btn--block', started ? 'Lanjut hitung' : 'Mulai hitung', started ? 'Continue counting' : 'Start counting', 'id="bm-start"' + (R.can_scan ? '' : ' disabled'), 'count')
+          : btn('k-btn--primary k-btn--lg k-btn--block', started ? 'Lanjut pindai' : 'Mulai pindai', started ? 'Continue scanning' : 'Start scanning', 'id="bm-start"' + (R.can_scan ? '' : ' disabled'), 'scan');
+    /* Mode manual: the count is blind, so the expected quantities are not shown before it. */
+    const expCard = manual || blindOf(R) ? (R.replenishment_id ? note('info', 'Mode manual: jumlah di PO tidak ditampilkan. Hitung setiap produk dengan tangan, lalu ketik jumlahnya.',
+      'Manual mode: the PO quantities are not shown. Count each product by hand, then type the number.')
+      : note('caution', 'Belum ada PO: hitung semua unit. Ops HQ yang mencocokkan.', 'No PO yet: count every unit. Ops HQ will match it.')) : null;
     ctx.body.innerHTML = '<div class="bm-wrap">' + stepBar(0, R) + headHtml(R) +
       '<div class="k-stack k-stack--tight">' + bis('Karton', 'Cartons', 'k-eyebrow') + carton + '</div>' +
       oldTasksNote(R) +
-      (exp.length ? '<div class="k-card k-card--pad k-stack k-stack--tight"><div class="k-line k-line--between">' + bis('Yang diharapkan', 'Expected', 'k-strong') +
-        '<span class="k-mono k-strong">' + n(R.total_expected) + ' pcs</span></div>' +
+      (expCard != null ? expCard : exp.length ? '<div class="k-card k-card--pad k-stack k-stack--tight"><div class="k-line k-line--between">' + bis('Yang diharapkan', 'Expected', 'k-strong') +
+        '<span class="k-mono k-strong">' + n(R.total_expected) + ' unit</span></div>' +
         '<table class="k-table bm-mini"><tbody>' + exp.map((l) => '<tr><td>' + esc(short(l.sku_name)) + '</td><td class="k-num">' + n(l.qty_expected) + '</td></tr>').join('') + '</tbody></table></div>'
         : note('caution', 'Belum ada PO: hitung semua unit. Ops HQ yang mencocokkan.', 'No PO yet: count every unit. Ops HQ will match it.')) +
       (S.atLeast('hq') && R.no_po && !R.no_po_linked ? '<div>' + btn('k-btn--secondary', 'Hubungkan ke permintaan', 'Link to a request', 'id="bm-link" data-min-role="hq"', 'link') + '</div>' : '') +
@@ -589,37 +643,46 @@
 
   /* ================= 2: scan every unit ================= */
 
-  const SCAN = { rid: null, last: null, damaged: false, pending: null, after: null, unknown: null, wrong: null };
+  const SCAN = { rid: null, last: null, damaged: false, pending: null, after: null, unknown: null, wrong: null, undone: null };
 
   async function scanStep(ctx, R) {
+    /* A Mode manual count locked at step 3: no more units until an SPV reopens it. */
+    if (R.count_locked) { go({ receipt: R.id, step: 'review' }, true); return; }
+    if (S.manualMode() && S.param('scan') !== '1') return manualCountStep(ctx, R);
     S.fullScreen(true, { title: ['Pindai barang', 'Scan items'], onBack: () => go({}) });
     if (!R.can_scan) { go({ receipt: R.id, step: 'door' }, true); return; }
-    if (SCAN.rid !== R.id) Object.assign(SCAN, { rid: R.id, last: null, damaged: false, pending: null, after: null, unknown: null, wrong: null });
+    if (SCAN.rid !== R.id) Object.assign(SCAN, { rid: R.id, last: null, damaged: false, pending: null, after: null, unknown: null, wrong: null, undone: null });
     if (!SCAN.last) {
       const filling = R.loads.filter((l) => l.status === 'filling');
       SCAN.last = filling.length ? filling[filling.length - 1] : null;
     }
     ctx.body.innerHTML = '<div class="bm-wrap" id="bm-scan">' + stepBar(1, R) +
+      (S.manualMode() ? '<div class="k-note k-note--caution">' + icon('warn', 20) + '<span>' + p2('Mode manual aktif. Pindai hanya kalau pemindai Anda berfungsi.', 'Manual mode is on. Scan only if your scanner works.') +
+        ' <button type="button" class="k-linkbtn" id="bm-totyped">' + p2('Kembali ke hitung ketik', 'Back to the typed count') + '</button></span></div>' : '') +
       '<div class="k-line k-line--between"><h2 class="k-h2" ' + biAttr('Pindai setiap unit', 'Scan every unit') + '></h2>' +
         '<span class="k-mono k-strong" id="bm-total"></span></div>' +
       '<div id="bm-answer" aria-live="polite"></div>' +
       '<div id="bm-zone"></div>' +
+      '<div id="bm-undo" class="k-stack k-stack--tight"></div>' +
       '<div id="bm-dmg" class="k-stack k-stack--tight"></div>' +
       '<button type="button" class="k-linkbtn" id="bm-manual" style="align-self:flex-start">' + p2('Produk tanpa barcode? Pilih dari daftar', 'Product without a barcode? Pick from the list') + '</button>' +
       '<div id="bm-bins"></div>' +
       oldTasksNote(R) +
-      '<div class="k-card k-card--pad k-stack k-stack--tight"><div class="k-line k-line--between" style="flex-wrap:wrap">' + bis('Selisih per produk', 'Differences per product', 'k-strong') +
-        '<span class="k-caption" ' + biAttr('dipindai/diharapkan', 'scanned/expected') + '></span></div><div id="bm-lines"></div></div>' +
+      (blindOf(R) ? '<div class="k-card k-card--pad k-stack k-stack--tight">' + bis('Dipindai per produk', 'Scanned per product', 'k-strong') + '<div id="bm-lines"></div></div>'
+        : '<div class="k-card k-card--pad k-stack k-stack--tight"><div class="k-line k-line--between" style="flex-wrap:wrap">' + bis('Selisih per produk', 'Differences per product', 'k-strong') +
+          '<span class="k-caption" ' + biAttr('dipindai/diharapkan', 'scanned/expected') + '></span></div><div id="bm-lines"></div></div>') +
       '<div class="k-actionbar">' + btn('k-btn--primary k-btn--lg k-btn--block', 'Selesai pindai', 'Done scanning', 'id="bm-done"', 'check') + '</div></div>';
     const host = $('#bm-scan', ctx.body);
     bindBar(host, R);
     let seq = 0;
     const zone = S.scan(onCode, { mount: $('#bm-zone', host), title: ['Pindai barang', 'Scan the item'] });
     $('#bm-manual', host).addEventListener('click', () => go({ receipt: R.id, step: 'manual' }));
+    const toTyped = $('#bm-totyped', host);
+    if (toTyped) toTyped.addEventListener('click', () => go({ receipt: R.id, step: 'scan' }, true));
     $('#bm-done', host).addEventListener('click', () => {
       if (!R.total_received) { S.toast(['Pindai minimal satu unit dulu.', 'Scan at least one unit first.'], 'caution'); return; }
       if (SCAN.pending || SCAN.after) { S.toast(['Selesaikan unit rusak dulu.', 'Finish the damaged unit first.'], 'caution'); return; }
-      go({ receipt: R.id, step: 'review' });
+      toReview(R);
     });
 
     const curLoad = () => SCAN.last && (R.loads.find((x) => x.id === SCAN.last.id) || SCAN.last);
@@ -645,19 +708,23 @@
           '<span class="k-target__hint" ' + biAttr('Ambil satu unit dari karton, pindai barcodenya. WMS langsung bilang masuk ke bin mana.', 'Take one unit from the carton and scan its barcode. The WMS tells you which bin at once.') + '></span></div></div>';
       }
       const line = R.lines.find((x) => x.sku_id === l.sku_id) || {};
-      const label = !l.label_scanned ? (l.is_extra ? ['Lebih dari PO. Ambil bin kosong ini, pindai labelnya', 'More than the PO. Take this empty bin, scan its label']
+      /* Blind (Mode manual): no "of N" and no "more than the PO"; an extra bin reads like any bin. */
+      const blind = blindOf(R);
+      const extra = l.is_extra && !blind;
+      const label = !l.label_scanned ? (extra ? ['Lebih dari PO. Ambil bin kosong ini, pindai labelnya', 'More than the PO. Take this empty bin, scan its label']
         : ['Ambil bin kosong ini, pindai labelnya', 'Take this empty bin, scan its label'])
-        : l.is_extra ? ['Lebih dari PO. Masukkan ke', 'More than the PO. Put in'] : ['Masukkan ke', 'Put in'];
+        : extra ? ['Lebih dari PO. Masukkan ke', 'More than the PO. Put in'] : ['Masukkan ke', 'Put in'];
       const got = line.qty_received != null ? line.qty_received : l.qty;
-      const cnt = line.qty_expected != null
-        ? '<b>' + n(got) + '</b> ' + p2('dari', 'of') + ' ' + n(line.qty_expected)
-        : '<b>' + n(got) + '</b> pcs';
-      return '<div class="k-target bm-answer' + (l.is_extra ? ' k-target--stop' : '') + '"><div class="k-target__text">' +
+      const cnt = blind ? '<b>' + n(got) + '</b> ' + p2('dipindai', 'scanned')
+        : line.qty_expected != null
+          ? '<b>' + n(got) + '</b> ' + p2('dari', 'of') + ' ' + n(line.qty_expected)
+          : '<b>' + n(got) + '</b> unit';
+      return '<div class="k-target bm-answer' + (extra ? ' k-target--stop' : '') + '"><div class="k-target__text">' +
         '<span class="k-target__label" ' + biAttr(label[0], label[1]) + '>' + esc(t(label[0], label[1])) + '</span>' +
         '<span class="k-target__code">' + esc(l.bin_code) + '</span>' +
         '<span class="bm-answer__sku">' + esc(short(l.sku_name || line.sku_name)) + '</span>' +
         '<span class="bm-answer__count">' + cnt + '</span>' +
-        (l.is_extra ? '<span class="k-target__hint" style="color:var(--stop)" ' + biAttr('Tunggu Ops HQ. Jangan ke rak.', 'Waits for Ops HQ. Not to the rack.') + '></span>' : '') +
+        (extra ? '<span class="k-target__hint" style="color:var(--stop)" ' + biAttr('Tunggu Ops HQ. Jangan ke rak.', 'Waits for Ops HQ. Not to the rack.') + '></span>' : '') +
         '</div>' + btn('k-btn--secondary k-btn--sm', 'Bin penuh', 'Bin full', 'id="bm-full"') + '</div>';
     }
 
@@ -706,16 +773,50 @@
         '<div>' + btn('k-btn--secondary k-btn--sm', 'Tambah bin sementara', 'Add a temporary bin', 'id="bm-addbin" data-min-role="supervisor"', 'plus') + '</div></div>';
     }
 
+    /* Batalkan pindai terakhir: takes back this person's last unit (a double scan),
+     * while its temporary bin is still being filled. Says what was taken back. */
+    function undoHtml() {
+      const u = SCAN.undone;
+      return (u ? '<div class="k-note k-note--info">' + icon('undo', 20) + '<span>' +
+          p2('Dibatalkan: 1 unit ' + u.name + '. Sekarang ' + u.got + ' unit.', 'Taken back: 1 unit of ' + u.name + '. Now ' + u.got + ' unit(s).') + '</span></div>' : '') +
+        (R.total_received ? '<button type="button" class="k-linkbtn" id="bm-undobtn" style="align-self:flex-start">' + icon('undo', 18) +
+          p2('Batalkan pindai terakhir', 'Undo last scan') + '</button>' : '');
+    }
+
+    async function undoLast(b) {
+      if (SCAN.pending || SCAN.after) { S.toast(['Selesaikan unit rusak dulu.', 'Finish the damaged unit first.'], 'caution'); return; }
+      b.disabled = true;
+      ++seq;
+      let res;
+      try { res = await scanPost('in-undo-' + R.id, 'undo', '/inbound/receipts/' + R.id + '/units/undo', {}); }
+      catch (e) { S.fail(e); b.disabled = false; return; }
+      const name = short((res.sku && res.sku.name_display) || '');
+      R.total_received = res.total_received;
+      R.free_bins = res.free_bins;
+      if (res.line) {
+        const j = R.lines.findIndex((x) => x.sku_id === res.line.sku_id);
+        if (j >= 0) R.lines[j] = Object.assign({}, R.lines[j], res.line);
+      }
+      SCAN.undone = { name, got: res.line ? res.line.qty_received : 0 };
+      S.toast(res.message, 'info');
+      paint();
+      reload();
+    }
+
     function paint() {
       if (!host.isConnected) return;
       const l = curLoad();
-      $('#bm-total', host).textContent = n(R.total_received) + (R.total_expected != null ? ' / ' + n(R.total_expected) : '') + ' pcs';
+      $('#bm-undo', host).innerHTML = undoHtml();
+      const ub = $('#bm-undobtn', host);
+      if (ub) ub.addEventListener('click', () => undoLast(ub));
+      const blind = blindOf(R);
+      $('#bm-total', host).textContent = n(R.total_received) + (R.total_expected != null && !blind ? ' / ' + n(R.total_expected) : '') + ' unit';
       const ans = $('#bm-answer', host);
       ans.innerHTML = answerHtml();
       const dm = $('#bm-dmg', host);
       dm.innerHTML = damageHtml();
       $('#bm-bins', host).innerHTML = binsHtml();
-      $('#bm-lines', host).innerHTML = linesHtml(R, true, l && l.status === 'filling' ? l.sku_id : null);
+      $('#bm-lines', host).innerHTML = linesHtml(R, true, l && l.status === 'filling' ? l.sku_id : null, blind);
       const needLabel = l && l.status === 'filling' && !l.label_scanned && !SCAN.damaged;
       zone.setTitle(needLabel ? 'Pindai label bin, lalu unitnya' : 'Pindai barang', needLabel ? 'Scan the bin label, then the unit' : 'Scan the item');
       S.toggle($('#bm-dmgsw', dm), (on) => { SCAN.damaged = on; SCAN.pending = null; SCAN.after = null; paint(); });
@@ -746,17 +847,20 @@
         const fresh = await getReceipt(R.id);
         if (my !== seq) return;
         R = fresh;
+        if (R.count_locked && host.isConnected) { go({ receipt: R.id, step: 'review' }, true); return; }   // locked on another phone
         paint();
       } catch (e) { /* the next scan refreshes */ }
     }
 
     async function countUnit(unit, damageTo) {
-      const body = Object.assign({ idempotency_key: key() }, unit);
+      const body = Object.assign({}, unit);
       if (SCAN.damaged) { body.damaged = true; body.damage_to = damageTo || null; }
       ++seq;
       let res;
-      try { res = await API().post('/inbound/receipts/' + R.id + '/units', body); }
+      const what = (unit.code || 'sku-' + unit.sku_id) + (SCAN.damaged ? '|' + (damageTo || '') : '');
+      try { res = await scanPost('in-' + R.id, what, '/inbound/receipts/' + R.id + '/units', body); }
       catch (e) { zone.reject(S.pick(e.message)); S.fail(e); return null; }
+      SCAN.undone = null;
       if (!res.accepted) {
         if (res.outcome === 'needs_damage_place') { SCAN.pending = unit; paint(); return res; }
         zone.reject(S.pick(res.message));
@@ -810,6 +914,246 @@
     paint();
   }
 
+  /* ================= 2 (Mode manual): count by hand, typed blind ================= */
+  /* The dark store's scanners or cameras are broken (S.manualMode()). Each product
+   * shows its photo, name and size, never the expected number; the person counts
+   * by hand and types the good units and, apart, the damaged ones. The server
+   * books them in one go (/manual-count, one idempotency key per entry) and names
+   * the temporary bin; *Sudah di bin sementara X* replaces the label scan. Step 3
+   * compares against the PO exactly as for scans. */
+  const MAN = { rid: null, extra: [], draft: {}, scopes: new Set() };
+
+  async function manualCountStep(ctx, R) {
+    S.fullScreen(true, { title: ['Hitung barang', 'Count items'], onBack: () => go({}) });
+    if (!R.can_scan) { go({ receipt: R.id, step: 'door' }, true); return; }
+    if (MAN.rid !== R.id) Object.assign(MAN, { rid: R.id, extra: [], draft: {}, scopes: new Set() });
+    let busy = false, catalog = null, seq = 0;
+    ctx.body.innerHTML = '<div class="bm-wrap" id="bm-mc"></div>';
+    const host = $('#bm-mc', ctx.body);
+    const photoOf = (key) => '<span class="bm-pthumb">' + (key ? '<img alt="" src="../api/photos/' + esc(key) + '">' : icon('box', 24)) + '</span>';
+    const whole = (v) => (String(v == null ? '' : v).trim() === '' ? 0 : Number(v));
+
+    /* The delivery's products (on the PO or already counted), then any picked from the list. */
+    function products() {
+      const list = R.lines.map((l) => ({ sku_id: l.sku_id, sku_name: l.sku_name, photo_key: l.photo_key, unit_size: l.unit_size }));
+      MAN.extra.forEach((x) => { if (!list.some((y) => y.sku_id === x.sku_id)) list.push(x); });
+      return list;
+    }
+    const loadsOf = (skuId) => R.loads.filter((l) => l.sku_id === skuId && (l.status === 'filling' || l.status === 'full') && l.qty > 0);
+    const unconfirmed = () => R.loads.filter((l) => l.status === 'filling' && l.qty > 0 && !l.label_scanned);
+
+    function cardHtml(x) {
+      const l = R.lines.find((y) => y.sku_id === x.sku_id);
+      const d = MAN.draft[x.sku_id] || {};
+      const good = l ? l.qty_received - l.qty_damaged : 0, bad = l ? l.qty_damaged : 0;
+      const counted = good + bad > 0;
+      const bins = loadsOf(x.sku_id).map((ld) => (ld.label_scanned
+        ? '<div>' + S.pill('ok', 'Di bin sementara ' + ld.bin_code, 'In temporary bin ' + ld.bin_code) + '</div>'
+        : '<div class="k-target"><div class="k-target__text"><span class="k-target__label" ' + biAttr('Taruh di bin sementara', 'Put in temporary bin') + '></span>' +
+          '<span class="k-target__code k-target__code--md">' + esc(ld.bin_code) + '</span></div></div>' +
+          btn('k-btn--primary k-btn--block', 'Sudah di bin sementara ' + ld.bin_code, 'In temporary bin ' + ld.bin_code, 'data-binok="' + ld.id + '"', 'check'))).join('');
+      const dmg = R.differences.filter((df) => df.kind === 'damaged' && df.sku_id === x.sku_id);
+      const dmgHtml = dmg.map((df) => '<div class="k-note k-note--stop">' + icon('warn', 20) + '<span>' +
+          (df.place === 'quarantine' ? p2(df.qty + ' rusak: taruh di baki ' + (df.bin_code || R.quarantine_tray) + '. Jangan ke rak.', df.qty + ' damaged: put them in tray ' + (df.bin_code || R.quarantine_tray) + '. Not on the rack.')
+            : p2(df.qty + ' rusak: berikan ke driver. Tulis di Surat Jalan: ditolak, rusak.', df.qty + ' damaged: give them to the driver. Write on the Surat Jalan: refused, damaged.')) + '</span></div>' +
+        (df.photos ? '' : photoSlot({ key: 'dmg:' + df.id, id: 'Foto kerusakan', en: 'Damage photo', capture: 'environment', receiptId: R.id, kind: 'damage', diff: df.id, done: false }))).join('');
+      return '<div class="k-card k-card--pad k-stack" data-card="' + x.sku_id + '">' +
+        '<div class="bm-prod">' + photoOf(x.photo_key) + '<div style="min-width:0"><div class="bm-line__name">' + esc(short(x.sku_name)) + '</div>' +
+          (x.unit_size ? '<div class="k-caption">' + esc(x.unit_size) + '</div>' : '') +
+          (counted ? '<div class="k-strong" style="color:var(--ok)">' + p2('Dicatat: ' + good + ' baik' + (bad ? ', ' + bad + ' rusak' : ''), 'Saved: ' + good + ' good' + (bad ? ', ' + bad + ' damaged' : '')) + '</div>' : '') +
+        '</div></div>' + bins + dmgHtml +
+        '<div class="bm-qty">' +
+          '<label class="k-field"><span class="k-field__label" ' + biAttr(counted ? 'Tambah unit baik' : 'Unit baik', counted ? 'Add good units' : 'Good units') + '></span>' +
+            '<input class="k-input bm-numin" type="number" inputmode="numeric" min="0" max="9999" step="1" data-good value="' + esc(d.good || '') + '"></label>' +
+          '<label class="k-field"><span class="k-field__label" ' + biAttr(counted ? 'Tambah unit rusak' : 'Unit rusak', counted ? 'Add damaged units' : 'Damaged units') + '></span>' +
+            '<input class="k-input bm-numin" type="number" inputmode="numeric" min="0" max="9999" step="1" data-bad value="' + esc(d.bad || '') + '"></label>' +
+        '</div>' +
+        '<div class="k-stack k-stack--tight" data-place' + (whole(d.bad) > 0 ? '' : ' hidden') + '>' + bis('Unit rusak ke mana?', 'Where do the damaged units go?', 'k-strong') +
+          '<div class="k-segment" role="group">' +
+            '<button type="button" data-to="quarantine" aria-pressed="' + (d.place === 'quarantine') + '">' + p2('Karantina ' + R.quarantine_tray, 'Quarantine ' + R.quarantine_tray) + '</button>' +
+            '<button type="button" data-to="driver" aria-pressed="' + (d.place === 'driver') + '">' + p2('Kembali ke driver', 'Back to the driver') + '</button></div></div>' +
+        btn('k-btn--secondary k-btn--block', counted ? 'Tambah ke hitungan' : 'Simpan hitungan', counted ? 'Add to the count' : 'Save the count', 'data-save', 'check') +
+        '</div>';
+    }
+
+    function paint() {
+      if (!host.isConnected) return;
+      const list = products();
+      host.innerHTML = stepBar(1, R) +
+        '<div class="k-line k-line--between" style="flex-wrap:wrap"><h2 class="k-h2" ' + biAttr('Hitung setiap produk', 'Count each product') + '></h2>' +
+          '<span class="k-mono k-strong">' + p2(n(R.total_received) + ' unit dicatat', n(R.total_received) + ' units saved') + '</span></div>' +
+        '<div class="k-note k-note--caution">' + icon('warn', 20) + '<span>' + p2('Mode manual: hitung unit setiap produk dengan tangan, lalu ketik jumlahnya. Unit rusak diketik terpisah. Jumlah di PO tidak ditampilkan.',
+          'Manual mode: count each product\'s units by hand, then type the number. Type damaged units apart. The PO quantities are not shown.') + '</span></div>' +
+        '<div class="k-line" style="gap:16px;flex-wrap:wrap">' +
+          '<button type="button" class="k-linkbtn" id="bm-scanok">' + icon('scan', 18) + p2('Masih bisa pindai?', 'Scanner still works?') + '</button>' +
+          (R.total_received ? '<button type="button" class="k-linkbtn" id="bm-mundo">' + icon('undo', 18) + p2('Batalkan ketikan terakhir', 'Undo last entry') + '</button>' : '') + '</div>' +
+        (R.free_bins ? '' : '<div class="k-stack k-stack--tight">' + note('caution', 'Semua bin sementara terisi. Panggil SPV untuk tambah bin sementara.', 'Every temporary bin is taken. Ask the SPV to add a temporary bin.') +
+          '<div>' + btn('k-btn--secondary k-btn--sm', 'Tambah bin sementara', 'Add a temporary bin', 'id="bm-addbin" data-min-role="supervisor"', 'plus') + '</div></div>') +
+        oldTasksNote(R) +
+        (list.length ? list.map(cardHtml).join('') : note('info', 'Belum ada produk. Pilih produk dari daftar.', 'No product yet. Pick a product from the list.')) +
+        '<button type="button" class="k-btn k-btn--secondary" id="bm-mpick" style="align-self:flex-start">' + icon('list', 18) + p2('Produk tidak ada di daftar? Pilih dari daftar', 'Product not listed? Pick from the list') + '</button>' +
+        '<div class="k-actionbar">' + btn('k-btn--primary k-btn--lg k-btn--block', 'Selesai hitung', 'Done counting', 'id="bm-mdone"', 'check') + '</div>';
+      bind();
+      bindBar(host, R);
+      bindSlots(host);
+      S.applyLang(host);
+      S.lockAll(host);
+    }
+
+    function bind() {
+      $('#bm-scanok', host).addEventListener('click', () => go({ receipt: R.id, step: 'scan', scan: 1 }));
+      const un = $('#bm-mundo', host);
+      if (un) un.addEventListener('click', () => undoEntry(un));
+      const ab = $('#bm-addbin', host);
+      if (ab) ab.addEventListener('click', () => addBin(reload));
+      $('#bm-mpick', host).addEventListener('click', pickFromList);
+      $('#bm-mdone', host).addEventListener('click', () => {
+        if (busy) return;
+        if (!R.total_received) { S.toast(['Simpan minimal satu hitungan dulu.', 'Save at least one count first.'], 'caution'); return; }
+        const left = unconfirmed().map((l) => l.bin_code).join(', ');
+        if (left) { S.toast(['Ketuk Sudah di bin sementara dulu: ' + left + '.', 'Tap In temporary bin first: ' + left + '.'], 'caution'); return; }
+        toReview(R);
+      });
+      $$('[data-card]', host).forEach((card) => {
+        const sku = +card.dataset.card;
+        const d = MAN.draft[sku] = MAN.draft[sku] || {};
+        const gIn = $('[data-good]', card), bIn = $('[data-bad]', card), place = $('[data-place]', card);
+        gIn.addEventListener('input', () => { d.good = gIn.value; });
+        bIn.addEventListener('input', () => { d.bad = bIn.value; place.hidden = !(whole(bIn.value) > 0); });
+        $$('[data-to]', card).forEach((b) => b.addEventListener('click', () => {
+          d.place = b.dataset.to;
+          $$('[data-to]', card).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        }));
+        const sv = $('[data-save]', card);
+        sv.addEventListener('click', () => save(sku, sv));
+        $$('[data-binok]', card).forEach((b) => b.addEventListener('click', () => confirmBin(+b.dataset.binok, b)));
+      });
+    }
+
+    async function reload() {
+      const my = ++seq;
+      try {
+        const fresh = await getReceipt(R.id);
+        if (my !== seq) return;
+        R = fresh;
+        if (R.count_locked && host.isConnected) { go({ receipt: R.id, step: 'review' }, true); return; }   // locked on another phone
+      } catch (e) { S.fail(e); }
+      paint();
+    }
+
+    /* One entry: serialised (the button stays off until the server answers) and
+     * sent with S.scanKey, so a retry after a lost connection is replayed. */
+    async function save(sku, b) {
+      if (busy) return;
+      const d = MAN.draft[sku] || {};
+      const good = whole(d.good), bad = whole(d.bad);
+      if (![good, bad].every((v) => Number.isInteger(v) && v >= 0 && v <= 9999)) { S.toast(['Ketik angka bulat, 0 sampai 9999.', 'Type a whole number, 0 to 9999.'], 'caution'); return; }
+      if (good + bad <= 0) { S.toast(['Ketik jumlah unit yang dihitung dulu.', 'Type the number of units counted first.'], 'caution'); return; }
+      if (bad && !d.place) { S.toast(['Pilih ke mana unit rusak: karantina atau driver.', 'Choose where the damaged units go: quarantine or the driver.'], 'caution'); return; }
+      const x = products().find((y) => y.sku_id === sku) || {};
+      const nm = short(x.sku_name);
+      const ok = await S.confirm({
+        title: ['Simpan hitungan?', 'Save the count?'],
+        text: [nm + ': ' + good + ' unit baik' + (bad ? ', ' + bad + ' rusak' : '') + '. Sudah dihitung dengan teliti?',
+          nm + ': ' + good + ' good unit(s)' + (bad ? ', ' + bad + ' damaged' : '') + '. Counted carefully?'],
+        ok: ['Simpan', 'Save'],
+      });
+      if (!ok || busy) return;
+      busy = true; b.disabled = true;
+      let r;
+      /* One retry scope per product: a lost answer for this product keeps its key
+       * until this same entry is sent again, whatever is typed for another product
+       * meanwhile. The receipt's total in the code tells a retry (nothing changed)
+       * from a new entry with the same numbers (the first one was booked). */
+      const scope = 'in-man-' + R.id + '-' + sku;
+      MAN.scopes.add(scope);
+      try {
+        r = await scanPost(scope, [good, bad, bad ? d.place : '', R.total_received].join('|'), '/inbound/receipts/' + R.id + '/manual-count',
+          { sku_id: sku, good, damaged: bad, damage_to: bad ? d.place : null });
+      } catch (e) { S.fail(e); busy = false; b.disabled = false; if (e.status === 409) reload(); return; }
+      busy = false;
+      S.scanDone('in-man-undo-' + R.id);   // a later undo is a new one
+      if (!r.accepted) {
+        S.toast(r.message, r.outcome === 'no_free_bin' || r.outcome === 'needs_damage_place' ? 'caution' : 'stop');
+        await reload();
+        return;
+      }
+      MAN.draft[sku] = {};
+      S.toast(r.message, 'ok', 6000);
+      await reload();
+    }
+
+    async function confirmBin(loadId, b) {
+      if (busy) return;
+      busy = true; b.disabled = true;
+      try { await API().post('/inbound/loads/' + loadId + '/bin-confirm', {}); }
+      catch (e) { S.fail(e); busy = false; b.disabled = false; return; }
+      busy = false;
+      S.toast(['Bin sementara dicatat.', 'Temporary bin recorded.'], 'ok');
+      await reload();
+    }
+
+    async function undoEntry(b) {
+      if (busy) return;
+      const ok = await S.confirm({
+        title: ['Batalkan ketikan terakhir?', 'Undo the last entry?'],
+        text: ['Hitungan terakhir yang Anda simpan dihapus seluruhnya. Ketik lagi kalau perlu.', 'The last count you saved is taken back as a whole. Type it again if needed.'],
+        ok: ['Batalkan ketikan', 'Undo the entry'],
+      });
+      if (!ok || busy) return;
+      busy = true; b.disabled = true;
+      let r;
+      /* Its own scope; the code carries the total seen, so a retry of a lost undo
+       * reuses its key but the next undo (after a save or another undo) never does. */
+      try { r = await scanPost('in-man-undo-' + R.id, 'undo|' + R.total_received, '/inbound/receipts/' + R.id + '/manual-count/undo', {}); }
+      catch (e) { S.fail(e); busy = false; b.disabled = false; if (e.status === 409) reload(); return; }
+      busy = false;
+      MAN.scopes.forEach((sc) => S.scanDone(sc));   // an entry typed again after this is a new one
+      MAN.scopes.clear();
+      S.toast(r.message, 'info', 6000);
+      await reload();
+    }
+
+    /* *Pilih dari daftar*: a product of the brand that is not on the PO. Blind too. */
+    async function pickFromList() {
+      if (!catalog) {
+        try { catalog = (await API().get('/skus' + API().qs({ brand_id: R.brand_id, limit: 500 }))).skus || []; }
+        catch (e) { S.fail(e); return; }
+      }
+      const have = new Set(products().map((x) => x.sku_id));
+      const opts = catalog.filter((s) => !have.has(s.id));
+      const m = S.modal({
+        title: ['Pilih dari daftar', 'Pick from the list'],
+        body: '<div class="k-stack"><input class="k-input" id="bm-mq" autocomplete="off" data-ph-id="Cari nama produk" data-ph-en="Search the product name" placeholder="' + esc(t('Cari nama produk', 'Search the product name')) + '">' +
+          '<div class="k-list" id="bm-mres" style="max-height:50vh;overflow:auto"></div>' +
+          '<span class="k-caption" ' + biAttr('Tidak ada di daftar? Sisihkan unitnya dan panggil SPV.', 'Not on the list? Put the units aside and call the SPV.') + '></span></div>',
+        actions: [{ label: ['Tutup', 'Close'], kind: 'secondary' }],
+      });
+      const q = $('#bm-mq', m.body), res = $('#bm-mres', m.body);
+      const draw = () => {
+        const w = q.value.trim().toLowerCase();
+        const rows = opts.filter((s) => !w || String(s.name_display || '').toLowerCase().includes(w) || String(s.brand_sku_code || '').toLowerCase().includes(w)).slice(0, 40);
+        res.innerHTML = rows.length ? rows.map((s) => '<button type="button" class="k-row" data-pick="' + s.id + '" style="width:100%;text-align:left">' + photoOf(s.photo_key) +
+          '<span class="k-row__text"><span class="k-row__title">' + esc(short(s.name_display)) + '</span>' + (s.unit_size ? '<span class="k-row__sub">' + esc(s.unit_size) + '</span>' : '') + '</span></button>').join('')
+          : '<p class="k-caption">' + esc(t('Tidak ada produk yang cocok.', 'No matching product.')) + '</p>';
+        $$('[data-pick]', res).forEach((b) => b.addEventListener('click', () => {
+          const s = opts.find((y) => String(y.id) === b.dataset.pick);
+          if (!s) return;
+          MAN.extra.push({ sku_id: s.id, sku_name: s.name_display, photo_key: s.photo_key, unit_size: s.unit_size });
+          m.close();
+          paint();
+          const card = $('[data-card="' + s.id + '"]', host);
+          if (card) { card.scrollIntoView({ block: 'center' }); const gi = $('[data-good]', card); if (gi) gi.focus(); }
+        }));
+      };
+      q.addEventListener('input', draw);
+      draw();
+      S.applyLang(m.body);
+    }
+
+    paint();
+  }
+
   async function addBin(after) {
     try {
       const r = await API().post('/inbound/temp-bins' + API().qs({ site_id: S.siteId() }), {});
@@ -822,6 +1166,9 @@
   /* ================= 2: pick a product with no barcode ================= */
 
   async function manualStep(ctx, R) {
+    /* Mode manual: the typed count has its own blind *Pilih dari daftar*. */
+    if (S.manualMode() || R.count_locked) { go({ receipt: R.id, step: R.count_locked ? 'review' : 'scan' }, true); return; }
+    const blind = blindOf(R);   // Mode manual ended, the typed count not locked yet
     S.fullScreen(true, { title: ['Pilih produk', 'Pick a product'], onBack: () => go({ receipt: R.id, step: 'scan' }) });
     if (!R.can_scan) { go({ receipt: R.id, step: 'door' }, true); return; }
     const list = R.lines.map((l) => ({ sku_id: l.sku_id, sku_name: l.sku_name, has_barcode: l.has_barcode, line: l }));
@@ -844,7 +1191,7 @@
           return '<div class="k-row' + (on ? ' bm-next' : '') + '" style="flex-wrap:wrap">' +
             '<button type="button" data-sku="' + x.sku_id + '" style="all:unset;cursor:pointer;flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">' +
             '<span class="k-row__title">' + esc(short(x.sku_name)) + (x.has_barcode ? '' : ' <span class="k-caption">· ' + esc(t('tidak ada barcode', 'no barcode')) + '</span>') + '</span>' +
-            '<span class="k-row__sub k-mono">' + n(l ? l.qty_received : 0) + (l && l.qty_expected != null ? ' ' + esc(t('dari', 'of')) + ' ' + n(l.qty_expected) : '') +
+            '<span class="k-row__sub k-mono">' + n(l ? l.qty_received : 0) + (l && l.qty_expected != null && !blind ? ' ' + esc(t('dari', 'of')) + ' ' + n(l.qty_expected) : '') +
               (l && l.bins && l.bins.length ? ' · ' + esc(l.bins.map(binShort).join(', ')) : '') + '</span></button>' +
             (on ? '<div class="k-line">' + btn('k-btn--secondary', '−1', '−1', 'data-minus aria-label="-1"', 'minus') + btn('k-btn--primary', '+1', '+1', 'data-plus aria-label="+1"', 'plus') + '</div>' : '') +
             '</div>';
@@ -856,15 +1203,15 @@
       if (plus) plus.addEventListener('click', async () => {
         plus.disabled = true;
         try {
-          const r = await API().post('/inbound/receipts/' + R.id + '/units', { sku_id: sel, idempotency_key: key() });
+          const r = await scanPost('in-' + R.id, 'sku-' + sel, '/inbound/receipts/' + R.id + '/units', { sku_id: sel });
           if (!r.accepted) S.toast(r.message, 'caution');
-          else S.toast(r.message, r.outcome === 'extra_bin' ? 'caution' : 'info', 6000);
+          else S.toast(r.message, r.outcome === 'extra_bin' && !blind ? 'caution' : 'info', 6000);
           if (r.load) { SCAN.rid = R.id; SCAN.last = r.load; }
           R = await getReceipt(R.id); paint();
         } catch (e) { S.fail(e); plus.disabled = false; }
       });
       if (minus) minus.addEventListener('click', async () => {
-        try { await API().post('/inbound/receipts/' + R.id + '/units/undo', { sku_id: sel, manual_only: true, idempotency_key: key() }); R = await getReceipt(R.id); paint(); }
+        try { await scanPost('in-undo-' + R.id, 'sku-' + sel, '/inbound/receipts/' + R.id + '/units/undo', { sku_id: sel, manual_only: true }); R = await getReceipt(R.id); paint(); }
         catch (e) { S.fail(e); }
       });
       $('#bm-back', host).addEventListener('click', () => go({ receipt: R.id, step: 'scan' }));
@@ -888,18 +1235,67 @@
     return out;
   }
 
+  /* Done counting: a blind count (Mode manual) asks first, since step 3 locks it. */
+  async function toReview(R) {
+    if (blindOf(R)) {
+      const ok = await S.confirm({
+        title: ['Selesai hitung?', 'Done counting?'],
+        text: ['Setelah ini hitungan dikunci dan selisih dengan PO ditampilkan. Hitung ulang hanya bisa dibuka oleh SPV.',
+          'After this the count is locked and the differences with the PO show. Only the SPV can open the count again.'],
+        ok: ['Ya, kunci hitungan', 'Yes, lock the count'],
+      });
+      if (!ok) return;
+    }
+    go({ receipt: R.id, step: 'review' });
+  }
+
+  /* SPV only: open a locked Mode manual count again, with a reason (recorded). */
+  function reopenCount(R) {
+    S.modal({
+      title: ['Hitung ulang', 'Count again'],
+      body: '<div class="k-stack"><p class="k-p" ' + biAttr('Hitungan dibuka lagi. Selisih dengan PO disembunyikan lagi sampai Cek selisih dibuka.',
+          'The count opens again. The differences with the PO are hidden again until Check differences opens.') + '></p>' +
+        '<label class="k-field"><span class="k-field__label" ' + biAttr('Alasan (minimal 10 huruf)', 'Reason (at least 10 characters)') + '></span>' +
+        '<textarea class="k-textarea" id="bm-rwhy" rows="3" data-ph-id="Contoh: satu karton belum dihitung" data-ph-en="For example: one carton was not counted"></textarea></label>' +
+        '<span class="k-caption" ' + biAttr('Nama Anda, jam dan alasannya tercatat di penerimaan ini.', 'Your name, the time and the reason are recorded on this receipt.') + '></span></div>',
+      actions: [{ label: ['Batal', 'Cancel'], kind: 'secondary' }, {
+        label: ['Buka hitungan', 'Open the count'], kind: 'primary', minRole: 'supervisor',
+        onClick: async () => {
+          const why = (($('#bm-rwhy') || {}).value || '').trim();
+          if (why.length < 10) { S.toast(['Tulis alasannya, minimal 10 huruf.', 'Write the reason, at least 10 characters.'], 'caution'); return false; }
+          try { await API().post('/inbound/receipts/' + R.id + '/count-reopen', { reason: why }); }
+          catch (e) { S.fail(e); return false; }
+          S.toast(['Hitungan dibuka lagi.', 'The count is open again.'], 'ok');
+          go({ receipt: R.id, step: 'scan' }, true);
+          return undefined;
+        },
+      }],
+    });
+  }
+
   async function reviewStep(ctx, R) {
-    S.fullScreen(true, { title: ['Cek selisih', 'Check differences'], onBack: () => go({ receipt: R.id, step: 'scan' }) });
+    /* Mode manual: opening step 3 locks the count first; only then does the server
+     * send the expected numbers (R.blind is false once locked). */
+    const typed = S.manualMode() || R.manual_mode || R.blind;   // counted in Mode manual
+    if (R.status === 'open' && typed && !R.count_locked) {
+      if (!R.total_received) { go({ receipt: R.id, step: 'scan' }, true); return; }
+      try { R = await API().post('/inbound/receipts/' + R.id + '/count-lock', {}); }
+      catch (e) { S.fail(e); go({ receipt: R.id, step: 'scan' }, true); return; }
+      if (R.blind) { go({ receipt: R.id, step: 'scan' }, true); return; }
+    }
+    const locked = !!R.count_locked;
+    S.fullScreen(true, { title: ['Cek selisih', 'Check differences'], onBack: () => go(locked ? {} : { receipt: R.id, step: 'scan' }) });
     const T = tallies(R);
     const diffs = R.lines.filter(isDiff);
+    const lk = R.count_lock || {};
     const kpi = (cls, id, en, num, foot) => '<div class="k-kpi' + (cls ? ' k-kpi--' + cls : '') + '">' + bis(id, en, 'k-kpi__label') + '<span class="k-kpi__num">' + num + '</span>' + (foot || '') + '</div>';
     ctx.body.innerHTML = '<div class="bm-wrap">' + stepBar(2, R) +
       '<div class="k-stack k-stack--tight"><h2 class="k-h2" ' + biAttr('Cek selisih', 'Check differences') + '></h2>' +
         '<span class="k-caption">' + esc(refOf(R) + ' · ' + (R.brand_name || '')) + '</span></div>' +
       '<div class="k-kpis" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
-        kpi('', 'Diharapkan', 'Expected', R.total_expected != null ? n(R.total_expected) : '-', bis('pcs di PO', 'pcs on the PO', 'k-kpi__foot')) +
-        kpi('', 'Dipindai', 'Scanned', n(R.total_received), bis('pcs', 'pcs', 'k-kpi__foot')) +
-        kpi(T.short || T.extra ? 'caution' : 'ok', 'Kurang / lebih', 'Short / extra', (T.short ? '−' + T.short : '0') + ' / ' + (T.extra ? '+' + T.extra : '0'), bis('pcs', 'pcs', 'k-kpi__foot')) +
+        kpi('', 'Diharapkan', 'Expected', R.total_expected != null ? n(R.total_expected) : '-', bis('unit di PO', 'units on the PO', 'k-kpi__foot')) +
+        kpi('', typed ? 'Dihitung' : 'Dipindai', typed ? 'Counted' : 'Scanned', n(R.total_received), bis('unit', 'units', 'k-kpi__foot')) +
+        kpi(T.short || T.extra ? 'caution' : 'ok', 'Kurang / lebih', 'Short / extra', (T.short ? '−' + T.short : '0') + ' / ' + (T.extra ? '+' + T.extra : '0'), bis('unit', 'units', 'k-kpi__foot')) +
         kpi(T.damaged ? 'stop' : '', 'Rusak', 'Damaged', n(T.damaged), '<span class="k-kpi__foot">' + p2('Karantina ' + T.q + ', driver ' + T.d, 'Quarantine ' + T.q + ', driver ' + T.d) + '</span>') +
       '</div>' +
       (diffs.length ? '<div class="k-card k-card--pad k-card--caution k-stack k-stack--tight">' + bis(diffs.length + ' produk berbeda dari PO', diffs.length + ' product(s) differ from the PO', 'k-strong') +
@@ -910,40 +1306,51 @@
       (R.no_po && !R.no_po_linked ? note('caution', 'Kiriman tanpa PO: belum jadi stok sampai Ops HQ menghubungkannya.', 'Delivery with no PO: not stock until Ops HQ links it.') : '') +
       (R.lines.length > diffs.length ? '<div class="k-card k-card--pad k-stack k-stack--tight">' + bis('Cocok dengan PO', 'Matching the PO', 'k-strong') +
         linesHtml({ lines: R.lines.filter((l) => !isDiff(l)) }, false) + '</div>' : '') +
-      '<p class="k-caption" ' + biAttr('Ada yang belum dipindai? Kembali ke pindai sebelum lanjut.', 'Something not scanned yet? Go back to scanning before you continue.') + '></p>' +
-      '<div class="k-actionbar">' + btn('k-btn--secondary k-btn--lg k-btn--block', 'Kembali pindai', 'Back to scanning', 'id="bm-back"', 'scan') +
+      (typed ? note('info', 'Dihitung dengan tangan (Mode manual). Tercatat sebagai hitungan manual.', 'Counted by hand (manual mode). Recorded as a manual count.') : '') +
+      (locked ? '<p class="k-caption">' + p2('Hitungan dikunci' + (lk.by_name || lk.by ? ' oleh ' + (lk.by_name || lk.by) : '') + (lk.at ? ' ' + S.fmt.time(lk.at) : '') +
+          '. Ada yang belum dihitung? Panggil SPV untuk hitung ulang.',
+        'Count locked' + (lk.by_name || lk.by ? ' by ' + (lk.by_name || lk.by) : '') + (lk.at ? ' ' + S.fmt.time(lk.at) : '') +
+          '. Something not counted yet? Call the SPV to count again.') + '</p>'
+        : typed ? '<p class="k-caption" ' + biAttr('Ada yang belum dihitung? Kembali ke hitung sebelum lanjut.', 'Something not counted yet? Go back to counting before you continue.') + '></p>'
+          : '<p class="k-caption" ' + biAttr('Ada yang belum dipindai? Kembali ke pindai sebelum lanjut.', 'Something not scanned yet? Go back to scanning before you continue.') + '></p>') +
+      '<div class="k-actionbar">' + (locked ? btn('k-btn--secondary k-btn--lg k-btn--block', 'Panggil SPV untuk hitung ulang', 'Call the SPV to count again', 'id="bm-recount" data-min-role="supervisor"', 'count')
+        : typed ? btn('k-btn--secondary k-btn--lg k-btn--block', 'Kembali hitung', 'Back to counting', 'id="bm-back"', 'count')
+          : btn('k-btn--secondary k-btn--lg k-btn--block', 'Kembali pindai', 'Back to scanning', 'id="bm-back"', 'scan')) +
         btn('k-btn--primary k-btn--lg k-btn--block', 'Benar, lanjut', 'Correct, continue', 'id="bm-next"' + (R.total_received ? '' : ' disabled'), 'arrow') + '</div></div>';
     bindBar(ctx.body, R);
-    $('#bm-back', ctx.body).addEventListener('click', () => go({ receipt: R.id, step: 'scan' }));
+    const back = $('#bm-back', ctx.body);
+    if (back) back.addEventListener('click', () => go({ receipt: R.id, step: 'scan' }));
+    const rc = $('#bm-recount', ctx.body);
+    if (rc) rc.addEventListener('click', () => reopenCount(R));
     $('#bm-next', ctx.body).addEventListener('click', () => go({ receipt: R.id, step: 'docs' }));
+    S.lockAll(ctx.body);
   }
 
-  /* ================= 4: paperwork and the three POD photos ================= */
+  /* ================= 4: paperwork and the three proof-of-delivery photos ================= */
 
   const PROOF = [
     ['sj_signed', 'Surat Jalan / Faktur yang sudah ditandatangani', 'The signed Surat Jalan / Faktur', 'environment'],
     ['selfie', 'Swafoto penerima', 'Selfie of the receiver', 'user'],
     ['sj_driver', 'Surat Jalan / Faktur bersama driver', 'The Surat Jalan / Faktur with the driver', 'environment'],
   ];
-  const docsKey = (id) => 'bm-docs-' + id;
-  function docsGet(id) {
-    let v = null;
-    try { v = sessionStorage.getItem(docsKey(id)); } catch (e) { v = null; }
-    if (!v) { try { v = localStorage.getItem(docsKey(id)); } catch (e) { v = null; } }
-    try { return JSON.parse(v || '{}') || {}; } catch (e) { return {}; }
-  }
-  function docsSet(id, v) {
-    const s = JSON.stringify(v);
-    try { sessionStorage.setItem(docsKey(id), s); } catch (e) { /* private mode */ }
-    try { localStorage.setItem(docsKey(id), s); } catch (e) { /* private mode */ }
-  }
   const AUTO = new Set();     // receipts just finished on this device: print their slips once
+  const tickedBy = (x) => (x && x.done ? p2('Dicentang ' + (x.by_name || x.by || '') + ' ' + S.fmt.time(x.at), 'Ticked by ' + (x.by_name || x.by || '') + ' ' + S.fmt.time(x.at)) : '');
+  /* A finish blocker as words: photo:selfie, damage_photo:12. */
+  function missingWords(b, R) {
+    const p = PROOF.find((x) => 'photo:' + x[0] === b);
+    if (p) return [p[1], p[2]];
+    const d = /^damage_photo:(\d+)$/.exec(b) && R.differences.find((x) => 'damage_photo:' + x.id === b);
+    return d ? ['Foto kerusakan: ' + short(d.sku_name), 'Damage photo: ' + short(d.sku_name)] : ['Foto', 'Photo'];
+  }
 
   async function docsStep(ctx, R) {
+    /* A Mode manual count goes through step 3 first: it locks the count. */
+    if (R.status === 'open' && !R.count_locked && (R.blind || R.manual_mode)) { go({ receipt: R.id, step: 'review' }, true); return; }
     S.fullScreen(true, { title: ['Dokumen & foto', 'Paperwork & photos'], onBack: () => go({ receipt: R.id, step: 'review' }) });
     const T = tallies(R);
     const dmg = R.differences.filter((d) => d.kind === 'damaged');
-    const D = docsGet(R.id);
+    const D = Object.assign({}, R.paperwork || {});    // the ticks, kept on the server with who ticked
+    const spv = S.atLeast('supervisor');
     const write = [];
     if (T.shortNames.length) write.push(['Kurang: ' + T.shortNames.join(', '), 'Short: ' + T.shortNames.join(', ')]);
     if (T.extraNames.length) write.push(['Lebih: ' + T.extraNames.join(', '), 'Extra: ' + T.extraNames.join(', ')]);
@@ -957,59 +1364,106 @@
       done: R.proof_done.includes(p[0]), onChange: refresh })).join('') +
       dmg.map((d, i) => photoSlot({ key: dmgKeys[i], id: 'Foto kerusakan: ' + short(d.sku_name), en: 'Damage photo: ' + short(d.sku_name), capture: 'environment',
         receiptId: R.id, kind: 'damage', diff: d.id, done: d.photos > 0, onChange: refresh })).join('');
+    const check = (k, no, id, en, sub) => '<label class="bm-check"><input type="checkbox" data-doc="' + k + '"' + (D[k] && D[k].done ? ' checked' : '') + '><span><span class="bm-check__t">' + no + '. ' + p2(id, en) + '</span>' +
+      '<span class="bm-check__h">' + sub + '</span><span class="bm-check__h" data-who="' + k + '">' + tickedBy(D[k]) + '</span></span></label>';
     ctx.body.innerHTML = '<div class="bm-wrap">' + stepBar(3, R) +
       '<div class="k-stack k-stack--tight"><h2 class="k-h2" ' + biAttr('Dokumen & foto', 'Paperwork & photos') + '></h2>' +
         '<span class="k-caption">' + esc(refOf(R) + ' · ' + (R.brand_name || '')) + '</span></div>' +
       '<div class="k-card k-card--pad">' +
-        '<label class="bm-check"><input type="checkbox" data-doc="wrote"' + (D.wrote ? ' checked' : '') + '><span><span class="bm-check__t">1. ' + p2('Tulis jumlah yang diterima di Surat Jalan / Faktur', 'Write the received quantities on the Surat Jalan / Faktur') + '</span>' +
-          '<span class="bm-check__h">' + hint + '</span></span></label>' +
-        '<label class="bm-check"><input type="checkbox" data-doc="signed"' + (D.signed ? ' checked' : '') + '><span><span class="bm-check__t">2. ' + p2('Tanda tangani Surat Jalan / Faktur', 'Sign the Surat Jalan / Faktur') + '</span>' +
-          '<span class="bm-check__h">' + p2('Sebaiknya SPV yang tanda tangan. Beri driver 1 salinan Surat Jalan.', 'Ideally the SPV signs. Give the driver 1 copy of the Surat Jalan.') + '</span></span></label>' +
+        check('wrote', 1, 'Tulis jumlah yang diterima di Surat Jalan / Faktur', 'Write the received quantities on the Surat Jalan / Faktur', hint) +
+        check('signed', 2, 'Tanda tangani Surat Jalan / Faktur', 'Sign the Surat Jalan / Faktur',
+          p2('Sebaiknya SPV yang tanda tangan. Beri driver 1 salinan Surat Jalan.', 'Ideally the SPV signs. Give the driver 1 copy of the Surat Jalan.')) +
       '</div>' +
-      '<div class="k-card k-card--pad"><div class="k-line k-line--between" style="margin-bottom:4px">' + bis('3. Foto bukti terima (POD)', '3. Proof of delivery photos (POD)', 'k-strong') +
+      '<div class="k-card k-card--pad"><div class="k-line k-line--between" style="margin-bottom:4px">' + bis('3. Foto bukti terima', '3. Proof-of-delivery photos', 'k-strong') +
         '<span class="k-mono k-strong" id="bm-phn"></span></div>' + slots + '</div>' +
-      '<span class="k-caption" id="bm-left"></span>' +
+      '<div id="bm-left"></div>' +
       '<div class="k-actionbar">' + btn('k-btn--primary k-btn--lg k-btn--block', 'Selesai & cetak slip', 'Finish and print slips', 'id="bm-finish" disabled', 'print') +
+        (spv ? btn('k-btn--secondary k-btn--block', 'Selesai tanpa foto (SPV)', 'Finish without the photo (SPV)', 'id="bm-nophoto" hidden', 'warn') : '') +
         btn('k-btn--ghost k-btn--block', 'Kembali', 'Back', 'id="bm-back"') + '</div></div>';
     bindBar(ctx.body, R);
     bindSlots(ctx.body);
     const slotDone = (k) => !!(SLOTS[k] && SLOTS[k].done);
-    function refresh() {
-      const fb = $('#bm-finish', ctx.body);
-      if (!fb || !fb.isConnected) return;
-      const D2 = docsGet(R.id);
+    /* What is still missing, as words; and the photo blockers the SPV may waive. */
+    function missing() {
       const pod = podKeys.filter(slotDone).length;
       const dmgLeft = dmgKeys.filter((k) => !slotDone(k)).length;
       const busy = podKeys.concat(dmgKeys).some((k) => PH[k] && PH[k].state === 'uploading');
-      const ticks = (D2.wrote ? 1 : 0) + (D2.signed ? 1 : 0);
-      const photosLeft = 3 - pod + dmgLeft;
-      $('#bm-phn', ctx.body).textContent = pod + ' ' + t('dari', 'of') + ' 3';
-      fb.disabled = !(ticks === 2 && photosLeft === 0 && !busy && R.total_received > 0);
-      const bits = [];
-      if (ticks < 2) bits.push([(2 - ticks) + ' centang lagi', (2 - ticks) + ' more tick' + (2 - ticks > 1 ? 's' : '')]);
-      if (photosLeft > 0) bits.push([photosLeft + ' foto lagi', photosLeft + ' more photo' + (photosLeft > 1 ? 's' : '')]);
-      $('#bm-left', ctx.body).innerHTML = bits.length ? p2('Untuk selesai: ' + bits.map((b) => b[0]).join(', ') + '.', 'To finish: ' + bits.map((b) => b[1]).join(', ') + '.') : '';
+      const out = [];
+      if (pod < 3) out.push(['foto ' + pod + ' dari 3', 'photo ' + pod + ' of 3']);
+      if (dmgLeft) out.push(['foto kerusakan ' + dmgLeft, dmgLeft + ' damage photo' + (dmgLeft > 1 ? 's' : '')]);
+      if (!(D.wrote && D.wrote.done)) out.push(['jumlah di Surat Jalan', 'quantities on the Surat Jalan']);
+      if (!(D.signed && D.signed.done)) out.push(['tanda tangan', 'signature']);
+      if (busy) out.push(['foto masih diunggah', 'a photo is still uploading']);
+      if (!R.total_received) out.push(['belum ada unit dipindai', 'no unit scanned yet']);
+      const photoGap = [];
+      PROOF.forEach((p, i) => { if (!slotDone(podKeys[i])) photoGap.push('photo:' + p[0]); });
+      dmg.forEach((d, i) => { if (!slotDone(dmgKeys[i])) photoGap.push('damage_photo:' + d.id); });
+      return { pod, out, busy, photoGap, onlyPhotos: !busy && R.total_received > 0 && D.wrote && D.wrote.done && D.signed && D.signed.done && photoGap.length > 0 };
     }
-    $$('[data-doc]', ctx.body).forEach((c) => c.addEventListener('change', () => {
-      const v = docsGet(R.id);
-      v[c.dataset.doc] = c.checked;
-      docsSet(R.id, v);
+    function refresh() {
+      const fb = $('#bm-finish', ctx.body);
+      if (!fb || !fb.isConnected) return;
+      const m = missing();
+      $('#bm-phn', ctx.body).textContent = m.pod + ' ' + t('dari', 'of') + ' 3';
+      fb.disabled = m.out.length > 0;
+      const left = $('#bm-left', ctx.body);
+      left.innerHTML = m.out.length ? '<div class="k-note k-note--caution">' + icon('warn', 20) + '<span>' +
+          p2('Belum: ' + m.out.map((b) => b[0]).join(', ') + '.', 'Not done yet: ' + m.out.map((b) => b[1]).join(', ') + '.') + '</span></div>' +
+          (m.photoGap.length && !spv ? '<span class="k-caption" ' + biAttr('Foto tidak bisa diambil (kamera rusak, memori penuh)? Panggil SPV untuk melanjutkan tanpa foto.',
+            'A photo cannot be taken (camera broken, storage full)? Call the SPV to continue without a photo.') + '></span>' : '')
+        : '';
+      S.applyLang(left);
+      const np = $('#bm-nophoto', ctx.body);
+      if (np) np.hidden = !m.onlyPhotos;
+    }
+    $$('[data-doc]', ctx.body).forEach((c) => c.addEventListener('change', async () => {
+      const k = c.dataset.doc, on = c.checked;
+      c.disabled = true;
+      try {
+        const res = await API().post('/inbound/receipts/' + R.id + '/paperwork', { item: k, done: on });
+        Object.assign(D, res.paperwork || {});
+        R.paperwork = Object.assign({}, D);
+      } catch (e) { c.checked = !on; S.fail(e); }
+      c.disabled = false;
+      const w = $('[data-who="' + k + '"]', ctx.body);
+      if (w) w.innerHTML = tickedBy(D[k]);
       refresh();
     }));
     $('#bm-back', ctx.body).addEventListener('click', () => go({ receipt: R.id, step: 'review' }));
-    $('#bm-finish', ctx.body).addEventListener('click', async (e) => {
-      const b = e.currentTarget;
+    async function finish(b, reason) {
       b.disabled = true;
       try {
-        await API().post('/inbound/receipts/' + R.id + '/finish', {});
-        S.toast(['Penerimaan selesai. Cetak slip putaway.', 'Receipt finished. Print the putaway slips.'], 'ok');
+        await API().post('/inbound/receipts/' + R.id + '/finish', reason ? { no_photo_reason: reason } : {});
+        S.toast(['Penerimaan selesai. Cetak slip taruh di rak.', 'Receipt finished. Print the putaway slips.'], 'ok');
         AUTO.add(R.id);
         go({ receipt: R.id }, true);
+        return true;
       } catch (err) {
-        if (err && typeof err.message !== 'string') S.toast(['Belum bisa selesai: cek foto dan centang.', 'Not ready to finish: check the photos and ticks.'], 'caution');
-        else S.fail(err);
+        S.fail(err);
         refresh();
+        return false;
       }
+    }
+    $('#bm-finish', ctx.body).addEventListener('click', (e) => finish(e.currentTarget));
+    const np = $('#bm-nophoto', ctx.body);
+    if (np) np.addEventListener('click', () => {
+      const gap = missing().photoGap;
+      S.modal({
+        title: ['Selesai tanpa foto', 'Finish without the photo'],
+        body: '<div class="k-stack"><p class="k-p">' + p2('Foto yang belum ada:', 'Photos still missing:') + '</p>' +
+          '<ul style="margin:0;padding-left:20px">' + gap.map((g) => { const w = missingWords(g, R); return '<li>' + p2(w[0], w[1]) + '</li>'; }).join('') + '</ul>' +
+          '<label class="k-field"><span class="k-field__label" ' + biAttr('Alasan (minimal 10 huruf)', 'Reason (at least 10 characters)') + '></span>' +
+          '<textarea class="k-textarea" id="bm-why" rows="3" data-ph-id="Contoh: kamera ponsel rusak, memori penuh" data-ph-en="For example: phone camera broken, storage full"></textarea></label>' +
+          '<span class="k-caption" ' + biAttr('Nama Anda, jam dan alasannya tercatat di penerimaan ini.', 'Your name, the time and the reason are recorded on this receipt.') + '></span></div>',
+        actions: [{ label: ['Batal', 'Cancel'], kind: 'secondary' }, {
+          label: ['Selesai tanpa foto', 'Finish without the photo'], kind: 'primary', minRole: 'supervisor',
+          onClick: async () => {
+            const why = ($('#bm-why') || {}).value || '';
+            if (why.trim().length < 10) { S.toast(['Tulis alasannya, minimal 10 huruf.', 'Write the reason, at least 10 characters.'], 'caution'); return false; }
+            return (await finish(np, why.trim())) ? undefined : false;
+          },
+        }],
+      });
     });
     refresh();
   }
@@ -1031,18 +1485,25 @@
   }
 
   async function printStep(ctx, R) {
-    S.fullScreen(true, { title: ['Cetak slip putaway', 'Print putaway slips'], onBack: () => go({}) });
+    S.fullScreen(true, { title: ['Cetak slip taruh di rak', 'Print putaway slips'], onBack: () => go({}) });
     const s = await API().get('/inbound/receipts/' + R.id + '/slip');
     const P = NJW.print;
     P.previewCss();
     const tasks = s.tasks || [];
+    /* A phone with no thermal printer set up prints nothing useful itself: the
+     * slips are printed on the pack bench laptop, then confirmed here. */
+    const benchLaptop = () => P.settings().thermal !== true && window.matchMedia('(max-width: 1023.98px)').matches;
     function render() {
       const printed = PRINTED.has(R.id);
+      const bench = benchLaptop() && tasks.length > 0;
       ctx.body.innerHTML = '<div class="bm-wrap">' + stepBar(4, R) +
-        '<div class="k-stack k-stack--tight"><h2 class="k-h2" ' + biAttr('Cetak slip putaway', 'Print putaway slips') + '></h2>' +
+        '<div class="k-stack k-stack--tight"><h2 class="k-h2" ' + biAttr('Cetak slip taruh di rak', 'Print putaway slips') + '></h2>' +
           '<span class="k-caption">' + esc(refOf(R) + ' · ' + (R.brand_name || '')) + (s.slip_no ? ' · <span class="k-mono">' + esc(s.slip_no) + '</span>' : '') + '</span></div>' +
         '<p class="k-p">' + p2(tasks.length + ' slip, satu per bin sementara. Taruh setiap slip di bin sementaranya.', tasks.length + ' slip(s), one per temporary bin. Put each slip on its temporary bin.') + '</p>' +
-        printerNote() +
+        (bench ? '<div class="k-note k-note--info">' + icon('print', 20) + '<span>' +
+            p2('Buka penerimaan ini di laptop meja kemas, tekan Cetak slip, lalu tekan tombol ini.', 'Open this receipt on the pack bench laptop, press Print slips, then press this button.') +
+            ' <a class="k-linkbtn" href="pengaturan.html?tab=printer" ' + biAttr('Atur printer di ponsel ini', 'Set up a printer on this phone') + '></a></span></div>'
+          : printerNote()) +
         '<div class="k-list">' + tasks.map((x) => '<div class="k-row"><span class="k-row__icon">' + icon('print', 24) + '</span><span class="k-row__text">' +
           '<span class="k-row__title"><span class="k-mono">' + esc(binShort(x.from_bin)) + '</span> → <span class="k-mono">' + esc(x.to_bin || '?') + '</span></span>' +
           '<span class="k-row__sub">' + x.n + '/' + x.of + ' · ' + esc(short(x.sku_name)) + ' · ' + n(x.qty) + ' unit</span></span></div>').join('') + '</div>' +
@@ -1053,11 +1514,13 @@
         (tasks.length ? '<details class="k-card k-card--pad"><summary class="k-strong" style="cursor:pointer">' + p2('Lihat slip', 'Preview the slips') + '</summary>' +
           '<div class="bm-roll" lang="id" style="margin-top:12px">' + binSlipsHtml(s) + '</div></details>'
           : note('ok', 'Tidak ada bin untuk ditaruh sekarang.', 'No bin to put away right now.', 'check')) +
-        (printed ? '<div class="k-card k-card--pad k-card--focus k-stack k-stack--tight">' + bis('Slip sudah keluar dari printer?', 'Did the slips come out of the printer?', 'k-strong') +
+        (printed && !bench ? '<div class="k-card k-card--pad k-card--focus k-stack k-stack--tight">' + bis('Slip sudah keluar dari printer?', 'Did the slips come out of the printer?', 'k-strong') +
           '<span class="k-caption" ' + biAttr('Setelah dicetak, WMS membuat satu tugas taruh di rak per bin sementara.', 'Once printed, the WMS makes one putaway task per temporary bin.') + '></span></div>' : '') +
         '<div><a class="k-linkbtn" href="?receipt=' + R.id + '&step=detail">' + p2('Lihat tanda terima', 'View the receipt') + '</a></div>' +
         '<div class="k-actionbar">' +
           (!tasks.length ? btn('k-btn--primary k-btn--lg k-btn--block', 'Lanjut', 'Continue', 'id="bm-ok"', 'arrow')
+            : bench ? btn('k-btn--primary k-btn--lg k-btn--block', 'Sudah dicetak di laptop meja kemas', 'Printed on the pack bench laptop', 'id="bm-printed"', 'check') +
+              btn('k-btn--secondary k-btn--block', printed ? 'Cetak ulang' : 'Cetak slip', printed ? 'Print again' : 'Print slips', 'id="bm-print"', 'print')
             : printed ? btn('k-btn--secondary k-btn--lg k-btn--block', 'Cetak ulang', 'Print again', 'id="bm-print"', 'print') +
               btn('k-btn--primary k-btn--lg k-btn--block', 'Sudah dicetak, mulai taruh', 'Printed, start putting away', 'id="bm-printed"', 'check')
               : btn('k-btn--primary k-btn--lg k-btn--block', 'Cetak slip', 'Print slips', 'id="bm-print"', 'print') +
@@ -1151,6 +1614,8 @@
       if (!it) { listView(); return; }
       setLoadParam(it.load.id);
       let alt = null;   // after Bin rak penuh: {code, label}
+      let showScan = false;   // Mode manual: *Masih bisa pindai?* shows the scan zone
+      let putting = false;
       const d = P.divider;
       const idx = P.items.indexOf(it);
       function paint() {
@@ -1158,6 +1623,7 @@
         const code = alt ? alt.code : it.to_location_code;
         const words = rackWords(label);
         const left = it.load.qty_to_put;
+        const manual = S.manualMode() && !showScan;
         host.innerHTML = stepBar(cur, R) +
           '<div class="k-line k-line--between"><h2 class="k-h2">' + p2('Tugas ' + (idx + 1) + ' dari ' + P.items.length, 'Task ' + (idx + 1) + ' of ' + P.items.length) + '</h2>' +
             '<button type="button" class="k-linkbtn" id="bm-list">' + p2('Daftar tugas', 'Task list') + '</button></div>' +
@@ -1172,22 +1638,29 @@
             '<li><span class="bm-num">3</span><span><span class="bm-swatch" style="background:' + esc(d.hex) + '"></span>' +
               p2('Pasang sekat ' + d.colour_id.toLowerCase() + ' (hari ini) di belakang stok lama, kalau ada', 'Put a new ' + d.colour_en.toLowerCase() + ' divider (today) behind the old stock, if any') + '</span></li>' +
             '<li><span class="bm-num">4</span>' + p2('Tulis tanggal ' + d.written + ' di sekat putih', 'Write the date ' + d.written + ' on the white divider') + '</li>' +
-            '<li><span class="bm-num">5</span>' + p2('Taruh unitnya di belakang sekat, cek jumlahnya, lalu pindai label bin rak', 'Put the units behind the divider, check the count, then scan the rack bin label') + '</li></ol>' +
+            (manual ? '<li><span class="bm-num">5</span>' + p2('Taruh unitnya di belakang sekat, cek jumlahnya, lalu ketuk Sudah ditaruh di bin', 'Put the units behind the divider, check the count, then tap Put in bin') + '</li></ol>'
+              : '<li><span class="bm-num">5</span>' + p2('Taruh unitnya di belakang sekat, cek jumlahnya, lalu pindai label bin rak', 'Put the units behind the divider, check the count, then scan the rack bin label') + '</li></ol>') +
+          (it.load.qty_hold > 0 ? note('caution', 'Ambil hanya ' + left + ' unit. ' + it.load.qty_hold + ' unit tetap di ' + it.load.bin_code + ', menunggu Ops HQ.',
+            'Take only ' + left + ' unit(s). ' + it.load.qty_hold + ' unit(s) stay in ' + it.load.bin_code + ', waiting for Ops HQ.') : '') +
           '<div class="k-card k-card--pad k-line k-line--between" style="flex-wrap:wrap;gap:12px"><span class="k-strong" ' + biAttr('Unit yang ditaruh', 'Units put away') + '></span><div id="bm-qty"></div></div>' +
-          '<div id="bm-zone"></div>' +
-          note('info', 'Setelah pindai, unit bisa dijual dan stok baru dikirim ke Hiryu.', 'After the scan the units are sellable and the new stock goes to Hiryu.') +
-          '<div class="k-actionbar">' + btn('k-btn--secondary k-btn--lg k-btn--block', 'Bin rak penuh', 'Rack bin full', 'id="bm-rfull"' + (code ? '' : ' disabled')) + '</div>';
+          (manual ? '<button type="button" class="k-linkbtn" id="bm-putscan" style="align-self:flex-start">' + icon('scan', 18) + p2('Masih bisa pindai?', 'Scanner still works?') + '</button>' : '<div id="bm-zone"></div>') +
+          note('info', manual ? 'Setelah diketuk, unit bisa dijual dan stok baru dikirim ke Hiryu. Tercatat sebagai Mode manual.' : 'Setelah pindai, unit bisa dijual dan stok baru dikirim ke Hiryu.',
+            manual ? 'After the tap the units are sellable and the new stock goes to Hiryu. Recorded as manual mode.' : 'After the scan the units are sellable and the new stock goes to Hiryu.') +
+          '<div class="k-actionbar">' +
+            (manual ? btn('k-btn--primary k-btn--lg k-btn--block', 'Sudah ditaruh di bin ' + (label || '?'), 'Put in bin ' + (label || '?'), 'id="bm-puttap"' + (code ? '' : ' disabled'), 'check') : '') +
+            btn('k-btn--secondary k-btn--lg k-btn--block', 'Bin rak penuh', 'Rack bin full', 'id="bm-rfull"' + (code ? '' : ' disabled')) + '</div>';
         const q = S.stepper($('#bm-qty', host), { value: left, min: 1, max: Math.max(1, left), label: ['Unit yang ditaruh', 'Units put away'] });
-        S.scan(async (c, z) => {
-          const cc = c.trim().toUpperCase();
-          if (/-(IN)-\d+$/.test(cc)) {
-            if (cc === String(it.load.bin_code).toUpperCase()) z.accept(it.load.bin_code, t('Bin sementara benar. Sekarang pindai label bin rak.', 'Right temporary bin. Now scan the rack bin label.'));
-            else z.reject(t('Bukan bin tugas ini: ambil dari ' + it.load.bin_code + '.', 'Not this task\'s bin: take from ' + it.load.bin_code + '.'));
-            return;
-          }
+        /* The rack bin: scanned, or (Mode manual) tapped. One request at a time. */
+        async function put(c, z, tapped) {
+          if (putting) { if (z) z.reject(t('Tunggu jawaban sebelumnya.', 'Wait for the last answer.')); return; }
+          putting = true;
+          const tb = $('#bm-puttap', host);
+          if (tb) tb.disabled = true;
           try {
-            const r = await API().post('/inbound/loads/' + it.load.id + '/putaway', { location_code: c, qty: q.get(), idempotency_key: key() });
-            z.accept(c, S.pick(r.message));
+            const r = await scanPost('put-' + it.load.id, (tapped ? 'tap|' : '') + c + '|' + q.get(), '/inbound/loads/' + it.load.id + '/putaway',
+              { location_code: c, qty: q.get(), manual: !!tapped });
+            putting = false;
+            if (z) z.accept(c, S.pick(r.message));
             S.toast(r.message, 'ok');
             it.load = r.load;
             if (r.remaining > 0) {
@@ -1203,8 +1676,28 @@
             }
             S.toast(['Semua bin sudah di rak.', 'Every bin is on the rack.'], 'ok');
             doneGo();
-          } catch (e) { z.reject(S.pick(e.message)); S.fail(e); }
-        }, { mount: $('#bm-zone', host), title: ['Pindai label bin rak', 'Scan the rack bin label'] });
+          } catch (e) {
+            putting = false;
+            if (tb && tb.isConnected) tb.disabled = false;
+            if (z) z.reject(S.pick(e.message));
+            S.fail(e);
+          }
+        }
+        if (manual) {
+          const tb = $('#bm-puttap', host);
+          if (tb) tb.addEventListener('click', () => { if (code) put(code, null, true); });
+          $('#bm-putscan', host).addEventListener('click', () => { showScan = true; paint(); });
+        } else {
+          S.scan(async (c, z) => {
+            const cc = c.trim().toUpperCase();
+            if (/-(IN)-\d+$/.test(cc)) {
+              if (cc === String(it.load.bin_code).toUpperCase()) z.accept(it.load.bin_code, t('Bin sementara benar. Sekarang pindai label bin rak.', 'Right temporary bin. Now scan the rack bin label.'));
+              else z.reject(t('Bukan bin tugas ini: ambil dari ' + it.load.bin_code + '.', 'Not this task\'s bin: take from ' + it.load.bin_code + '.'));
+              return;
+            }
+            await put(c, z, false);
+          }, { mount: $('#bm-zone', host), title: ['Pindai label bin rak', 'Scan the rack bin label'] });
+        }
         $('#bm-list', host).addEventListener('click', listView);
         $('#bm-rfull', host).addEventListener('click', async () => {
           try {
@@ -1256,9 +1749,9 @@
     const pages = (fk && fk.pages) || [];
     const tasks = slip ? (slip.tasks || []) : [];
     const stageCard = R.stage === 'print'
-      ? '<div class="k-card k-card--pad k-card--focus k-stack k-stack--tight">' + bis('Berikutnya: cetak slip putaway', 'Next: print the putaway slips', 'k-strong') +
+      ? '<div class="k-card k-card--pad k-card--focus k-stack k-stack--tight">' + bis('Berikutnya: cetak slip taruh di rak', 'Next: print the putaway slips', 'k-strong') +
         '<span class="k-caption">' + p2(R.slip_pending + ' bin sementara menunggu slipnya.', R.slip_pending + ' temporary bin(s) waiting for their slip.') + '</span>' +
-        '<div>' + btn('k-btn--primary', 'Cetak slip putaway', 'Print putaway slips', 'id="bm-toprint"', 'print') + '</div></div>'
+        '<div>' + btn('k-btn--primary', 'Cetak slip taruh di rak', 'Print putaway slips', 'id="bm-toprint"', 'print') + '</div></div>'
       : R.stage === 'putaway'
         ? '<div class="k-card k-card--pad k-card--focus k-stack k-stack--tight">' + bis('Berikutnya: taruh di rak', 'Next: put away', 'k-strong') +
           '<span class="k-caption">' + p2(R.tasks_open + ' tugas, ' + R.units_to_put + ' unit masih di bin sementara.', R.tasks_open + ' task(s), ' + R.units_to_put + ' unit(s) still in temporary bins.') + '</span>' +
@@ -1290,6 +1783,7 @@
           (spv && R.photos.length ? '<div class="k-card k-card--pad k-stack k-stack--tight">' + bis('Foto penerimaan', 'Receiving photos', 'k-strong') +
             '<div class="bm-pages">' + R.photos.map((p) => '<a class="bm-page" target="_blank" rel="noopener" href="' + esc('..' + p.url) + '" style="background-image:url(' + esc('..' + p.url) + ')">' + esc(photoName(p.kind)) + '</a>').join('') + '</div>' +
             '<span class="k-caption" ' + biAttr('Hanya SPV dan Ops HQ yang bisa melihat foto ini.', 'Only the SPV and Ops HQ can see these photos.') + '></span></div>' : '') +
+          waiverCard(R) +
         '</div>' +
         '<div class="k-stack">' +
           (closed ? '<div class="k-card k-card--pad k-stack">' + bis('Unggah Faktur', 'Upload the Faktur', 'k-h2') +
@@ -1302,7 +1796,7 @@
             (pages.length ? '<span class="k-caption">' + p2(pages.length + ' halaman disimpan ' + S.fmt.time(fk.faktur_uploaded_at) + ' oleh ' + (fk.faktur_uploaded_by || ''), pages.length + ' pages saved ' + S.fmt.time(fk.faktur_uploaded_at) + ' by ' + (fk.faktur_uploaded_by || '')) + '</span>' : '') +
             '<div class="k-phone-only">' + btn('k-btn--primary k-btn--block', 'Unggah Faktur', 'Upload Faktur', 'id="bm-cam" data-min-role="supervisor"', 'camera') + '</div></div>' : '') +
           (closed ? '<div class="k-card k-card--pad k-stack k-stack--tight">' +
-            '<span class="k-h2">' + p2('Slip putaway', 'Putaway slip') + (slip && slip.slip_no ? ' <span class="k-mono">' + esc(slip.slip_no) + '</span>' : '') + '</span>' +
+            '<span class="k-h2">' + p2('Slip taruh di rak', 'Putaway slip') + (slip && slip.slip_no ? ' <span class="k-mono">' + esc(slip.slip_no) + '</span>' : '') + '</span>' +
             '<span class="k-caption" ' + biAttr('Satu slip per bin sementara untuk menaruh barang, dan satu ringkasan untuk SPV tanda tangan dan simpan bersama Surat Jalan dan Faktur.', 'One slip per temporary bin for the putaway, and one summary for the SPV to sign and keep with the Surat Jalan and the Faktur.') + '></span>' +
             '<div class="k-line" style="flex-wrap:wrap;gap:8px">' + (tasks.length ? btn('k-btn--secondary', 'Cetak ulang slip bin', 'Reprint bin slips', 'id="bm-binslips"', 'print') : '') +
               btn('k-btn--secondary', 'Cetak ringkasan', 'Print summary', 'id="bm-slip"', 'print') + '</div></div>' : '') +
@@ -1345,6 +1839,21 @@
     const lk = $('#bm-link', ctx.body);
     if (lk) lk.addEventListener('click', () => linkDialog(R));
   }
+  /* An SPV's *Selesai tanpa foto*: who, when, why, which photos; and who ticked the paperwork. */
+  function waiverCard(R) {
+    const w = R.photo_waiver, pw = R.paperwork || {};
+    const ticks = [['wrote', 'Jumlah ditulis', 'Quantities written'], ['signed', 'Surat Jalan ditandatangani', 'Surat Jalan signed']]
+      .filter((x) => pw[x[0]] && pw[x[0]].done)
+      .map((x) => p2(x[1] + ': ' + (pw[x[0]].by_name || pw[x[0]].by) + ' ' + S.fmt.time(pw[x[0]].at), x[2] + ': ' + (pw[x[0]].by_name || pw[x[0]].by) + ' ' + S.fmt.time(pw[x[0]].at)));
+    if (!w && !ticks.length) return '';
+    return '<div class="k-card k-card--pad k-stack k-stack--tight' + (w ? ' k-card--caution' : '') + '">' + bis('Dokumen', 'Paperwork', 'k-strong') +
+      (ticks.length ? '<span class="k-caption">' + ticks.join(' · ') + '</span>' : '') +
+      (w ? '<div class="k-note k-note--caution">' + icon('warn', 20) + '<span>' +
+        p2('Selesai tanpa foto oleh ' + (w.by_name || w.by) + ', ' + S.fmt.dt(w.at) + '. Alasan: ' + (w.reason || '-'),
+          'Finished without the photo by ' + (w.by_name || w.by) + ', ' + S.fmt.dt(w.at) + '. Reason: ' + (w.reason || '-')) +
+        (w.missing && w.missing.length ? '<br>' + p2('Foto yang tidak ada: ', 'Photos missing: ') +
+          w.missing.map((b) => { const m = missingWords(b, R); return p2(m[0], m[1]); }).join(', ') : '') + '</span></div>' : '') + '</div>';
+  }
   const photoName = (k) => ({ sj_signed: t('SJ ditandatangani', 'Signed SJ'), selfie: t('Swafoto', 'Selfie'), sj_driver: t('SJ + driver', 'SJ + driver'), sj_no_po: t('SJ tanpa PO', 'SJ, no PO'), damage: t('Kerusakan', 'Damage') }[k] || k);
 
   /* ================= the putaway slips (thermal 80 mm, A4 without one) ================= */
@@ -1363,20 +1872,20 @@
       P.rule('=', W),
       kv('Dark store', S.shortCode(s.site_code) + ' · ' + (s.site_name || '')),
       kv('Merek', s.brand_name),
-      kv('Ninja ref', s.reference),
+      kv('Ref. Ninja', s.reference),
       kv('No. PO', s.brand_po_number),
     ] };
   }
 
   function binSlipLines(s, x, W) {
     const P = NJW.print;
-    const h = head(s, W, 'SLIP PUTAWAY ' + x.n + '/' + x.of);
+    const h = head(s, W, 'SLIP TARUH DI RAK ' + x.n + '/' + x.of);
     return h.lines.concat([
       h.kv('Slip', s.slip_no),
       h.kv('Dicetak', P.when().both),
       P.rule('=', W),
       { b: P.wrap(x.sku_name, W) },
-      P.lr('Jumlah', n(x.qty) + ' pcs', W),
+      P.lr('Jumlah', n(x.qty) + ' unit', W),
       P.lr('Dari bin sementara', x.from_bin, W),
       { b: P.lr('Ke bin rak', x.to_bin || 'minta SPV', W) },
       P.lr('Warna sekat', x.divider.colour_id + ', minggu ' + x.divider.week_parity, W),
@@ -1394,12 +1903,12 @@
   }
   function printBinSlips(s) {
     if (!s || !(s.tasks || []).length) return Promise.resolve(false);
-    return NJW.print.thermal(binSlipsHtml(s), { title: 'Slip putaway ' + (s.slip_no || '') });
+    return NJW.print.thermal(binSlipsHtml(s), { title: 'Slip taruh di rak ' + (s.slip_no || '') });
   }
 
   function summaryLines(s, W) {
     const P = NJW.print;
-    const h = head(s, W, 'RINGKASAN PUTAWAY');
+    const h = head(s, W, 'RINGKASAN TARUH DI RAK');
     const from = P.when(s.received_from), to = P.when(s.received_to);
     const diffText = (x) => {
       if (x.kind === 'extra') return x.sku_name + ': ' + x.qty + ' unit lebih, tetap di ' + (x.bin_code || '') + '.';
@@ -1419,14 +1928,14 @@
     s.lines.forEach((l, i) => {
       if (i) out.push(P.rule('-', W));
       out.push({ b: P.wrap((i + 1) + '. ' + l.sku_name, W, '   ') });
-      out.push(P.lr('   Jumlah', n(l.qty) + ' pcs', W, '   '));
+      out.push(P.lr('   Jumlah', n(l.qty) + ' unit', W, '   '));
       out.push(P.lr('   Dari bin sementara', l.from_bin, W, '   '));
       out.push({ b: P.lr('   Ke bin rak', l.to_bin, W, '   ') });
       out.push(P.lr('   Warna sekat', l.divider.colour_id + ', minggu ' + l.divider.week_parity, W, '   '));
     });
-    out.push(P.rule('=', W), { b: P.lr('Total ditaruh di rak', n(s.total_put) + ' pcs', W) });
+    out.push(P.rule('=', W), { b: P.lr('Total ditaruh di rak', n(s.total_put) + ' unit', W) });
     const left = (s.tasks || []).reduce((a, x) => a + x.qty, 0);
-    if (left) out.push(P.wrap('Belum ditaruh: ' + n(left) + ' pcs di ' + s.tasks.length + ' bin sementara.', W));
+    if (left) out.push(P.wrap('Belum ditaruh: ' + n(left) + ' unit di ' + s.tasks.length + ' bin sementara.', W));
     out.push(P.wrap('Satu bin sementara, satu produk.', W));
     if (s.differences.length) {
       out.push(P.rule('-', W), { b: P.wrap('SELISIH' + (pend.length ? ', menunggu persetujuan Ops HQ' : '') + ' (tidak ditaruh di rak)', W) });
@@ -1437,11 +1946,11 @@
       P.rule('-', W), P.wrap('Ringkasan ini catatan kepatuhan. SPV tanda tangan, lalu simpan bersama Surat Jalan dan Faktur dari kiriman ini.', W));
     return out;
   }
-  const printSummary = (s) => NJW.print.thermal(NJW.print.slip(summaryLines(s, NJW.print.cols())), { title: 'Ringkasan putaway ' + (s.slip_no || '') });
+  const printSummary = (s) => NJW.print.thermal(NJW.print.slip(summaryLines(s, NJW.print.cols())), { title: 'Ringkasan taruh di rak ' + (s.slip_no || '') });
 
   /* ?slip=<id>: the summary, for old links and the laptop. */
   async function slipView(ctx, id) {
-    S.fullScreen(true, { title: ['Slip putaway', 'Putaway slip'], onBack: () => go({ receipt: id, step: 'detail' }) });
+    S.fullScreen(true, { title: ['Slip taruh di rak', 'Putaway slip'], onBack: () => go({ receipt: id, step: 'detail' }) });
     const s = await API().get('/inbound/receipts/' + id + '/slip');
     const P = NJW.print;
     P.previewCss();
@@ -1478,6 +1987,7 @@
       if (step === 'docs') return docsStep(ctx, R);
       if (step === 'putaway') return putawayStep(ctx, R);   // bins batched before 7 Oct
       if (R.no_po && !R.no_po_linked && S.atLeast('hq')) return door(ctx, R);
+      if (R.count_locked) return reviewStep(ctx, R);   // a locked Mode manual count
       return R.total_received > 0 ? scanStep(ctx, R) : door(ctx, R);
     }
     if (step === 'print') return printStep(ctx, R);

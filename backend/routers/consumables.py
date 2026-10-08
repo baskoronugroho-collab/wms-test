@@ -224,6 +224,9 @@ async def list_items(site_id: int, user: auth.User = Depends(auth.current_user))
     """Bahan kemas (9a): per item the usage per order, stock, use per day, days
     left, the minimum, and where its need, PR and receipt stand."""
     site = await auth.assert_site_access(user, site_id)
+    # The weekly count is blind for staff: below SPV they get no system stock
+    # (stock, days left, below the minimum), only usage and the minimum.
+    show = user.at_least("supervisor")
     cfg = await _settings()
     items = await db.fetch_all("SELECT * FROM consumables WHERE site_id = %s AND active = 1 "
                                "ORDER BY sort_order, name", (site_id,))
@@ -293,12 +296,14 @@ async def list_items(site_id: int, user: auth.User = Depends(auth.current_user))
             "usage_basis": basis, "usage_qty": per,
             "usage_label_id": f"{_fmt(per)} {it['unit']} {BASIS[basis][0]}",
             "usage_label_en": f"{_fmt(per)} {it['unit']} {BASIS[basis][1]}",
-            "stock": stock, "per_day": round(day_use, 2), "per_day_actual": round(actual_day, 2),
+            "stock": stock if show else None,
+            "per_day": round(day_use, 2), "per_day_actual": round(actual_day, 2),
             "per_day_target": round(target_day, 2), "used_7d": round(use7.get(it["id"], 0), 2),
             "use_by_day": [round(days7.get(it["id"], {}).get(k, 0), 2) for k in day_keys],
-            "days_left": (int(stock / day_use) if day_use > 0 and stock > 0 else (0 if day_use > 0 else None)),
+            "days_left": ((int(stock / day_use) if day_use > 0 and stock > 0 else (0 if day_use > 0 else None))
+                          if show else None),
             "min_qty": mn, "min_suggested": suggested,
-            "below_min": mn is not None and stock < mn,
+            "below_min": (mn is not None and stock < mn) if show else None,
             "request": state,
             "receipts": [{"id": x["id"], "status": x["status"], "packs": _num(x["packs"]),
                           "per_pack": _num(x["per_pack"]), "qty_total": _num(x["qty_total"]),
@@ -493,9 +498,11 @@ async def enter_receipt(item_id: int, body: ReceiptIn, user: auth.User = Depends
         (item_id, it["site_id"], req_id, Decimal(str(body.packs)), Decimal(str(body.per_pack)), total,
          status, user.email))
     stock = _num(it["stock_qty"])
+    show = user.at_least("supervisor")  # blind weekly count: no system stock for staff
     who = ("Ops HQ", "Ops HQ") if status == "pending" else ("SPV", "the SPV")
-    return {"ok": True, "id": rid, "status": status, "qty_total": float(total), "stock_now": stock,
-            "stock_after": stock + float(total),
+    return {"ok": True, "id": rid, "status": status, "qty_total": float(total),
+            "stock_now": stock if show else None,
+            "stock_after": stock + float(total) if show else None,
             "message": f"Total diterima {_fmt(total)} {it['unit']}. Menunggu persetujuan {who[0]}. / "
                        f"{_fmt(total)} {it['unit']} received. Waiting for {who[1]}."}
 
@@ -526,11 +533,12 @@ async def pending_receipts(site_id: int | None = None,
         "JOIN sites st ON st.id = x.site_id LEFT JOIN consumable_requests r ON r.id = x.request_id "
         f"WHERE {where} ORDER BY x.entered_at", params)
     names = await names_for([r["entered_by"] for r in rows] + [r["decided_by"] for r in rows])
+    show = user.at_least("supervisor")  # blind weekly count: no system stock for staff
     return {"receipts": [{
         "id": r["id"], "consumable_id": r["consumable_id"], "name": r["name"], "unit": r["unit"],
         "site_id": r["site_id"], "site_code": hub_short(r["site_code"]), "status": r["status"],
         "packs": _num(r["packs"]), "per_pack": _num(r["per_pack"]), "qty_total": _num(r["qty_total"]),
-        "stock_now": _num(r["stock_qty"]), "pr_number": r["pr_number"],
+        "stock_now": _num(r["stock_qty"]) if show else None, "pr_number": r["pr_number"],
         "pr_qty": _num(r["pr_qty"]) if r["pr_qty"] is not None else None,
         "entered_by": r["entered_by"], "entered_name": names.get(r["entered_by"]),
         "entered_at": iso(r["entered_at"]), "hq_note": r["hq_note"], "note": r["hq_note"],
@@ -647,7 +655,9 @@ async def submit_count(body: CountIn, user: auth.User = Depends(auth.require("st
     return {"ok": True, "id": cid, "status": status}
 
 
-async def _count_out(c: dict) -> dict:
+async def _count_out(c: dict, show_system: bool = True) -> dict:
+    """show_system False (staff): the weekly count is blind like a bin count, so
+    the system number and the difference stay with the SPV and Ops HQ."""
     lines = await db.fetch_all(
         "SELECT l.*, c.name, c.unit, c.stock_qty FROM consumable_count_lines l "
         "JOIN consumables c ON c.id = l.consumable_id WHERE l.count_id = %s ORDER BY c.sort_order", (c["id"],))
@@ -659,9 +669,11 @@ async def _count_out(c: dict) -> dict:
             "decided_name": names.get(c["decided_by"]), "decided_at": iso(c["decided_at"]),
             "hq_note": c["hq_note"], "note": c["hq_note"],
             "lines": [{"consumable_id": l["consumable_id"], "name": l["name"], "unit": l["unit"],
-                       "qty_counted": _num(l["qty_counted"]), "qty_system": _num(l["qty_system"]),
-                       "difference": _num(l["qty_counted"]) - _num(l["qty_system"]),
-                       "stock_now": _num(l["stock_qty"])} for l in lines]}
+                       "qty_counted": _num(l["qty_counted"]),
+                       "qty_system": _num(l["qty_system"]) if show_system else None,
+                       "difference": (_num(l["qty_counted"]) - _num(l["qty_system"])
+                                      if show_system else None),
+                       "stock_now": _num(l["stock_qty"]) if show_system else None} for l in lines]}
 
 
 @router.get("/counts")
@@ -682,7 +694,8 @@ async def list_counts(site_id: int | None = None, status: str = Query(default="a
         "SELECT k.*, st.code AS site_code FROM consumable_counts k JOIN sites st ON st.id = k.site_id " +
         ("WHERE " + " AND ".join(where) if where else "") + " ORDER BY k.counted_at DESC, k.id DESC LIMIT 20",
         params)
-    return {"counts": [await _count_out(r) for r in rows]}
+    show = user.at_least("supervisor")
+    return {"counts": [await _count_out(r, show) for r in rows]}
 
 
 @router.post("/counts/{count_id}/spv-approve")

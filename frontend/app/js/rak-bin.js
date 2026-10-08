@@ -22,6 +22,8 @@
  *
  * Every role may look; building racks, sizes, special-bin counts and Simpan di
  * are SPV (data-min-role). Labels may be printed and checked by anyone.
+ * Mode manual (S.manualMode()): Cek label shows that label checks wait until
+ * scanning works again (printing stays); *Masih bisa pindai?* shows the zone.
  */
 (function () {
   'use strict';
@@ -108,6 +110,25 @@
 .rb-lab__line{font-size:11px;font-weight:700}
 .rb-lab svg{width:100%;height:38px;display:block}
 .rb-check__num{font-family:var(--mono);font-size:30px;font-weight:700}
+.rb-spot{flex:1 1 0;min-width:0;display:flex;flex-direction:column-reverse;gap:3px}
+.rb-spot--besar{flex-grow:2}
+.rb-spot .rb-bin{flex:1 1 auto;width:100%;box-sizing:border-box}
+.rb-spot--besar .rb-bin:not(.rb-bin--besar){width:60%;align-self:center}
+.rb-cell{align-items:flex-end}
+.rb-slot{display:inline-flex;flex-direction:column-reverse;gap:3px}
+.rb-slot--stack{padding:3px;border-radius:10px;background:var(--sunk)}
+.rb-cell .rb-chip{height:auto;min-height:44px;min-width:56px;justify-content:center;padding:0 8px;cursor:pointer;font:inherit;font-size:12px;font-weight:700;color:var(--ink)}
+.rb-cell .rb-chip--besar{font-weight:800}
+.rb-chip small{font-family:var(--mono);font-size:11px;font-weight:700;margin-left:4px;color:var(--ink-2)}
+.rb-chip.is-pick{outline:3px solid var(--action);outline-offset:1px}
+.rb-cell .rb-add{width:44px;height:44px}
+.rb-add:disabled{opacity:.4;cursor:not-allowed}
+.rb-binbar{border:2px solid var(--action);border-radius:12px;padding:10px 12px;background:#F5F8FC}
+.rb-binbar .k-btn,.rb-binbar .k-segment button{min-height:44px}
+.rb-lab__stack{font-size:12px;font-weight:900;letter-spacing:.06em;border:2px solid #000;border-radius:4px;padding:0 6px;align-self:flex-start;line-height:16px}
+.rb-lab--stack svg{height:28px}
+.rb-cell__k{display:none}
+@media(max-width:599px){.rb-bgrid{grid-template-columns:minmax(0,1fr)!important}.rb-bgrid__head,.rb-bgrid__corner{display:none}.rb-bgrid__lv{margin-top:8px}.rb-cell__k{display:block;flex-basis:100%;font-size:12px;font-weight:700;color:var(--muted)}}
 #rb-printzone{display:none}
 @media print{
   @page{size:A4;margin:0}
@@ -195,8 +216,9 @@
   }
 
   function binLabelHtml(l) {
-    return '<div class="rb-lab"><span class="rb-lab__top"><span class="rb-lab__code">' + esc(l.code) + '</span>' +
-      '<span class="rb-lab__kol">' + esc(l.kolom_text || '') + '</span></span>' + barcodeSvg(l.barcode || l.code) +
+    return '<div class="rb-lab' + (l.stack_text ? ' rb-lab--stack' : '') + '"><span class="rb-lab__top"><span class="rb-lab__code">' + esc(l.code) + '</span>' +
+      '<span class="rb-lab__kol">' + esc(l.kolom_text || '') + '</span></span>' +
+      (l.stack_text ? '<span class="rb-lab__stack">' + esc(l.stack_text) + '</span>' : '') + barcodeSvg(l.barcode || l.code) +
       '<span class="rb-lab__line">' + esc(l.line || '') + '</span></div>';
   }
   function specialLabelHtml(l) {
@@ -223,7 +245,7 @@
         h += '<div style="display:flex;gap:18px;align-items:stretch"><div class="rb-racklab"><span style="display:flex;align-items:baseline;justify-content:space-between">' +
           '<span class="rb-racklab__code">' + esc(d.rack_label.title) + '</span><span style="font-size:14px;font-weight:800">' + esc(d.rack_label.hub) + '</span></span>' +
           '<div style="height:44px">' + barcodeSvg(d.rack_label.title.replace(/\s+/g, '-') + '-' + d.rack_label.hub).replace('<svg', '<svg style="height:44px;width:100%"') + '</div>' +
-          '<span style="font-size:12px;font-weight:700">' + esc(d.rack_label.note) + '</span></div>' +
+          '<span style="font-size:12px;font-weight:700">' + esc(S.pick(d.rack_label.note)) + '</span></div>' +
           '<div class="rb-contents"><span style="font-size:13px;font-weight:800">Isi halaman ini</span>' +
           p.contents.map((c) => '<span>' + esc(c) + '</span>').join('') +
           (d.later_pages_text ? '<span>' + esc(d.later_pages_text) + '</span>' : '') +
@@ -242,10 +264,26 @@
 
   /* ---------------- the rack drawing (preview, detail, Perlu bin) ---------------- */
   /* levels: bottom first, each {level_no, kolom:[[bin…]…]} where a bin has
-     size and optional code/state. opts.binHtml(bin) makes the inside of a bin,
-     opts.cls(bin) adds classes, opts.levelSub(level) the small lines under "Level n". */
+     size, index (its place on the level) and optional row (1 = bottom of a stack),
+     code and state. Bins of one place are drawn on top of each other, bottom bin
+     at the bottom. opts.binHtml(bin) makes the inside of a bin, opts.cls(bin)
+     adds classes, opts.levelSub(level) the small lines under "Level n". */
+  function spotsOf(bins) {
+    const out = [];
+    bins.forEach((b) => {
+      const last = out[out.length - 1];
+      if (last && b.index != null && last[0].index === b.index) last.push(b); else out.push([b]);
+    });
+    out.forEach((sp) => sp.sort((a, b) => (a.row || 1) - (b.row || 1)));
+    return out;
+  }
+  const placesOn = (lv) => lv.kolom.reduce((n, k) => n + spotsOf(k.bins || k).length, 0);
   function drawRack(levels, opts) {
     opts = opts || {};
+    const binEl = (b) => '<span class="rb-bin' + (b.size === 'BESAR' ? ' rb-bin--besar' : '') + (opts.cls ? ' ' + opts.cls(b) : '') + '"' +
+      (b.location_id ? ' data-loc="' + b.location_id + '"' : '') + '>' + (opts.binHtml ? opts.binHtml(b) : esc(pad2(b.index))) + '</span>';
+    const spotEl = (sp) => (sp.length === 1 ? binEl(sp[0])
+      : '<span class="rb-spot' + (sp.some((b) => b.size === 'BESAR') ? ' rb-spot--besar' : '') + '">' + sp.map(binEl).join('') + '</span>');
     const kol = Math.max(1, ...levels.map((l) => l.kolom.length));
     const rows = levels.slice().sort((a, b) => b.level_no - a.level_no);
     return '<div class="rb-front' + (opts.big ? ' rb-big' : '') + '">' +
@@ -253,13 +291,12 @@
       Array.from({ length: kol }, (_, i) => '<span>' + esc(t('Kolom ', 'Kolom ')) + (i + 1) + '</span>').join('') + '</div></div>' +
       rows.map((lv, ri) => '<div class="rb-frow"><span class="rb-frow__lv"><span>' + esc(t('Level ', 'Level ')) + lv.level_no + '</span>' + (opts.levelSub ? opts.levelSub(lv) : '') + '</span>' +
         '<div class="rb-frame"' + (ri ? ' style="border-top-width:0"' : '') + '>' + lv.kolom.map((bins, ki) =>
-          (ki ? '<span class="rb-upright"></span>' : '') + '<span class="rb-kol">' + bins.map((b) =>
-            '<span class="rb-bin' + (b.size === 'BESAR' ? ' rb-bin--besar' : '') + (opts.cls ? ' ' + opts.cls(b) : '') + '"' +
-            (b.location_id ? ' data-loc="' + b.location_id + '"' : '') + '>' + (opts.binHtml ? opts.binHtml(b) : esc(pad2(b.index))) + '</span>').join('') + '</span>').join('') +
+          (ki ? '<span class="rb-upright"></span>' : '') + '<span class="rb-kol">' + spotsOf(bins).map(spotEl).join('') + '</span>').join('') +
         '</div></div>').join('') + '</div>';
   }
   const legend = () => '<div class="rb-legend"><span><i style="width:12px"></i>' + bis('Kecil: sempit', 'Kecil: narrow') + '</span>' +
-    '<span><i style="width:24px;background:#CFDDF0"></i>' + bis('Besar: lebar, biru', 'Besar: wide, blue') + '</span></div>';
+    '<span><i style="width:24px;background:#CFDDF0"></i>' + bis('Besar: lebar, biru', 'Besar: wide, blue') + '</span>' +
+    '<span><span style="display:inline-flex;flex-direction:column;gap:2px;vertical-align:-4px;margin-right:6px"><i style="width:12px;height:7px;margin:0"></i><i style="width:12px;height:7px;margin:0"></i></span>' + bis('Bertumpuk: bin di atas bin (B bawah, T atas)', 'Stacked: bin on bin (B bottom, T top)') + '</span></div>';
 
   /* ================= tab: Rak ================= */
 
@@ -322,7 +359,8 @@
     if (r.label_wrong) pills.push(S.pill('stop', r.label_wrong + ' label salah', r.label_wrong + ' wrong'));
     return '<div class="k-card k-card--pad k-stack">' +
       '<div class="k-line k-line--between"><span class="rb-rack__code">' + esc(t('Rak ', 'Rack ')) + esc(r.code) + '</span>' +
-      '<span class="k-muted">' + r.levels + ' level · ' + r.kolom_count + ' kolom · ' + r.bins + ' bin</span></div>' +
+      '<span class="k-muted">' + r.levels + ' level · ' + r.kolom_count + ' kolom · ' + r.bins + ' bin' +
+      (r.stacks ? ' · ' + r.stacks + ' ' + esc(t('tumpukan', r.stacks === 1 ? 'stack' : 'stacks')) : '') + '</span></div>' +
       '<div class="k-line" style="gap:10px;flex-wrap:wrap">' + sizeChip('KECIL') + '<span class="k-strong">' + r.kecil + '</span>' + sizeChip('BESAR') + '<span class="k-strong">' + r.besar + '</span>' +
       '<span class="k-muted">· ' + esc(t('kosong', 'free')) + ' ' + r.free_kecil + ' Kecil, ' + r.free_besar + ' Besar</span></div>' +
       '<div class="rb-pills">' + pills.join('') + '</div>' +
@@ -339,17 +377,27 @@
     return '';
   }
 
+  /* Limits as the server (racks.py): places side by side, bins counted one by one
+     (a stack of 3 is 3 bins), and up to 3 bins in one stack. */
+  const LIM = { spotsKolom: 20, binsKolom: 30, stack: 3 };
+  const STACK_WORD = { B: ['bawah', 'bottom'], M: ['tengah', 'middle'], T: ['atas', 'top'] };
+  const stackLetter = (row, rows) => (rows < 2 ? '' : row <= 1 ? 'B' : row >= rows ? 'T' : 'M');
+
+  /* The builder keeps every place as a list of sizes, bottom first: ['KECIL'] is a
+     single bin, ['BESAR','KECIL'] a Besar bin with a Kecil bin on top. The server
+     takes a size for a single bin and a list for a stack. */
   async function builder(ctx, rackId) {
     if (!OVERVIEW) await loadOverview().catch(() => null);
-    const st = { code: nextRackCode(), kolom: 2, grid: [], sel: null, inUse: false };
-    const mk = (n) => Array.from({ length: n }, () => 'KECIL');
+    const st = { code: nextRackCode(), kolom: 2, grid: [], sel: null, pick: null, inUse: false };
+    const mk = (n) => Array.from({ length: n }, () => ['KECIL']);
+    const copyCol = (c) => c.map((sp) => sp.slice());
     if (rackId) {
       const d = await api().get('/racks/' + rackId + '/layout');
       st.code = d.rack.code;
       st.kolom = d.rack.kolom_count || 1;
       st.inUse = d.rack.in_use;
-      st.grid = d.levels.map((lv) => lv.columns.map((c) => c.slice()));
-      while (st.grid.some((lv) => lv.length < st.kolom)) st.grid.forEach((lv) => { while (lv.length < st.kolom) lv.push([]); });
+      st.grid = d.levels.map((lv) => lv.columns.map((c) => c.map((sp) => (Array.isArray(sp) ? sp.slice() : [sp]))));
+      st.grid.forEach((lv) => { while (lv.length < st.kolom) lv.push([]); });
     } else {
       st.grid = Array.from({ length: 5 }, () => Array.from({ length: 2 }, () => mk(3)));
     }
@@ -367,56 +415,112 @@
       ' <span class="k-muted" style="font-weight:500">' + bis('· tiap bin punya ukurannya sendiri', '· each bin has its own size') + '</span></span>' +
       '<button type="button" class="k-btn k-btn--sm k-btn--secondary" id="rb-copy">' + icon('list', 18) + bis('Salin ke semua kolom', 'Copy to every kolom') + '</button></div>' +
       '<div id="rb-grid"></div>' +
+      '<div id="rb-binbar"></div>' +
       '<p class="k-caption" id="rb-hint"></p>' +
       '<div class="k-note k-note--navy" id="rb-result"></div>' +
       '<div class="k-line" style="gap:10px"><button type="button" class="k-btn k-btn--secondary" data-back2>' + bis('Batal', 'Cancel') + '</button>' +
       '<button type="submit" class="k-btn k-btn--primary k-grow" data-min-role="supervisor">' + icon('check') + bis('Simpan rak', 'Save rack') + '</button></div>' +
       (rackId && !st.inUse ? '<button type="button" class="k-linkbtn" id="rb-del" data-min-role="supervisor" style="color:var(--stop)">' + icon('trash', 18) + bis('Hapus rak ini', 'Delete this rack') + '</button>' : '') +
       '</form><div class="k-card k-card--pad k-stack"><h2 class="k-h2" id="rb-ptitle"></h2>' + legend() + '<div id="rb-preview"></div>' +
-      '<p class="k-caption">' + bis('Kode bin = rak, level, bin. Level 1 paling bawah. Bin dihitung per level dari kiri ke kanan, menyeberang kolom.',
-        'Bin code = rack, level, bin. Level 1 is the bottom. Bins are numbered per level from left to right, across the kolom.') + '</p></div></div>';
+      '<p class="k-caption">' + bis('Kode bin = rak, level, bin. Level 1 paling bawah. Bin dihitung per level dari kiri ke kanan, menyeberang kolom. Bin bertumpuk memakai satu nomor dengan huruf: B bawah, M tengah, T atas.',
+        'Bin code = rack, level, bin. Level 1 is the bottom. Bins are numbered per level from left to right, across the kolom. Stacked bins share one number with a letter: B bottom, M middle, T top.') + '</p></div></div>';
     wireBack(ctx.body);
     ctx.body.querySelector('[data-back2]').addEventListener('click', () => nav({}));
     const $ = (s) => ctx.body.querySelector(s);
 
     function codeNow() { return ($('#rb-code').value || '').trim().toUpperCase() || '?'; }
+    /* Place number of place s in kolom k of level li: counted across the kolom. */
+    function placeNo(li, k, s) {
+      let n = 0;
+      for (let i = 0; i < k; i++) n += st.grid[li][i].length;
+      return n + s + 1;
+    }
+    function binCode(li, k, s, r) {
+      const sp = st.grid[li][k][s];
+      return codeNow() + '-' + (li + 1) + '-' + pad2(placeNo(li, k, s)) + stackLetter(r + 1, sp.length);
+    }
+    const binsIn = (col) => col.reduce((n, sp) => n + sp.length, 0);
+    function pickedSpot() {
+      const p = st.pick;
+      if (!p || !st.grid[p.lv] || !st.grid[p.lv][p.k] || !st.grid[p.lv][p.k][p.s]) { st.pick = null; return null; }
+      if (p.r >= st.grid[p.lv][p.k][p.s].length) p.r = st.grid[p.lv][p.k][p.s].length - 1;
+      return st.grid[p.lv][p.k][p.s];
+    }
+
+    function paintBar() {
+      const bar = $('#rb-binbar');
+      const sp = pickedSpot();
+      if (!sp) { bar.innerHTML = ''; return; }
+      const p = st.pick, col = st.grid[p.lv][p.k], size = sp[p.r];
+      const letter = stackLetter(p.r + 1, sp.length);
+      const where = STACK_WORD[letter];
+      const canStack = sp.length < LIM.stack && binsIn(col) < LIM.binsKolom;
+      bar.innerHTML = '<div class="rb-binbar k-stack k-stack--tight" role="group" aria-label="' + esc(t('Bin terpilih', 'Chosen bin')) + '">' +
+        '<div class="k-line k-line--between" style="gap:8px;flex-wrap:wrap"><span><span class="k-mono k-strong" style="font-size:18px">' + esc(binCode(p.lv, p.k, p.s, p.r)) + '</span> ' +
+        '<span class="k-muted">' + esc('Level ' + (p.lv + 1) + ' · Kolom ' + (p.k + 1)) +
+        (where ? ' · ' + esc(t('bin ' + where[0] + ' dari ' + sp.length + ' bertumpuk', where[1] + ' bin of ' + sp.length + ' stacked')) : '') + '</span></span>' +
+        '<button type="button" class="k-btn k-btn--sm k-btn--ghost" data-bar="close" aria-label="' + esc(t('Tutup', 'Close')) + '">' + icon('close', 18) + '</button></div>' +
+        '<div class="k-segment" role="group" aria-label="' + esc(t('Ukuran bin', 'Bin size')) + '">' +
+        ['KECIL', 'BESAR'].map((s) => '<button type="button" data-bar="size" data-size="' + s + '" aria-pressed="' + (size === s) + '">' + esc(t(sizeWord(s)[0], sizeWord(s)[1])) + '</button>').join('') + '</div>' +
+        '<div class="rb-btns"><button type="button" class="k-btn k-btn--secondary" data-bar="stack"' + (canStack ? '' : ' disabled') + '>' + icon('plus', 18) +
+        '<span>' + esc(t('Tumpuk bin di atas', 'Stack a bin on top')) + '</span></button>' +
+        '<button type="button" class="k-btn k-btn--ghost" data-bar="remove" style="color:var(--stop)">' + icon('trash', 18) +
+        '<span>' + esc(sp.length > 1 ? t('Hapus bin paling atas', 'Remove the top bin') : t('Hapus bin', 'Remove bin')) + '</span></button></div>' +
+        (sp.length >= LIM.stack ? '<span class="k-caption">' + esc(t('Paling banyak 3 bin bertumpuk.', 'At most 3 stacked bins.')) + '</span>' : '') + '</div>';
+    }
+
     function paint() {
       const code = codeNow();
       const K = st.kolom;
       const g = $('#rb-grid');
-      let h = '<div class="rb-bgrid" style="grid-template-columns:56px repeat(' + K + ',minmax(0,1fr))"><span></span>' +
+      let h = '<div class="rb-bgrid" style="grid-template-columns:56px repeat(' + K + ',minmax(0,1fr))"><span class="rb-bgrid__corner"></span>' +
         Array.from({ length: K }, (_, i) => '<span class="rb-bgrid__head">Kolom ' + (i + 1) + '</span>').join('');
       for (let li = st.grid.length - 1; li >= 0; li--) {
         h += '<span class="rb-bgrid__lv">Level ' + (li + 1) + '</span>';
         st.grid[li].forEach((col, ki) => {
           const sel = st.sel && st.sel.lv === li && st.sel.k === ki;
-          h += '<div class="rb-cell' + (sel ? ' is-sel' : '') + '" data-lv="' + li + '" data-k="' + ki + '">' + col.map((s, bi) =>
-            '<span class="rb-chip' + (s === 'BESAR' ? ' rb-chip--besar' : '') + '"><button type="button" data-tog="' + bi + '" aria-label="' +
-            esc('Level ' + (li + 1) + ' kolom ' + (ki + 1) + ' bin ' + (bi + 1) + ': ' + t(sizeWord(s)[0], sizeWord(s)[1]) + ', ' + t('ketuk untuk ganti', 'tap to switch')) + '">' +
-            esc(t(sizeWord(s)[0], sizeWord(s)[1])) + '</button><button type="button" class="rb-x" data-del="' + bi + '" aria-label="' +
-            esc(t('Hapus bin ', 'Remove bin ') + (bi + 1)) + '">' + icon('close', 14, 2.4) + '</button></span>').join('') +
-            '<button type="button" class="rb-add" data-addbin aria-label="' + esc(t('Tambah bin di level ', 'Add a bin on level ') + (li + 1) + ' kolom ' + (ki + 1)) + '">' + icon('plus', 16, 2.4) + '</button></div>';
+          h += '<div class="rb-cell' + (sel ? ' is-sel' : '') + '" data-lv="' + li + '" data-k="' + ki + '"><span class="rb-cell__k">Kolom ' + (ki + 1) + '</span>' + col.map((sp, si) =>
+            '<span class="rb-slot' + (sp.length > 1 ? ' rb-slot--stack' : '') + '">' + sp.map((s, ri) => {
+              const on = st.pick && st.pick.lv === li && st.pick.k === ki && st.pick.s === si && st.pick.r === ri;
+              const letter = stackLetter(ri + 1, sp.length);
+              return '<button type="button" class="rb-chip' + (s === 'BESAR' ? ' rb-chip--besar' : '') + (on ? ' is-pick' : '') + '" data-s="' + si + '" data-r="' + ri + '" aria-pressed="' + on + '" aria-label="' +
+                esc(binCode(li, ki, si, ri) + ': ' + t(sizeWord(s)[0], sizeWord(s)[1]) + (letter ? ', ' + t('bin ' + STACK_WORD[letter][0], STACK_WORD[letter][1] + ' bin') : '') + '. ' + t('Ketuk untuk ukuran, tumpuk atau hapus', 'Tap for size, stack or remove')) + '">' +
+                esc(t(sizeWord(s)[0], sizeWord(s)[1])) + (letter ? '<small>' + letter + '</small>' : '') + '</button>';
+            }).join('') + '</span>').join('') +
+            '<button type="button" class="rb-add" data-addbin' + (col.length >= LIM.spotsKolom || binsIn(col) >= LIM.binsKolom ? ' disabled' : '') + ' aria-label="' +
+            esc(t('Tambah bin di sebelah kanan, level ', 'Add a bin to the right, level ') + (li + 1) + ' kolom ' + (ki + 1)) + '">' + icon('plus', 18, 2.4) + '</button></div>';
         });
       }
       g.innerHTML = h + '</div>';
-      $('#rb-hint').textContent = t('Ketuk ukuran untuk menukar Kecil dan Besar, × untuk hapus bin, + untuk tambah bin. Salin ke semua kolom menyalin kolom terpilih (',
-        'Tap a size to switch Kecil and Besar, × removes a bin, + adds one. Copy to every kolom copies the selected kolom (') +
+      paintBar();
+      $('#rb-hint').textContent = t('Ketuk bin untuk mengganti ukuran, menumpuk bin lain di atasnya (sampai 3), atau menghapusnya. + menambah bin di sebelah kanan. Salin ke semua kolom menyalin kolom terpilih (',
+        'Tap a bin to change its size, stack another bin on top (up to 3) or remove it. + adds a bin to the right. Copy to every kolom copies the selected kolom (') +
         (st.sel ? 'kolom ' + (st.sel.k + 1) + t(', semua level).', ', every level).') : '-).');
-      // levels for drawing + counts
+      // levels for drawing + counts: every bin with its place number and place in the stack
       const levels = st.grid.map((cols, li) => {
         let idx = 0;
-        return { level_no: li + 1, kolom: cols.map((c) => c.map((s) => ({ size: s, index: ++idx }))), count: idx, sizes: cols.flat() };
+        const kolom = cols.map((c) => {
+          const out = [];
+          c.forEach((sp) => { idx += 1; sp.forEach((s, ri) => out.push({ size: s, index: idx, row: ri + 1, rows: sp.length, label: pad2(idx) + stackLetter(ri + 1, sp.length) })); });
+          return out;
+        });
+        return { level_no: li + 1, kolom, count: idx, all: kolom.flat() };
       });
-      const all = levels.flatMap((l) => l.sizes);
-      const kecil = all.filter((s) => s === 'KECIL').length;
-      const first = levels.find((l) => l.count), last = levels.slice().reverse().find((l) => l.count);
+      const all = levels.flatMap((l) => l.all);
+      const kecil = all.filter((b) => b.size === 'KECIL').length;
+      const stacks = levels.reduce((n, l) => n + l.kolom.flat().filter((b) => b.rows > 1 && b.row === 1).length, 0);
+      const firstL = levels.find((l) => l.all.length), lastL = levels.slice().reverse().find((l) => l.all.length);
+      const first = firstL ? code + '-' + firstL.level_no + '-' + firstL.all[0].label : '';
+      const last = lastL ? code + '-' + lastL.level_no + '-' + lastL.all[lastL.all.length - 1].label : '';
       $('#rb-result').innerHTML = '<span><b>' + esc(t('Hasil: ', 'Result: ')) + all.length + ' bin</b>' +
-        (first ? ', ' + esc(code + '-' + first.level_no + '-01') + ' ' + esc(t('sampai', 'to')) + ' ' + esc(code + '-' + last.level_no + '-' + pad2(last.count)) : '') +
-        ' · ' + kecil + ' Kecil, ' + (all.length - kecil) + ' Besar</span>';
+        (first ? ', ' + esc(first) + ' ' + esc(t('sampai', 'to')) + ' ' + esc(last) : '') +
+        ' · ' + kecil + ' Kecil, ' + (all.length - kecil) + ' Besar' +
+        (stacks ? ' · ' + esc(stacks + ' ' + t('tumpukan', stacks === 1 ? 'stack' : 'stacks')) : '') + '</span>';
       $('#rb-ptitle').textContent = t('Pratinjau rak ', 'Preview of rack ') + code + t(', tampak depan', ', front view');
       $('#rb-preview').innerHTML = drawRack(levels, {
+        binHtml: (b) => esc(b.label),
         levelSub: (lv) => {
-          const set = new Set(lv.sizes);
+          const set = new Set(lv.all.map((b) => b.size));
           const w = set.size > 1 ? ['campur', 'mixed'] : set.has('BESAR') ? SIZE.BESAR : SIZE.KECIL;
           return '<small class="rb-mono">' + esc(code + '-' + lv.level_no + '-xx') + '</small><small>' + esc(t(w[0], w[1])) + '</small>';
         },
@@ -426,17 +530,42 @@
       const cell = e.target.closest('.rb-cell');
       if (!cell) return;
       const li = +cell.dataset.lv, ki = +cell.dataset.k, col = st.grid[li][ki];
-      const tog = e.target.closest('[data-tog]'), del = e.target.closest('[data-del]'), add = e.target.closest('[data-addbin]');
-      if (tog) { const i = +tog.dataset.tog; col[i] = col[i] === 'KECIL' ? 'BESAR' : 'KECIL'; }
-      else if (del) col.splice(+del.dataset.del, 1);
-      else if (add) { if (col.length < 20) col.push(col.length ? col[col.length - 1] : 'KECIL'); }
+      const chip = e.target.closest('[data-s]'), add = e.target.closest('[data-addbin]');
+      if (chip) {
+        const p = { lv: li, k: ki, s: +chip.dataset.s, r: +chip.dataset.r };
+        const same = st.pick && st.pick.lv === p.lv && st.pick.k === p.k && st.pick.s === p.s && st.pick.r === p.r;
+        st.pick = same ? null : p;
+      } else if (add) {
+        if (col.length < LIM.spotsKolom && binsIn(col) < LIM.binsKolom) {
+          const lastSp = col[col.length - 1];
+          col.push([lastSp ? lastSp[0] : 'KECIL']);
+          st.pick = null;
+        }
+      }
       st.sel = { lv: li, k: ki };
+      paint();
+    });
+    $('#rb-binbar').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-bar]');
+      const sp = pickedSpot();
+      if (!b || !sp) return;
+      const p = st.pick, col = st.grid[p.lv][p.k];
+      const act = b.dataset.bar;
+      if (act === 'close') st.pick = null;
+      else if (act === 'size') sp[p.r] = b.dataset.size;
+      else if (act === 'stack') {
+        if (sp.length < LIM.stack && binsIn(col) < LIM.binsKolom) { sp.push(sp[sp.length - 1]); p.r = sp.length - 1; }
+      } else if (act === 'remove') {
+        if (sp.length > 1) { sp.pop(); p.r = Math.min(p.r, sp.length - 1); }
+        else { col.splice(p.s, 1); st.pick = null; }
+      }
       paint();
     });
     $('#rb-copy').addEventListener('click', () => {
       if (!st.sel) return;
       const k = st.sel.k;
-      st.grid.forEach((cols) => cols.forEach((c, ki) => { if (ki !== k) cols[ki] = cols[k].slice(); }));
+      st.grid.forEach((cols) => cols.forEach((c, ki) => { if (ki !== k) cols[ki] = copyCol(cols[k]); }));
+      st.pick = null;
       S.toast(['Kolom ' + (k + 1) + ' disalin ke semua kolom.', 'Kolom ' + (k + 1) + ' copied to every kolom.'], 'ok');
       paint();
     });
@@ -444,7 +573,7 @@
     $('#rb-lv').addEventListener('change', () => {
       const n = Math.max(1, Math.min(10, parseInt($('#rb-lv').value, 10) || 1));
       $('#rb-lv').value = n;
-      while (st.grid.length < n) st.grid.push(st.grid.length ? st.grid[st.grid.length - 1].map((c) => c.slice()) : Array.from({ length: st.kolom }, () => mk(3)));
+      while (st.grid.length < n) st.grid.push(st.grid.length ? st.grid[st.grid.length - 1].map(copyCol) : Array.from({ length: st.kolom }, () => mk(3)));
       st.grid.length = n;
       if (st.sel && st.sel.lv >= n) st.sel.lv = n - 1;
       paint();
@@ -454,7 +583,7 @@
       $('#rb-k').value = n;
       st.kolom = n;
       st.grid.forEach((cols) => {
-        while (cols.length < n) cols.push(cols.length ? cols[cols.length - 1].slice() : mk(3));
+        while (cols.length < n) cols.push(cols.length ? copyCol(cols[cols.length - 1]) : mk(3));
         cols.length = n;
       });
       if (st.sel && st.sel.k >= n) st.sel.k = n - 1;
@@ -462,7 +591,10 @@
     });
     $('#rb-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const body = { code: codeNow(), kolom_count: st.kolom, levels: st.grid.map((cols, li) => ({ level_no: li + 1, columns: cols })) };
+      const body = {
+        code: codeNow(), kolom_count: st.kolom,
+        levels: st.grid.map((cols, li) => ({ level_no: li + 1, columns: cols.map((c) => c.map((sp) => (sp.length === 1 ? sp[0] : sp.slice()))) })),
+      };
       try {
         const res = rackId ? await api().put('/racks/' + rackId + '/build', body) : await api().post('/sites/' + siteId() + '/racks/build', body);
         S.toast(S.pick(res.message), 'ok');
@@ -486,9 +618,9 @@
     const bins = {};
     const levels = d.levels.map((lv) => ({ level_no: lv.level_no, kolom: lv.kolom.map((k) => k.bins.map((b) => { bins[b.location_id] = b; return b; })) }));
     ctx.body.innerHTML = '<div class="k-line">' + back() + '</div>' +
-      '<div class="k-card k-card--pad k-stack"><h2 class="k-h2">' + esc(t('Rak ', 'Rack ')) + esc(d.rack.code) + '</h2><div class="k-line k-line--between" style="flex-wrap:wrap;gap:8px"><span class="k-strong">' + esc(d.rack.summary) + '</span>' +
+      '<div class="k-card k-card--pad k-stack"><h2 class="k-h2">' + esc(t('Rak ', 'Rack ')) + esc(d.rack.code) + '</h2><div class="k-line k-line--between" style="flex-wrap:wrap;gap:8px"><span class="k-strong">' + esc(t(d.rack.summary, d.rack.summary_en || d.rack.summary)) + '</span>' +
       '<span class="k-muted">' + esc(t('Dipakai ', 'In use ')) + d.rack.used + ' · ' + esc(t('kosong ', 'free ')) + (d.rack.bins - d.rack.used) + '</span></div>' + legend() +
-      '<div style="overflow-x:auto"><div style="min-width:' + Math.max(340, d.levels.reduce((m, l) => Math.max(m, l.bins.length), 0) * 64) + 'px">' +
+      '<div style="overflow-x:auto"><div style="min-width:' + Math.max(340, d.levels.reduce((m, l) => Math.max(m, placesOn(l)), 0) * 64) + 'px">' +
       drawRack(levels, {
         big: true,
         cls: (b) => 'is-click' + (b.occupied ? ' is-used' : ''),
@@ -503,7 +635,8 @@
     const other = b.size === 'BESAR' ? 'KECIL' : 'BESAR';
     S.modal({
       title: [b.short_code, b.short_code],
-      body: '<div class="k-stack"><div class="k-line" style="gap:8px">' + sizeChip(b.size) + '<span class="k-muted">Level ' + b.level_no + ' · Kolom ' + b.kolom_no + '</span></div>' +
+      body: '<div class="k-stack"><div class="k-line" style="gap:8px;flex-wrap:wrap">' + sizeChip(b.size) + '<span class="k-muted">Level ' + b.level_no + ' · Kolom ' + b.kolom_no + '</span>' +
+        (b.stack_word ? '<span class="k-tag">' + bis('Bin ' + b.stack_word + ' dari ' + b.rows + ' bertumpuk', (b.stack_word_en || '') + ' bin of ' + b.rows + ' stacked') + '</span>' : '') + '</div>' +
         (b.occupied ? '<div class="k-note"><span><b>' + esc(b.sku_name || '') + '</b><br>' + esc(S.fmt.n(b.qty_on_hand)) + ' ' + esc(t('unit di bin', 'units in the bin')) + '</span></div>'
           : '<div class="k-note">' + bis('Bin kosong.', 'Empty bin.') + '</div>') +
         (b.label_check === 'wrong' ? '<div class="k-note k-note--stop">' + bis('Label di bin ini salah: milik ' + (b.label_check_scanned || '?') + '.', 'The label on this bin is wrong: it belongs to ' + (b.label_check_scanned || '?') + '.') + '</div>' : '') + '</div>',
@@ -549,7 +682,11 @@
     ctx.body.innerHTML = '<div class="k-stack" id="rb-cek"></div>';
     const host = ctx.body.querySelector('#rb-cek');
     let zone = null;
+    /* Mode manual: a label check needs a scan, so it waits until scanning works
+       again; printing stays available. *Masih bisa pindai?* shows the zone. */
+    let showScan = false;
     function paint(last) {
+      const wait = S.manualMode() && !showScan;
       const pct = st.total ? Math.round(100 * st.checked / st.total) : 0;
       let h = '<div class="k-card k-card--pad k-stack k-stack--tight"><span class="k-eyebrow">' + esc(t('Cek label rak ', 'Check labels, rack ')) + esc(st.rack.code) + '</span>' +
         '<div class="k-line" style="gap:10px;align-items:baseline"><span class="rb-check__num">' + st.checked + '</span><span class="k-strong">' + esc(t('dari ', 'of ')) + st.total + ' label</span>' +
@@ -558,7 +695,12 @@
       if (st.next) {
         h += '<div class="k-target' + (last === 'ok' ? ' k-target--ok' : last === 'stop' ? ' k-target--stop' : '') + '"><div class="k-target__text">' +
           '<span class="k-target__label">' + esc(t('Cek bin berikut', 'Check the next bin')) + '</span><span class="k-target__code">' + esc(st.next.code) + '</span>' +
-          '<span class="k-target__hint">' + esc(st.next.hint) + '</span></div></div><div id="rb-zone"></div>';
+          '<span class="k-target__hint">' + esc(S.pick(st.next.hint)) + '</span></div></div>' +
+          (wait ? '<div class="k-note k-note--caution">' + icon('warn', 20) + '<span>' + bis('Mode manual: cek label menunggu sampai pemindai berfungsi lagi. Cetak label tetap bisa.',
+            'Manual mode: label checks wait until scanning works again. Printing labels still works.') + '</span></div>' +
+            '<div class="rb-btns"><button type="button" class="k-btn k-btn--secondary" data-labels>' + icon('print') + bis('Cetak label rak ini', 'Print the labels of this rack') + '</button>' +
+            '<button type="button" class="k-linkbtn" data-scanok>' + icon('scan', 18) + bis('Masih bisa pindai?', 'Scanner still works?') + '</button></div>'
+            : '<div id="rb-zone"></div>');
       } else if (st.done) {
         h += '<div class="k-card k-empty"><span class="k-empty__icon">' + icon('check', 28, 2.6) + '</span>' +
           '<span class="k-empty__title">' + esc(t('Semua label cocok', 'Every label matches')) + '</span>' +
@@ -569,7 +711,7 @@
       if (st.to_fix.length) {
         h += '<span class="k-eyebrow" style="color:var(--stop)">' + esc(t('Perlu dibereskan', 'To fix')) + ' (' + st.to_fix.length + ')</span>' +
           st.to_fix.map((f) => '<div class="k-card k-card--pad k-card--stop k-stack k-stack--tight"><span class="k-mono k-strong" style="font-size:22px">' + esc(f.code) + '</span>' +
-            '<span class="k-strong" style="color:var(--stop)">' + esc(f.message) + '</span><span class="k-muted">' + esc(f.action) + '</span>' +
+            '<span class="k-strong" style="color:var(--stop)">' + esc(S.pick(f.message)) + '</span><span class="k-muted">' + esc(S.pick(f.action)) + '</span>' +
             '<button type="button" class="k-btn k-btn--secondary" data-reprint="' + f.location_id + '">' + icon('print') + '<span>' + esc(t('Cetak ulang ', 'Reprint ')) + esc(f.code) + '</span></button></div>').join('');
       }
       if (st.recent.length) {
@@ -584,7 +726,11 @@
         try { await reprint(+b.dataset.reprint); st = await api().get('/racks/' + rackId + '/label-check'); paint(); } catch (e) { S.fail(e); }
       }));
       host.querySelector('[data-done]').addEventListener('click', () => { S.fullScreen(false); nav({}); });
-      if (st.next) {
+      const lb = host.querySelector('[data-labels]');
+      if (lb) lb.addEventListener('click', () => { S.fullScreen(false); nav({ view: 'labels', rack: rackId }); });
+      const so = host.querySelector('[data-scanok]');
+      if (so) so.addEventListener('click', () => { showScan = true; paint(); });
+      if (st.next && !wait) {
         zone = S.scan(onScan, { title: ['Pindai label ' + st.next.code, 'Scan label ' + st.next.code], mount: host.querySelector('#rb-zone') });
         zone.focus();
       }
@@ -595,7 +741,7 @@
         const r = await api().post('/racks/' + rackId + '/label-check', { location_id: st.next.location_id, scanned: code });
         st = r.progress;
         if (r.result === 'cocok') { z.accept(['Cocok', 'Match'], r.expected_code); paint('ok'); }
-        else { z.reject(r.message, ''); S.toast(r.message, 'stop'); paint('stop'); }
+        else { z.reject(S.pick(r.message), ''); S.toast(r.message, 'stop'); paint('stop'); }
       } catch (e) { z.reject(S.pick(e.message), ''); S.fail(e); }
     }
     paint();
@@ -617,7 +763,7 @@
       '<div class="rb-codes">' + (c.bins.length ? c.bins.map((b) => '<span>' + esc(b.code) + '</span>').join('') : '<em class="k-muted">' + esc(t('Belum ada', 'None yet')) + '</em>') + '</div>' +
       '<div class="rb-btns"><button type="button" class="k-btn k-btn--sm k-btn--secondary" data-add data-min-role="supervisor">' + icon('plus', 18) + bis(ADD[c.kind][0], ADD[c.kind][1]) + '</button>' +
       '<button type="button" class="k-btn k-btn--sm k-btn--ghost" data-less data-min-role="supervisor"' + (c.count <= c.min ? ' disabled' : '') + '>' + icon('minus', 18) + bis('Kurangi', 'Remove one') + '</button></div>' +
-      (c.note ? '<p class="k-caption">' + esc(c.note) + '</p>' : '') +
+      (c.note ? '<p class="k-caption">' + esc(S.pick(c.note)) + '</p>' : '') +
       '<div class="k-card__foot" style="margin:0 -16px -16px;padding:12px 16px">' +
       (c.labels_printed ? S.pill('ok', c.label_printed_text, 'Labels printed') : S.pill('caution', 'Label belum dicetak', 'Labels not printed')) +
       '<button type="button" class="k-btn k-btn--sm k-btn--secondary" data-print style="margin-left:auto"' + (c.count ? '' : ' disabled') + '>' + icon('print', 18) + bis('Cetak label', 'Print labels') + '</button></div></div>').join('') + '</div>' +
@@ -694,7 +840,7 @@
         '<p class="k-caption">' + esc(opt.order_note) + '</p>';
       if (r) {
         const levels = r.levels.map((lv) => ({ level_no: lv.level_no, size_text: lv.size_text, kolom: lv.kolom.map((k) => k.bins) }));
-        h += '<div style="overflow-x:auto"><div style="min-width:' + Math.max(320, Math.max(...r.levels.map((l) => l.bins.length)) * 70) + 'px">' + drawRack(levels, {
+        h += '<div style="overflow-x:auto"><div style="min-width:' + Math.max(320, Math.max(...r.levels.map(placesOn)) * 70) + 'px">' + drawRack(levels, {
           big: true,
           levelSub: (lv) => '<small>' + esc(lv.size_text || '') + '</small>',
           cls: (b) => ({ dipakai: 'is-used', disarankan: 'is-match', cocok: 'is-match', lain: 'is-other' }[b.state] || '') + (b.location_id === pick ? ' is-best' : ''),

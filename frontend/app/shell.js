@@ -6,6 +6,8 @@
  * laptop sidebar or the phone header and menu sheet), the training and
  * view-as banners, then loads js/<page>.js. That script registers its view
  * with NJW.shell.page(fn) or NJW.shell.tab('id', fn). No script: "Segera hadir".
+ * The ? next to every title opens the page help from panduan/pages.json
+ * (helpPanel); it opens by itself once per page per device.
  *
  * Read README.md in this folder before writing a page.
  */
@@ -118,6 +120,7 @@
     check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     minus: '<path d="M5 12h14"/>',
+    help: '<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17h.01"/>',
     arrow: '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
     refresh: '<path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v4h-4"/>',
     search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
@@ -165,6 +168,24 @@
     ] },
   ];
   const itemHref = (it) => it.page + '.html' + (it.tab ? '?tab=' + it.tab : '');
+
+  /* Staff and dark store operators see their own jobs first. Every other page
+     is still there, one tap away under Lainnya: the same pages, nothing hidden. */
+  const ITEM = (page, tab) => MENU.flatMap((g) => g.items).find((i) => i.page === page && (i.tab || null) === (tab || null));
+  const STAFF_MENU = [
+    { group: null, items: [ITEM('perlu-tindakan')] },
+    { group: ['Pekerjaan saya', 'My work'], items: [
+      ITEM('pesanan'), ITEM('pesanan', 'kembalikan'), ITEM('barang-masuk'), ITEM('hitung-stok'),
+      { page: 'karantina-retur', tab: 'lapor', id: 'Laporkan barang rusak', en: 'Report a damaged item', icon: 'warn' },
+      ITEM('bahan-kemas'), ITEM('panduan'),
+    ] },
+    { group: ['Lainnya', 'More'], more: true, items: [
+      ITEM('stok'), ITEM('rak-bin'), ITEM('karantina-retur'), ITEM('restock'), ITEM('produk'),
+      ITEM('menu-toko-hiryu'), ITEM('laporan'), ITEM('pengaturan'),
+    ] },
+  ];
+  const isFloor = () => !!ME && (RANK[ME.role] || 0) <= RANK.hub_operator;
+  const menu = () => (isFloor() ? STAFF_MENU : MENU);
 
   /* Old console and station links (Perlu tindakan rows, bookmarks) to the new
      pages. legacy.js holds the table; this only reads it when loaded. */
@@ -228,13 +249,25 @@
 
   let CUR_TITLE = null;
   function navHtml(sheet) {
-    return MENU.map((g) => '<nav class="k-nav" aria-label="' + esc(g.group ? g.group[0] : 'Menu') + '">' +
-      (g.group ? '<span class="k-nav__group" ' + biAttr(g.group[0], g.group[1]) + '>' + esc(t(g.group[0], g.group[1])) + '</span>' : '') +
-      g.items.map((it) => '<a class="k-nav__link' + (it.badge ? ' k-nav__link--top' : '') + '" href="' + itemHref(it) + '" data-page="' + it.page + '"' +
+    const links = (g) => g.items.map((it) => '<a class="k-nav__link' + (it.badge ? ' k-nav__link--top' : '') + '" href="' + itemHref(it) + '" data-page="' + it.page + '"' +
         (it.tab ? ' data-tab="' + it.tab + '"' : '') + '>' + icon(it.icon, sheet ? 22 : 20) +
         '<span class="k-nav__label" ' + biAttr(it.id, it.en) + '>' + esc(t(it.id, it.en)) + '</span>' +
-        (it.badge ? '<span class="k-badge" data-todo-count hidden></span>' : '') + '</a>').join('') +
-      '</nav>').join('');
+        (it.badge ? '<span class="k-badge" data-todo-count hidden></span>' : '') + '</a>').join('');
+    return menu().map((g) => g.more
+      ? '<details class="k-nav k-nav--more"' + (g.items.some((it) => it.page === OPTS.page) ? ' open' : '') + '>' +
+        '<summary class="k-nav__group k-nav__more"><span ' + biAttr(g.group[0], g.group[1]) + '>' + esc(t(g.group[0], g.group[1])) + '</span>' + icon('chev', 16, 2.4) + '</summary>' +
+        links(g) + '</details>'
+      : '<nav class="k-nav" aria-label="' + esc(g.group ? g.group[0] : 'Menu') + '">' +
+        (g.group ? '<span class="k-nav__group" ' + biAttr(g.group[0], g.group[1]) + '>' + esc(t(g.group[0], g.group[1])) + '</span>' : '') +
+        links(g) + '</nav>').join('');
+  }
+  /* The sidebar is drawn before we know who signed in: redraw it for floor roles. */
+  function repaintNav() {
+    if (!isFloor()) return;
+    const side = $('.k-side');
+    $$('.k-side > .k-nav', side).forEach((n) => n.remove());
+    $('#k-usercard').insertAdjacentHTML('beforebegin', navHtml(false));
+    markCurrent(side);
   }
 
   function renderFrame() {
@@ -254,6 +287,7 @@
         '<header class="k-phead">' +
           '<button type="button" class="k-iconbtn" id="k-menubtn" data-aria-id="Buka menu" data-aria-en="Open the menu" aria-label="Buka menu">' + icon('menu', 26) + '</button>' +
           '<div class="k-phead__text"><span class="k-phead__line" id="k-pline"></span><span class="k-phead__title" id="k-ptitle"></span></div>' +
+          '<button type="button" class="k-iconbtn k-phead__help" data-help data-aria-id="Tentang halaman ini" data-aria-en="About this page" aria-label="Tentang halaman ini">' + icon('help', 24) + '</button>' +
           '<a class="k-todopill" id="k-ptodo" href="perlu-tindakan.html" hidden>' + icon('bell', 16, 2.4) + '<span data-todo-count></span></a>' +
         '</header>' +
         '<header class="k-top">' +
@@ -264,7 +298,9 @@
         '</header>' +
         '<div id="k-banners"></div>' +
         '<main class="k-content" id="k-content">' +
-          '<div class="k-pagehead"><div class="k-pagehead__text"><h1 class="k-pagehead__title" id="k-title"></h1>' +
+          '<div class="k-pagehead"><div class="k-pagehead__text"><div class="k-pagehead__titleline"><h1 class="k-pagehead__title" id="k-title"></h1>' +
+          '<button type="button" class="k-helpbtn" data-help data-aria-id="Tentang halaman ini" data-aria-en="About this page" aria-label="Tentang halaman ini">' + icon('help', 20) +
+          '<span ' + biAttr('Tentang halaman ini', 'About this page') + '>Tentang halaman ini</span></button></div>' +
           '<p class="k-pagehead__sub" id="k-sub" hidden></p></div><div class="k-pagehead__actions" id="k-actions"></div></div>' +
           '<nav class="k-tabs" role="tablist" id="k-tabs" hidden></nav>' +
           '<div id="k-body"></div>' +
@@ -335,12 +371,14 @@
       esc(SITE ? shortCode(SITE.code) : t('semua', 'all')) + '</span></div>' +
       '<button type="button" class="k-navbtn" data-lang-toggle style="height:40px">ID</button>' +
       '<a class="k-navbtn" style="height:40px" href="' + NJW.shell.SIGN_OUT + '"><span ' + biAttr('Keluar', 'Sign out') + '></span></a></div>' +
+      '<div class="k-sheet__link" id="k-linkpill2"></div>' +
       (visibleSites().length > 1 ? '<div class="k-sheet__hub"><label for="k-hub2">Dark store</label>' + hubSelectHtml('k-hub2') + '</div>' : '') +
       navHtml(true);
     document.body.appendChild(SHEET);
     document.body.style.overflow = 'hidden';
     markCurrent(SHEET);
     paintCountInto(SHEET);
+    paintLink();
     applyLang(SHEET);
     const sel = $('#k-hub2', SHEET);
     if (sel && sel.tagName === 'SELECT') sel.addEventListener('change', () => { closeSheet(); chooseSite(sel.value); });
@@ -359,7 +397,7 @@
     const tab = currentTab();
     $$('.k-nav__link', root).forEach((a) => {
       const on = a.dataset.page === OPTS.page &&
-        (a.dataset.tab ? a.dataset.tab === tab : !MENU.some((g) => g.items.some((it) => it.page === OPTS.page && it.tab && it.tab === tab)));
+        (a.dataset.tab ? a.dataset.tab === tab : !menu().some((g) => g.items.some((it) => it.page === OPTS.page && it.tab && it.tab === tab)));
       if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
   }
@@ -382,6 +420,14 @@
     } else if (store.get('njw.viewAs')) {
       store.set('njw.viewAs', null);   // only a superadmin may preview
     }
+    if (manualMode()) {
+      const until = SITE.manual_mode_until ? fmt.time(SITE.manual_mode_until) : null;
+      h += '<div class="k-banner k-banner--stop" role="status">' + icon('warn', 20) +
+        bis('MODE MANUAL: pemindai tidak dipakai' + (until ? ' sampai ' + until + ' WIB' : '') + '. Konfirmasi dengan ketuk, hitung dengan mengetik angka.',
+          'MANUAL MODE: no scanning' + (until ? ' until ' + until + ' WIB' : '') + '. Confirm by tapping, count by typing the number.') +
+        (atLeast('hq') ? '<a class="k-btn k-btn--sm k-btn--outline" href="pengaturan.html?tab=hub&hub=' + SITE.id + '#manual" ' + biAttr('Atur', 'Manage') + '></a>' : '') +
+        '</div>';
+    }
     if (SITE && SITE.is_training) {
       h += '<div class="k-banner" role="status">' + icon('warn', 20) +
         bis('MODE LATIHAN: barang tidak nyata, aman untuk salah', 'TRAINING MODE: not real stock, safe to get wrong') + '</div>';
@@ -392,6 +438,14 @@
     if (sel) sel.addEventListener('change', () => { store.set('njw.viewAs', sel.value || null); location.reload(); });
     const ex = $('#k-viewas-exit', host);
     if (ex) ex.addEventListener('click', () => { store.set('njw.viewAs', null); location.reload(); });
+  }
+
+  /* Mode manual (V32, Pengaturan, Dark store): this dark store works without
+     scanning until manual_mode_until. Pages switch their scan steps to taps
+     and typed, blind numbers while it is on. */
+  function manualMode() {
+    if (!SITE || !SITE.manual_mode) return false;
+    return !SITE.manual_mode_until || NJW.toDate(SITE.manual_mode_until) > new Date();
   }
 
   /* ---- Perlu tindakan count: menu badge and the phone header pill ---- */
@@ -432,9 +486,9 @@
 
   /* ---- Hiryu link status pill (laptop top bar, SPV and above) ---- */
   async function paintLink() {
-    const host = $('#k-linkpill');
-    if (!host) return;
-    host.innerHTML = '';
+    const hosts = [$('#k-linkpill'), $('#k-linkpill2')].filter(Boolean);
+    if (!hosts.length) return;
+    hosts.forEach((h) => { h.innerHTML = ''; });
     if (!atLeast('supervisor')) return;
     let s = null;
     const key = 'njw.linkStatus.' + siteKey();
@@ -455,7 +509,7 @@
     else if (s.failed) p = ['stop', 'Hiryu: ada pesan gagal', 'Hiryu: messages failed'];
     else if (s.late || !s.sending) p = ['caution', 'Hiryu: pesan menunggu', 'Hiryu: messages waiting'];
     else p = ['ok', 'Tersambung ke Hiryu', 'Connected to Hiryu'];
-    host.innerHTML = '<a href="pengaturan.html?tab=integrasi" style="text-decoration:none">' + pill(p[0], p[1], p[2]) + '</a>';
+    hosts.forEach((h) => { if (h.isConnected) h.innerHTML = '<a href="pengaturan.html?tab=integrasi" style="text-decoration:none">' + pill(p[0], p[1], p[2]) + '</a>'; });
   }
 
   /* ---- clock (WIB) ---- */
@@ -486,7 +540,10 @@
   function currentTab() {
     if (!OPTS.tabs || !OPTS.tabs.length) return null;
     const q = param('tab');
-    return OPTS.tabs.some((x) => x.id === q) ? q : OPTS.tabs[0].id;
+    if (OPTS.tabs.some((x) => x.id === q)) return q;
+    // No ?tab=: the page may choose by role (pesanan.html: SPV and up land on the queue board).
+    const d = typeof OPTS.defaultTab === 'function' && ME ? OPTS.defaultTab(ME.role, atLeast) : null;
+    return OPTS.tabs.some((x) => x.id === d) ? d : OPTS.tabs[0].id;
   }
   function paintTabs(tab) {
     const nav = $('#k-tabs');
@@ -498,6 +555,13 @@
         '<span ' + biAttr(l[0], l[1]) + '>' + esc(t(l[0], l[1])) + '</span><span class="k-tab__count" data-tab-count hidden></span></button>';
     }).join('');
     $$('.k-tab', nav).forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab)));
+    // On a phone five tabs do not fit: fade the edge while more tabs are off
+    // screen, and bring the open tab into view.
+    const more = () => nav.classList.toggle('is-more', nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4);
+    if (!nav.dataset.fade) { nav.dataset.fade = '1'; nav.addEventListener('scroll', more, { passive: true }); window.addEventListener('resize', more); }
+    const on = $('.k-tab[aria-selected="true"]', nav);
+    if (on && nav.scrollWidth > nav.clientWidth) nav.scrollLeft = Math.max(0, on.offsetLeft - 24);
+    more();
   }
   function setTab(id) {
     const u = new URL(location.href);
@@ -560,6 +624,87 @@
     lockAll($('#k-actions'));
   }
 
+  /* ================= page help: the ? next to every title ================= */
+
+  /* panduan/pages.json, one entry per page: what it is for, who uses it, what
+     each tab or main button does, the Hiryu touchpoint and the Guide sections.
+     Opens by itself the first time a page is opened on a device (not in the
+     middle of a task), then only from the ?. */
+  const HELP_RANK_WHO = { supervisor: ['SPV ke atas', 'SPV and up'], hq: ['Ops HQ ke atas', 'Ops HQ and up'], ops_head: ['Ops Head ke atas', 'Ops Head and up'] };
+  let HELP = null, HELP_SECS = null, HELP_OPEN = null;
+  async function helpData() {
+    const q = VER ? '?v=' + VER : '';
+    if (!HELP) HELP = await fetch('panduan/pages.json' + q, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : { pages: {} })).catch(() => ({ pages: {} }));
+    if (!HELP_SECS) HELP_SECS = await fetch('panduan/sections.json' + q, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : { sections: [] })).catch(() => ({ sections: [] }));
+    return HELP.pages[OPTS.page] || null;
+  }
+  const helpRich = (o) => String(o ? t(o.id, o.en) : '').replace(/<(?!\/?em>)[^>]*>/g, '');
+
+  function helpBody(h) {
+    const tab = currentTab();
+    const tabLabel = (id) => { const d = (OPTS.tabs || []).find((x) => x.id === id); return d ? pair(d.label) : [id, id]; };
+    const parts = (h.parts || []).map((p) => {
+      const nm = p.tab ? tabLabel(p.tab) : [p.name.id, p.name.en];
+      const here = p.tab && p.tab === tab;
+      const locked = p.min && !atLeast(p.min);
+      const who = HELP_RANK_WHO[p.min];
+      return '<li class="k-help__part' + (here ? ' is-here' : '') + '">' +
+        '<span class="k-line" style="gap:8px"><b>' + esc(t(nm[0], nm[1])) + '</b>' +
+        (here ? '<span class="k-tag k-tag--here">' + esc(t('Anda di sini', 'You are here')) + '</span>' : '') +
+        (locked && who ? '<span class="k-tag k-help__lock">' + icon('lock', 14, 2.2) + esc(t(who[0], who[1])) + '</span>' : '') + '</span>' +
+        '<span>' + helpRich(p.text) + '</span></li>';
+    }).join('');
+    const secs = (h.guide || []).map((n) => {
+      const s = (HELP_SECS.sections || []).find((x) => x.n === n);
+      return '<a class="k-help__guide" href="panduan.html?s=' + n + '">' + icon('book', 20) +
+        '<span><span class="k-help__guidenum">' + esc(t('Panduan, bagian ', 'Guide, section ') + n) + '</span>' +
+        esc(s ? t(s.title.id, s.title.en) : '') + '</span>' + icon('chev', 18) + '</a>';
+    }).join('');
+    const r = roleName(ME ? ME.role : '');
+    return '<div class="k-help">' +
+      '<p class="k-help__for">' + helpRich(h.for) + '</p>' +
+      '<section class="k-help__block"><span class="k-eyebrow">' + esc(t('Siapa yang memakai', 'Who uses it')) + '</span>' +
+        '<span class="k-line" style="gap:6px">' + (h.who || []).map(roleChip).join('') + '</span>' +
+        '<p class="k-caption">' + esc(t('Peran Anda: ' + r[0] + '. Tombol di luar peran Anda tampil terkunci, dengan siapa yang boleh memakainya.',
+          'Your role: ' + r[1] + '. Buttons outside your role show a lock and who may use them.')) + '</p></section>' +
+      (parts ? '<section class="k-help__block"><span class="k-eyebrow">' + esc(t('Yang bisa dilakukan di sini', 'What you can do here')) + '</span>' +
+        '<ul class="k-help__parts">' + parts + '</ul></section>' : '') +
+      (h.hiryu ? '<section class="k-help__block"><span class="k-eyebrow">' + esc(t('Hubungan dengan Hiryu', 'How it connects to Hiryu')) + '</span>' +
+        '<div class="k-note k-note--info"><span>' + helpRich(h.hiryu) + '</span></div>' +
+        // The message numbers are for Ops HQ and IT (Pengaturan, Integrasi Hiryu, Peta pesan).
+        (h.hiryu_msg && atLeast('hq') ? '<p class="k-caption">' + helpRich(h.hiryu_msg) + '</p>' : '') + '</section>' : '') +
+      (secs ? '<section class="k-help__block"><span class="k-eyebrow">' + esc(t('Langkah demi langkah', 'Step by step')) + '</span>' + secs + '</section>' : '') +
+      '<p class="k-caption">' + esc(t('Buka lagi kapan saja dengan tombol ? di samping judul.', 'Open this again any time with the ? next to the title.')) + '</p>' +
+    '</div>';
+  }
+
+  /* Seen once per person (a shared phone has more than one new hire). */
+  const helpKey = () => 'njw.help.' + (ME ? ME.email : '') + '.' + OPTS.page;
+  async function helpPanel() {
+    const h = await helpData();
+    if (!h || HELP_OPEN) return;
+    store.set(helpKey(), '1');
+    const title = CUR_TITLE || pair(OPTS.title || OPTS.page);
+    HELP_OPEN = drawer({
+      title: ['Tentang: ' + title[0], 'About: ' + title[1]],
+      body: helpBody(h),
+      actions: [{ label: ['Mengerti', 'Got it'], kind: 'primary' }],
+      onClose: () => { HELP_OPEN = null; },
+    });
+  }
+  /* First visit on this device: open it once, unless the page was opened in
+     the middle of a task (a link with more than ?tab=) or full screen. */
+  async function helpFirstTime() {
+    if (store.get(helpKey()) || FULL) return;
+    // Never over the picker's screen: an order may ring at any moment there.
+    if (OPTS.page === 'pesanan' && currentTab() === 'ambil') return;
+    const extra = Array.from(new URLSearchParams(location.search).keys()).filter((k) => k !== 'tab');
+    if (extra.length) return;
+    if (!(await helpData())) return;
+    helpPanel();
+  }
+  document.addEventListener('njw:lang', () => { if (HELP_OPEN && HELP) { const h = HELP.pages[OPTS.page]; if (h) HELP_OPEN.body.innerHTML = helpBody(h); } });
+
   /* ================= boot ================= */
 
   let READY_OK;
@@ -572,7 +717,10 @@
     if (OPTS.sub) setSub(pair(OPTS.sub)[0], pair(OPTS.sub)[1]);
     if (OPTS.fullScreen) fullScreen(true, { title: OPTS.title, onBack: OPTS.onBack });
     applyLang(document);
-    document.addEventListener('click', (e) => { if (e.target.closest('[data-lang-toggle]')) setLang(lang() === 'en' ? 'id' : 'en'); });
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('[data-lang-toggle]')) setLang(lang() === 'en' ? 'id' : 'en');
+      if (e.target.closest('[data-help]')) helpPanel();
+    });
     try {
       ME = await raw().get('/me');
     } catch (e) {
@@ -580,12 +728,19 @@
       return null;
     }
     NJW.me = ME;
+    repaintNav();
     const p = pickSite();
     SITE = p.site; ALL = p.all; NJW.site = SITE;
     paintUser();
     paintBanners();
     paintClock();
     setInterval(paintClock, 30000);
+    // Mode manual may be switched by Ops HQ while this page is open.
+    setInterval(async () => {
+      if (!SITE || document.visibilityState !== 'visible') return;
+      try { const m = await raw().get('/manual-mode' + raw().qs({ site_id: SITE.id })); NJW.shell.setManualMode(m.on, m.until); }
+      catch (e) { /* next minute */ }
+    }, 60000);
     refreshCount(false);
     paintLink();
     applyLang(document);
@@ -596,6 +751,7 @@
       try { await loadScript(OPTS.script || ('js/' + OPTS.page + '.js')); } catch (e) { /* not built yet: Segera hadir */ }
     }
     await render();
+    helpFirstTime();
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
     return ctx;
   }
@@ -630,6 +786,26 @@
     setTimeout(() => el.remove(), ms || (kind === 'stop' ? 6000 : 3600));
     return el;
   }
+  /* One key per scan until the server answers. A scan whose request got no
+     answer (e.network) may still have been booked, so scanning the same code
+     again in the same place reuses its key and the server replays the first
+     result instead of counting the unit twice.
+       const k = S.scanKey('pick-' + line.id, code);
+       try { r = await api().post(..., { code, idempotency_key: k }); S.scanDone('pick-' + line.id); }
+       catch (e) { if (!e.network) S.scanDone('pick-' + line.id); ... } */
+  const SCAN_KEYS = {};
+  function scanKey(scope, code) {
+    const p = SCAN_KEYS[scope];
+    // Reused only when the last request with this code got no answer at all
+    // (api.js marks it): never for a second unit with the same barcode.
+    if (p && p.code === String(code) && p.noAnswer) { p.noAnswer = false; return p.key; }
+    const k = 'sk-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    SCAN_KEYS[scope] = { code: String(code), key: k, noAnswer: false };
+    return k;
+  }
+  const scanDone = (scope) => { delete SCAN_KEYS[scope]; };
+  NJW.scanNoAnswer = (key) => { Object.values(SCAN_KEYS).forEach((p) => { if (p.key === key) p.noAnswer = true; }); };
+
   function fail(e) {
     if (e && e.status === 401) { signedOut(e); return; }
     toast((e && e.message) || ['Ada masalah. Panggil supervisor.', 'Something went wrong. Call your supervisor.'], 'stop');
@@ -833,7 +1009,11 @@
       openCamera: () => zone.openCamera(),
       emit: (code) => zone._emit(String(code)),
     };
-    zone.onScan((code) => handler(code, api));
+    // One scan at a time: the next waits until the previous has its answer.
+    let chain = Promise.resolve();
+    zone.onScan((code) => {
+      chain = chain.then(() => handler(code, api)).catch((e) => { if (window.console) console.error(e); });
+    });
     const form = $('form', el), input = $('input', form);
     $('[data-type]', el).addEventListener('click', () => {
       form.hidden = !form.hidden;
@@ -935,9 +1115,19 @@
     site: () => SITE, siteId: () => (SITE ? SITE.id : null), allSites: () => ALL, sites: visibleSites,
     siteLabel, shortCode, onSiteChange(fn) { SITE_HANDLERS.push(fn); },
     setCount, refreshCount, route, param,
-    lock, lockAll, toast, say: toast, fail, modal, drawer, confirm: confirmBox,
+    lock, lockAll, toast, say: toast, fail, modal, drawer, confirm: confirmBox, scanKey, scanDone, manualMode,
+    /* A page that hears the dark store's Mode manual changed (pesanan.js via
+       /pickers/me) updates the banner without a reload. */
+    setManualMode(on, until) {
+      if (!SITE) return;
+      const same = !!on === !!SITE.manual_mode && (until === undefined || (until || null) === (SITE.manual_mode_until || null));
+      if (same) return;
+      SITE.manual_mode = !!on;
+      if (until !== undefined) SITE.manual_mode_until = until || null;
+      paintBanners();
+    },
     stopwatch, scan, stepper, toggle, fullScreen, pill, sysChip, icon,
     t, bi, bis, biAttr, esc, pick, applyLang, lang, setLang,
-    fmt, api: () => raw(), go: (p) => { location.href = p; },
+    fmt, api: () => raw(), go: (p) => { location.href = p; }, help: helpPanel,
   };
 })();

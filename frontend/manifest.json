@@ -1,7 +1,7 @@
 {
   "name": "Ninja SatSet WMS",
   "short_name": "SatSet WMS",
-  "description": "Station app: inbound by AWB, picking, counting.",
+  "description": "SatSet WMS for GrabMart Kilat dark stores: orders, inbound, stock and counts.",
   "start_url": "/index.html?station",
   "scope": "/",
   "display": "standalone",

@@ -34,6 +34,7 @@ when none is stocked), unallocated, so the picker goes there and presses
 Barang tidak ada as usual. Nothing in the order handler needs changing.
 """
 import asyncio
+import json
 import logging
 import random
 import secrets
@@ -49,7 +50,7 @@ import daycolor
 import db
 import floor
 import ledger
-from routers import hiryu_link, opname, replenishment
+from routers import hiryu_link, opname, racks, replenishment
 
 log = logging.getLogger("wms.demo")
 # Preset C: the stand-in cancels as the customer this long after the order arrives,
@@ -388,6 +389,27 @@ SEED_LEVELS = {
 }
 RESET_DEFAULT = 12
 RESET_REASON = "demo_reset"
+
+# Contoh: produk tanpa bin (Pengaturan, Demo). Reference products a trainer may
+# take off their rack bin to rehearse Rak & bin, Perlu bin. All are real Hiryu
+# products of the dev seed (tools/gen_dev_seed.py), each alone in one primary
+# bin at MA5 and KJ5 (KHF-0064 D-4-06 Kecil, KHF-0043 B-1-03 Besar, KHF-0036
+# C-4-06 Kecil, KHF-0044 B-1-05 Besar, LBR-0037 B-3-02 Kecil, LBR-0023 A-5-03
+# Kecil), with no order, quarantine or restock line in the seeded week. None is a
+# preset product, on the Labore request or on the demo delivery. Kecil and Besar
+# alternate at the front, so repeated rehearsals practise both sizes. They are
+# tried in this order, the one used last goes to the back; one that fails a rule
+# is skipped, then any other product with a bin and an empty bin qualifies
+# (a product is never invented).
+DEMO_NEEDS_BIN = ["KHF-0064", "KHF-0043", "KHF-0036", "KHF-0044", "LBR-0037", "LBR-0023"]
+NEEDS_BIN_SET = "demo_needs_bin"            # audit action: the bin was taken off
+NEEDS_BIN_BACK = "demo_needs_bin_reset"     # audit action: put back / closed
+NEEDS_BIN_REASON = "demo_needs_bin"         # reason_code of the stock corrections
+# The reference products hold their seed stock (12 to 24 units). Setting up the
+# example empties the bin through an audited stock correction (so "bin holds 0
+# units" is true when the slot goes) and Put it back returns those units. Off:
+# only products whose bin is already empty qualify, which on the seed is none.
+NEEDS_BIN_CLEAR_STOCK = True
 
 
 def _preset_codes() -> list[str]:
@@ -886,10 +908,421 @@ async def new_demo_delivery(body: DeliveryIn, user: auth.User = Depends(auth.req
     state.update(
         closed=closed,
         message=(f"Kiriman demo {reference} siap diterima: {DELIVERY_PO}, {len(lines)} produk, "
-                 f"{units} pcs." + (f" {gone} dibatalkan." if closed else "") +
+                 f"{units} unit." + (f" {gone} dibatalkan." if closed else "") +
                  f" / Demo delivery {reference} is ready to receive: {DELIVERY_PO}, "
-                 f"{len(lines)} products, {units} pcs." +
+                 f"{len(lines)} products, {units} units." +
                  (f" {gone} cancelled." if closed else "")))
+    return state
+
+
+# --------------------------------------------------------------------------
+# Contoh: produk tanpa bin (Pengaturan, Demo), to rehearse Rak & bin, Perlu bin
+# --------------------------------------------------------------------------
+
+_MODE_OFF = ("Mode demo belum menyala untuk dark store ini (Pengaturan, Demo). / "
+             "Mode demo is not on for this dark store (Settings, Demo).")
+
+
+class NeedsBinExample(BaseModel):
+    sku_id: int
+    sku_code: str = Field(description="The brand SKU code (KHF-0064)")
+    name: str | None
+    bin_size: str = Field(description="KECIL or BESAR: the size of bin the product needs")
+    bin_size_label: str = Field(description="Kecil or Besar")
+    original_bin: str = Field(description="The bin it had (D-4-06)")
+    original_bin_free: bool = Field(description="That bin is still free")
+    units_cleared: int = Field(description="Units taken out of the bin by the set-up")
+    waiting: bool = Field(description="Still in Perlu bin: no bin yet")
+    current_bin: str | None = Field(description="Its bin now, when someone assigned one")
+
+
+class NeedsBinState(BaseModel):
+    site_id: int
+    demo_mode: bool
+    can_setup: bool
+    can_reset: bool
+    example: NeedsBinExample | None = None
+    problems: list[str] = Field(default_factory=list, description="Indonesian / English")
+    message: str | None = None
+
+
+class NeedsBinIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    site_id: int
+
+
+def _nb_why(pairs: list[tuple[str, str]]) -> tuple[str, str]:
+    return ("; ".join(p[0] for p in pairs), "; ".join(p[1] for p in pairs))
+
+
+async def _nb_ids(cur, table: str | None, sql: str, params: tuple) -> list[dict]:
+    """Rows of one blocker query; a table that has not landed on this database
+    yet blocks nothing."""
+    if table and not await opname.table_exists(table):
+        return []
+    return await db.many(cur, sql, params)
+
+
+async def _nb_products(cur, site: dict) -> list[dict]:
+    """Every product with a primary bin at this dark store and the reasons it
+    may not be taken off that bin now ("why": list of (Indonesian, English)).
+    No reason means it qualifies. Run inside the transaction that holds the site
+    row, so two presses queue."""
+    sid = site["id"]
+    rows = await db.many(
+        cur,
+        "SELECT s.id AS sku_id, UPPER(s.brand_sku_code) AS code, s.name_display, s.bin_size, "
+        "       sa.id AS slot_id, sa.basket_id, sa.full_threshold, sa.restock_point, "
+        "       sa.safety_stock, sa.created_by AS slot_created_by, "
+        "       l.id AS location_id, l.code AS location_code "
+        "FROM slot_assignments sa JOIN skus s ON s.id = sa.sku_id "
+        "JOIN brands b ON b.id = s.brand_id JOIN sites st ON st.id = sa.site_id "
+        "JOIN baskets bk ON bk.id = sa.basket_id JOIN locations l ON l.id = bk.location_id "
+        "WHERE sa.site_id = %s AND sa.slot_role = 'primary' AND s.active = 1 AND b.active = 1 "
+        "  AND s.bin_size IS NOT NULL AND " + racks.CARRIED_SQL, (sid,))
+    slots = {r["sku_id"]: r["n"] for r in await db.many(
+        cur, "SELECT sku_id, COUNT(*) AS n FROM slot_assignments WHERE site_id = %s "
+             "GROUP BY sku_id", (sid,))}
+    total: dict[int, int] = {}
+    held: dict[int, int] = {}
+    at_bin: dict[tuple, int] = {}
+    for b in await db.many(
+            cur, "SELECT sku_id, location_id, qty_on_hand, qty_allocated FROM inventory_balances "
+                 "WHERE site_id = %s AND (qty_on_hand <> 0 OR qty_allocated <> 0)", (sid,)):
+        total[b["sku_id"]] = total.get(b["sku_id"], 0) + int(b["qty_on_hand"])
+        held[b["sku_id"]] = held.get(b["sku_id"], 0) + int(b["qty_allocated"])
+        at_bin[(b["sku_id"], b["location_id"])] = int(b["qty_on_hand"])
+
+    def col(rs, k="sku_id"):
+        return {r[k] for r in rs if r[k] is not None}
+
+    open_order = "o.handed_over_at IS NULL AND o.status NOT IN ('handed_over', 'cancelled')"
+    orders = col(await db.many(
+        cur, "SELECT DISTINCT ol.sku_id FROM order_lines ol JOIN orders o ON o.id = ol.order_id "
+             "WHERE o.site_id = %s AND " + open_order, (sid,)))
+    orders |= col(await db.many(
+        cur, "SELECT DISTINCT pl.sku_id FROM pick_lines pl JOIN pick_tasks pt ON pt.id = pl.pick_task_id "
+             "JOIN orders o ON o.id = pt.order_id WHERE pt.site_id = %s AND pl.status = 'pending' "
+             "AND pt.status <> 'completed' AND " + open_order, (sid,)))
+    counts = await _nb_ids(
+        cur, "count_tasks", "SELECT sku_id, location_id FROM count_tasks WHERE site_id = %s "
+        "AND status IN ('pending', 'counting', 'recount', 'awaiting_spv')", (sid,))
+    counts += await _nb_ids(
+        cur, "bin_count_flags", "SELECT sku_id, location_id FROM bin_count_flags "
+        "WHERE site_id = %s AND status = 'open'", (sid,))
+    count_sku, count_loc = col(counts), col(counts, "location_id")
+    back = col(await _nb_ids(
+        cur, "return_tasks", "SELECT sku_id FROM return_tasks WHERE site_id = %s AND status = 'open' "
+        "AND qty > qty_returned", (sid,)))
+    quarantine = col(await _nb_ids(
+        cur, "quarantine_items", "SELECT sku_id FROM quarantine_items WHERE site_id = %s "
+        "AND status NOT IN ('returned', 'written_off', 'back_to_rack')", (sid,)))
+    inbound = col(await db.many(
+        cur, "SELECT DISTINCT rl.sku_id FROM replenishment_lines rl JOIN replenishments rp "
+             "ON rp.id = rl.replenishment_id WHERE rp.site_id = %s "
+             "AND rp.status NOT IN ('received', 'cancelled')", (sid,)))
+    inbound |= col(await db.many(
+        cur, "SELECT DISTINCT tl.sku_id FROM transfer_lines tl JOIN transfers t ON t.id = tl.transfer_id "
+             "WHERE (t.to_site_id = %s OR t.from_site_id = %s) "
+             "AND t.status NOT IN ('received', 'cancelled')", (sid, sid)))
+    inbound |= col(await db.many(
+        cur, "SELECT DISTINCT rl.sku_id FROM receipt_lines rl JOIN inbound_receipts ir "
+             "ON ir.id = rl.receipt_id WHERE ir.site_id = %s AND ir.status = 'open'", (sid,)))
+    inbound |= col(await db.many(
+        cur, "SELECT sku_id FROM replenishment_tasks WHERE site_id = %s "
+             "AND status IN ('open', 'claimed')", (sid,)))
+    inbound |= col(await db.many(
+        cur, "SELECT sku_id FROM restock_requests WHERE site_id = %s "
+             "AND status IN ('open', 'sent')", (sid,)))
+    plates = col(await db.many(
+        cur, "SELECT DISTINCT sku_id FROM unit_plates WHERE site_id = %s AND state = 'in_stock'", (sid,)))
+
+    listed = set(DEMO_NEEDS_BIN)
+    out = []
+    for r in rows:
+        k, loc = r["sku_id"], r["location_id"]
+        units = at_bin.get((k, loc), 0)
+        why: list[tuple[str, str]] = []
+        if slots.get(k, 0) > 1:
+            why.append(("punya bin cadangan", "has an overflow bin"))
+        if total.get(k, 0) != units:
+            why.append(("ada stok di tempat lain", "has stock somewhere else"))
+        if held.get(k, 0) > 0:
+            why.append(("stoknya dipegang pesanan", "its stock is held by an order"))
+        if units > 0 and not (NEEDS_BIN_CLEAR_STOCK and r["code"] in listed):
+            why.append((f"bin masih berisi {units} unit", f"the bin still holds {units} units"))
+        if k in orders:
+            why.append(("ada pesanan terbuka", "has an open order"))
+        if k in count_sku or loc in count_loc:
+            why.append(("ada tugas hitung terbuka", "has an open count task"))
+        if k in back:
+            why.append(("ada barang menunggu Kembalikan ke rak",
+                        "has items waiting to go back to the rack"))
+        if k in quarantine:
+            why.append(("ada barang di karantina", "has items in quarantine"))
+        if k in inbound:
+            why.append(("ada di kiriman atau permintaan yang belum selesai",
+                        "is on a delivery or request that is not finished"))
+        if k in plates:
+            why.append(("punya label unit di stok", "has unit labels in stock"))
+        out.append({**r, "units": units, "why": why, "short": floor.short_bin(r["location_code"]),
+                    "size": racks.norm_size(r["bin_size"]) or "BESAR"})
+    return out
+
+
+async def _nb_last(cur, site_id: int) -> dict | None:
+    """The latest set-up or put-back audit row of this dark store."""
+    sql = ("SELECT id, action, after_json FROM audit_log WHERE entity = 'site' AND entity_id = %s "
+           "AND action IN (%s, %s) ORDER BY id DESC LIMIT 1")
+    params = (site_id, NEEDS_BIN_SET, NEEDS_BIN_BACK)
+    return await (db.one(cur, sql, params) if cur is not None else db.fetch_one(sql, params))
+
+
+async def _nb_example(cur, site: dict) -> dict | None:
+    """The current example, or None. {snap, out}: snap is what the set-up
+    recorded, out the answer for the card, with where the product stands now."""
+    last = await _nb_last(cur, site["id"])
+    if not last or last["action"] != NEEDS_BIN_SET:
+        return None
+    try:
+        snap = json.loads(last["after_json"] or "{}")
+    except ValueError:
+        return None
+    if not snap.get("sku_id"):
+        return None
+
+    async def get(q, p):
+        return await (db.one(cur, q, p) if cur is not None else db.fetch_one(q, p))
+
+    prim = await get(
+        "SELECT l.code FROM slot_assignments sa JOIN baskets bk ON bk.id = sa.basket_id "
+        "JOIN locations l ON l.id = bk.location_id "
+        "WHERE sa.site_id = %s AND sa.sku_id = %s AND sa.slot_role = 'primary'",
+        (site["id"], snap["sku_id"]))
+    taken = await get("SELECT 1 AS x FROM slot_assignments WHERE basket_id = %s",
+                      (snap.get("basket_id"),))
+    size = racks.norm_size(snap.get("bin_size")) or "BESAR"
+    return {"snap": snap, "out": {
+        "sku_id": snap["sku_id"], "sku_code": snap.get("sku_code") or "",
+        "name": snap.get("name"), "bin_size": size, "bin_size_label": racks.SIZE_LABEL[size],
+        "original_bin": snap.get("bin") or "", "original_bin_free": not taken,
+        "units_cleared": int(snap.get("units_cleared") or 0), "waiting": prim is None,
+        "current_bin": floor.short_bin(prim["code"]) if prim else None}}
+
+
+async def _nb_state(site: dict, cur=None) -> dict:
+    ex = await _nb_example(cur, site)
+    problems = [] if site["demo_mode"] else [_MODE_OFF]
+    return {"site_id": site["id"], "demo_mode": site["demo_mode"], "can_setup": not problems,
+            "can_reset": bool(ex) and not problems, "example": ex["out"] if ex else None,
+            "problems": problems}
+
+
+def _nb_name(ex: dict) -> str:
+    return f"{ex['name'] or ex['sku_code']} ({ex['sku_code']})"
+
+
+@router.get("/needs-bin", response_model=NeedsBinState)
+async def needs_bin_state(site_id: int, user: auth.User = Depends(auth.require("supervisor"))):
+    """Contoh: produk tanpa bin. The current example at this dark store (the
+    product, its bin size, the bin it had, and whether it is still in Perlu bin
+    or already has a bin), and whether Mode demo allows setting up or putting back."""
+    site = await _site(user, site_id)
+    return await _nb_state(site)
+
+
+async def _nb_put_back(cur, site: dict, user: auth.User, ex: dict, closing: str) -> dict:
+    """Close the example: the original bin back to the product when it still
+    has none and that bin is free (refused with 409 when another product took
+    it); when it has a bin, that stays. The units the set-up took out go back
+    into its bin when the product has no stock anywhere. Audited."""
+    snap, sid = ex["snap"], site["id"]
+    code = snap.get("sku_code") or ""
+    done = {"slot": False, "units": 0, "bin": None}
+    prim = await db.one(
+        cur, "SELECT sa.id, bk.location_id, l.code FROM slot_assignments sa "
+             "JOIN baskets bk ON bk.id = sa.basket_id JOIN locations l ON l.id = bk.location_id "
+             "WHERE sa.site_id = %s AND sa.sku_id = %s AND sa.slot_role = 'primary' FOR UPDATE",
+        (sid, snap["sku_id"]))
+    if prim is None:
+        free = await db.one(
+            cur, "SELECT bk.id, bk.location_id, l.code FROM baskets bk "
+                 "JOIN locations l ON l.id = bk.location_id WHERE bk.id = %s AND bk.site_id = %s "
+                 "AND NOT EXISTS (SELECT 1 FROM slot_assignments sa WHERE sa.basket_id = bk.id) "
+                 "FOR UPDATE", (snap.get("basket_id"), sid))
+        if not free:
+            raise HTTPException(409, (
+                f"Bin lama {snap.get('bin')} sudah dipakai produk lain. Beri {code} bin lain di "
+                f"Rak & bin, tab Perlu bin. / The old bin {snap.get('bin')} is used by another "
+                f"product now. Give {code} another bin in Racks & bins, tab Need a bin."))
+        slot_id = await db.run(
+            cur, "INSERT INTO slot_assignments (site_id, sku_id, basket_id, created_by, "
+                 "created_during_inbound, slot_role, full_threshold, restock_point, safety_stock) "
+                 "VALUES (%s,%s,%s,%s,0,'primary',%s,%s,%s)",
+            (sid, snap["sku_id"], free["id"], snap.get("slot_created_by") or user.email,
+             snap.get("full_threshold"), snap.get("restock_point"), snap.get("safety_stock")))
+        await ledger.audit(cur, actor_email=user.email, entity="slot", entity_id=slot_id,
+                           action="assign", after={"site_id": sid, "sku_id": snap["sku_id"],
+                                                   "basket_id": free["id"],
+                                                   "reason": NEEDS_BIN_BACK})
+        prim = {"location_id": free["location_id"], "code": free["code"]}
+        done["slot"] = True
+    done["bin"] = floor.short_bin(prim["code"])
+    units = int(snap.get("units_cleared") or 0)
+    if units > 0:
+        bal = await db.many(
+            cur, "SELECT qty_on_hand, qty_allocated FROM inventory_balances "
+                 "WHERE site_id = %s AND sku_id = %s FOR UPDATE", (sid, snap["sku_id"]))
+        if not any(int(b["qty_on_hand"]) or int(b["qty_allocated"]) for b in bal):
+            await ledger.apply(
+                cur, site_id=sid, sku_id=snap["sku_id"], location_id=prim["location_id"],
+                qty_delta=units, movement_type="adjustment", actor_email=user.email,
+                ref_type=NEEDS_BIN_BACK, ref_id=sid, reason_code=NEEDS_BIN_REASON,
+                scan_source="manual", is_training=bool(site.get("is_training")))
+            done["units"] = units
+    await ledger.audit(cur, actor_email=user.email, entity="site", entity_id=sid,
+                       action=NEEDS_BIN_BACK, before={"sku": code, "bin": snap.get("bin")},
+                       after={"closing": closing, "sku": code, "bin": done["bin"],
+                              "bin_given_back": done["slot"], "units_back": done["units"]})
+    return done
+
+
+@router.post("/needs-bin", response_model=NeedsBinState)
+async def needs_bin_setup(body: NeedsBinIn, user: auth.User = Depends(auth.require("supervisor"))):
+    """Siapkan contoh (SPV and above, only in Mode demo): take one reference
+    product off its rack bin so it appears in Rak & bin, Perlu bin, and the
+    trainer can give it a bin again. Never a made-up product: first one of
+    DEMO_NEEDS_BIN, then any other product whose bin is empty.
+
+    It must be safe to leave its bin: one primary bin and no other slot, no
+    stock anywhere else, nothing held (qty_allocated 0), no open order or pick
+    line, count task or count flag, no item waiting to go back to the rack or in
+    quarantine, nothing on an unfinished delivery, restock request or transfer.
+    A reference product's units in the bin are taken out first as an audited
+    stock correction (reason demo_needs_bin) so that the bin holds 0 units; Put it
+    back returns them. The slot is removed (the bin becomes free), audited as
+    demo_needs_bin with everything needed to restore it. Already set up and still
+    without a bin: nothing changes and the same product comes back. If the
+    earlier example was given a bin meanwhile, its units are returned to that bin
+    first and the next reference product is used."""
+    site = await _site(user, body.site_id)
+    if not site["demo_mode"]:
+        raise HTTPException(409, _MODE_OFF)
+    units = 0
+    async with db.tx() as cur:
+        # The site row first: it makes two presses queue, as Kiriman demo baru does.
+        await db.one(cur, "SELECT id FROM sites WHERE id = %s FOR UPDATE", (site["id"],))
+        ex = await _nb_example(cur, site)
+        if ex and ex["out"]["waiting"]:
+            state = await _nb_state(site, cur)
+            e = ex["out"]
+            state["message"] = (
+                f"Contoh sudah siap: {_nb_name(e)} sudah ada di Perlu bin, perlu bin "
+                f"{e['bin_size_label']}, tadinya di {e['original_bin']}. / Example already set "
+                f"up: {_nb_name(e)} is already in Need a bin, it needs a "
+                f"{racks.SIZE_LABEL_EN[e['bin_size']].lower()} bin, it was in {e['original_bin']}.")
+            return state
+        last_code = None
+        if ex:
+            # Given a bin during the last rehearsal: its units come back first.
+            await _nb_put_back(cur, site, user, ex, closing="new example")
+            last_code = ex["out"]["sku_code"]
+
+        products = await _nb_products(cur, site)
+        order = [c for c in DEMO_NEEDS_BIN if c != last_code] + \
+                [c for c in DEMO_NEEDS_BIN if c == last_code]
+        rank = {c: i for i, c in enumerate(order)}
+        ok = [p for p in products if not p["why"]]
+        ok.sort(key=lambda p: (rank.get(p["code"], len(rank)), p["size"], p["name_display"] or ""))
+        if not ok:
+            seen = sorted((p for p in products if p["code"] in rank), key=lambda p: rank[p["code"]])
+            bits = [(f"{p['code']}: {_nb_why(p['why'])[0]}", f"{p['code']}: {_nb_why(p['why'])[1]}")
+                    for p in seen[:3]]
+            raise HTTPException(409, (
+                "Belum ada produk yang aman dilepas dari bin-nya di dark store ini. "
+                + ("; ".join(x[0] for x in bits) + ". " if bits else
+                   "Produk contoh tidak punya bin di sini. ")
+                + "Coba lagi setelah itu selesai. / No product is safe to take off its bin at "
+                  "this dark store right now. "
+                + ("; ".join(x[1] for x in bits) + ". " if bits else
+                   "The example products have no bin here. ")
+                + "Try again when that is finished."))
+        p = ok[0]
+
+        # Lock what the choice rests on and look again: a pick may have just started.
+        bal = await db.many(
+            cur, "SELECT location_id, qty_on_hand, qty_allocated FROM inventory_balances "
+                 "WHERE site_id = %s AND sku_id = %s FOR UPDATE", (site["id"], p["sku_id"]))
+        units = sum(int(b["qty_on_hand"]) for b in bal if b["location_id"] == p["location_id"])
+        if (any(int(b["qty_allocated"]) for b in bal)
+                or any(int(b["qty_on_hand"]) for b in bal if b["location_id"] != p["location_id"])):
+            raise HTTPException(409, f"Stok {p['code']} baru saja berubah. Coba lagi. / "
+                                     f"The stock of {p['code']} just changed. Try again.")
+        slot = await db.one(cur, "SELECT id FROM slot_assignments WHERE id = %s FOR UPDATE",
+                            (p["slot_id"],))
+        if not slot:
+            raise HTTPException(409, "Bin produk itu baru saja berubah. Coba lagi. / "
+                                     "That product's bin just changed. Try again.")
+        if units:
+            await ledger.apply(
+                cur, site_id=site["id"], sku_id=p["sku_id"], location_id=p["location_id"],
+                qty_delta=-units, movement_type="adjustment", actor_email=user.email,
+                ref_type=NEEDS_BIN_SET, ref_id=site["id"], reason_code=NEEDS_BIN_REASON,
+                scan_source="manual", is_training=bool(site.get("is_training")))
+        await db.run(cur, "DELETE FROM slot_assignments WHERE id = %s", (p["slot_id"],))
+        snap = {"hub": site["code"], "sku_id": p["sku_id"], "sku_code": p["code"],
+                "name": p["name_display"], "bin_size": p["size"], "bin": p["short"],
+                "location_id": p["location_id"], "basket_id": p["basket_id"],
+                "full_threshold": p["full_threshold"], "restock_point": p["restock_point"],
+                "safety_stock": p["safety_stock"], "slot_created_by": p["slot_created_by"],
+                "units_cleared": units, "reason": "Contoh produk tanpa bin"}
+        await ledger.audit(cur, actor_email=user.email, entity="slot", entity_id=p["slot_id"],
+                           action="unassign", before={"site_id": site["id"], "sku_id": p["sku_id"],
+                                                      "basket_id": p["basket_id"]},
+                           after={"reason": NEEDS_BIN_SET})
+        await ledger.audit(cur, actor_email=user.email, entity="site", entity_id=site["id"],
+                           action=NEEDS_BIN_SET, after=snap)
+        state = await _nb_state(site, cur)
+    e = state["example"]
+    state["message"] = (
+        f"Contoh siap: {_nb_name(e)} sekarang ada di Perlu bin. Produk ini perlu bin "
+        f"{e['bin_size_label']}; tadinya di {e['original_bin']}"
+        + (f" ({units} unit stok dikosongkan)" if units else "") +
+        f". / Example ready: {_nb_name(e)} is now in Need a bin. It needs a "
+        f"{racks.SIZE_LABEL_EN[e['bin_size']].lower()} bin; it was in {e['original_bin']}"
+        + (f" ({units} units of stock taken out)" if units else "") + ".")
+    return state
+
+
+@router.post("/needs-bin/reset", response_model=NeedsBinState)
+async def needs_bin_reset(body: NeedsBinIn, user: auth.User = Depends(auth.require("supervisor"))):
+    """Kembalikan seperti semula (SPV and above, only in Mode demo): the example
+    product gets its original bin back when it still has none and that bin is
+    free (409 when another product took it). If someone gave it a bin during the
+    demo, that bin stays. The units the set-up took out go back into its bin
+    when the product holds no stock. Audited as demo_needs_bin_reset."""
+    site = await _site(user, body.site_id)
+    if not site["demo_mode"]:
+        raise HTTPException(409, _MODE_OFF)
+    async with db.tx() as cur:
+        await db.one(cur, "SELECT id FROM sites WHERE id = %s FOR UPDATE", (site["id"],))
+        ex = await _nb_example(cur, site)
+        if not ex:
+            state = await _nb_state(site, cur)
+            state["message"] = ("Tidak ada contoh yang perlu dikembalikan. / "
+                                "There is no example to put back.")
+            return state
+        e = ex["out"]
+        done = await _nb_put_back(cur, site, user, ex, closing="reset")
+        state = await _nb_state(site, cur)
+    units_id = f" {done['units']} unit stok dikembalikan." if done["units"] else ""
+    units_en = f" {done['units']} units of stock put back." if done["units"] else ""
+    if done["slot"]:
+        state["message"] = (f"{_nb_name(e)} kembali di bin {done['bin']}.{units_id} / "
+                            f"{_nb_name(e)} is back in bin {done['bin']}.{units_en}")
+    else:
+        state["message"] = (f"{_nb_name(e)} sudah punya bin {done['bin']}, dibiarkan.{units_id} / "
+                            f"{_nb_name(e)} already has bin {done['bin']}, left as it is.{units_en}")
     return state
 
 

@@ -68,33 +68,33 @@ async def _validate_row(row_no: int, raw: dict) -> tuple[dict | None, str | None
     location_raw = _pick(raw, "location")
 
     if not hub_name:
-        return None, f"Baris {row_no}: Hub name kosong."
+        return None, f"Baris {row_no}: kolom Hub name kosong. / Row {row_no}: the Hub name column is empty."
     if not barcode:
-        return None, f"Baris {row_no}: barcode kosong."
+        return None, f"Baris {row_no}: barcode kosong. / Row {row_no}: the barcode is empty."
     if not brand_name:
-        return None, f"Baris {row_no}: brand kosong."
+        return None, f"Baris {row_no}: merek kosong. / Row {row_no}: the brand is empty."
     if not product_name:
-        return None, f"Baris {row_no}: Product Name kosong."
+        return None, f"Baris {row_no}: nama produk kosong. / Row {row_no}: the product name is empty."
     if not location_raw:
-        return None, f"Baris {row_no}: LOCATION kosong — wajib diisi."
+        return None, f"Baris {row_no}: kolom LOCATION wajib diisi. / Row {row_no}: the LOCATION column is required."
 
     site = await db.fetch_one(
         "SELECT id, code FROM sites WHERE code = %s AND active = 1", (hub_name,)
     )
     if not site:
-        return None, f"Baris {row_no}: Hub '{hub_name}' tidak dikenal."
+        return None, f"Baris {row_no}: dark store '{hub_name}' tidak dikenal. / Row {row_no}: dark store '{hub_name}' is not known."
 
     existing_barcode = await db.fetch_one(
         "SELECT sku_id FROM barcodes WHERE barcode = %s", (barcode,)
     )
     if existing_barcode:
-        return None, f"Baris {row_no}: barcode {barcode} sudah ada di data stok."
+        return None, f"Baris {row_no}: barcode {barcode} sudah ada di data stok. / Row {row_no}: barcode {barcode} is already in the stock data."
 
     brand = await db.fetch_one(
         "SELECT id, name FROM brands WHERE name = %s", (brand_name,)
     )
     if not brand:
-        return None, f"Baris {row_no}: brand '{brand_name}' tidak ada di data induk."
+        return None, f"Baris {row_no}: merek '{brand_name}' tidak ada di data induk. / Row {row_no}: brand '{brand_name}' is not in the master data."
 
     master = await db.fetch_one(
         "SELECT pdl.sku_id, s.name_display "
@@ -104,8 +104,8 @@ async def _validate_row(row_no: int, raw: dict) -> tuple[dict | None, str | None
     )
     if not master:
         return None, (
-            f"Baris {row_no}: produk '{product_name}' ({brand_name}) "
-            "tidak ada di data induk."
+            f"Baris {row_no}: produk '{product_name}' ({brand_name}) tidak ada di data induk. / "
+            f"Row {row_no}: product '{product_name}' ({brand_name}) is not in the master data."
         )
 
     location = await db.fetch_one(
@@ -113,7 +113,7 @@ async def _validate_row(row_no: int, raw: dict) -> tuple[dict | None, str | None
         (site["id"], location_raw),
     )
     if not location:
-        return None, f"Baris {row_no}: lokasi '{location_raw}' tidak ditemukan di {hub_name}."
+        return None, f"Baris {row_no}: lokasi '{location_raw}' tidak ditemukan di {hub_name}. / Row {row_no}: location '{location_raw}' not found in {hub_name}."
 
     return {
         "site_id": site["id"],
@@ -133,7 +133,7 @@ async def upload_stock(
     reader = csv.DictReader(io.StringIO(raw))
     rows = list(reader)
     if not rows:
-        raise HTTPException(400, "File kosong atau tidak terbaca.")
+        raise HTTPException(400, "File kosong atau tidak terbaca. / The file is empty or cannot be read.")
 
     parsed, errors = [], []
     seen_barcodes: set[str] = set()
@@ -143,7 +143,7 @@ async def upload_stock(
             errors.append({"row_no": i, "message": err})
             continue
         if clean["barcode"] in seen_barcodes:
-            errors.append({"row_no": i, "message": f"Baris {i}: barcode {clean['barcode']} duplikat di file ini."})
+            errors.append({"row_no": i, "message": f"Baris {i}: barcode {clean['barcode']} dobel di file ini. / Row {i}: barcode {clean['barcode']} is duplicated in this file."})
             continue
         seen_barcodes.add(clean["barcode"])
         parsed.append((i, clean))
@@ -152,7 +152,7 @@ async def upload_stock(
         return {
             "ok": False, "upload_id": None, "rows_total": len(rows),
             "rows_committed": 0, "errors": errors,
-            "message": f"Upload gagal: {len(errors)} baris bermasalah. Tidak ada yang disimpan.",
+            "message": f"Upload gagal: {len(errors)} baris bermasalah. Tidak ada yang disimpan. / Upload failed: {len(errors)} rows have problems. Nothing was saved.",
         }
 
     # Every row also needs write access to its site.
@@ -224,7 +224,7 @@ async def upload_stock(
     return {
         "ok": True, "upload_id": upload_id, "rows_total": len(rows),
         "rows_committed": len(parsed), "errors": [],
-        "message": f"Berhasil: {len(parsed)} baris disimpan.",
+        "message": f"Berhasil: {len(parsed)} baris disimpan. / Done: {len(parsed)} rows saved.",
     }
 
 

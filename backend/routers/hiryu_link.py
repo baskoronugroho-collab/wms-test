@@ -218,9 +218,9 @@ def _utc(value: str | None, name: str) -> datetime | None:
     try:
         ts = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
-        raise HTTPException(422, f"{name}: waktu tidak dikenal / not an ISO 8601 time")
+        raise HTTPException(422, f"{name}: format waktu tidak dikenal. / {name}: not an ISO 8601 time.")
     if ts.tzinfo is None:
-        raise HTTPException(422, f"{name}: waktu tanpa zona / time has no zone")
+        raise HTTPException(422, f"{name}: waktu tanpa zona. / {name}: the time has no zone.")
     return ts.astimezone(timezone.utc).replace(tzinfo=None)
 
 
@@ -479,7 +479,9 @@ async def _handle_order(body: OrderMessage, caller: str, is_test: bool,
              rep_id, ins.replace_units if ins else None, action,
              problem[:160] if problem else None, line_id))
         if problem:
-            problems.append(f"{body.gm_number} {line.hiryu_item_id}: {problem}")
+            p_id, _, p_en = problem.partition(" / ")
+            ref = f"{body.gm_number} {line.hiryu_item_id}"
+            problems.append(f"{ref}: {p_id} / {ref}: {p_en or p_id}")
     for p in problems:
         await _log("order", body.message_id, "problem", p, gid, body.hiryu_store_id)
     await _audit(caller, "order", order_id, "hiryu_link_order",
@@ -664,7 +666,7 @@ async def post_cancel(grab_order_id: str, body: CancelMessage,
     hold; picked units go to Kembalikan ke rak. A cancel before its order is
     kept."""
     if not re.fullmatch(_ORDER_ID, grab_order_id or ""):
-        raise HTTPException(422, "grab_order_id tidak valid / invalid grab_order_id")
+        raise HTTPException(422, "grab_order_id tidak valid. / The grab_order_id is not valid.")
     return (await handle_cancel(grab_order_id, body, caller))[1]
 
 
@@ -692,7 +694,7 @@ async def _register_barcodes(sku_id: int, code: str, barcodes: list[str], proble
     for bc in barcodes:
         bc = (bc or "").strip()
         if not bc or len(bc) > 64 or not bc.isalnum():
-            problems.append(f"SKU {code}: barcode tidak valid / invalid barcode")
+            problems.append(f"SKU {code}: barcode tidak valid. / SKU {code}: invalid barcode.")
             continue
         owner = await db.fetch_one("SELECT sku_id FROM barcodes WHERE barcode = %s", (bc,))
         if not owner:
@@ -700,7 +702,7 @@ async def _register_barcodes(sku_id: int, code: str, barcodes: list[str], proble
                 "INSERT IGNORE INTO barcodes (barcode, sku_id, source, registered_by) "
                 "VALUES (%s,%s,'hiryu','hiryu')", (bc, sku_id))
         elif owner["sku_id"] != sku_id:
-            problems.append(f"SKU {code}: barcode {bc} milik SKU lain / belongs to another SKU")
+            problems.append(f"SKU {code}: barcode {bc} milik SKU lain. / SKU {code}: barcode {bc} belongs to another SKU.")
 
 
 async def _create_sku(code: str, name: str, brand_id: int, barcodes: list[str],
@@ -709,7 +711,7 @@ async def _create_sku(code: str, name: str, brand_id: int, barcodes: list[str],
     completes it (Lengkapi data SKU)."""
     if await db.fetch_one("SELECT id FROM skus WHERE brand_id = %s AND UPPER(brand_sku_code) = %s",
                           (brand_id, code)):
-        problems.append(f"SKU {code}: kode sudah dipakai SKU lain / code already used by another SKU")
+        problems.append(f"SKU {code}: kode sudah dipakai SKU lain. / SKU {code}: code already used by another SKU.")
         return None
     brand = await db.fetch_one("SELECT identity_mode FROM brands WHERE id = %s", (brand_id,))
     sku_id = await db.execute(
@@ -810,14 +812,16 @@ async def _handle_catalogue(body: CatalogueMessage, caller: str) -> tuple[int, d
         code = f"HY{ds.hiryu_dark_store_id}"
         if await db.fetch_one("SELECT id FROM sites WHERE code = %s", (code,)):
             problems.append(f"Dark store #{ds.hiryu_dark_store_id}: kode {code} sudah dipakai dark store "
-                            f"lain / code {code} already used by another dark store")
+                            f"lain. / Dark store #{ds.hiryu_dark_store_id}: code {code} already used "
+                            "by another dark store.")
             continue
         await db.execute(
             "INSERT INTO sites (code, name, address, site_type, hiryu_dark_store_id, "
             "opening_hours_json, hiryu_received_at) "
             "VALUES (%s,%s,%s,'darkstore',%s,%s,UTC_TIMESTAMP())",
             (code, ds.name[:160], ds.address[:255], ds.hiryu_dark_store_id, hours))
-        warnings.append(f"Dark store baru dari Hiryu: {ds.name} (#{ds.hiryu_dark_store_id})")
+        warnings.append(f"Dark store baru dari Hiryu: {ds.name} (#{ds.hiryu_dark_store_id}). / "
+                        f"New dark store from Hiryu: {ds.name} (#{ds.hiryu_dark_store_id}).")
     if body.full and body.dark_stores:
         listed = [d.hiryu_dark_store_id for d in body.dark_stores]
         await db.execute(
@@ -831,8 +835,9 @@ async def _handle_catalogue(body: CatalogueMessage, caller: str) -> tuple[int, d
         site = await db.fetch_one("SELECT id FROM sites WHERE hiryu_dark_store_id = %s",
                                   (st.hiryu_dark_store_id,))
         if not site:
-            problems.append(f"Toko/store #{st.hiryu_store_id}: dark store #{st.hiryu_dark_store_id} "
-                            "tidak dikenal / unknown dark store")
+            problems.append(f"Toko #{st.hiryu_store_id}: dark store #{st.hiryu_dark_store_id} "
+                            f"tidak dikenal. / Store #{st.hiryu_store_id}: dark store "
+                            f"#{st.hiryu_dark_store_id} is not known.")
             continue
         acceptance = (st.order_acceptance or "").upper() or None
         h_active = 1 if st.status.lower() == "active" else 0
@@ -851,8 +856,8 @@ async def _handle_catalogue(body: CatalogueMessage, caller: str) -> tuple[int, d
         stores_done += 1
         touched.append(st.hiryu_store_id)
         if acceptance and acceptance != "MANUAL":
-            warnings.append(f"Toko #{st.hiryu_store_id}: terima {acceptance}, bukan MANUAL / "
-                            f"order acceptance {acceptance}, not MANUAL")
+            warnings.append(f"Toko #{st.hiryu_store_id}: terima {acceptance}, bukan MANUAL. / "
+                            f"Store #{st.hiryu_store_id}: order acceptance {acceptance}, not MANUAL.")
     if body.full and body.stores:
         in_msg = [s.hiryu_store_id for s in body.stores]
         await db.execute(
@@ -909,8 +914,8 @@ async def _handle_catalogue(body: CatalogueMessage, caller: str) -> tuple[int, d
                 (code, s.name[:255], json.dumps(s.barcodes), body.message_id))
             if code not in waiting_codes:
                 problems.append(f"SKU {code}: merek belum diketahui, disimpan sampai menu toko "
-                                "yang bermerek memakainya / brand not known yet, kept until a "
-                                "menu of a store with a brand uses it")
+                                f"yang bermerek memakainya. / SKU {code}: brand not known yet, "
+                                "kept until a menu of a store with a brand uses it.")
             continue
         if await _create_sku(code, s.name, brand_id, s.barcodes, problems):
             created += 1
@@ -919,7 +924,8 @@ async def _handle_catalogue(body: CatalogueMessage, caller: str) -> tuple[int, d
     items = 0
     for menu in body.menus:
         if menu.hiryu_store_id not in store_brand:
-            problems.append(f"Menu toko/store #{menu.hiryu_store_id}: toko tidak dikenal / unknown store")
+            problems.append(f"Menu toko #{menu.hiryu_store_id}: toko tidak dikenal. / "
+                            f"Menu of store #{menu.hiryu_store_id}: the store is not known.")
             continue
         brand_id = store_brand[menu.hiryu_store_id]
         seen_ids = []
@@ -931,7 +937,8 @@ async def _handle_catalogue(body: CatalogueMessage, caller: str) -> tuple[int, d
                 sku_id = sku["id"] if sku else await _sku_from_pending(code, brand_id, problems)
                 if not sku_id:
                     problems.append(f"#{menu.hiryu_store_id} {it.item_id}: kode SKU {code} "
-                                    "tidak dikenal / unknown SKU code")
+                                    f"tidak dikenal. / #{menu.hiryu_store_id} {it.item_id}: "
+                                    f"unknown SKU code {code}.")
             await db.execute(
                 "INSERT INTO hiryu_items (hiryu_store_no, hiryu_item_id, brand_id, item_name, sku_id, "
                 "sku_code, units_per_sale, price_idr, available_status, active, imported_at, "

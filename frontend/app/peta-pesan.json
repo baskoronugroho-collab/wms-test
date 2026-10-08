@@ -976,7 +976,7 @@
     {
      "status": 422,
      "body": {
-      "detail": "order_time: waktu tanpa zona / time has no zone"
+      "detail": "order_time: waktu tanpa zona. / order_time: the time has no zone."
      },
      "when": {
       "id": "Waktu tanpa zona (berlaku juga untuk scheduled_time dan estimated_ready_time).",
@@ -1013,7 +1013,7 @@
       "en": "X-Hiryu-Key missing or wrong."
      },
      "body": {
-      "detail": "Not signed in. Enable Google SSO on the app's Access tab."
+      "detail": "Belum masuk. Aktifkan Google SSO di tab Access aplikasi. / Not signed in. Enable Google SSO on the app's Access tab."
      },
      "request": null
     }
@@ -1336,7 +1336,7 @@
     {
      "status": 422,
      "body": {
-      "detail": "grab_order_id tidak valid / invalid grab_order_id"
+      "detail": "grab_order_id tidak valid. / The grab_order_id is not valid."
      },
      "when": {
       "id": "grab_order_id di alamat tidak cocok dengan polanya.",
@@ -1346,7 +1346,7 @@
     {
      "status": 422,
      "body": {
-      "detail": "cancelled_at: waktu tanpa zona / time has no zone"
+      "detail": "cancelled_at: waktu tanpa zona. / cancelled_at: the time has no zone."
      },
      "when": {
       "id": "cancelled_at tanpa zona.",
@@ -1386,7 +1386,7 @@
       "en": "X-Hiryu-Key missing or wrong."
      },
      "body": {
-      "detail": "Not signed in. Enable Google SSO on the app's Access tab."
+      "detail": "Belum masuk. Aktifkan Google SSO di tab Access aplikasi. / Not signed in. Enable Google SSO on the app's Access tab."
      },
      "request": null
     }
@@ -3400,7 +3400,7 @@
       "skus_updated": 1,
       "items": 1,
       "problems": [
-       "Toko/store #905: dark store #99 tidak dikenal / unknown dark store"
+       "Toko #905: dark store #99 tidak dikenal. / Store #905: dark store #99 is not known."
       ]
      },
      "when": {
@@ -3459,7 +3459,7 @@
       "en": "X-Hiryu-Key missing or wrong."
      },
      "body": {
-      "detail": "Not signed in. Enable Google SSO on the app's Access tab."
+      "detail": "Belum masuk. Aktifkan Google SSO di tab Access aplikasi. / Not signed in. Enable Google SSO on the app's Access tab."
      },
      "request": null
     }

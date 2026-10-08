@@ -1,4 +1,4 @@
-"""Return to shelf — units from cancelled orders going back on the rack.
+"""Return to shelf: units from cancelled orders going back on the rack.
 
 Canonical design: when Hiryu cancels (message 2) the WMS releases what was only
 allocated, and anything already picked goes to return-to-shelf. A pick removed
@@ -15,6 +15,11 @@ before the unit counts as back.
 Reasons: cancelled (an order cancelled after picking), uji (a test order after
 its handover step), driver_return (fine units from a cancelled parcel the
 driver brought back).
+
+Mode manual (V32): while the dark store's scanners are broken, the unit is
+chosen by a tap in the list and the bin confirmed with "Sudah dikembalikan ke
+bin X" (`scan` with manual, no code). Refused once Mode manual is off; the
+movement and the audit are marked manual.
 """
 from datetime import datetime, timezone
 
@@ -28,6 +33,7 @@ import db
 import floor
 import ledger
 import models
+from routers import manual_mode
 
 router = APIRouter(prefix="/api", tags=["returns"])
 
@@ -53,9 +59,12 @@ class ReturnTaskListV2(models.ReturnTaskList):
 
 
 class ReturnScanV2In(models.ReturnScanIn):
+    code: str = Field(default="", max_length=64, description="The unit scanned; empty with manual")
     bin_code: str | None = Field(
         default=None, description="The bin label scanned after the unit (board 6k); checked "
                                   "against the task's bin before the unit counts")
+    manual: bool = Field(default=False, description="Mode manual: the unit tapped in the list "
+                                                    "and the bin confirmed by a tap")
 
 
 class ReturnScanV2Result(models.ReturnScanResult):
@@ -89,6 +98,7 @@ class ReturnGroup(BaseModel):
 class ReturnGroupList(BaseModel):
     groups: list[ReturnGroup]
     open_units: int
+    manual_mode: bool = Field(default=False, description="The dark store is in Mode manual now")
 
 
 def _out(row: dict) -> dict:
@@ -111,7 +121,7 @@ def _out(row: dict) -> dict:
         "photo_key": row.get("photo_key"),
         "location_short": floor.short_bin(row.get("location_code")),
         "location_words": floor.bin_words(row.get("rack_code"), row.get("level_no"),
-                                          row.get("position_no")),
+                                          row.get("position_no"), code=row.get("location_code")),
     }
 
 
@@ -202,7 +212,8 @@ async def returns_by_order(site_id: int, user: auth.User = Depends(auth.current_
         g["tasks"].append(_out(r))
     out = list(groups.values())
     return {"groups": out,
-            "open_units": sum(g["units"] - g["units_returned"] for g in out)}
+            "open_units": sum(g["units"] - g["units_returned"] for g in out),
+            "manual_mode": await manual_mode.active(site_id)}
 
 
 async def _unit_sku(code: str) -> tuple[dict | None, dict | None]:
@@ -222,11 +233,11 @@ async def check_unit(task_id: int, body: UnitCheckIn,
     the unit counts as back when its bin is scanned (`scan` with bin_code)."""
     task = await db.fetch_one(_SELECT + "WHERE rt.id = %s", (task_id,))
     if not task:
-        raise HTTPException(404, "Return task not found")
+        raise HTTPException(404, "Tugas kembalikan tidak ditemukan. / Put-back task not found.")
     await auth.assert_site_access(user, task["site_id"])
     sku, _ = await _unit_sku(body.code.strip())
     if not sku:
-        raise HTTPException(422, "Barcode tidak dikenal. / Unknown barcode.")
+        raise HTTPException(422, "Barcode tidak dikenal. / Barcode not recognised.")
     if sku["id"] != task["sku_id"]:
         raise HTTPException(
             409, f"Salah barang. Yang dikembalikan: {task['sku_name']}. / "
@@ -234,7 +245,7 @@ async def check_unit(task_id: int, body: UnitCheckIn,
     return {"ok": True, "sku_name": task["sku_name"], "location_code": task["location_code"],
             "location_short": floor.short_bin(task["location_code"]),
             "location_words": floor.bin_words(task["rack_code"], task["level_no"],
-                                              task["position_no"]),
+                                              task["position_no"], code=task["location_code"]),
             "message": "Cocok. Taruh di bin, lalu pindai label bin. / "
                        "Match. Put it in the bin, then scan the bin label."}
 
@@ -270,38 +281,48 @@ async def scan_return(
     user: auth.User = Depends(auth.current_user),
 ):
     """One unit back on the shelf. Scan-verified, no override. With bin_code
-    (board 6k) the bin label must be the task's bin."""
+    (board 6k) the bin label must be the task's bin. With manual (Mode manual,
+    only while it is on) there is no code: the picker tapped the unit in the
+    list and confirmed the bin by a tap (or scanned only the bin)."""
     replayed = await ledger.replay(body.idempotency_key, "return_scan")
     if replayed:
         return replayed
 
     task = await db.fetch_one(_SELECT + "WHERE rt.id = %s", (task_id,))
     if not task:
-        raise HTTPException(404, "Return task not found")
+        raise HTTPException(404, "Tugas kembalikan tidak ditemukan. / Put-back task not found.")
     site = await auth.assert_site_access(user, task["site_id"])
     if task["status"] != "open":
         raise HTTPException(409, "Sudah selesai dikembalikan. / Already returned.")
     if not task["location_id"]:
         raise HTTPException(
-            409, "Barang ini belum punya rak. Panggil supervisor. / "
-                 "This SKU has no rack yet. Call a supervisor.")
+            409, "Barang ini belum punya rak. Panggil SPV. / "
+                 "This product has no rack yet. Call the SPV.")
 
     if body.bin_code is not None and not floor.bin_matches(body.bin_code, task["location_code"]):
         short = floor.short_bin(task["location_code"])
         raise HTTPException(409, f"Bin salah. Taruh di {short}, lalu pindai labelnya. / "
                                  f"Wrong bin. Put it in {short}, then scan its label.")
 
-    code = body.code.strip()
-    sku, plate = await _unit_sku(code)
-    if not sku:
-        raise HTTPException(422, "Barcode tidak dikenal. / Unknown barcode.")
-    if sku["id"] != task["sku_id"]:
-        raise HTTPException(
-            409, f"Salah barang. Yang dikembalikan: {task['sku_name']}. / "
-                 f"Wrong item. This return is {task['sku_name']}.")
-    if plate and plate["state"] != "picked":
-        raise HTTPException(
-            409, "Label ini tidak sedang di luar rak. / This label is not out of the rack.")
+    manual = bool(body.manual)
+    if manual and not await manual_mode.active(task["site_id"]):
+        raise HTTPException(409, "Mode manual tidak aktif. Pindai barangnya. / "
+                                 "Manual mode is off. Scan the item.")
+    code = (body.code or "").strip()
+    sku, plate = None, None
+    if code:
+        sku, plate = await _unit_sku(code)
+        if not sku:
+            raise HTTPException(422, "Barcode tidak dikenal. / Barcode not recognised.")
+        if sku["id"] != task["sku_id"]:
+            raise HTTPException(
+                409, f"Salah barang. Yang dikembalikan: {task['sku_name']}. / "
+                     f"Wrong item. This return is {task['sku_name']}.")
+        if plate and plate["state"] != "picked":
+            raise HTTPException(
+                409, "Label ini tidak sedang di luar rak. / This label is not out of the rack.")
+    elif not manual:
+        raise HTTPException(422, "Pindai barangnya. / Scan the item.")
 
     async with db.tx() as cur:
         # Re-read under lock: two people scanning the same tote must not
@@ -311,6 +332,17 @@ async def scan_return(
                  "WHERE id = %s FOR UPDATE", (task_id,))
         if locked["status"] != "open" or locked["qty_returned"] >= locked["qty"]:
             raise HTTPException(409, "Sudah selesai dikembalikan. / Already returned.")
+        if manual and not code and task.get("order_id"):
+            # No label scanned: a Mode B unit of this order goes back with the
+            # first of the order's labels still out of the rack (the oldest
+            # pick first), so its label is on the rack again and can be picked.
+            plate = await db.one(
+                cur, "SELECT up.id, up.plate_code FROM unit_plates up "
+                     "JOIN stock_movements m ON m.plate_id = up.id AND m.ref_type = 'pick_line' "
+                     "JOIN pick_lines pl ON pl.id = m.ref_id "
+                     "JOIN pick_tasks pt ON pt.id = pl.pick_task_id "
+                     "WHERE pt.order_id = %s AND up.sku_id = %s AND up.state = 'picked' "
+                     "ORDER BY m.id LIMIT 1 FOR UPDATE", (task["order_id"], task["sku_id"]))
 
         await ledger.apply(
             cur, site_id=task["site_id"], sku_id=task["sku_id"],
@@ -318,7 +350,7 @@ async def scan_return(
             movement_type="return_in", actor_email=user.email,
             ref_type="return_task", ref_id=task_id,
             plate_id=plate["id"] if plate else None,
-            scan_source="plate" if plate else "scan",
+            scan_source="manual" if manual else "plate" if plate else "scan",
             is_training=bool(site["is_training"]),
         )
         if plate:
@@ -335,6 +367,12 @@ async def scan_return(
             "done_at = " + ("NOW()" if done else "NULL") + ", done_by = %s WHERE id = %s",
             (returned, "done" if done else "open", user.email if done else None, task_id),
         )
+        if manual:
+            await ledger.audit(cur, actor_email=user.email, entity="return_tasks", entity_id=task_id,
+                               action="return.scan",
+                               after={"manual": True, "unit_tapped": not code,
+                                      "bin_scanned": body.bin_code is not None,
+                                      "plate": plate["plate_code"] if plate else None})
         task.update(qty_returned=returned, status="done" if done else "open")
         result = {
             "ok": True, "task": _out(task), "done": done,

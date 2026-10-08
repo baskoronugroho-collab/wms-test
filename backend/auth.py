@@ -168,12 +168,12 @@ async def current_user(
         if not _anon_allowed():
             raise HTTPException(
                 status_code=401,
-                detail="Not signed in. Enable Google SSO on the app's Access tab.",
+                detail="Belum masuk. Aktifkan Google SSO di tab Access aplikasi. / Not signed in. Enable Google SSO on the app's Access tab.",
             )
         email = os.getenv("DEV_USER_EMAIL", "dev@ninjavan.co")
 
     if not db.ready():
-        raise HTTPException(status_code=503, detail="Database not configured")
+        raise HTTPException(status_code=503, detail="Database belum diatur. / Database not configured.")
 
     # Read the row regardless of `active`, so a deactivated account is told it
     # is deactivated rather than silently falling through to provisioning and
@@ -186,7 +186,7 @@ async def current_user(
     if row and not row["active"]:
         raise HTTPException(
             status_code=403,
-            detail=f"{email} has been deactivated. Ask an admin to restore access.",
+            detail=f"{email} sudah dinonaktifkan. Minta admin membukanya lagi. / {email} has been deactivated. Ask an admin to restore access.",
         )
 
     if not row:
@@ -196,7 +196,7 @@ async def current_user(
         # Known to Google, unknown to us, and not on a domain we provision for.
         raise HTTPException(
             status_code=403,
-            detail=f"{email} is not registered in the WMS. Ask an admin to add you.",
+            detail=f"{email} belum terdaftar di WMS. Minta admin menambahkan kamu. / {email} is not registered in the WMS. Ask an admin to add you.",
         )
     user = User(row)
     if row.get("first_login_at") is None and "first_login_at" in row:
@@ -227,7 +227,7 @@ def require(role: str):
         if not user.at_least(role):
             raise HTTPException(
                 status_code=403,
-                detail=f"This needs the {role} role. You are {user.role}.",
+                detail=f"Ini butuh peran {role}. Peran kamu {user.role}. / This needs the {role} role. You are {user.role}.",
             )
         return user
 
@@ -242,7 +242,7 @@ async def assert_site_access(user: User, site_id: int) -> dict:
         (site_id,),
     )
     if not site:
-        raise HTTPException(status_code=404, detail="Site not found")
+        raise HTTPException(status_code=404, detail="Dark store tidak ditemukan. / Dark store not found.")
 
     # Ops HQ works across every hub, so it is scoped like an admin here.
     if user.at_least("hq"):
@@ -254,7 +254,8 @@ async def assert_site_access(user: User, site_id: int) -> dict:
     )
     if not allowed:
         raise HTTPException(
-            status_code=403, detail=f"You do not have access to {site['code']}."
+            status_code=403,
+            detail=f"Kamu tidak punya akses ke {site['code']}. / You do not have access to {site['code']}.",
         )
     return site
 
@@ -270,12 +271,13 @@ async def assert_training_site(site_id: int) -> dict:
         "SELECT id, code, name, is_training FROM sites WHERE id = %s", (site_id,)
     )
     if not site:
-        raise HTTPException(status_code=404, detail="Site not found")
+        raise HTTPException(status_code=404, detail="Dark store tidak ditemukan. / Dark store not found.")
     if not site["is_training"]:
         raise HTTPException(
             status_code=403,
             detail=(
-                f"{site['code']} is a live site. Training actions are only "
+                f"{site['code']} adalah dark store aktif. Aksi latihan hanya boleh di lokasi latihan. / "
+                f"{site['code']} is a live dark store. Training actions are only "
                 "permitted on a training site."
             ),
         )

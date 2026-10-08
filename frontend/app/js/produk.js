@@ -116,7 +116,7 @@
 
     function paintGuide(g) {
       $('#pd-guide').innerHTML = '<div class="k-line k-line--between"><span class="k-strong">' + bis('Ukuran bin', 'Bin size') + '</span>' +
-        '<span class="k-tag">' + esc(g.note) + '</span></div>' +
+        '<span class="k-tag">' + esc(S.pick(g.note)) + '</span></div>' +
         '<span><b>' + esc(t('Kecil', 'Kecil')) + '</b> ' + esc(g.kecil_text.replace(/^Kecil: /, '')) + '</span>' +
         '<span><b>' + esc(t('Besar', 'Besar')) + '</b> ' + esc(g.besar_text.replace(/^Besar: /, '')) + '</span>' +
         '<div><button type="button" class="k-linkbtn" id="pd-guide-edit" data-min-role="hq">' + icon('edit', 16) + bis('Ubah batas', 'Change the limits') + '</button></div>';
@@ -347,7 +347,7 @@
         '<span class="k-row__sub">' + [b.grab_account === 'ninja' ? 'Ninja Van (Nemu Mart)' : b.grab_account === 'own' ? t('Merek sendiri', 'Own account') : '-',
           b.stores + ' ' + t('toko', 'stores'), b.skus + ' SKU'].map(esc).join(' · ') + '</span></span>' + (editable ? '<span class="k-row__chev">' + icon('chev', 22) + '</span>' : '') + '</div>').join('') + '</div>' +
       (d.brands.length ? '' : '<div class="k-card k-empty"><span class="k-empty__title">' + esc(t('Belum ada merek', 'No brands yet')) + '</span></div>') +
-      '<div class="k-note k-note--info">' + icon('info', 20) + '<span>' + esc(d.note) + '</span></div>';
+      '<div class="k-note k-note--info">' + icon('info', 20) + '<span>' + esc(S.pick(d.note)) + '</span></div>';
     ctx.body.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => brandForm(d.brands.find((x) => x.id === +b.dataset.edit), d)));
   });
 

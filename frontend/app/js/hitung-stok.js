@@ -4,8 +4,14 @@
  * cycles; on the phone also "Bin saya" and the bin label scan that starts a
  * count) and hasil (8c: Sistem, Hitung, Hitung ulang, Selisih, then step 1
  * Setujui SPV and step 2 Tinjau Ops HQ). The count itself (8b) opens full
- * screen: scan the bin label, scan every unit, Selesai hitung; blind count is
- * the option. The expected number is never shown to the person counting.
+ * screen: scan the bin label, scan every unit, Selesai hitung; *Hitung tanpa
+ * pindai* (count without scanning) is the option and always waits for the SPV.
+ * The expected number is never shown to the person counting. Scans and the undo
+ * use S.scanKey, so a scan sent again after a lost connection is replayed.
+ * An SPV can release a bin someone left locked (*Lepas bin*) from the plan.
+ * Mode manual (S.manualMode()): a count starts with a tap on the bin in *Bin
+ * saya* (no label scan, /counts/start manual) and *Hitung tanpa pindai* is the
+ * way to count; *Masih bisa pindai?* still shows the scan zones.
  *
  * API (backend/routers/opname.py, /api/counts):
  *   GET  /counts/plan?site_id   GET /counts/mine?site_id   GET /counts/results?site_id
@@ -26,7 +32,6 @@
   const sp = (id, en) => '<span ' + biAttr(id, en) + '>' + esc(t(id, en)) + '</span>';
   const btn = (cls, id, en, attrs, ic) => '<button type="button" class="k-btn ' + (cls || '') + '" ' + (attrs || '') + '>' + (ic ? icon(ic, 18, 2.2) : '') + sp(id, en) + '</button>';
   const first = (name) => String(name || '').split(' ')[0];
-  const key = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
   function styles() {
     if ($('#hs-style')) return;
@@ -42,7 +47,7 @@
       '.hs-cyc{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--rule)}',
       '.hs-cyc__every{font-weight:800;color:var(--action);white-space:nowrap}',
       '.hs-why{display:inline-flex;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:700;background:var(--action-bg);color:var(--action)}',
-      '.hs-why--missing_item{background:var(--caution-bg);color:var(--caution)}',
+      '.hs-why--missing_item,.hs-why--damaged_pick{background:var(--caution-bg);color:var(--caution)}',
       '.hs-why--spv_added{background:#EFE7FB;color:#5B3A9A}',
       '.hs-why--monthly_full{background:var(--ok-bg);color:var(--ok)}',
       '.hs-step{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:34px}',
@@ -62,6 +67,8 @@
       '.hs-cnt{font-family:var(--mono);font-weight:800;font-size:16px}',
       '#k-body .hs-table td{vertical-align:middle}',
       '#k-body .hs-table td.k-num .hs-sub,#k-body .hs-table td.k-num .k-strong{font-family:inherit;font-family:var(--font)}',
+      '.hs-held{font-size:12px;color:var(--muted);margin-top:4px}',
+      '.hs-confirm td,.hs-confirm th{padding:8px 10px}',
     ].join('\n');
     document.head.appendChild(st);
   }
@@ -69,7 +76,8 @@
   const thumb = (key) => '<span class="hs-thumb">' + (key ? '<img alt="" src="../api/photos/' + esc(key) + '">' : icon('box', 24)) + '</span>';
 
   function whyChip(tk) {
-    const label = { cycle: ['Siklus wajib', 'Mandatory cycle'], missing_item: ['Barang tidak ada kemarin', 'Missing item yesterday'],
+    const label = { cycle: ['Siklus wajib', 'Mandatory cycle'], missing_item: ['Barang tidak ada saat ambil', 'Item missing at picking'],
+      damaged_pick: ['Rusak saat ambil', 'Damaged at picking'],
       spv_added: ['Ditambah SPV', 'Added by the SPV'], monthly_full: ['Hitung penuh bulanan', 'Monthly full count'] }[tk.reason] || [tk.reason_id, tk.reason_en];
     const extra = tk.reason === 'cycle' && tk.reason_note ? ': ' + tk.reason_note : '';
     const sub = tk.reason === 'cycle' || tk.reason === 'monthly_full'
@@ -77,6 +85,16 @@
       : (tk.reason_note || '');
     return '<div class="k-stack k-stack--tight" style="gap:3px"><span class="hs-why hs-why--' + esc(tk.reason) + '">' + esc(t(label[0], label[1]) + extra) + '</span>' +
       (sub ? '<span class="hs-sub">' + esc(sub) + '</span>' : '') + '</div>';
+  }
+
+  /* The open count that locks a bin: who holds it and since when. */
+  const openAttempt = (tk) => (tk.attempts || []).find((a) => a.status === 'counting');
+  function heldBy(tk) {
+    const a = openAttempt(tk);
+    if (tk.status !== 'counting' || !a) return '';
+    const who = first(a.counted_name) || a.counted_by || '';
+    return '<div class="hs-held">' + sp('Dikunci ' + who + ' sejak ' + S.fmt.time(a.started_at), 'Locked by ' + who + ' since ' + S.fmt.time(a.started_at)) + '</div>' +
+      (S.atLeast('supervisor') ? '<button type="button" class="k-linkbtn" data-release="' + tk.id + '" data-min-role="supervisor">' + icon('lock', 14) + sp('Lepas bin', 'Release bin') + '</button>' : '');
   }
 
   function statusPill(tk) {
@@ -94,8 +112,8 @@
   S.tab('rencana', async function (ctx) {
     styles();
     S.setTitle('Hitung stok', 'Stock count');
-    S.setSub('Rencana dibuat WMS setiap pagi: siklus wajib dari Ops HQ dan bin dengan barang tidak ada kemarin. SPV menetapkan petugas tiap bin.',
-      'The WMS makes the plan every morning: Ops HQ\'s mandatory cycles and bins with a missing item yesterday. The SPV assigns a counter to each bin.');
+    S.setSub('Rencana dibuat WMS setiap pagi: siklus wajib dari Ops HQ, dan bin dengan barang tidak ada atau rusak saat ambil (dihitung hari itu juga). SPV menetapkan petugas tiap bin.',
+      'The WMS makes the plan every morning: Ops HQ\'s mandatory cycles and bins with an item missing or damaged at picking (counted the same day). The SPV assigns a counter to each bin.');
     if (!ctx.siteId) { ctx.body.innerHTML = '<div class="k-note k-note--info">' + icon('info', 20) + sp('Pilih satu dark store di atas.', 'Choose one dark store above.') + '</div>'; return; }
     ctx.body.innerHTML = '<div class="k-loading" ' + biAttr('Memuat rencana…', 'Loading the plan…') + '></div>';
     const [plan, mine] = await Promise.all([
@@ -139,7 +157,7 @@
         '<td style="max-width:280px">' + esc(x.sku_name || '-') + '</td><td>' + whyChip(x) + '</td>' +
         '<td>' + (x.status === 'pending' || x.status === 'recount'
           ? '<button type="button" class="k-linkbtn" data-assign="' + x.id + '" data-min-role="supervisor">' + esc(x.assigned_name ? first(x.assigned_name) : t('Atur', 'Set')) + '</button>'
-          : esc(first(x.assigned_name) || '-')) + '</td><td>' + statusPill(x) + '</td></tr>').join('') +
+          : esc(first(x.assigned_name) || '-')) + '</td><td>' + statusPill(x) + heldBy(x) + '</td></tr>').join('') +
       '</tbody></table></div>'
       : '<div class="k-card k-empty"><span class="k-empty__icon">' + icon('check', 28, 2.6) + '</span>' + bis('Tidak ada bin untuk dihitung hari ini', 'No bin to count today', 'k-empty__title') + '</div>';
 
@@ -155,22 +173,38 @@
         : '<p class="k-caption" ' + biAttr('Tidak ada bin untuk Anda saat ini. SPV yang menetapkan petugas tiap bin.', 'No bin for you right now. The SPV assigns a counter to each bin.') + '></p>') +
       (S.atLeast('supervisor') ? bis('Rencana dark store', 'Dark store plan', 'k-eyebrow') + '<div class="k-list">' + plan.tasks.map((x) => '<div class="k-row' + (x.status === 'recount' ? ' k-row--caution' : '') + '">' +
         '<span class="k-row__text"><span class="k-row__title"><span class="k-mono">' + esc(x.bin) + '</span> · ' + esc(x.sku_name || '') + '</span>' +
-        '<span class="k-row__sub">' + esc(t(x.reason_id, x.reason_en)) + ' · ' + esc(first(x.assigned_name) || t('Belum ada petugas', 'No counter yet')) + '</span></span>' + statusPill(x) +
+        '<span class="k-row__sub">' + esc(t(x.reason_id, x.reason_en)) + ' · ' + esc(first(x.assigned_name) || t('Belum ada petugas', 'No counter yet')) + '</span>' + heldBy(x) + '</span>' + statusPill(x) +
         ((x.status === 'pending' || x.status === 'recount') ? '<button type="button" class="k-linkbtn" data-assign="' + x.id + '" data-min-role="supervisor">' + esc(x.assigned_name ? t('Ganti', 'Change') : t('Atur', 'Set')) + '</button>' : '') +
         '</div>').join('') + '</div>' : '') +
       '</div>';
 
     ctx.body.innerHTML = phone +
       '<div class="k-laptop-only k-stack"><div class="hs-top">' + fullCard + cycles + '</div>' + table +
-      '<p class="k-caption">' + esc(t('Siklus wajib: diatur Ops HQ per SKU atau merek; bin satu merek dibagi rata ke setiap hari dalam siklus. Ditambah SPV: lewat Tambah bin. Barang tidak ada kemarin: bin tempat staf menekan Barang tidak ada saat mengambil. Bin yang sedang dihitung tidak dipakai untuk ambil pesanan.',
-        'Mandatory cycle: set by Ops HQ per SKU or brand; a brand\'s bins are spread evenly over the cycle. Added by the SPV: through Add a bin. Missing item yesterday: bins where staff pressed Item missing while picking. A bin being counted is not picked from.')) + '</p></div>';
+      '<p class="k-caption">' + esc(t('Siklus wajib: diatur Ops HQ per SKU atau merek; bin satu merek dibagi rata ke setiap hari dalam siklus. Ditambah SPV: lewat Tambah bin. Barang tidak ada saat ambil: bin tempat staf menekan Barang tidak ada, dihitung hari itu juga. Rusak saat ambil: bin tempat staf menemukan unit rusak. Bin yang sedang dihitung tidak dipakai untuk ambil pesanan.',
+        'Mandatory cycle: set by Ops HQ per SKU or brand; a brand\'s bins are spread evenly over the cycle. Added by the SPV: through Add a bin. Item missing at picking: bins where staff pressed Item missing, counted the same day. Damaged at picking: bins where staff found a damaged unit. A bin being counted is not picked from.')) + '</p></div>';
 
-    // Phone: scan a bin label to start counting it.
-    const z = S.scan(async (code, zone) => {
+    // Phone: scan a bin label to start counting it. Mode manual: tap the bin in Bin saya.
+    const startZone = () => S.scan(async (code, zone) => {
       try { await start(ctx, code); } catch (e) { zone.reject(S.pick(e.message)); }
     }, { title: ['Pindai label bin untuk mulai hitung', 'Scan a bin label to start counting'], mount: $('#hs-startscan', ctx.body) });
-    void z;
-    $$('[data-start]', ctx.body).forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); labelStep(ctx, a.dataset.start); }));
+    const manual = S.manualMode();
+    if (manual) {
+      const host = $('#hs-startscan', ctx.body);
+      host.innerHTML = '<div class="k-note k-note--caution">' + icon('warn', 20) + '<span>' + sp('Mode manual: ketuk bin di Bin saya untuk mulai hitung. Hitung dengan tangan dan ketik jumlahnya.',
+        'Manual mode: tap a bin in My bins to start counting. Count by hand and type the number.') + '</span></div>' +
+        '<button type="button" class="k-linkbtn" id="hs-scanok">' + icon('scan', 16) + sp('Masih bisa pindai?', 'Scanner still works?') + '</button>';
+      $('#hs-scanok', host).addEventListener('click', () => { host.innerHTML = ''; startZone(); });
+    } else startZone();
+    let starting = false;
+    $$('[data-start]', ctx.body).forEach((a) => a.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (!manual) { labelStep(ctx, a.dataset.start); return; }
+      if (starting) return;
+      starting = true;
+      a.setAttribute('aria-busy', 'true');
+      try { await start(ctx, a.dataset.start, true); }
+      catch (err) { S.fail(err); starting = false; a.removeAttribute('aria-busy'); }
+    }));
     $('[data-act="add"]', ctx.actions).addEventListener('click', () => addBin(ctx));
     const all = $('[data-act="assign-all"]', ctx.actions);
     if (all) all.addEventListener('click', () => assignAllModal(ctx, unassigned.length));
@@ -178,11 +212,13 @@
     const ca = $('[data-act="cycle-add"]', ctx.body);
     if (ca) ca.addEventListener('click', () => cycleModal(ctx, null));
     $$('[data-assign]', ctx.body).forEach((b) => b.addEventListener('click', () => assignModal(ctx, plan.tasks.find((x) => String(x.id) === b.dataset.assign))));
+    $$('[data-release]', ctx.body).forEach((b) => b.addEventListener('click', () => releaseBin(plan.tasks.find((x) => String(x.id) === b.dataset.release))));
     ctx.every(60000, () => { if (!document.body.classList.contains('is-full') && !$('.k-scrim')) S.rerender(); });
   });
 
-  async function start(ctx, binCode) {
-    const a = await api().post('/counts/start', { site_id: ctx.siteId, bin_code: binCode });
+  /* manual: Mode manual, the bin was tapped in Bin saya instead of its label scanned. */
+  async function start(ctx, binCode, manual) {
+    const a = await api().post('/counts/start', { site_id: ctx.siteId, bin_code: binCode, manual: !!manual });
     countScreen(ctx, a);
   }
   async function openCount(ctx, attemptId) {
@@ -209,30 +245,44 @@
     styles();
     S.fullScreen(true, { title: ['Hitung stok', 'Stock count'], onBack: () => leave(ctx, a) });
     ctx.actions.innerHTML = '';
-    let blind = false;
+    /* Mode manual: started by a tap (the attempt starts as 'blind'), typed blind by default. */
+    const tapStart = a.method === 'blind';
+    const manual = S.manualMode() || tapStart;
+    let blind = manual;
+    const toggleWords = () => (manual
+      ? (blind ? ['Masih bisa pindai?', 'Scanner still works?'] : ['Kembali ke hitung tanpa pindai', 'Back to counting without scanning'])
+      : (blind ? ['Kembali ke hitung pindai', 'Back to counting by scan'] : ['Hitung tanpa pindai', 'Count without scanning']));
     ctx.body.innerHTML = '<div class="k-stack">' +
       '<div class="k-line k-line--between"><span class="k-strong">' + (a.position ? esc(t('Bin ' + a.position + ' dari ' + a.of + ' hari ini', 'Bin ' + a.position + ' of ' + a.of + ' today')) : '') +
-      (a.is_recount ? ' ' + S.pill('caution', 'Hitung ulang', 'Recount') : '') + '</span>' + S.pill('ok', 'Label bin cocok', 'Bin label matches') + '</div>' +
+      (a.is_recount ? ' ' + S.pill('caution', 'Hitung ulang', 'Recount') : '') + '</span>' +
+      (tapStart ? S.pill('info', 'Dimulai dengan ketuk', 'Started by tap') : S.pill('ok', 'Label bin cocok', 'Bin label matches')) + '</div>' +
       '<div class="k-card k-card--pad hs-bincard"><div class="k-line k-line--between"><span class="k-eyebrow">Bin</span>' +
       '<span class="k-line k-strong" style="gap:6px;color:var(--action)">' + icon('lock', 16) + sp('Bin dikunci', 'Bin locked') + '</span></div>' +
       '<span class="hs-bincode">' + esc(a.bin) + '</span>' +
       '<div class="hs-prod">' + thumb(a.photo_key) + '<strong style="font-size:17px">' + esc(a.sku_name || '-') + '</strong></div></div>' +
-      '<div class="k-card hs-count" id="hs-scanbox"><span class="k-eyebrow" ' + biAttr('Unit dipindai', 'Units scanned') + '></span>' +
+      '<div class="k-card hs-count" id="hs-scanbox"' + (blind ? ' hidden' : '') + '><span class="k-eyebrow" ' + biAttr('Unit dipindai', 'Units scanned') + '></span>' +
       '<span class="hs-big" id="hs-n">' + n(a.qty_counted) + '</span>' +
       '<span class="k-strong" id="hs-last" style="color:var(--ok);min-height:20px">' + (a.last_scan ? icon('check', 16, 2.6) + esc(t('Pindaian terakhir cocok · ', 'Last scan matched · ') + S.fmt.time(a.last_scan.at)) : '') + '</span>' +
-      '<button type="button" class="k-linkbtn" id="hs-undo" ' + biAttr('Batalkan pindaian terakhir', 'Undo the last scan') + '></button></div>' +
-      '<div class="k-card hs-count" id="hs-blindbox" hidden><span class="k-eyebrow" ' + biAttr('Jumlah dihitung (blind)', 'Counted (blind)') + '></span><div id="hs-step"></div>' +
-      '<span class="k-caption" ' + biAttr('Hasil blind selalu menunggu Setujui SPV, juga jika cocok.', 'A blind result always waits for the SPV, even when it matches.') + '></span></div>' +
+      '<button type="button" class="k-linkbtn" id="hs-undo" ' + biAttr('Batalkan pindai terakhir', 'Undo last scan') + '></button></div>' +
+      '<div class="k-card hs-count" id="hs-blindbox"' + (blind ? '' : ' hidden') + '><span class="k-eyebrow" ' + biAttr('Jumlah dihitung tanpa pindai', 'Counted without scanning') + '></span><div id="hs-step"></div>' +
+      (manual ? '<span class="k-caption" ' + biAttr('Mode manual: hitung semua unit di bin dengan tangan, termasuk yang di belakang. Jumlah di sistem tidak ditampilkan.',
+        'Manual mode: count every unit in the bin by hand, including the ones at the back. The system number is not shown.') + '></span>' : '') +
+      '<span class="k-caption" ' + biAttr('Hasil hitung tanpa pindai selalu menunggu Setujui SPV, juga jika cocok.', 'A count without scanning always waits for the SPV, even when it matches.') + '></span></div>' +
       '<div id="hs-zone"></div>' +
-      '<button type="button" class="k-btn k-btn--secondary k-btn--block" id="hs-blind">' + icon('edit', 18) + '<span ' + biAttr('Hitung tanpa pindai (blind)', 'Count without scanning (blind)') + '></span></button>' +
-      '<p class="k-caption" style="text-align:center" id="hs-blindcap">' + esc(t('Ketik jumlahnya. Hasil blind selalu menunggu Setujui SPV, juga jika cocok.', 'Type the number. A blind result always waits for the SPV, even when it matches.')) + '</p>' +
+      '<div class="k-stack k-stack--tight" style="align-items:center">' +
+      '<button type="button" class="k-linkbtn" id="hs-blind">' + icon(manual ? 'scan' : 'edit', 16) + '<span ' + biAttr(toggleWords()[0], toggleWords()[1]) + '></span></button>' +
+      '<p class="k-caption" style="text-align:center;margin:0" id="hs-blindcap"' + (blind ? ' hidden' : '') + ' ' + biAttr('Ketik jumlahnya. Hasilnya selalu menunggu Setujui SPV, juga jika cocok.', 'Type the number. The result always waits for the SPV, even when it matches.') + '></p></div>' +
       '<button type="button" class="k-linkbtn" id="hs-abandon" style="align-self:center" ' + biAttr('Lepas bin, hitung nanti', 'Release the bin, count later') + '></button>' +
       '<div class="k-actionbar"><button type="button" class="k-btn k-btn--primary k-btn--lg k-btn--block" id="hs-finish">' + icon('check', 22, 2.4) + '<span ' + biAttr('Selesai hitung', 'Done counting') + '></span></button></div></div>';
     const step = S.stepper($('#hs-step', ctx.body), { value: 0, min: 0, max: 9999, label: ['Jumlah', 'Quantity'] });
     const zone = S.scan(async (code, z) => {
-      if (blind) { z.reject(t('Mode blind: ketik jumlahnya.', 'Blind mode: type the number.')); return; }
+      if (blind) { z.reject(t('Hitung tanpa pindai: ketik jumlahnya.', 'Counting without scanning: type the number.')); return; }
+      const sc = 'cnt-' + a.attempt_id;
+      const k = S.scanKey(sc, code);
       try {
-        const r = await api().post('/counts/attempts/' + a.attempt_id + '/scan', { code, idempotency_key: key() });
+        let r;
+        try { r = await api().post('/counts/attempts/' + a.attempt_id + '/scan', { code, idempotency_key: k }); S.scanDone(sc); }
+        catch (e) { if (!e.network) S.scanDone(sc); throw e; }
         $('#hs-n', ctx.body).textContent = n(r.qty_counted);
         const last = $('#hs-last', ctx.body);
         if (r.outcome === 'counted') {
@@ -248,17 +298,24 @@
     }, { title: ['Pindai setiap unit di bin', 'Scan every unit in the bin'], mount: $('#hs-zone', ctx.body) });
     zone.zone.restingState = t('Termasuk yang di belakang. Jumlah di sistem tidak ditampilkan.', 'Including the ones at the back. The system number is not shown.');
     zone.rest();
+    zone.el.hidden = blind;
     $('#hs-undo', ctx.body).addEventListener('click', async () => {
-      try { const r = await api().post('/counts/attempts/' + a.attempt_id + '/undo', {}); $('#hs-n', ctx.body).textContent = n(r.qty_counted); S.toast(r.message, 'ok'); }
-      catch (e) { S.fail(e); }
+      const sc = 'cnt-undo-' + a.attempt_id;
+      const k = S.scanKey(sc, 'undo');
+      try {
+        const r = await api().post('/counts/attempts/' + a.attempt_id + '/undo', { idempotency_key: k });
+        S.scanDone(sc);
+        $('#hs-n', ctx.body).textContent = n(r.qty_counted);
+        S.toast(r.message, 'ok');
+      } catch (e) { if (!e.network) S.scanDone(sc); S.fail(e); }
     });
     $('#hs-blind', ctx.body).addEventListener('click', () => {
       blind = !blind;
       $('#hs-blindbox', ctx.body).hidden = !blind;
       $('#hs-scanbox', ctx.body).hidden = blind;
       zone.el.hidden = blind;
-      $('#hs-blindcap', ctx.body).hidden = blind;
-      S.bi($('#hs-blind span', ctx.body), blind ? 'Kembali ke hitung pindai' : 'Hitung tanpa pindai (blind)', blind ? 'Back to counting by scan' : 'Count without scanning (blind)');
+      $('#hs-blindcap', ctx.body).hidden = blind || manual;
+      S.bi($('#hs-blind span', ctx.body), toggleWords()[0], toggleWords()[1]);
       if (blind) step.input.focus();
     });
     $('#hs-abandon', ctx.body).addEventListener('click', () => leave(ctx, a));
@@ -292,6 +349,46 @@
   }
 
   /* ================= SPV and Ops HQ dialogs ================= */
+
+  /* Lepas bin: a count left open (phone lost, shift over) keeps the bin locked
+     against picking. The SPV drops that count; the bin stays in the plan. */
+  async function releaseBin(tk) {
+    const a = tk && openAttempt(tk);
+    if (!a) return;
+    const who = a.counted_name || a.counted_by || '';
+    const ok = await S.confirm({
+      title: ['Lepas bin ' + tk.bin + '?', 'Release bin ' + tk.bin + '?'],
+      text: ['Dikunci ' + who + ' sejak ' + S.fmt.time(a.started_at) + '. Hitungan itu dibuang, bin bisa dipakai ambil pesanan lagi, dan tetap di rencana.',
+        'Locked by ' + who + ' since ' + S.fmt.time(a.started_at) + '. That count is dropped, the bin can be picked from again, and it stays in the plan.'],
+      ok: ['Lepas bin', 'Release bin'],
+    });
+    if (!ok) return;
+    try {
+      const r = await api().post('/counts/attempts/' + a.attempt_id + '/abandon', {});
+      S.toast(r.message, 'ok');
+      S.rerender();
+    } catch (e) { S.fail(e); }
+  }
+
+  /* Setujui SPV changes the stock and tells Hiryu at once: show the numbers first. */
+  function confirmApprove(x) {
+    const fin = (x.attempts || []).filter((y) => y.status === 'finished');
+    const last = fin[fin.length - 1];
+    const counted = last ? last.qty_counted : x.qty_final;
+    const diff = x.variance != null ? x.variance : (counted != null && x.qty_expected != null ? counted - x.qty_expected : null);
+    const sign = (v) => (v > 0 ? '+' : '') + n(v);
+    return S.confirm({
+      title: ['Setujui hasil ' + x.bin + '?', 'Approve the result for ' + x.bin + '?'],
+      body: '<div class="k-stack"><div class="k-strong">' + esc(x.sku_name || '-') + '</div>' +
+        '<table class="k-table hs-confirm"><tbody>' +
+        '<tr><td>' + sp('Sistem', 'System') + '</td><td class="k-num">' + n(x.qty_expected) + '</td></tr>' +
+        '<tr><td>' + sp('Hitung', 'Count') + (last && last.method === 'blind' ? ' <span class="hs-sub">' + sp('(tanpa pindai)', '(no scan)') + '</span>' : '') + '</td><td class="k-num k-strong">' + n(counted) + '</td></tr>' +
+        '<tr><td>' + sp('Selisih', 'Difference') + '</td><td class="k-num ' + (diff ? 'hs-diff' : 'hs-ok') + '">' + (diff == null ? '-' : sign(diff)) + '</td></tr></tbody></table>' +
+        '<div class="k-note k-note--caution">' + icon('warn', 20) + sp('Stok ' + x.bin + ' langsung jadi ' + n(counted) + ' dan Hiryu diberi tahu saat itu juga.',
+          'The stock of ' + x.bin + ' becomes ' + n(counted) + ' at once and Hiryu is told straight away.') + '</div></div>',
+      ok: ['Setujui SPV', 'Approve'],
+    });
+  }
 
   function addBin(ctx) {
     S.modal({
@@ -429,7 +526,7 @@
   function cntCell(a) {
     if (!a) return '<span class="hs-sub">-</span>';
     return '<div style="text-align:right"><div class="hs-cnt">' + (a.qty_counted == null ? '-' : n(a.qty_counted)) + '</div><div class="hs-sub">' + esc(first(a.counted_name)) + '</div>' +
-      (a.method === 'blind' ? '<div class="hs-sub" style="color:var(--caution);font-weight:800">blind</div>' : a.method === 'scan' && a.attempt_no === 1 ? '<div class="hs-sub">' + esc(t('pindai', 'scan')) + '</div>' : '') + '</div>';
+      (a.method === 'blind' ? '<div class="hs-sub" style="color:var(--caution);font-weight:800">' + sp('tanpa pindai', 'no scan') + '</div>' : a.method === 'scan' && a.attempt_no === 1 ? '<div class="hs-sub">' + esc(t('pindai', 'scan')) + '</div>' : '') + '</div>';
   }
   function recountCell(x) {
     const a = (x.attempts || []).filter((y) => y.status === 'finished')[1];
@@ -467,18 +564,24 @@
       : '<div class="k-card k-empty"><span class="k-empty__icon">' + icon('count', 28) + '</span>' + bis('Belum ada hasil hitung', 'No count results yet', 'k-empty__title') + '</div>';
     const cards = '<div class="k-stack">' + rows.map((x) => '<div class="k-card k-card--pad' + (x.variance ? ' k-card--caution' : '') + '"><div class="k-line k-line--between"><span class="hs-bin">' + esc(x.bin) + '</span>' + diffCell(x) + '</div>' +
       '<div class="k-strong">' + esc(x.sku_name || '-') + '</div><div class="hs-sub">' +
-      esc((showExp ? t('Sistem ', 'System ') + n(x.qty_expected) + ' · ' : '') + ((x.attempts || []).filter((y) => y.status === 'finished').map((a) => n(a.qty_counted) + ' ' + first(a.counted_name) + (a.method === 'blind' ? ' (blind)' : '')).join(' · ') || '-')) + '</div>' +
+      esc((showExp ? t('Sistem ', 'System ') + n(x.qty_expected) + ' · ' : '') + ((x.attempts || []).filter((y) => y.status === 'finished').map((a) => n(a.qty_counted) + ' ' + first(a.counted_name) + (a.method === 'blind' ? t(' (tanpa pindai)', ' (no scan)') : '')).join(' · ') || '-')) + '</div>' +
       stepOne(x) + stepTwo(x) + '</div>').join('') + '</div>';
     const fc = plan && plan.full_count;
-    ctx.body.innerHTML = '<div class="k-stack" id="hs-res"><div class="k-note k-note--info">' + icon('info', 20) + '<span ' + biAttr('Selisih dan hitung blind perlu Setujui SPV: stok berubah dan Hiryu ikut saat itu juga. Hitung pindai yang cocok selesai sendiri. Ops HQ meninjau setiap selisih sesudahnya, untuk laporan selisih bulanan.',
-      'Differences and blind counts need the SPV approval: the stock and Hiryu change at once. A matching count by scan closes by itself. Ops HQ reviews every difference afterwards, for the monthly variance report.') + '></span></div>' +
+    ctx.body.innerHTML = '<div class="k-stack" id="hs-res"><div class="k-note k-note--info">' + icon('info', 20) + '<span ' + biAttr('Selisih dan hitung tanpa pindai perlu Setujui SPV: stok berubah dan Hiryu ikut saat itu juga. Hitung pindai yang cocok selesai sendiri. Ops HQ meninjau setiap selisih sesudahnya, untuk laporan selisih bulanan.',
+      'Differences and counts without scanning need the SPV approval: the stock and Hiryu change at once. A matching count by scan closes by itself. Ops HQ reviews every difference afterwards, for the monthly variance report.') + '></span></div>' +
       '<div class="k-laptop-only">' + table + '</div><div class="k-phone-only">' + cards + '</div>' +
       (fc ? '<div class="k-note k-note--navy">' + icon('clock', 20) + '<span>' + esc(t('Hitung penuh ' + fc.date_label + ' mengisi stok terhitung di laporan bulanan merek. SPV menyetujui paling lambat ' + fc.approve_by_label + '; Ops HQ meninjau selisihnya untuk laporan selisih bulanan.',
         'The full count on ' + fc.date + ' fills the counted stock in the monthly brand report. The SPV approves it by ' + fc.approve_by + '; Ops HQ reviews the differences for the monthly variance report.')) + '</span></div>' : '') + '</div>';
     $('#hs-res', ctx.body).addEventListener('click', async (e) => {
       const ap = e.target.closest('[data-approve]'), rc = e.target.closest('[data-recount]'), rv = e.target.closest('[data-review]');
       try {
-        if (ap) { const r = await api().post('/counts/tasks/' + ap.dataset.approve + '/approve', {}); S.toast(r.message, 'ok'); S.rerender(); }
+        if (ap) {
+          const x = rows.find((y) => String(y.id) === ap.dataset.approve);
+          if (x && !(await confirmApprove(x))) return;
+          const r = await api().post('/counts/tasks/' + ap.dataset.approve + '/approve', {});
+          S.toast(r.message, 'ok');
+          S.rerender();
+        }
         else if (rc) { await api().post('/counts/tasks/' + rc.dataset.recount + '/recount', {}); S.toast(['Dikirim ke orang lain untuk dihitung ulang.', 'Sent to another person for a recount.'], 'ok'); S.rerender(); }
         else if (rv) { await api().post('/counts/review', { task_ids: [+rv.dataset.review] }); S.rerender(); }
       } catch (err) { S.fail(err); }

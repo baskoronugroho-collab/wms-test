@@ -113,8 +113,9 @@
           '<span class="k-row__text"><span class="k-row__title">' + esc(r.name) + '</span>' +
           '<span class="k-row__sub">' + esc([multi ? S.shortCode(r.site_code) : null, r.bin_code, t('bisa dijual ', 'sellable ') + r.sellable, r.age_days != null ? r.age_days + ' ' + t('hari', 'days') : null].filter((x) => x != null && x !== '').join(' · ')) + '</span>' +
           '<span class="rb-pills" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">' + flagsOf(r) + '</span></span>' +
-          '<span class="k-mono k-strong" style="font-size:22px">' + S.fmt.n(r.on_hand) + '</span></div>').join('') + '</div>' +
-        '<p class="k-caption" style="margin-top:8px">' + esc(st.data.age_note) + '</p>';
+          '<span style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.1"><span class="k-mono k-strong" style="font-size:22px">' + S.fmt.n(r.on_hand) + '</span>' +
+          '<span class="k-muted" style="font-size:12px">' + esc(t('unit total', 'units in all')) + '</span></span></div>').join('') + '</div>' +
+        '<p class="k-caption" style="margin-top:8px">' + esc(S.pick(st.data.age_note)) + '</p>';
       S.applyLang(host);
     }
     async function load() {

@@ -22,6 +22,12 @@ the brand.
   note RTR-<HUB>-yymm-NNN linked to the brand's next delivery; staff scan each
   unit out and the brand's driver signs.
 
+Mode manual (V32, routers/manual_mode.py): while a dark store has no working
+scanner, *Laporkan masalah* takes the product and the bin from a list and the
+tray by a tap (manual=true), and *Serahkan retur* counts a note out with one
+tap (/tap-all). Both are refused when Mode manual is off and marked manual in
+the audit log.
+
 Nothing leaves the stock without an Ops HQ approval (write-off) or a return
 note signed by the brand's driver. Damage a customer reports after handover is
 a Grab claim and never reaches the WMS.
@@ -69,7 +75,7 @@ STATUS = {
     "on_note": ("Di nota retur", "On a return note"),
     "returned": ("Sudah diretur", "Returned"),
     "write_off_pending": ("Menunggu persetujuan Ops HQ", "Waiting for Ops HQ"),
-    "written_off": ("Dihapus", "Written off"),
+    "written_off": ("Stok dihapus", "Written off"),
 }
 
 
@@ -331,6 +337,11 @@ class HandoverIn(BaseModel):
     vehicle_no: str | None = None
 
 
+class ReturnTapIn(BaseModel):
+    """Mode manual: every unit of the note counted out in front of the driver, one tap."""
+    idempotency_key: str | None = None
+
+
 # --- reading ------------------------------------------------------------------------
 
 _ITEM_SQL = (
@@ -452,12 +463,28 @@ async def _sku_from_code(code: str) -> dict | None:
     return sku
 
 
+async def _manual_on(site_id: int, what: tuple[str, str]) -> None:
+    from routers import manual_mode
+    if not await manual_mode.active(site_id):
+        raise HTTPException(409, f"Mode manual tidak aktif di dark store ini. {what[0]} / "
+                                 f"Manual mode is not on at this dark store. {what[1]}")
+
+
 @router.get("/quarantine/lookup")
-async def lookup_unit(site_id: int, code: str, user: auth.User = Depends(auth.current_user)):
+async def lookup_unit(site_id: int, code: str | None = None, sku_id: int | None = None,
+                      user: auth.User = Depends(auth.current_user)):
     """Step 1 of Laporkan masalah: the product scanned and the bins it can come
-    from (free units), the first one proposed."""
+    from (free units), the first one proposed. Mode manual: the product picked
+    from the list (sku_id) instead of scanned, only while Mode manual is on."""
     site = await auth.assert_site_access(user, site_id)
-    sku = await _sku_from_code(code)
+    if code:
+        sku = await _sku_from_code(code)
+    elif sku_id:
+        await _manual_on(site_id, ("Pindai barangnya.", "Scan the unit."))
+        sku = await common.sku_by_id(sku_id)
+    else:
+        raise HTTPException(422, "Pindai barang atau pilih dari daftar. / Scan the unit or pick it "
+                                 "from the list.")
     if not sku:
         raise HTTPException(422, "Barcode tidak dikenal. / Unknown barcode.")
     places = await common.pick_locations_for(site_id, sku["id"])
@@ -478,14 +505,24 @@ async def report_problem(
     note: str | None = Form(default=None),
     tray_code: str | None = Form(default=None, description="The tray label scanned (MA5-QR-01)"),
     order_ref: str | None = Form(default=None, description="Reason driver_rusak: the GM number"),
+    manual: bool = Form(default=False, description="Mode manual: product, bin and tray chosen by tap"),
+    idempotency_key: str | None = Form(default=None),
     photo: UploadFile | None = File(default=None),
     user: auth.User = Depends(auth.current_user),
 ):
     """Laporkan masalah: the unit leaves sellable stock at once, Hiryu gets the
     lower number, and the SPV gets it to decide. Reason driver_rusak (a parcel
     the driver brought back damaged) takes no bin: those units left the stock
-    when they were picked."""
+    when they were picked. Mode manual (manual=true): the product comes from the
+    list, the bin from the list and the tray by a tap; accepted only while Mode
+    manual is on and recorded as manual. A report sent again with the same
+    idempotency key is answered from the first one."""
+    replayed = await ledger.replay(idempotency_key, "quarantine_report")
+    if replayed:
+        return replayed
     site = await auth.assert_site_access(user, site_id)
+    if manual:
+        await _manual_on(site_id, ("Pindai barang dan baki.", "Scan the unit and the tray."))
     if reason not in HUB_REASONS + ("driver_rusak",):
         raise HTTPException(422, "Pilih alasan: Rusak, Bocor, Kedaluwarsa, Produk salah atau Kembali dari "
                                  "driver. / Choose a reason.")
@@ -506,9 +543,11 @@ async def report_problem(
                                               order_ref=(order and (order["hiryu_short_no"] or order["external_ref"]))
                                               or (order_ref or None), reason_note=note, tray_code=tray,
                                               photo_key=photo_key, is_training=bool(site["is_training"]))
-        return {"ok": True, "item_id": item_id, "tray_code": tray, "sku_name": sku["name_display"],
-                "message": f"Di baki {tray}. Beban Ninja; Ops HQ klaim ke Grab di luar WMS. / In tray {tray}. "
-                           "Ninja's cost; Ops HQ claims it from Grab outside the WMS."}
+            result = {"ok": True, "item_id": item_id, "tray_code": tray, "sku_name": sku["name_display"],
+                      "message": f"Di baki {tray}. Beban Ninja; Ops HQ klaim ke Grab di luar WMS. / In tray "
+                                 f"{tray}. Ninja's cost; Ops HQ claims it from Grab outside the WMS."}
+            await _report_marks(cur, user, item_id, manual, idempotency_key, result)
+        return result
     if bin_code:
         short = hub_short(site["code"])
         c = bin_code.strip().upper()
@@ -531,9 +570,20 @@ async def report_problem(
                                       qty=qty, reason=reason, actor_email=user.email, reason_note=note,
                                       tray_code=tray, photo_key=photo_key,
                                       is_training=bool(site["is_training"]))
-    return {"ok": True, "item_id": item_id, "tray_code": tray, "sku_name": sku["name_display"],
-            "message": f"Di baki {tray}. Barang langsung tidak dijual di Grab. / In tray {tray}. "
-                       "No longer sold on Grab."}
+        result = {"ok": True, "item_id": item_id, "tray_code": tray, "sku_name": sku["name_display"],
+                  "message": f"Di baki {tray}. Barang langsung tidak dijual di Grab. / In tray {tray}. "
+                             "No longer sold on Grab."}
+        await _report_marks(cur, user, item_id, manual, idempotency_key, result)
+    return result
+
+
+async def _report_marks(cur, user: auth.User, item_id: int, manual: bool, key: str | None,
+                        result: dict) -> None:
+    """Inside the report's transaction: the manual mark and the replay answer."""
+    if manual:
+        await ledger.audit(cur, actor_email=user.email, entity="quarantine_item", entity_id=item_id,
+                           action="reported_manual", after={"manual": True})
+    await ledger.remember(cur, key, "quarantine_report", result)
 
 
 # --- SPV decisions (7b) -----------------------------------------------------------------
@@ -619,7 +669,8 @@ async def approve_write_off(item_id: int, body: HqNoteIn | None = None,
                      (user.email, body.note if body else None, item_id))
         await ledger.audit(cur, actor_email=user.email, entity="quarantine_item", entity_id=item_id,
                            action="write_off_approved", after={"qty": q["qty"], "bearer": q["cost_bearer"]})
-    return {"ok": True}
+    return {"ok": True, "message": f"Hapus stok disetujui: {q['qty']} unit keluar dari stok. / "
+                                   f"Write-off approved: {q['qty']} unit(s) leave the stock."}
 
 
 @router.post("/quarantine/write-offs/{item_id}/reject")
@@ -637,7 +688,8 @@ async def reject_write_off(item_id: int, body: HqNoteIn,
                      (user.email, body.note.strip(), item_id))
         await ledger.audit(cur, actor_email=user.email, entity="quarantine_item", entity_id=item_id,
                            action="write_off_rejected", after={"note": body.note})
-    return {"ok": True}
+    return {"ok": True, "message": "Ditolak. Barang tetap di baki, kembali ke SPV. / "
+                                   "Refused. The unit stays in the tray, back to the SPV."}
 
 
 # --- returns to the brand (7d to 7f) ---------------------------------------------------
@@ -918,6 +970,39 @@ async def scan_return_unit(note_id: int, body: ReturnScanIn, user: auth.User = D
                               "The driver signs the note.") if left == 0 else
                              f"Pindai {left} unit lagi. / Scan {left} more."}
         await ledger.remember(cur, body.idempotency_key, "return_note_scan", result)
+    return result
+
+
+@router.post("/returns-to-brand/{note_id}/tap-all")
+async def tap_out_note(note_id: int, body: ReturnTapIn | None = None,
+                       user: auth.User = Depends(auth.current_user)):
+    """Mode manual: *Semua unit sudah dihitung keluar*. Every line of the note is
+    counted out in front of the driver by hand and confirmed with one tap instead
+    of a scan per unit. Only while Mode manual is on; recorded as manual. The
+    driver still ticks the lines and signs (/handover)."""
+    key = body.idempotency_key if body else None
+    replayed = await ledger.replay(key, "return_note_tap")
+    if replayed:
+        return replayed
+    n = await _note(note_id, user)
+    if n["status"] != "open":
+        raise HTTPException(409, "Nota ini sudah diserahkan atau dibatalkan. / This note is closed.")
+    await _manual_on(n["site_id"], ("Pindai setiap unit.", "Scan every unit."))
+    async with db.tx() as cur:
+        locked = await db.one(cur, "SELECT status FROM return_notes WHERE id = %s FOR UPDATE", (note_id,))
+        if locked["status"] != "open":
+            raise HTTPException(409, "Nota ini sudah diserahkan atau dibatalkan. / This note is closed.")
+        tot = await db.one(cur, "SELECT SUM(qty) AS q, SUM(qty_scanned) AS s FROM return_note_lines "
+                                "WHERE note_id = %s", (note_id,))
+        await db.run(cur, "UPDATE return_note_lines SET qty_scanned = qty WHERE note_id = %s", (note_id,))
+        units = int(tot["q"] or 0)
+        await ledger.audit(cur, actor_email=user.email, entity="return_note", entity_id=note_id,
+                           action="counted_out_manual",
+                           after={"units": units, "scanned_before": int(tot["s"] or 0), "manual": True})
+        result = {"ok": True, "scanned": units, "units": units, "all_scanned": True,
+                  "message": "Semua unit dicatat keluar. Driver tanda tangan nota. / Every unit recorded "
+                             "out. The driver signs the note."}
+        await ledger.remember(cur, key, "return_note_tap", result)
     return result
 
 

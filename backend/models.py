@@ -16,6 +16,8 @@ class SiteBrief(BaseModel):
     name: str
     site_type: str
     is_training: bool
+    manual_mode: bool = False
+    manual_mode_until: str | None = None
 
 
 class Me(BaseModel):
@@ -175,6 +177,7 @@ class LocationCell(BaseModel):
     location_id: int
     code: str
     position_no: int
+    bin_row: int = Field(default=1, description="1 = the only or Bottom bin of a stack, then upwards")
     basket_id: int | None = None
     basket_size: str | None = None
     sku_id: int | None = None
@@ -209,7 +212,7 @@ class GenerateRacksIn(BaseModel):
     level_count: int = 5
     positions_per_level: int = 3
     basket_size: str = "BESAR"
-    bin_rows: int = Field(default=1, description="1, or 2 stacked bins at every position (Bottom ...B, Top ...T)")
+    bin_rows: int = Field(default=1, description="1, or 2 to 3 stacked bins at every position (Bottom ...B, Middle ...M, Top ...T)")
     open_shelf_levels: list[str] = []
 
 
@@ -600,7 +603,7 @@ class PickConfirmIn(BaseModel):
 
 class PickConfirmResult(BaseModel):
     accepted: bool
-    outcome: str = Field(description="picked | wrong_sku | plate_error | short | error")
+    outcome: str = Field(description="picked | wrong_sku | unknown_code | plate_error | short | error")
     expected_sku_name: str | None = None
     scanned_sku_name: str | None = None
     qty_picked: int = 0
@@ -1411,7 +1414,7 @@ class AddRackIn(BaseModel):
     level_count: int = 5
     positions_per_level: int = 5
     basket_size: str = "BESAR"
-    bin_rows: int = Field(default=1, description="1, or 2 stacked bins at every position (Bottom ...B, Top ...T)")
+    bin_rows: int = Field(default=1, description="1, or 2 to 3 stacked bins at every position (Bottom ...B, Middle ...M, Top ...T)")
 
 
 # --- return to shelf --------------------------------------------------------
@@ -1479,7 +1482,10 @@ class RackBin(BaseModel):
     location_id: int
     code: str
     position_no: int
-    bin_row: int = Field(default=1, description="1 = the only or Bottom bin, 2 = the Top bin")
+    bin_row: int = Field(default=1, description="1 = the only or Bottom bin, then upwards; the highest is the Top bin")
+    stack_rows: int = Field(default=1, description="Bins stacked at this position (1 = a single bin, up to 3)")
+    stack_word: str | None = Field(default=None, description="bawah | tengah | atas for a stacked bin, else null")
+    stack_word_en: str | None = Field(default=None, description="bottom | middle | top for a stacked bin, else null")
     basket_id: int | None = None
     basket_size: str | None = None
     sku_id: int | None = None
@@ -1494,7 +1500,7 @@ class RackLevel(BaseModel):
     level_id: int
     level_no: int
     is_open_shelf: bool
-    bin_rows: int = 1
+    bin_rows: int = Field(default=1, description="The highest stack on the level (1 = no stacked bins)")
     removable: bool
     bins: list[RackBin]
 
@@ -1518,11 +1524,11 @@ class AddLevelIn(BaseModel):
     bins: int = Field(default=5, description="Positions on the level")
     basket_size: str = "BESAR"
     open_shelf: bool = False
-    bin_rows: int = Field(default=1, description="1, or 2 stacked bins at every position (Bottom ...B, Top ...T)")
+    bin_rows: int = Field(default=1, description="1, or 2 to 3 stacked bins at every position (Bottom ...B, Middle ...M, Top ...T)")
 
 
 class BinRowsIn(BaseModel):
-    bin_rows: int = Field(description="1, or 2 stacked bins per position (Bottom ...B, Top ...T)")
+    bin_rows: int = Field(description="1, or 2 to 3 stacked bins per position (Bottom ...B, Middle ...M, Top ...T)")
 
 
 class AddBinsIn(BaseModel):
@@ -1887,7 +1893,10 @@ class LayoutBin(BaseModel):
     location_id: int
     code: str
     position_no: int
-    bin_row: int = 1
+    bin_row: int = Field(default=1, description="1 = the only or Bottom bin, then upwards")
+    stack_rows: int = Field(default=1, description="Bins stacked at this position (1 = a single bin, up to 3)")
+    stack_word: str | None = Field(default=None, description="bawah | tengah | atas for a stacked bin, else null")
+    stack_word_en: str | None = Field(default=None, description="bottom | middle | top for a stacked bin, else null")
     basket_id: int | None = None
     basket_size: str | None = None
     sku_id: int | None = None
@@ -1906,7 +1915,7 @@ class LayoutBin(BaseModel):
 class LayoutLevel(BaseModel):
     level_id: int
     level_no: int
-    bin_rows: int = 1
+    bin_rows: int = Field(default=1, description="The highest stack on the level (1 = no stacked bins)")
     bins: list[LayoutBin]
 
 

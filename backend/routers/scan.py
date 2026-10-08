@@ -37,7 +37,7 @@ async def resolve(
                     site_id, sku["id"], slot["location_id"]
                 )
             else:
-                out["message"] = "Barang ini belum punya keranjang di lokasi ini."
+                out["message"] = "Barang ini belum punya keranjang di lokasi ini. / This product has no bin at this location yet."
         return out
 
     # Mode B: a Ninja license plate resolves to one physical unit.
@@ -52,11 +52,11 @@ async def resolve(
             "slot_location_id": plate["location_id"],
             "slot_location_code": plate["location_code"],
             "message": (
-                "Label ini belum dipakai." if plate["state"] == "unbound" else None
+                "Label ini belum dipakai. / This label is not in use yet." if plate["state"] == "unbound" else None
             ),
         }
 
     return {
         "found": False, "kind": "unknown", "code": code,
-        "message": "Barcode tidak dikenal.",
+        "message": "Barcode tidak dikenal. / Barcode not recognised.",
     }

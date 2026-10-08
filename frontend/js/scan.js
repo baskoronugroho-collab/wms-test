@@ -71,6 +71,13 @@
       this._bind();
       this._tools();
       this.focus();
+      // The camera was open on the step before (it closed because the screen
+      // moved on): carry on scanning here without another tap.
+      ScanZone._last = this;
+      if (ScanZone._camResume && Date.now() - ScanZone._camResume < 3000 && !this.opts.noCamResume) {
+        ScanZone._camResume = 0;
+        setTimeout(() => { if (this.root.isConnected && !document.querySelector('.camscan')) this.openCamera(); }, 50);
+      }
     }
 
     /* A phone has no scanner gun: offer its camera, and typing as the last
@@ -113,33 +120,78 @@
     }
 
     /* Camera scanning: the browser's own BarcodeDetector where it exists
-       (Chrome on Android), otherwise ZXing loaded on first use. One code per
-       opening: the overlay closes on a read, like pulling a gun's trigger. */
+       (Chrome on Android), otherwise ZXing loaded on first use.
+       The camera stays open between units, but every unit is still its own
+       scan: after a read nothing counts until no barcode has been in view for
+       CLEAR_MS, so a barcode held still is one unit, never several. Move the
+       unit away and show the next one. The overlay closes by itself on a
+       rejection or a dialog (the person must see and act on it) and when the
+       screen moves on; if a new scan zone appears right after, the camera
+       reopens there. */
     async openCamera() {
       const en = localStorage.getItem('njw.lang') === 'en';
+      const CLEAR_MS = 500;
       const ov = document.createElement('div');
       ov.className = 'camscan';
       ov.innerHTML = '<video playsinline muted></video><div class="camscan__frame"></div>' +
+        '<div class="camscan__status" hidden></div>' +
         '<div class="camscan__bar"><span class="camscan__hint">' +
         (en ? 'Point the camera at the barcode' : 'Arahkan kamera ke barcode') + '</span>' +
         '<button type="button" class="btn btn--primary">' + (en ? 'Close' : 'Tutup') + '</button></div>';
       document.body.appendChild(ov);
       const video = ov.querySelector('video'), hint = ov.querySelector('.camscan__hint');
-      let stream = null, stopped = false, zx = null;
-      const stop = () => {
+      const status = ov.querySelector('.camscan__status');
+      let stream = null, stopped = false, zx = null, armed = true, clearSince = 0;
+      const stop = (why) => {
+        if (stopped) return;
         stopped = true;
+        this._cam = null;
+        ScanZone._camResume = why === 'moved' ? Date.now() : 0;
         if (zx) { try { zx.reset(); } catch (e) { /* already stopped */ } }
         if (stream) stream.getTracks().forEach(t => t.stop());
         ov.remove();
-        this.focus();
+        if (this.root.isConnected) this.focus();
+        // The next step's zone may already be on screen: reopen there now.
+        const next = ScanZone._last;
+        if (why === 'moved' && next && next !== this && next.root.isConnected && !next.opts.noCamResume) {
+          ScanZone._camResume = 0;
+          setTimeout(() => { if (next.root.isConnected && !document.querySelector('.camscan')) next.openCamera(); }, 50);
+        }
       };
-      ov.querySelector('button').onclick = stop;
-      const done = (code) => {
-        if (stopped || !code) return;
+      ov.querySelector('button').onclick = () => stop('closed');
+      // The zone's answer shows over the video; a rejection closes the camera.
+      this._cam = {
+        paint: (state, label, prompt) => {
+          if (state === STATE.REJECTED || state === STATE.OFFLINE) { stop('rejected'); return; }
+          if (state !== STATE.ACCEPTED) return;
+          status.hidden = false;
+          status.textContent = '✓ ' + label + (prompt ? ' · ' + prompt : '');
+        },
+      };
+      // Called for every frame: the code read, or null when no barcode is in view.
+      const seen = (code) => {
+        if (stopped) return;
+        if (!this.root.isConnected) { stop('moved'); return; }
+        if (document.querySelector('.k-scrim, .modal-backdrop')) { stop('dialog'); return; }
+        const now = performance.now();
+        if (!code) {
+          if (!armed) {
+            if (!clearSince) clearSince = now;
+            if (now - clearSince >= CLEAR_MS) {
+              armed = true;
+              hint.textContent = en ? 'Show the next unit' : 'Tunjukkan unit berikutnya';
+            }
+          }
+          return;
+        }
+        clearSince = 0;
+        if (!armed) return;
+        armed = false;
         if (navigator.vibrate) navigator.vibrate(60);
-        stop();
+        hint.textContent = en ? 'Move it away, then show the next unit' : 'Jauhkan, lalu tunjukkan unit berikutnya';
         this._emit(String(code).trim());
       };
+      const done = seen;
       try {
         if ('BarcodeDetector' in global) {
           const want = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf', 'qr_code'];
@@ -152,7 +204,7 @@
             if (stopped) return;
             try {
               const found = await det.detect(video);
-              if (found.length) return done(found[0].rawValue);
+              done(found.length ? found[0].rawValue : null);
             } catch (e) { /* next frame */ }
             requestAnimationFrame(tick);
           };
@@ -168,7 +220,7 @@
           }
           zx = new global.ZXing.BrowserMultiFormatReader();
           await zx.decodeFromConstraints({ video: { facingMode: 'environment' } }, video,
-            (result) => { if (result) done(result.getText()); });
+            (result) => done(result ? result.getText() : null));
         }
       } catch (e) {
         hint.textContent = en ? 'The camera is not available here. Use "Type the code".'
@@ -222,6 +274,7 @@
       if (this.stateEl) this.stateEl.textContent = label;
       if (this.promptEl) this.promptEl.textContent = prompt;
       this.root.setAttribute('data-state', state);
+      if (this._cam) this._cam.paint(state, label, prompt);
     }
 
     rest() { this._paint(STATE.WAITING, this.restingState, this.restingPrompt); }

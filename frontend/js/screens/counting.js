@@ -97,7 +97,10 @@
         } else if (r.outcome === 'foreign_item') {
           // Recorded server-side, not counted. Red, because this unit does
           // not belong here; the person has to set it aside.
-          const other = (String(r.message).match(/^Barang lain: (.*) — dicatat\.$/) || [])[1];
+          // The product's name, from the server's message
+          // "Barang lain: <name>, dicatat. / Another product: <name>, noted."
+          const other = r.scanned_sku_name ||
+            (String(r.message).match(/^Barang lain: (.*), dicatat\. \/ /) || [])[1];
           zone.reject(tx('Barang lain — tidak dihitung', 'Different product — not counted'),
             (other ? other + '. ' : '') +
             tx('Sisihkan barang ini. Sudah dicatat untuk supervisor.',

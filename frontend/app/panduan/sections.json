@@ -194,8 +194,8 @@
      "en": "One screen per job, the same for every role."
     },
     {
-     "id": "Semua orang melihat semua item menu dan boleh melihat semua layar. Server memeriksa setiap perubahan. Tombol yang tidak boleh dipakai peran Anda berwarna abu-abu dengan gembok dan tulisan <em>Hanya SPV</em> atau <em>Hanya Ops HQ</em>.",
-     "en": "Everyone sees every menu item and may view every screen. The server checks every change; a button your role may not use is grey with a lock and <em>Hanya SPV</em> or <em>Hanya Ops HQ</em>."
+     "id": "Semua orang boleh membuka dan melihat semua layar. Server memeriksa setiap perubahan. Tombol yang tidak boleh dipakai peran Anda berwarna abu-abu dengan gembok dan tulisan <em>Hanya SPV</em> atau <em>Hanya Ops HQ</em>.",
+     "en": "Everyone may open and view every screen. The server checks every change; a button your role may not use is grey with a lock and <em>Hanya SPV</em> or <em>Hanya Ops HQ</em>."
     },
     {
      "id": "Alamat lama stasiun dan konsol akan membuka layar yang baru.",
@@ -214,8 +214,16 @@
      "en": "No customer data anywhere in the app."
     },
     {
-     "id": "Menu sama untuk semua peran (pimpinan ops, 5 Okt): semua staf bisa melihat semua item menu, dan perubahan dibatasi sesuai peran.",
-     "en": "The menu is the same for every role (ops lead, 5 Oct): all staff can view every menu item, and editing is blocked by role."
+     "id": "Staf dan operator dark store melihat <em>Pekerjaan saya</em> dulu di menu; layar lain ada di bawah <em>Lainnya</em>, satu ketukan saja. SPV ke atas melihat menu lengkap.",
+     "en": "Staff and dark store operators see <em>My work</em> first in the menu; the other screens are under <em>More</em>, one tap away. SPV and up see the full menu."
+    },
+    {
+     "id": "Setiap halaman punya tombol <em>?</em> di samping judul: untuk apa halaman itu, siapa yang memakainya, apa yang bisa dilakukan, dan langkahnya di Panduan. Tombol itu terbuka sendiri sekali, pertama kali Anda membuka halaman.",
+     "en": "Every page has a <em>?</em> next to its title: what the page is for, who uses it, what you can do there, and its steps in the Guide. It opens by itself once, the first time you open the page."
+    },
+    {
+     "id": "Pemindai atau kamera HP rusak: Ops HQ menyalakan <em>Mode manual</em> untuk dark store itu (Pengaturan, Dark store) dengan alasan, sampai akhir hari atau paling lama 3 hari. Selama aktif, layar merah di atas menandainya: ambil barang dengan ketuk per unit sambil mencocokkan foto, barang masuk dan hitung stok dengan mengetik angka tanpa melihat angka seharusnya, dan taruh di rak dengan ketuk bin. Setiap entri manual ditandai; SPV memeriksanya di laporan akhir hari.",
+     "en": "Scanners or phone cameras broken: Ops HQ switches on <em>Manual mode</em> for that dark store (Settings, Dark store) with a reason, until the end of the day or at most 3 days. While it is on a red bar at the top shows it: picking is a tap per unit while matching the photo, inbound and stock counts are typed numbers without seeing the expected one, and putaway is a tap on the bin. Every manual entry is marked; the SPV checks them in the end of day report."
     }
    ]
   },
@@ -927,8 +935,8 @@
       "en": "<em>Rak &amp; bin</em>, <em>Tambah rak</em>: enter the rack as it physically stands."
      },
      "detail": {
-      "id": "<em>Nama rak</em> A, <em>Jumlah level</em> 5, <em>Kolom per level</em> 2 (<em>kolom</em> adalah bagian rak di antara dua tiang). Lalu isi kotak level dan kolom: setiap kotak berisi bin dari satu kolom, dan setiap bin punya ukurannya sendiri, <em>Kecil</em> atau <em>Besar</em>. Ketuk ukuran untuk menggantinya, × untuk menghapus bin, + untuk menambah bin. Atur satu kolom, tekan <em>Salin ke semua kolom</em>, lalu ubah hanya yang berbeda. Rak A: level 1 dan 2 Besar, level 3 dan 4 Kecil, level 5 <em>Kolom 1</em> Kecil, Kecil, Besar dan <em>Kolom 2</em> Kecil. Pratinjau menggambar rak saat Anda mengetik, bin Besar lebar dan berwarna biru. Berdirilah di depan rak asli dan bandingkan. Lalu tekan <em>Simpan rak</em>.",
-      "en": "<em>Nama rak</em> A, <em>Jumlah level</em> 5, <em>Kolom per level</em> 2 (a <em>kolom</em> is the section of the rack between two uprights). Then fill the grid of levels and columns: each cell lists the bins of one column, and each bin has its own size, <em>Kecil</em> or <em>Besar</em>. Tap a size to switch it, × removes a bin, + adds one. Set up one column, press <em>Salin ke semua kolom</em>, then change only the exceptions. Rack A: levels 1 and 2 Besar, levels 3 and 4 Kecil, level 5 <em>Kolom 1</em> Kecil, Kecil, Besar and <em>Kolom 2</em> Kecil. The preview draws the rack as you type, Besar bins wide and blue: stand in front of the real rack and compare. Then <em>Simpan rak</em>."
+      "id": "<em>Nama rak</em> A, <em>Jumlah level</em> 5, <em>Kolom per level</em> 2 (<em>kolom</em> adalah bagian rak di antara dua tiang). Lalu isi kotak level dan kolom: setiap kotak berisi bin dari satu kolom, dan setiap bin punya ukurannya sendiri, <em>Kecil</em> atau <em>Besar</em>. Ketuk bin untuk mengganti ukurannya atau menghapusnya, + untuk menambah bin di sebelah kanan. Ada bin yang ditumpuk? Ketuk bin bawahnya, lalu <em>Tumpuk bin di atas</em> (sampai 3 bin, tiap bin punya ukurannya sendiri). Bin bertumpuk memakai satu nomor dengan huruf: A-2-03B (bawah) dan A-2-03T (atas), tiga tumpuk B, M (tengah), T. Labelnya menulis <em>BAWAH / BOTTOM</em>, <em>TENGAH / MIDDLE</em> atau <em>ATAS / TOP</em>. Atur satu kolom, tekan <em>Salin ke semua kolom</em>, lalu ubah hanya yang berbeda. Rak A: level 1 dan 2 Besar, level 3 dan 4 Kecil, level 5 <em>Kolom 1</em> Kecil, Kecil, Besar dan <em>Kolom 2</em> Kecil. Pratinjau menggambar rak saat Anda mengetik, bin Besar lebar dan berwarna biru. Berdirilah di depan rak asli dan bandingkan. Lalu tekan <em>Simpan rak</em>.",
+      "en": "<em>Nama rak</em> A, <em>Jumlah level</em> 5, <em>Kolom per level</em> 2 (a <em>kolom</em> is the section of the rack between two uprights). Then fill the grid of levels and columns: each cell lists the bins of one column, and each bin has its own size, <em>Kecil</em> or <em>Besar</em>. Tap a bin to change its size or remove it, + adds a bin to the right. A bin stacked on another? Tap the bottom bin, then <em>Tumpuk bin di atas</em> (up to 3 bins, each with its own size). Stacked bins share one number with a letter: A-2-03B (bottom) and A-2-03T (top), three high B, M (middle), T. Their labels say <em>BAWAH / BOTTOM</em>, <em>TENGAH / MIDDLE</em> or <em>ATAS / TOP</em>. Set up one column, press <em>Salin ke semua kolom</em>, then change only the exceptions. Rack A: levels 1 and 2 Besar, levels 3 and 4 Kecil, level 5 <em>Kolom 1</em> Kecil, Kecil, Besar and <em>Kolom 2</em> Kecil. The preview draws the rack as you type, Besar bins wide and blue: stand in front of the real rack and compare. Then <em>Simpan rak</em>."
      },
      "result": {
       "id": "Yang terlihat: <em>30 bin</em>, A-1-01 sampai A-5-06, 17 Kecil dan 13 Besar. Level 1 adalah rak paling bawah.",
@@ -1506,8 +1514,8 @@
       "en": "Scan every unit, one by one. After each scan the WMS tells you at once which temporary bin it goes in."
      },
      "detail": {
-      "id": "Layar menulis besar <em>Masukkan ke MA5-IN-03</em> dan hitungan produk itu (<em>7 dari 24</em>). Satu produk, satu bin sementara. Pada unit pertama sebuah produk, layar menulis <em>Ambil bin kosong ini, pindai labelnya</em>: label bin dipindai sekali per produk. Bin penuh? Tekan <em>Bin penuh</em>, unit berikutnya dapat bin kosong baru. Unit di atas jumlah PO masuk ke bin sendiri dengan kartu merah dan menunggu Ops HQ, tidak pernah ke rak. Barcode tidak dikenal: kalau produknya memang tanpa barcode, tekan <em>Pilih dari daftar</em>, lalu <em>+1</em> untuk setiap unit (<em>−1</em> untuk membatalkan). Kalau tidak ada di daftar, sisihkan dan panggil SPV. Semua bin sementara terisi: SPV menambah bin dengan <em>Tambah bin sementara</em>. Pindai terus sampai karton terakhir. Tidak ada taruh di rak di tengah jalan.",
-      "en": "The screen shows in large letters <em>Put in MA5-IN-03</em> and that product's count (<em>7 of 24</em>). One product, one temporary bin. At the first unit of a product the screen says <em>Take this empty bin, scan its label</em>: the bin label is scanned once per product. Bin full? Tap <em>Bin full</em> and the next unit gets a new empty bin. Units above the PO quantity get a bin of their own on a red card and wait for Ops HQ, never on the rack. An unknown barcode: if the product really has no barcode, tap <em>Pick from the list</em>, then <em>+1</em> for each unit (<em>−1</em> to undo). If it is not on the list, put it aside and call the SPV. Every temporary bin taken: the SPV adds one with <em>Add a temporary bin</em>. Keep scanning to the last carton. There is no putaway in the middle."
+      "id": "Layar menulis besar <em>Masukkan ke MA5-IN-03</em> dan hitungan produk itu (<em>7 dari 24</em>). Satu produk, satu bin sementara. Pada unit pertama sebuah produk, layar menulis <em>Ambil bin kosong ini, pindai labelnya</em>: label bin dipindai sekali per produk. Bin penuh? Tekan <em>Bin penuh</em>, unit berikutnya dapat bin kosong baru. Unit di atas jumlah PO masuk ke bin sendiri dengan kartu merah dan menunggu Ops HQ, tidak pernah ke rak. Barcode tidak dikenal: kalau produknya memang tanpa barcode, tekan <em>Pilih dari daftar</em>, lalu <em>+1</em> untuk setiap unit (<em>−1</em> untuk membatalkan). Kalau tidak ada di daftar, sisihkan dan panggil SPV. Semua bin sementara terisi: SPV menambah bin dengan <em>Tambah bin sementara</em>. Pindai terus sampai karton terakhir. Tidak ada taruh di rak di tengah jalan. Salah pindai? Tekan <em>Batalkan pindai terakhir</em>: unit terakhir Anda dibatalkan dan layar menyebut produknya.",
+      "en": "The screen shows in large letters <em>Put in MA5-IN-03</em> and that product's count (<em>7 of 24</em>). One product, one temporary bin. At the first unit of a product the screen says <em>Take this empty bin, scan its label</em>: the bin label is scanned once per product. Bin full? Tap <em>Bin full</em> and the next unit gets a new empty bin. Units above the PO quantity get a bin of their own on a red card and wait for Ops HQ, never on the rack. An unknown barcode: if the product really has no barcode, tap <em>Pick from the list</em>, then <em>+1</em> for each unit (<em>−1</em> to undo). If it is not on the list, put it aside and call the SPV. Every temporary bin taken: the SPV adds one with <em>Add a temporary bin</em>. Keep scanning to the last carton. There is no putaway in the middle. Scanned by mistake? Press <em>Undo last scan</em>: your last unit is taken back and the screen names the product."
      },
      "result": {
       "id": "Yang terlihat: di bawah layar pindai, selisih per produk selalu tampil: <em>Pas</em>, <em>Kurang 3</em>, <em>Lebih 2</em>, <em>Rusak 1</em> atau <em>Tidak ada di PO</em>.",
@@ -1602,8 +1610,8 @@
       "en": "Write the received quantities on the Surat Jalan / Faktur, sign, then take the three photos."
      },
      "detail": {
-      "id": "Layar <em>Dokumen &amp; foto</em> punya dua centang: <em>Tulis jumlah yang diterima di Surat Jalan / Faktur</em> (layar menyebut selisih yang harus ditulis; unit yang dikembalikan ke driver ditulis ditolak, rusak) dan <em>Tanda tangani Surat Jalan / Faktur</em> (sebaiknya SPV, tetapi siapa pun yang menerima boleh; beri driver 1 salinan Surat Jalan). Lalu tiga foto bukti terima (POD): Surat Jalan / Faktur yang sudah ditandatangani, swafoto penerima, dan Surat Jalan / Faktur bersama driver. Tekan <em>Ambil foto</em> dan foto sekali: fotonya langsung tampil, tertulis <em>Mengunggah...</em>, lalu <em>Tersimpan</em>. Salah foto? Tekan <em>Ulangi</em>.",
-      "en": "The <em>Paperwork &amp; photos</em> screen has two ticks: <em>Write the received quantities on the Surat Jalan / Faktur</em> (the screen lists the differences to write; a unit returned to the driver is written as refused, damaged) and <em>Sign the Surat Jalan / Faktur</em> (ideally the SPV, but anyone receiving may sign; give the driver 1 copy of the Surat Jalan). Then the three proof of delivery (POD) photos: the signed Surat Jalan / Faktur, a selfie of the receiver, and the Surat Jalan / Faktur with the driver. Tap <em>Take photo</em> and take it once: the photo shows at once with <em>Uploading...</em>, then <em>Saved</em>. Wrong photo? Tap <em>Retake</em>."
+      "id": "Layar <em>Dokumen &amp; foto</em> punya dua centang: <em>Tulis jumlah yang diterima di Surat Jalan / Faktur</em> (layar menyebut selisih yang harus ditulis; unit yang dikembalikan ke driver ditulis ditolak, rusak) dan <em>Tanda tangani Surat Jalan / Faktur</em> (sebaiknya SPV, tetapi siapa pun yang menerima boleh; beri driver 1 salinan Surat Jalan). Lalu tiga foto bukti terima (POD): Surat Jalan / Faktur yang sudah ditandatangani, swafoto penerima, dan Surat Jalan / Faktur bersama driver. Tekan <em>Ambil foto</em> dan foto sekali: fotonya langsung tampil, tertulis <em>Mengunggah...</em>, lalu <em>Tersimpan</em>. Salah foto? Tekan <em>Ulangi</em>. Tombol <em>Selesai</em> menyebut apa yang belum, misalnya <em>Belum: foto 2 dari 3</em>. Kalau kamera tidak bisa dipakai, SPV bisa menekan <em>Selesai tanpa foto (SPV)</em> dan menulis alasannya; alasan itu tercatat di penerimaan.",
+      "en": "The <em>Paperwork &amp; photos</em> screen has two ticks: <em>Write the received quantities on the Surat Jalan / Faktur</em> (the screen lists the differences to write; a unit returned to the driver is written as refused, damaged) and <em>Sign the Surat Jalan / Faktur</em> (ideally the SPV, but anyone receiving may sign; give the driver 1 copy of the Surat Jalan). Then the three proof of delivery (POD) photos: the signed Surat Jalan / Faktur, a selfie of the receiver, and the Surat Jalan / Faktur with the driver. Tap <em>Take photo</em> and take it once: the photo shows at once with <em>Uploading...</em>, then <em>Saved</em>. Wrong photo? Tap <em>Retake</em>. The Finish button says what is still missing, for example <em>Not yet: photo 2 of 3</em>. If the camera cannot be used, the SPV can press <em>Finish without photo (SPV)</em> and write why; the reason is kept on the receipt."
      },
      "result": {
       "id": "Yang terlihat: <em>3 dari 3</em>. <em>Selesai &amp; cetak slip</em> tetap abu-abu sampai dua centang dan semua foto selesai.",
@@ -1636,8 +1644,8 @@
       "en": "<em>Finish and print slips</em>: the putaway slips print, one per temporary bin."
      },
      "detail": {
-      "id": "Penerimaan ditutup dan selisih dikirim ke Ops HQ. Di perangkat yang printernya sudah diatur (<em>Pengaturan</em>, <em>Printer</em>), slip langsung tercetak di printer thermal 80 mm di meja kemas, printer yang sama dengan slip kemas Hiryu, atau di kertas A4 kalau perangkat itu tidak punya printer thermal. Di ponsel tanpa printer, tekan <em>Cetak slip</em>, atau cetak dari laptop di meja kemas lalu tekan <em>Sudah dicetak di perangkat lain</em>. Setiap slip: produk, jumlah unit, dari bin sementara, ke bin rak, warna sekat hari ini (contoh Biru, minggu B), dan tanggal untuk sekat putih. Nama produk yang panjang pindah ke baris berikutnya, tidak dipotong. Taruh setiap slip di bin sementaranya. Bin berisi unit lebih tidak dapat slip: biarkan di tempatnya. Setelah slip keluar, tekan <em>Sudah dicetak, mulai taruh</em>.",
-      "en": "The receipt closes and the differences go to Ops HQ. On a device with its printer set up (<em>Settings</em>, <em>Printer</em>) the slips print at once on the 80 mm thermal printer at the packing counter, the same printer as Hiryu's packing slip, or on A4 paper when that device has no thermal printer. On a phone without a printer, tap <em>Print slips</em>, or print from the packing counter laptop and tap <em>Already printed on another device</em>. Each slip: product, units, from temporary bin, to rack bin, today's divider colour (e.g. Biru, minggu B) and the date for the white divider. A long product name wraps onto the next line instead of being cut. Put each slip on its temporary bin. A bin with extra units gets no slip: leave it where it is. Once the slips are out, tap <em>Printed, start putting away</em>."
+      "id": "Penerimaan ditutup dan selisih dikirim ke Ops HQ. Di perangkat yang printernya sudah diatur (<em>Pengaturan</em>, <em>Printer</em>), slip langsung tercetak di printer thermal 80 mm di meja kemas, printer yang sama dengan slip kemas Hiryu, atau di kertas A4 kalau perangkat itu tidak punya printer thermal. Di ponsel tanpa printer, tekan <em>Cetak slip</em>, atau cetak dari laptop di meja kemas lalu tekan <em>Sudah dicetak di perangkat lain</em>. Setiap slip: produk, jumlah unit, dari bin sementara, ke bin rak, warna sekat hari ini (contoh Biru, minggu B), dan tanggal untuk sekat putih. Nama produk yang panjang pindah ke baris berikutnya, tidak dipotong. Taruh setiap slip di bin sementaranya. Bin berisi unit lebih tidak dapat slip: biarkan di tempatnya. Setelah slip keluar, tekan <em>Sudah dicetak, mulai taruh</em>. Di HP tanpa printer: cetak dari laptop meja kemas, lalu tekan <em>Sudah dicetak di laptop meja kemas</em>.",
+      "en": "The receipt closes and the differences go to Ops HQ. On a device with its printer set up (<em>Settings</em>, <em>Printer</em>) the slips print at once on the 80 mm thermal printer at the packing counter, the same printer as Hiryu's packing slip, or on A4 paper when that device has no thermal printer. On a phone without a printer, tap <em>Print slips</em>, or print from the packing counter laptop and tap <em>Already printed on another device</em>. Each slip: product, units, from temporary bin, to rack bin, today's divider colour (e.g. Biru, minggu B) and the date for the white divider. A long product name wraps onto the next line instead of being cut. Put each slip on its temporary bin. A bin with extra units gets no slip: leave it where it is. Once the slips are out, tap <em>Printed, start putting away</em>. On a phone without a printer: print from the pack bench laptop, then press <em>Printed on the pack bench laptop</em>."
      },
      "result": {
       "id": "Yang terlihat: satu tugas <em>Taruh di rak</em> per bin sementara, di Barang masuk dan di <em>Perlu tindakan</em> staf.",
@@ -1770,8 +1778,8 @@
    ],
    "rules": [
     {
-     "id": "Pindai setiap unit, satu per satu, dan hitung per pcs. Karton hanya dicocokkan dengan Surat Jalan di pintu. Jika jumlahnya berbeda, SPV memutuskan saat itu juga. Pilih dari daftar hanya untuk produk tanpa barcode. SPV melihat setiap pilihan manual.",
-     "en": "Scan every unit, one by one, and count in pieces (pcs). Cartons are only checked against the Surat Jalan at the door; if the count differs, the SPV decides on the spot. Pick from the list only for a product with no barcode; the SPV sees every manual pick."
+     "id": "Pindai setiap unit, satu per satu, dan hitung per unit. Karton hanya dicocokkan dengan Surat Jalan di pintu. Jika jumlahnya berbeda, SPV memutuskan saat itu juga. Pilih dari daftar hanya untuk produk tanpa barcode. SPV melihat setiap pilihan manual.",
+     "en": "Scan every unit, one by one, and count in units. Cartons are only checked against the Surat Jalan at the door; if the count differs, the SPV decides on the spot. Pick from the list only for a product with no barcode; the SPV sees every manual pick."
     },
     {
      "id": "Jangan pernah mengetik tanggal saat barang masuk. Umur stok dihitung dari tanggal barang masuk: sekat berwarna hari itu dan tanggal tanda terima. Batch yang lebih tua dari jumlah hari tertentu ditandai <em>Stok lama</em>.",
@@ -1888,12 +1896,12 @@
       "en": "On the phone, open <em>Pesanan</em> and switch on <em>Siap ambil</em>."
      },
      "detail": {
-      "id": "Biarkan aplikasi tetap terbuka. Untuk istirahat, tekan <em>Istirahat</em>: tidak ada pesanan yang masuk ke Anda sampai Anda menyalakannya lagi.",
-      "en": "Keep the app open. For a break press <em>Istirahat</em>: no order comes to you until you switch back."
+      "id": "Biarkan layar tetap menyala: pesanan hanya berbunyi saat layar menyala, dan WMS menjaga layar tetap menyala selama <em>Siap ambil</em> aktif. Untuk istirahat, tekan <em>Istirahat</em>: tidak ada pesanan yang masuk ke Anda sampai Anda menyalakannya lagi.",
+      "en": "Keep the screen on: an order only rings while the screen is on, and the WMS keeps it on while <em>Siap ambil</em> is on. For a break press <em>Istirahat</em>: no order comes to you until you switch back."
      },
      "result": {
-      "id": "Yang terlihat: <em>Menunggu pesanan. Ponsel akan berbunyi.</em>",
-      "en": "You see: <em>Menunggu pesanan. Ponsel akan berbunyi.</em>"
+      "id": "Yang terlihat: <em>Menunggu pesanan.</em> dan pesan untuk membiarkan layar menyala.",
+      "en": "You see: <em>Waiting for an order.</em> and a note to keep the screen on."
      }
     },
     {
@@ -1917,8 +1925,8 @@
       "en": "The order comes to you. Take any empty basket and scan its label."
      },
      "detail": {
-      "id": "WMS memberi setiap pesanan ke pengambil yang paling lama siap, satu pesanan per pengambil. Ponsel berbunyi dan menampilkan GM-358, <em>4 produk · 12 unit</em>. Pesanan dimulai saat Anda memindai keranjang MA5-OUT-02. Jika tidak dimulai dalam 2 menit, pesanan kembali ke antrean.",
-      "en": "The WMS gives each order to the picker who has been ready longest, one order per picker. The phone rings and shows GM-358, <em>4 produk · 12 unit</em>. Scanning basket MA5-OUT-02 starts the order. Not started within 2 minutes: the order goes back to the queue."
+      "id": "WMS memberi setiap pesanan ke pengambil yang paling lama siap, satu pesanan per pengambil. Ponsel berbunyi dan menampilkan GM-358, <em>4 produk · 12 unit</em>. Pesanan dimulai saat Anda memindai keranjang MA5-OUT-02. Jika tidak dimulai dalam 2 menit, pesanan kembali ke antrean. Hitungan mundur <em>Mulai dalam 1:32</em> menunjukkan sisa waktu. Di atas layar juga ada <em>Siap paling lambat</em>: jam target 10 menit dari waktu pesan Grab.",
+      "en": "The WMS gives each order to the picker who has been ready longest, one order per picker. The phone rings and shows GM-358, <em>4 produk · 12 unit</em>. Scanning basket MA5-OUT-02 starts the order. Not started within 2 minutes: the order goes back to the queue. The countdown <em>Start within 1:32</em> shows the time left. The top of the screen also shows <em>Ready by</em>: the 10-minute target from Grab's order time."
      },
      "result": {
       "id": "Yang terlihat: bin pertama, dan stopwatch mulai berjalan.",
@@ -1946,8 +1954,8 @@
       "en": "Go to the bin shown, take the units from the front and scan each one."
      },
      "detail": {
-      "id": "Bin (A-3-01) ditandai di gambar rak kecil. Sekat paling depan berisi stok paling lama. Jika produknya salah, layar berhenti dan menampilkan kedua produk berdampingan.",
-      "en": "The bin (A-3-01) is marked on a small rack picture. The front divider holds the oldest stock. A wrong product stops you and shows both products side by side."
+      "id": "Bin (A-3-01) ditandai di gambar rak kecil. Sekat paling depan berisi stok paling lama. Jika produknya salah, layar berhenti dan menampilkan kedua produk berdampingan. Barcode yang tidak dikenal (misalnya barcode kardus) menampilkan <em>Barcode tidak dikenal</em>: pindai barcode di kemasan satuan.",
+      "en": "The bin (A-3-01) is marked on a small rack picture. The front divider holds the oldest stock. A wrong product stops you and shows both products side by side. An unknown barcode (for example the outer box) shows <em>Barcode not recognised</em>: scan the barcode on the single item."
      },
      "result": {
       "id": "Yang terlihat: satu titik terisi untuk setiap unit, lalu produk berikutnya.",
@@ -1955,7 +1963,35 @@
      }
     },
     {
-     "n": 5,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengambil",
+       "en": "Staff · picker"
+      }
+     ],
+     "systems": [
+      "WMS",
+      "Hiryu"
+     ],
+     "tags": [],
+     "screens": [],
+     "action": {
+      "id": "Unitnya ada tapi rusak atau bocor: tekan <em>Barang rusak</em>.",
+      "en": "The unit is there but damaged or leaking: press <em>Item damaged</em>."
+     },
+     "detail": {
+      "id": "Pindai unit yang rusak, pilih <em>Rusak</em> atau <em>Bocor</em>, ambil foto kalau sempat, taruh di baki karantina dan pindai label bakinya. WMS lalu menunjuk unit baik: dari bin yang sama, dari bin lain, atau mengikuti instruksi pelanggan kalau tidak ada lagi.",
+      "en": "Scan the damaged unit, choose <em>Damaged</em> or <em>Leaking</em>, take a photo if there is time, put it in the quarantine tray and scan the tray label. The WMS then points you to a good unit: in the same bin, in another bin, or the customer's instruction if none is left."
+     },
+     "result": {
+      "id": "Yang terlihat: unit rusak tercatat di karantina dan Anda lanjut mengambil unit baik.",
+      "en": "You see: the damaged unit recorded in quarantine, and you carry on with a good unit."
+     },
+     "n": 5
+    },
+    {
+     "n": 6,
      "phase": null,
      "roles": [
       {
@@ -1977,8 +2013,8 @@
       "en": "Not there: press <em>Barang tidak ada</em>."
      },
      "detail": {
-      "id": "Isi berapa yang Anda temukan, lalu cek tempat lain yang ditunjukkan WMS. Di contoh ini, A-2-03 menjadi 0 pada 08:55 (GM-347), tetapi WMS masih mencatat 3 di C-1-02, jadi GM-358 bisa memesannya. Pengambil menemukan 0 di kedua tempat, jadi kedua bin menjadi 0 dan masuk hitung stok berikutnya. Jika masih tidak ada, WMS menampilkan instruksi pelanggan dari Grab: <em>Ganti dengan</em> produk tertentu, <em>Hapus dari pesanan</em>, <em>Batalkan pesanan</em> atau <em>Hubungi pelanggan</em> (dianggap batal). Untuk <em>Ganti dengan: Labore GentleBiome Mild Cleanser 225 ml (1 unit)</em>, pergi ke bin B-1-04, tekan <em>Ambil pengganti</em> lalu pindai. Saat Anda mengambil pengganti atau satu baris dihapus, WMS mengirimnya ke Hiryu (pesan 5) dan Hiryu mengubah pesanan di Grab secara otomatis. Tidak ada yang perlu dilakukan di Hiryu atau Grab.",
-      "en": "Say how many you found, then check the other places the WMS lists. Here A-2-03 went to 0 at 08:55 (GM-347) but the WMS still had 3 at C-1-02, so GM-358 could order it; the picker finds 0 at both, and both bins go to 0 and on the next count. Still missing: the WMS shows the customer's instruction from Grab: <em>Ganti dengan</em> a named product, <em>Hapus dari pesanan</em>, <em>Batalkan pesanan</em> or <em>Hubungi pelanggan</em> (handled as cancel). For <em>Ganti dengan: Labore GentleBiome Mild Cleanser 225 ml (1 unit)</em>, go to bin B-1-04, press <em>Ambil pengganti</em> and scan. When you take the replacement or a line is removed, the WMS sends it to Hiryu (message 5) and Hiryu edits the order on Grab by itself. Nobody does anything in Hiryu or Grab."
+      "id": "Pindai unit yang masih ada di bin: setiap pindaian masuk keranjang (<em>Ketemu 1 dari 3</em>). Lalu cek setiap tempat lain yang ditunjukkan WMS dan tekan <em>Ketemu, ambil di sini</em> atau <em>Kosong, sudah dicek</em>. <em>Catat: tidak ada</em> baru bisa ditekan setelah semua tempat dicek. Bin itu masuk hitung stok hari ini; SPV menetapkan penghitungnya. Lalu WMS menampilkan instruksi pelanggan dari Grab: <em>Ganti dengan</em> produk tertentu, <em>Hapus dari pesanan</em>, <em>Batalkan pesanan</em> atau <em>Hubungi pelanggan</em> (dianggap batal).",
+      "en": "Scan the units still in the bin: each scan goes into the basket (<em>Found 1 of 3</em>). Then check every other place the WMS shows and press <em>Found, pick here</em> or <em>Empty, checked</em>. <em>Record: missing</em> only works once every place is checked. The bin goes on today's stock count; the SPV assigns its counter. Then the WMS shows the customer's instruction from Grab: <em>Replace with</em> a set product, <em>Remove from the order</em>, <em>Cancel the order</em> or <em>Contact the customer</em> (treated as cancel)."
      },
      "result": {
       "id": "Yang terlihat: pengganti ada di daftar ambil dan <em>Perubahan dikirim otomatis ke Hiryu dan Grab</em>. Kekurangannya dikirim ke SPV di <em>Perlu tindakan</em>.",
@@ -1986,7 +2022,7 @@
      }
     },
     {
-     "n": 6,
+     "n": 7,
      "phase": null,
      "roles": [
       {
@@ -2016,7 +2052,34 @@
      }
     },
     {
-     "n": 7,
+     "phase": null,
+     "roles": [
+      {
+       "id": "Staf · pengambil",
+       "en": "Staff · picker"
+      }
+     ],
+     "systems": [
+      "WMS"
+     ],
+     "tags": [],
+     "screens": [],
+     "action": {
+      "id": "Harus berhenti di tengah pesanan: tekan <em>Berhenti ambil pesanan ini</em>.",
+      "en": "Must stop in the middle of an order: press <em>Stop picking this order</em>."
+     },
+     "detail": {
+      "id": "Pilih alasannya (dipanggil SPV, HP atau baterai, sakit atau darurat, atau lainnya). Kalau sudah ada unit di keranjang, taruh keranjang di meja kemas seperti yang disebut layar. Pesanan kembali ke antrean dan picker berikutnya melanjutkan dari barang yang belum diambil, dengan keranjang yang sama. Anda masuk <em>Istirahat</em>. SPV melihat alasannya di <em>Perlu tindakan</em> dan di papan antrean.",
+      "en": "Choose the reason (called by the SPV, phone or battery, sick or emergency, or other). If units are already in the basket, put the basket on the pack bench as the screen says. The order goes back to the queue and the next picker carries on from what is not picked yet, with the same basket. You go on <em>Break</em>. The SPV sees the reason in <em>To do</em> and on the queue board."
+     },
+     "result": {
+      "id": "Yang terlihat: <em>GM-xxx kembali ke antrean.</em>",
+      "en": "You see: <em>GM-xxx went back to the queue.</em>"
+     },
+     "n": 8
+    },
+    {
+     "n": 9,
      "phase": null,
      "roles": [
       {
@@ -2032,8 +2095,8 @@
       "6f"
      ],
      "action": {
-      "id": "Setelah unit terakhir, taruh keranjang MA5-OUT-02 di meja kemas dan tekan <em>Serahkan ke meja packing</em>.",
-      "en": "After the last unit, put basket MA5-OUT-02 on the pack bench and press <em>Serahkan ke meja packing</em>."
+      "id": "Setelah unit terakhir, taruh keranjang MA5-OUT-02 di meja kemas dan tekan <em>Serahkan ke meja kemas</em>.",
+      "en": "After the last unit, put basket MA5-OUT-02 on the pack bench and press <em>Serahkan ke meja kemas</em>."
      },
      "detail": {
       "id": "Stopwatch berhenti (di sini 04:20, 10 unit dengan satu pengganti). Tidak ada lagi yang perlu ditekan: pesanan berikutnya datang sendiri.",
@@ -2045,7 +2108,7 @@
      }
     },
     {
-     "n": 8,
+     "n": 10,
      "phase": null,
      "roles": [
       {
@@ -2074,7 +2137,7 @@
      }
     },
     {
-     "n": 9,
+     "n": 11,
      "phase": null,
      "roles": [
       {
@@ -2095,8 +2158,8 @@
       "en": "Pack in the pack the WMS names, then type the GM number and press <em>Selesai dikemas</em>."
      },
      "detail": {
-      "id": "WMS memilih kemasan dari ukuran dan berat produk: di sini <em>Kantong kertas</em>, karena satu botol besar (yang 225 ml) masih muat di kantong. <em>Karton</em> dipakai jika ada lebih dari satu botol besar, isi lebih dari 3,9 L atau 3 kg, atau ada barang lebih panjang dari 27 cm. Pesanan yang sangat besar dapat dua kemasan. Centang setiap barang. Masukkan slip Hiryu dengan nomor GM terlihat. Jika tidak muat, tekan <em>Ganti kemasan</em> dan isi alasannya. Slip tidak punya barcode, jadi ketik nomornya di <em>Ketik nomor GM</em> (358). Pesanan di WMS sama dengan pesanan di Hiryu (ID pesanan Grab dan barisnya sama, dikirim saat <em>Terima</em>). Setiap unit sudah dicek dengan pindai saat diambil, dan nomor GM yang diketik dicocokkan dengan keranjang. Jadi pengemas cukup mencocokkan nomor GM di slip dengan layar.",
-      "en": "The WMS names the pack from the products' size and weight: here a <em>Kantong kertas</em>, because one large bottle (the 225 ml) still fits a bag. A <em>Karton</em> is used for more than one large bottle, more than 3.9 L or 3 kg, or an item longer than 27 cm; a very big one gets two packs. Tick each item. Put the Hiryu slip in with the GM number showing. If it does not fit, press <em>Ganti kemasan</em> and give a reason. The slip has no barcode, so type the number in <em>Ketik nomor GM</em> (358). The WMS order is Hiryu's order (same Grab order ID and lines, sent at <em>Accept</em>), every unit was checked by scan at picking, and the typed GM number is checked against the basket: the packer only compares the slip's GM number with the screen."
+      "id": "WMS memilih kemasan dari ukuran dan berat produk: di sini <em>Kantong kertas</em>, karena satu botol besar (yang 225 ml) masih muat di kantong. <em>Karton</em> dipakai jika ada lebih dari satu botol besar, isi lebih dari 3,9 L atau 3 kg, atau ada barang lebih panjang dari 27 cm. Pesanan yang sangat besar dapat dua kemasan. Centang setiap barang. Masukkan slip Hiryu dengan nomor GM terlihat. Jika tidak muat, tekan <em>Ganti kemasan</em> dan isi alasannya. Slip tidak punya barcode, jadi ketik nomornya di <em>Ketik nomor GM</em> (358). Pesanan di WMS sama dengan pesanan di Hiryu (ID pesanan Grab dan barisnya sama, dikirim saat <em>Terima</em>). Setiap unit sudah dicek dengan pindai saat diambil, dan nomor GM yang diketik dicocokkan dengan keranjang. Jadi pengemas cukup mencocokkan nomor GM di slip dengan layar. Pesanan tanpa perubahan punya satu centang <em>Semua cocok</em> untuk semua barang.",
+      "en": "The WMS names the pack from the products' size and weight: here a <em>Kantong kertas</em>, because one large bottle (the 225 ml) still fits a bag. A <em>Karton</em> is used for more than one large bottle, more than 3.9 L or 3 kg, or an item longer than 27 cm; a very big one gets two packs. Tick each item. Put the Hiryu slip in with the GM number showing. If it does not fit, press <em>Ganti kemasan</em> and give a reason. The slip has no barcode, so type the number in <em>Ketik nomor GM</em> (358). The WMS order is Hiryu's order (same Grab order ID and lines, sent at <em>Accept</em>), every unit was checked by scan at picking, and the typed GM number is checked against the basket: the packer only compares the slip's GM number with the screen. An order with no changes has one <em>All match</em> tick for every item."
      },
      "result": {
       "id": "Yang terlihat: Hiryu menandai pesanan siap di Grab, dan satu kantong kertas berkurang dari stok bahan kemas.",
@@ -2104,7 +2167,7 @@
      }
     },
     {
-     "n": 10,
+     "n": 12,
      "phase": null,
      "roles": [
       {
@@ -2134,7 +2197,7 @@
      }
     },
     {
-     "n": 11,
+     "n": 13,
      "phase": null,
      "roles": [
       {
@@ -2163,7 +2226,7 @@
      }
     },
     {
-     "n": 12,
+     "n": 14,
      "phase": null,
      "roles": [
       {
@@ -2192,7 +2255,7 @@
      }
     },
     {
-     "n": 13,
+     "n": 15,
      "phase": null,
      "roles": [
       {
@@ -2564,8 +2627,8 @@
       "en": "The WMS makes the count plan each morning; the SPV assigns a counter to every bin: <em>Stock count</em> → <em>Today's plan</em> → <em>Assign counters</em>."
      },
      "detail": {
-      "id": "Setiap hari: bin yang jatuh jadwal siklus wajib (<em>Siklus wajib</em>) dan setiap bin yang kemarin dilaporkan ada barang yang tidak ada (<em>Barang tidak ada kemarin</em>). Sebulan sekali: hitung penuh semua bin (<em>Hitung penuh bulanan</em>). SPV bisa menambah bin dengan <em>Tambah bin</em>; bin itu ditandai <em>Ditambah SPV</em>. Sampai setiap bin punya petugas, <em>Perlu tindakan</em> SPV menampilkan <em>Tetapkan petugas hitung</em>, paling lambat pukul 10:00. Petugas bisa diganti per bin dengan <em>Atur</em>.",
-      "en": "Daily: bins due under a mandatory cycle (<em>Siklus wajib</em>) and every bin where a missing item was declared yesterday (<em>Barang tidak ada kemarin</em>). Once a month: a full count of every bin (<em>Hitung penuh bulanan</em>). The SPV can add a bin with <em>Tambah bin</em>; it shows <em>Ditambah SPV</em>. Until every bin has a counter, the SPV's <em>To do</em> shows <em>Assign counters</em>, due by 10:00. A single bin's counter can be changed with <em>Set</em>."
+      "id": "Setiap hari: bin yang jatuh jadwal siklus wajib (<em>Siklus wajib</em>) dan setiap bin yang kemarin dilaporkan ada barang yang tidak ada (<em>Barang tidak ada saat ambil</em>). Sebulan sekali: hitung penuh semua bin (<em>Hitung penuh bulanan</em>). SPV bisa menambah bin dengan <em>Tambah bin</em>; bin itu ditandai <em>Ditambah SPV</em>. Sampai setiap bin punya petugas, <em>Perlu tindakan</em> SPV menampilkan <em>Tetapkan petugas hitung</em>, paling lambat pukul 10:00. Petugas bisa diganti per bin dengan <em>Atur</em>. Barang tidak ada saat ambil masuk rencana hari itu juga, bukan besok.",
+      "en": "Daily: bins due under a mandatory cycle (<em>Siklus wajib</em>) and every bin where a missing item was declared yesterday (<em>Barang tidak ada saat ambil</em>). Once a month: a full count of every bin (<em>Hitung penuh bulanan</em>). The SPV can add a bin with <em>Tambah bin</em>; it shows <em>Ditambah SPV</em>. Until every bin has a counter, the SPV's <em>To do</em> shows <em>Assign counters</em>, due by 10:00. A single bin's counter can be changed with <em>Set</em>. A missing item at picking goes on that same day's plan, not tomorrow's."
      },
      "result": {
       "id": "Yang terlihat: bin hari ini dengan alasan, petugas dan statusnya. Tidak ada bin yang tertulis <em>Belum ada petugas</em>.",
@@ -2725,12 +2788,12 @@
      "en": "The SPV assigns every counter. Staff count only the bins given to them."
     },
     {
-     "id": "Cara utama adalah hitung dengan memindai. Hitung blind (mengetik angka) boleh, tetapi selalu perlu <em>Setujui SPV</em>, walaupun tidak ada selisih. Orang yang menghitung tidak pernah melihat angka yang seharusnya.",
-     "en": "Count by scan by default. Blind count (typing the number) is allowed, but always needs <em>Setujui SPV</em>, even with no difference. Nobody who counts sees the expected number."
+     "id": "Cara utama adalah hitung dengan memindai. Hitung tanpa pindai (mengetik angka) boleh, tetapi selalu perlu <em>Setujui SPV</em>, walaupun tidak ada selisih. Orang yang menghitung tidak pernah melihat angka yang seharusnya.",
+     "en": "Count by scan by default. Counting without scanning (typing the number) is allowed, but always needs <em>Setujui SPV</em>, even with no difference. Nobody who counts sees the expected number."
     },
     {
-     "id": "Barang tidak boleh diambil dari bin yang sedang dihitung.",
-     "en": "A bin being counted is not picked from."
+     "id": "Bin yang sedang dihitung tidak bisa diambil. Kalau penghitungnya pergi tanpa selesai, SPV menekan <em>Lepas bin</em> di <em>Rencana hari ini</em>.",
+     "en": "A bin being counted cannot be picked from. If the counter leaves without finishing, the SPV presses <em>Release bin</em> on <em>Today's plan</em>."
     },
     {
      "id": "Hitung ulang selalu dilakukan oleh orang yang berbeda.",
@@ -3429,7 +3492,7 @@
       "en": "See Guide section 6 for every step."
      },
      "result": {
-      "id": "Yang terlihat: keranjang ada di meja packing.",
+      "id": "Yang terlihat: keranjang ada di meja kemas.",
       "en": "You see: the basket on the pack bench."
      }
     },

@@ -27,7 +27,9 @@ NJW.shell.init({
     {id: 'serah', label: ['Serah ke driver', 'Hand to driver']},
     {id: 'papan', label: ['Papan antrean', 'Queue board']},
     {id: 'kembalikan', label: ['Kembalikan ke rak', 'Put back to rack']}
-  ]
+  ],
+  // No ?tab=: SPV and up land on the queue board, everyone else on Ambil.
+  defaultTab: (role, atLeast) => (atLeast('supervisor') ? 'papan' : 'ambil')
 });
 </script>
 </body>

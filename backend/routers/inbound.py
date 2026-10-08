@@ -32,6 +32,15 @@ reordered 7 Oct 2026).
 Receipts from before 7 Oct may have bins already 'batched' while still open (the
 old *Selesai batch ini*): they stay putaway tasks and can be put away any time.
 
+Mode manual (V32, routers/manual_mode.py), while the dark store has no working
+scanner: step 2 is a typed, blind count per product (/manual-count: good and
+damaged units booked in one go, units above the PO held in the same temporary
+bin so the screen never gives the expected number away; /manual-count/undo
+takes the last entry back), the temporary bin is confirmed by a tap
+(/bin-confirm) and step 6 by a tap on the rack bin (putaway manual=true). These
+are refused when Mode manual is off; the receipt is marked
+(inbound_receipts.manual_mode) and every tap is in the audit log as manual.
+
 Units in a temporary bin are not stock: they are counted in inbound_bin_loads
 and inbound_units, not in the ledger. Nobody types a date; stock age counts from
 the inbound date.
@@ -120,6 +129,8 @@ class LineOut(BaseModel):
     sku_name: str
     brand_sku_code: str | None = None
     has_barcode: bool = True
+    photo_key: str | None = None
+    unit_size: str | None = None
     qty_expected: int | None = None
     qty_received: int = 0
     qty_damaged: int = 0
@@ -213,6 +224,22 @@ class ReceiptOut(BaseModel):
     slip_pending: int = Field(default=0, description="Temporary bins waiting for their slip")
     tasks_open: int = Field(default=0, description="Putaway tasks (temporary bins) left")
     units_to_put: int = 0
+    paperwork: dict = Field(default_factory=dict,
+                            description="The two ticks of step 4, kept on the server: "
+                                        "{wrote|signed: {done, by, by_name, at}}")
+    photo_waiver: dict | None = Field(default=None,
+                                      description="Finished without a proof photo by an SPV: "
+                                                  "{by, by_name, at, reason, missing}")
+    manual_mode: bool = Field(default=False, description="Counted by typed numbers (Mode manual, V32)")
+    count_locked: bool = Field(default=False,
+                               description="Mode manual: the count was locked when step 3 opened; "
+                                           "no more units until an SPV reopens it")
+    count_lock: dict | None = Field(default=None,
+                                    description="The last lock or reopen: {action, by, by_name, at, "
+                                                "reason}")
+    blind: bool = Field(default=False,
+                        description="Mode manual, count not locked yet, role below SPV: every "
+                                    "expected number is left out (qty_expected, state, holds)")
 
 
 class UnitIn(BaseModel):
@@ -249,9 +276,38 @@ class BinLabelIn(BaseModel):
     code: str
 
 
+class ManualCountIn(BaseModel):
+    """Mode manual: one product counted by hand, typed blind (no expected number on screen)."""
+    sku_id: int
+    good: int = Field(default=0, ge=0, le=9999, description="Good units counted")
+    damaged: int = Field(default=0, ge=0, le=9999, description="Damaged units counted")
+    damage_to: str | None = Field(default=None, description="quarantine | driver (damaged > 0)")
+    idempotency_key: str | None = None
+
+
+class ManualUndoIn(BaseModel):
+    idempotency_key: str | None = None
+
+
+class ManualCountResult(BaseModel):
+    accepted: bool
+    outcome: str = Field(description="counted | undone | no_free_bin | needs_damage_place "
+                                     "| wrong_brand | carton_check")
+    message: str
+    sku: dict | None = None
+    loads: list[LoadOut] = []
+    line: LineOut | None = None
+    difference_id: int | None = None
+    photo_needed: bool = False
+    free_bins: int = 0
+    total_received: int = 0
+    entry: str | None = Field(default=None, description="The typed entry, for its undo")
+
+
 class PutawayIn(BaseModel):
-    location_code: str = Field(description="The rack bin label scanned")
+    location_code: str = Field(description="The rack bin label scanned (or, manual, the bin tapped)")
     qty: int | None = Field(default=None, ge=1, description="Default: everything left to put")
+    manual: bool = Field(default=False, description="Mode manual: the bin confirmed by a tap")
     idempotency_key: str | None = None
 
 
@@ -291,6 +347,20 @@ class PutawayResult(BaseModel):
 class FinishIn(BaseModel):
     sj_signed_by: str | None = Field(default=None, description="Email of who signed the SJ; "
                                                                "default the caller")
+    no_photo_reason: str | None = Field(default=None, max_length=500,
+                                        description="SPV and up: finish without the missing "
+                                                    "photos (camera blocked, phone full). "
+                                                    "At least 10 characters.")
+
+
+class PaperworkIn(BaseModel):
+    item: str = Field(pattern="^(wrote|signed)$", description="wrote | signed")
+    done: bool = True
+
+
+class CountReopenIn(BaseModel):
+    reason: str | None = Field(default=None, max_length=500,
+                               description="Why the count is opened again (at least 10 characters)")
 
 
 class LinkIn(BaseModel):
@@ -457,7 +527,7 @@ def _line_state(expected, received: int, is_open: bool, no_po: bool) -> str:
 
 async def _lines(r: dict) -> list[dict]:
     rows = await db.fetch_all(
-        "SELECT rl.*, s.name_display, s.brand_sku_code, "
+        "SELECT rl.*, s.name_display, s.brand_sku_code, s.photo_key, s.unit_size, "
         "  (SELECT COUNT(*) FROM barcodes b WHERE b.sku_id = rl.sku_id "
         "    AND b.source <> 'test' AND b.barcode NOT LIKE '299%%') AS barcodes "
         "FROM receipt_lines rl JOIN skus s ON s.id = rl.sku_id "
@@ -480,6 +550,7 @@ async def _lines(r: dict) -> list[dict]:
         out.append({
             "sku_id": x["sku_id"], "sku_name": x["name_display"],
             "brand_sku_code": x["brand_sku_code"], "has_barcode": int(x["barcodes"]) > 0,
+            "photo_key": x.get("photo_key"), "unit_size": x.get("unit_size"),
             "qty_expected": expected, "qty_received": int(x["qty_received"]),
             "qty_damaged": int(x.get("qty_damaged") or 0),
             "qty_manual": int(x.get("qty_manual") or 0),
@@ -517,7 +588,151 @@ async def _target(site_id: int, sku_id: int) -> dict | None:
     return await common.slot_for(site_id, sku_id)
 
 
-async def receipt_view(r: dict) -> dict:
+PHOTO_BLOCKERS = ("photo:", "damage_photo:")
+
+
+async def _receipt_notes(receipt_id: int) -> tuple[dict, dict | None]:
+    """The paperwork ticks and an SPV's *finish without a photo*, from audit_log
+    (no column of their own): the last row per tick wins, so another phone sees
+    the same ticks."""
+    rows = await db.fetch_all(
+        "SELECT actor_email, action, after_json, created_at FROM audit_log "
+        "WHERE entity = 'receipt' AND entity_id = %s "
+        "AND action IN ('paperwork', 'finish_without_photo') ORDER BY id", (receipt_id,))
+    if not rows:
+        return {}, None
+    names = await replenishment.user_names([x["actor_email"] for x in rows])
+    paper, waiver = {}, None
+    for x in rows:
+        try:
+            a = json.loads(x["after_json"] or "{}")
+        except ValueError:
+            a = {}
+        who = {"by": x["actor_email"], "by_name": names.get(x["actor_email"]),
+               "at": _ts(x["created_at"])}
+        if x["action"] == "paperwork" and a.get("item") in ("wrote", "signed"):
+            paper[a["item"]] = dict(who, done=bool(a.get("done")))
+        elif x["action"] == "finish_without_photo":
+            waiver = dict(who, reason=a.get("reason"), missing=a.get("missing") or [])
+    return paper, waiver
+
+
+# --- Mode manual: the blind count and its lock ----------------------------------------
+# A receipt counted in Mode manual is counted blind: nobody below the SPV gets an
+# expected number (per product, the total, a held unit) until the count is
+# locked, which happens when step 3 (Cek selisih) opens. From then on no unit is
+# added or taken back (typed or scanned) until an SPV reopens the count. The lock
+# lives in audit_log (count_lock / count_reopen, the last row wins), like the
+# paperwork ticks.
+
+COUNT_LOCKED_MSG = ("Hitungan sudah dikunci di Cek selisih. Panggil SPV untuk hitung ulang. / "
+                    "The count is locked at Check differences. Call the SPV to count again.")
+
+
+async def _count_lock(receipt_id: int, cur=None) -> dict | None:
+    """The last count_lock or count_reopen of a receipt, or None."""
+    sql = ("SELECT actor_email, action, after_json, created_at FROM audit_log "
+           "WHERE entity = 'receipt' AND entity_id = %s "
+           "AND action IN ('count_lock', 'count_reopen') ORDER BY id DESC LIMIT 1")
+    row = await (db.one(cur, sql, (receipt_id,)) if cur else db.fetch_one(sql, (receipt_id,)))
+    if not row:
+        return None
+    try:
+        a = json.loads(row["after_json"] or "{}")
+    except ValueError:
+        a = {}
+    return {"action": row["action"], "by": row["actor_email"], "at": _ts(row["created_at"]),
+            "reason": a.get("reason")}
+
+
+def _locked(lock: dict | None) -> bool:
+    return bool(lock and lock["action"] == "count_lock")
+
+
+async def _assert_counting(cur, receipt_id: int) -> None:
+    """Inside the counting transaction (receipt row locked): refused once the
+    Mode manual count is locked."""
+    if _locked(await _count_lock(receipt_id, cur)):
+        raise HTTPException(409, COUNT_LOCKED_MSG)
+
+
+async def _manual_receipt(r: dict) -> bool:
+    """Counted in Mode manual: a typed entry on it, or Mode manual on at the dark store."""
+    if r.get("manual_mode"):
+        return True
+    from routers import manual_mode
+    return await manual_mode.active(r["site_id"])
+
+
+async def _blind(r: dict, user: auth.User | None, lock: dict | None) -> bool:
+    if user is None or user.at_least("supervisor") or r["status"] != "open" or _locked(lock):
+        return False
+    return await _manual_receipt(r)
+
+
+def _blind_line(l: dict | None) -> dict | None:
+    """A product line without anything that gives the expected number away."""
+    if not l:
+        return l
+    return dict(l, qty_expected=None, qty_extra=0,
+                state="counting" if int(l.get("qty_received") or 0) else "not_started")
+
+
+def _blind_load(l: dict) -> dict:
+    """A temporary bin without its held units (they show where the PO ends)."""
+    live = l["status"] in ("batched", "filling", "full")
+    return dict(l, qty_hold=0, is_extra=False,
+                qty_to_put=max(0, l["qty"] - l["qty_put"]) if live else 0)
+
+
+async def _rehold(cur, r: dict, sku_id: int) -> None:
+    """Mode manual: the units held above the expected quantity, worked out again
+    for one product after a typed entry is taken back, so an undo by one person
+    never leaves units held that are no longer above the PO (or lets extra units
+    through). Held = received above the expected quantity, minus what scanned
+    extras already hold in their own bins, spread over the product's bins being
+    filled from the newest one. A delivery with no PO holds nothing here (its
+    link to a request sets the holds)."""
+    if not r.get("replenishment_id"):
+        return
+    line = await db.one(cur, "SELECT qty_expected, qty_received FROM receipt_lines "
+                             "WHERE receipt_id = %s AND sku_id = %s", (r["id"], sku_id))
+    if not line:
+        return
+    loads = await db.many(
+        cur, "SELECT id, is_extra, status, qty, qty_put, qty_hold FROM inbound_bin_loads "
+             "WHERE receipt_id = %s AND sku_id = %s AND status <> 'done' ORDER BY id FOR UPDATE",
+        (r["id"], sku_id))
+    mine = [l for l in loads if not l["is_extra"] and l["status"] in ("filling", "full")]
+    ids = {l["id"] for l in mine}
+    held_elsewhere = sum(int(l["qty_hold"]) for l in loads if l["id"] not in ids)
+    left = max(0, int(line["qty_received"]) - int(line["qty_expected"] or 0) - held_elsewhere)
+    for l in reversed(mine):
+        h = min(left, max(0, int(l["qty"]) - int(l["qty_put"])))
+        left -= h
+        if h != int(l["qty_hold"]):
+            await db.run(cur, "UPDATE inbound_bin_loads SET qty_hold = %s WHERE id = %s",
+                         (h, l["id"]))
+
+
+async def receipt_view(r: dict, user: auth.User | None = None) -> dict:
+    """The receipt as the screens get it. With `user`, a Mode manual count that is
+    not locked yet is blind for roles below the SPV (see _blind)."""
+    out = await _receipt_view(r)
+    lock = await _count_lock(r["id"])
+    if lock and lock.get("by"):
+        lock["by_name"] = (await replenishment.user_names([lock["by"]])).get(lock["by"])
+    out["count_lock"] = lock
+    out["count_locked"] = _locked(lock) and r["status"] == "open"
+    out["blind"] = await _blind(r, user, lock)
+    if out["blind"]:
+        out["lines"] = [_blind_line(l) for l in out["lines"]]
+        out["loads"] = [_blind_load(l) for l in out["loads"]]
+        out["total_expected"] = None
+    return out
+
+
+async def _receipt_view(r: dict) -> dict:
     site = await _site(r["site_id"])
     rep = None
     if r.get("replenishment_id"):
@@ -550,6 +765,7 @@ async def receipt_view(r: dict) -> dict:
     if not any(l["qty_received"] for l in lines):
         blockers.append("nothing_counted")
     expected = [l["qty_expected"] for l in lines if l["qty_expected"] is not None]
+    paper, waiver = await _receipt_notes(r["id"])
     return {
         "id": r["id"], "site_id": r["site_id"], "site_code": site["code"],
         "brand_id": r.get("brand_id"), "brand_name": brand["name"] if brand else None,
@@ -577,13 +793,15 @@ async def receipt_view(r: dict) -> dict:
         "faktur_uploaded_at": _ts(r.get("faktur_uploaded_at")),
         "total_expected": sum(expected) if expected else None,
         "total_received": sum(l["qty_received"] for l in lines),
+        "paperwork": paper, "photo_waiver": waiver,
+        "manual_mode": bool(r.get("manual_mode")),
         **_stage(r, loads),
     }
 
 
-async def _view(receipt_id: int) -> dict:
+async def _view(receipt_id: int, user: auth.User | None = None) -> dict:
     return await receipt_view(await db.fetch_one(
-        "SELECT * FROM inbound_receipts WHERE id = %s", (receipt_id,)))
+        "SELECT * FROM inbound_receipts WHERE id = %s", (receipt_id,)), user)
 
 
 def _delivery(rp: dict, today, receipt_id=None) -> dict:
@@ -702,7 +920,7 @@ async def open_receipt(body: OpenIn, user: auth.User = Depends(auth.current_user
                               "WHERE id = %s", (rid, rep_id))
             await ledger.audit(cur, actor_email=user.email, entity="receipt", entity_id=rid,
                                action="open", after={"replenishment_id": rep_id})
-    return await _view(rid)
+    return await _view(rid, user)
 
 
 @router.post("/inbound/receipts/no-po", response_model=ReceiptOut, status_code=201)
@@ -733,7 +951,7 @@ async def open_no_po(
         await _store_photo(cur, rid, site_id, "sj_no_po", None, data, ctype, ext, user.email)
         await ledger.audit(cur, actor_email=user.email, entity="receipt", entity_id=rid,
                            action="open_no_po", after={"code": code, "brand_id": brand_id})
-    return await _view(rid)
+    return await _view(rid, user)
 
 
 @router.post("/inbound/receipts/{receipt_id}/cartons", response_model=ReceiptOut)
@@ -748,7 +966,7 @@ async def cartons(receipt_id: int, body: CartonsIn, user: auth.User = Depends(au
                                  "The SPV already decided the cartons.")
     await db.execute("UPDATE inbound_receipts SET sj_cartons = %s, counted_cartons = %s "
                      "WHERE id = %s", (body.sj_cartons, body.counted_cartons, receipt_id))
-    return await _view(receipt_id)
+    return await _view(receipt_id, user)
 
 
 @router.post("/inbound/receipts/{receipt_id}/carton-decision", response_model=ReceiptOut)
@@ -784,7 +1002,7 @@ async def carton_decision(receipt_id: int, body: CartonDecisionIn,
         await ledger.audit(cur, actor_email=user.email, entity="receipt", entity_id=receipt_id,
                            action="carton_" + decision,
                            after={"sj": r.get("sj_cartons"), "counted": r.get("counted_cartons")})
-    return await _view(receipt_id)
+    return await _view(receipt_id, user)
 
 
 @router.post("/inbound/receipts/{receipt_id}/carton-seen", response_model=ReceiptOut)
@@ -794,13 +1012,13 @@ async def carton_seen(receipt_id: int, user: auth.User = Depends(auth.require("h
     await db.execute("UPDATE inbound_receipts SET carton_seen_by = %s, carton_seen_at = NOW() "
                      "WHERE id = %s AND carton_decision = 'accept_rewrite'",
                      (user.email, receipt_id))
-    return await _view(receipt_id)
+    return await _view(receipt_id, user)
 
 
 @router.get("/inbound/receipts/{receipt_id}", response_model=ReceiptOut)
 async def get_receipt(receipt_id: int, user: auth.User = Depends(auth.current_user)):
     """Everything the scan, summary and laptop receipt screens show (5b to 5h)."""
-    return await receipt_view(await _receipt(receipt_id, user))
+    return await receipt_view(await _receipt(receipt_id, user), user)
 
 
 @router.get("/inbound/receipts")
@@ -921,10 +1139,15 @@ async def count_unit(receipt_id: int, body: UnitIn, user: auth.User = Depends(au
                   sku=common.sku_dict(sku))
     tray = await quarantine_tray(site)
     linked = bool(r.get("replenishment_id"))
+    lock = await _count_lock(receipt_id)
+    if _locked(lock):
+        raise HTTPException(409, COUNT_LOCKED_MSG)
+    blind = await _blind(r, user, lock)
 
     async with db.tx() as cur:
         await db.one(cur, "SELECT id FROM inbound_receipts WHERE id = %s FOR UPDATE",
                      (receipt_id,))
+        await _assert_counting(cur, receipt_id)
         line = await db.one(cur, "SELECT * FROM receipt_lines WHERE receipt_id = %s "
                                  "AND sku_id = %s", (receipt_id, sku["id"]))
         if not line:
@@ -992,6 +1215,10 @@ async def count_unit(receipt_id: int, body: UnitIn, user: auth.User = Depends(au
                               "for Ops HQ."),
                 "counted": f"Masukkan ke {load['bin_code']}. / Into {load['bin_code']}.",
             }
+            if blind and outcome == "extra_bin":
+                # Blind count (Mode manual): the bin of its own is named like any new
+                # bin, never as "above the expected quantity"; it is still held.
+                outcome = "new_bin"
             result.update(outcome=outcome, message=msgs[outcome],
                           needs_bin_label=not load.get("label_scanned_at"))
         await db.run(
@@ -1011,11 +1238,11 @@ async def count_unit(receipt_id: int, body: UnitIn, user: auth.User = Depends(au
                                 "WHERE receipt_id = %s", (receipt_id,))
         result["total_received"] = int(tot["n"])
         if load:
-            result["load"] = _load_out(load)
+            result["load"] = _blind_load(_load_out(load)) if blind else _load_out(load)
         result["free_bins"] = len(await _free_bins(site, cur))
         fresh = dict(r, status="open")
         lines = {x["sku_id"]: x for x in await _lines_cur(cur, fresh)}
-        result["line"] = lines.get(sku["id"])
+        result["line"] = _blind_line(lines.get(sku["id"])) if blind else lines.get(sku["id"])
         await ledger.remember(cur, body.idempotency_key, "inbound_unit", result)
     return result
 
@@ -1023,7 +1250,8 @@ async def count_unit(receipt_id: int, body: UnitIn, user: auth.User = Depends(au
 async def _lines_cur(cur, r: dict) -> list[dict]:
     """_lines inside a transaction (reads its own writes)."""
     rows = await db.many(
-        cur, "SELECT rl.*, s.name_display, s.brand_sku_code FROM receipt_lines rl "
+        cur, "SELECT rl.*, s.name_display, s.brand_sku_code, s.photo_key, s.unit_size "
+             "FROM receipt_lines rl "
              "JOIN skus s ON s.id = rl.sku_id WHERE rl.receipt_id = %s", (r["id"],))
     loads = await db.many(cur, "SELECT sku_id, bin_code, qty_hold FROM inbound_bin_loads "
                                "WHERE receipt_id = %s ORDER BY id", (r["id"],))
@@ -1034,7 +1262,8 @@ async def _lines_cur(cur, r: dict) -> list[dict]:
         expected = x["qty_expected"] if x["qty_expected"] is not None else (0 if linked else None)
         out.append({
             "sku_id": x["sku_id"], "sku_name": x["name_display"],
-            "brand_sku_code": x["brand_sku_code"], "qty_expected": expected,
+            "brand_sku_code": x["brand_sku_code"], "photo_key": x.get("photo_key"),
+            "unit_size": x.get("unit_size"), "qty_expected": expected,
             "qty_received": int(x["qty_received"]), "qty_damaged": int(x["qty_damaged"] or 0),
             "qty_manual": int(x["qty_manual"] or 0),
             "qty_extra": sum(int(l["qty_hold"] or 0) for l in mine),
@@ -1055,16 +1284,22 @@ async def undo_unit(receipt_id: int, body: UndoIn, user: auth.User = Depends(aut
     if r["status"] != "open":
         raise HTTPException(409, "Penerimaan sudah ditutup. / The receipt is closed.")
     site = await _site(r["site_id"])
-    where = ["u.receipt_id = %s", "u.actor_email = %s", "u.qty = 1"]
+    # A typed count (Mode manual) is taken back as a whole with /manual-count/undo.
+    where = ["u.receipt_id = %s", "u.actor_email = %s", "u.qty = 1", "u.method <> 'typed'"]
     params: list = [receipt_id, user.email]
     if body.sku_id:
         where.append("u.sku_id = %s")
         params.append(body.sku_id)
     if body.manual_only:
         where.append("u.method = 'manual'")
+    lock = await _count_lock(receipt_id)
+    if _locked(lock):
+        raise HTTPException(409, COUNT_LOCKED_MSG)
+    blind = await _blind(r, user, lock)
     async with db.tx() as cur:
         await db.one(cur, "SELECT id FROM inbound_receipts WHERE id = %s FOR UPDATE",
                      (receipt_id,))
+        await _assert_counting(cur, receipt_id)
         last = await db.one(
             cur, "SELECT u.* FROM inbound_units u WHERE " + " AND ".join(where) +
                  " AND NOT EXISTS (SELECT 1 FROM inbound_units x WHERE x.undo_of = u.id) "
@@ -1079,7 +1314,7 @@ async def undo_unit(receipt_id: int, body: UndoIn, user: auth.User = Depends(aut
                                          "This bin is already in a batch.")
             await db.run(
                 cur, "UPDATE inbound_bin_loads SET qty = qty - 1, "
-                     "qty_hold = GREATEST(0, qty_hold - %s), "
+                     "qty_hold = LEAST(GREATEST(0, qty_hold - %s), qty), "
                      "status = IF(qty = 0, 'done', status), done_at = IF(qty = 0, NOW(), done_at) "
                      "WHERE id = %s", (1 if load["is_extra"] else 0, load["id"]))
         if last["difference_id"]:
@@ -1098,16 +1333,335 @@ async def undo_unit(receipt_id: int, body: UndoIn, user: auth.User = Depends(aut
             "VALUES (%s,%s,%s,%s,%s,-1,%s,%s,%s,%s,%s)",
             (receipt_id, r["site_id"], last["sku_id"], last["load_id"], last["difference_id"],
              last["method"], last["damaged"], last["damage_to"], last["id"], user.email))
+        if r.get("manual_mode"):
+            # Typed entries hold units in the product's own bin: worked out again.
+            await _rehold(cur, r, last["sku_id"])
         tot = await db.one(cur, "SELECT COALESCE(SUM(qty_received), 0) AS n FROM receipt_lines "
                                 "WHERE receipt_id = %s", (receipt_id,))
         lines = {x["sku_id"]: x for x in await _lines_cur(cur, r)}
+        sku = common.sku_dict(await common.sku_by_id(last["sku_id"])) or {}
+        name = sku.get("name_display") or ""
+        line = lines.get(last["sku_id"])
         result = {"accepted": True, "outcome": "counted",
-                  "message": "Satu unit dibatalkan. / One unit taken back.",
-                  "sku": common.sku_dict(await common.sku_by_id(last["sku_id"])),
-                  "line": lines.get(last["sku_id"]), "total_received": int(tot["n"]),
+                  "message": f"Dibatalkan: 1 unit {name}. / Taken back: 1 unit of {name}.",
+                  "sku": sku or None,
+                  "line": _blind_line(line) if blind else line, "total_received": int(tot["n"]),
                   "free_bins": len(await _free_bins(site, cur))}
         await ledger.remember(cur, body.idempotency_key, "inbound_undo", result)
     return result
+
+
+# --- Mode manual: counts typed per product (V32) -------------------------------------
+
+class _NoFreeBin(Exception):
+    """Every temporary bin is taken: nothing of the typed entry is booked."""
+
+
+async def _manual_on(site_id: int) -> None:
+    from routers import manual_mode
+    if not await manual_mode.active(site_id):
+        raise HTTPException(409, "Mode manual tidak aktif di dark store ini. Pindai seperti biasa. / "
+                                 "Manual mode is not on at this dark store. Scan as usual.")
+
+
+@router.post("/inbound/receipts/{receipt_id}/manual-count", response_model=ManualCountResult)
+async def manual_count(receipt_id: int, body: ManualCountIn,
+                       user: auth.User = Depends(auth.current_user)):
+    """Mode manual: the units of one product counted by hand and typed, blind (the
+    screen never shows the expected number). Booked in one go, like that many
+    scans: good units into the product's temporary bin (a first unit gets an
+    empty bin, named in the answer; the tap *Sudah di bin sementara* replaces the
+    label scan); units above the expected quantity stay in the same bin, held for
+    Ops HQ (qty_hold), so the answer does not give the expected number away.
+    Damaged units follow the *Rusak* path (quarantine tray or back to the driver,
+    a difference for Ops HQ). Marks the receipt manual (inbound_receipts.manual_mode).
+    Only while Mode manual is on at the dark store."""
+    replayed = await ledger.replay(body.idempotency_key, "inbound_manual")
+    if replayed:
+        return replayed
+    r = await _receipt(receipt_id, user)
+    site = await _site(r["site_id"])
+    if r["status"] != "open":
+        raise HTTPException(409, "Penerimaan sudah ditutup. / The receipt is closed.")
+    await _manual_on(r["site_id"])
+    free_now = len(await _free_bins(site))
+
+    def no(outcome, msg, **kw):
+        return dict({"accepted": False, "outcome": outcome, "message": msg,
+                     "free_bins": free_now}, **kw)
+
+    if not _can_scan(r):
+        return no("carton_check", "Cek karton dulu: jumlah karton beda menunggu keputusan SPV. / "
+                                  "Check the cartons first; a difference waits for the SPV.")
+    good, damaged = int(body.good), int(body.damaged)
+    if good + damaged <= 0:
+        raise HTTPException(422, "Ketik jumlah unit yang dihitung. / Type the number of units counted.")
+    sku = await common.sku_by_id(body.sku_id)
+    if not sku:
+        raise HTTPException(404, "Produk tidak ditemukan. / Product not found.")
+    if r.get("brand_id") and sku["brand_id"] != r["brand_id"]:
+        return no("wrong_brand", f"{sku['name_display']} bukan dari merek kiriman ini. Sisihkan, "
+                                 "panggil SPV. / Not from this delivery's brand.",
+                  sku=common.sku_dict(sku))
+    damage_to = (body.damage_to or "").strip().lower() or None
+    if damaged and damage_to not in DAMAGE_TO:
+        return no("needs_damage_place", "Unit rusak mau ke mana: karantina atau kembali ke driver? / "
+                                        "Quarantine or back to the driver?", sku=common.sku_dict(sku))
+    if _locked(await _count_lock(receipt_id)):
+        raise HTTPException(409, COUNT_LOCKED_MSG)
+    tray = await quarantine_tray(site)
+    linked = bool(r.get("replenishment_id"))
+    entry = "typed:" + uuid.uuid4().hex[:16]
+    try:
+        async with db.tx() as cur:
+            await db.one(cur, "SELECT id FROM inbound_receipts WHERE id = %s FOR UPDATE",
+                         (receipt_id,))
+            await _assert_counting(cur, receipt_id)
+            line = await db.one(cur, "SELECT * FROM receipt_lines WHERE receipt_id = %s "
+                                     "AND sku_id = %s", (receipt_id, sku["id"]))
+            load = None
+            bin_code = None
+            if good:
+                load = await db.one(
+                    cur, "SELECT * FROM inbound_bin_loads WHERE receipt_id = %s AND sku_id = %s "
+                         "AND is_extra = 0 AND status = 'filling' ORDER BY id DESC LIMIT 1 FOR UPDATE",
+                    (receipt_id, sku["id"]))
+                if not load:
+                    bin_code = await _allocate_bin(cur, site)
+                    if not bin_code:
+                        raise _NoFreeBin()
+            if not line:
+                await db.run(cur, "INSERT INTO receipt_lines (receipt_id, sku_id, qty_expected) "
+                                  "VALUES (%s,%s,%s)", (receipt_id, sku["id"], 0 if linked else None))
+                line = await db.one(cur, "SELECT * FROM receipt_lines WHERE receipt_id = %s "
+                                         "AND sku_id = %s", (receipt_id, sku["id"]))
+            result: dict = {"accepted": True, "outcome": "counted", "sku": common.sku_dict(sku),
+                            "entry": entry}
+            loads_out = []
+            if good:
+                if not load:
+                    lid = await db.run(
+                        cur,
+                        "INSERT INTO inbound_bin_loads (site_id, receipt_id, sku_id, bin_code, "
+                        "is_extra, status, opened_by) VALUES (%s,%s,%s,%s,0,'filling',%s)",
+                        (r["site_id"], receipt_id, sku["id"], bin_code, user.email))
+                    load = await db.one(cur, "SELECT * FROM inbound_bin_loads WHERE id = %s", (lid,))
+                # Above the expected quantity: held in the same bin for Ops HQ.
+                room = (max(0, int(line["qty_expected"] or 0) - int(line["qty_received"]))
+                        if linked else good)
+                hold = max(0, good - room)
+                await db.run(cur, "UPDATE inbound_bin_loads SET qty = qty + %s, "
+                                  "qty_hold = qty_hold + %s WHERE id = %s", (good, hold, load["id"]))
+                for q, code in ((good - hold, entry), (hold, entry + ":hold")):
+                    if q:
+                        await db.run(
+                            cur,
+                            "INSERT INTO inbound_units (receipt_id, site_id, sku_id, load_id, qty, "
+                            "method, code, actor_email) VALUES (%s,%s,%s,%s,%s,'typed',%s,%s)",
+                            (receipt_id, r["site_id"], sku["id"], load["id"], q, code, user.email))
+            if damaged:
+                await db.run(
+                    cur,
+                    "INSERT INTO inbound_differences (receipt_id, replenishment_id, site_id, sku_id, "
+                    "kind, place, bin_code, qty, created_by) "
+                    "VALUES (%s,%s,%s,%s,'damaged',%s,%s,%s,%s) "
+                    "ON DUPLICATE KEY UPDATE qty = qty + VALUES(qty)",
+                    (receipt_id, r.get("replenishment_id"), r["site_id"], sku["id"], damage_to,
+                     tray if damage_to == "quarantine" else None, damaged, user.email))
+                d = await db.one(cur, "SELECT id FROM inbound_differences WHERE receipt_id = %s AND "
+                                      "sku_id = %s AND kind = 'damaged' AND place = %s",
+                                 (receipt_id, sku["id"], damage_to))
+                photos = await db.one(cur, "SELECT COUNT(*) AS n FROM inbound_photos "
+                                           "WHERE difference_id = %s", (d["id"],))
+                await db.run(
+                    cur,
+                    "INSERT INTO inbound_units (receipt_id, site_id, sku_id, difference_id, qty, "
+                    "method, damaged, damage_to, code, actor_email) "
+                    "VALUES (%s,%s,%s,%s,%s,'typed',1,%s,%s,%s)",
+                    (receipt_id, r["site_id"], sku["id"], d["id"], damaged, damage_to, entry,
+                     user.email))
+                result.update(difference_id=d["id"], photo_needed=not int(photos["n"]))
+            await db.run(
+                cur,
+                "UPDATE receipt_lines SET qty_received = qty_received + %s, "
+                "qty_damaged = qty_damaged + %s WHERE receipt_id = %s AND sku_id = %s",
+                (good + damaged, damaged, receipt_id, sku["id"]))
+            # The holds of this product from everything counted so far (the same rule
+            # as the undo), then the bin as it is now.
+            await _rehold(cur, r, sku["id"])
+            if good:
+                load = await db.one(cur, "SELECT l.*, s.name_display FROM inbound_bin_loads l "
+                                         "JOIN skus s ON s.id = l.sku_id WHERE l.id = %s",
+                                    (load["id"],))
+                # Blind: never the held units (they show where the PO ends).
+                loads_out.append(_blind_load(_load_out(load)))
+            await db.run(cur, "UPDATE inbound_receipts SET manual_mode = 1 WHERE id = %s",
+                         (receipt_id,))
+            await ledger.audit(cur, actor_email=user.email, entity="receipt", entity_id=receipt_id,
+                               action="manual_count",
+                               after={"sku_id": sku["id"], "good": good, "damaged": damaged,
+                                      "damage_to": damage_to if damaged else None, "entry": entry,
+                                      "manual": True})
+            name = sku["name_display"]
+            parts_id, parts_en = [], []
+            if good:
+                parts_id.append(f"{good} unit baik ke bin sementara {load['bin_code']}")
+                parts_en.append(f"{good} good unit(s) into temporary bin {load['bin_code']}")
+            if damaged:
+                parts_id.append(f"{damaged} rusak " + (f"ke baki {tray}" if damage_to == "quarantine"
+                                                       else "kembali ke driver"))
+                parts_en.append(f"{damaged} damaged " + (f"to tray {tray}" if damage_to == "quarantine"
+                                                         else "back to the driver"))
+            result["message"] = (f"{name}: " + ", ".join(parts_id) + ". / "
+                                 f"{name}: " + ", ".join(parts_en) + ".")
+            result["loads"] = loads_out
+            tot = await db.one(cur, "SELECT COALESCE(SUM(qty_received), 0) AS n FROM receipt_lines "
+                                    "WHERE receipt_id = %s", (receipt_id,))
+            result["total_received"] = int(tot["n"])
+            result["free_bins"] = len(await _free_bins(site, cur))
+            lines = {x["sku_id"]: x for x in await _lines_cur(cur, dict(r, status="open"))}
+            result["line"] = _blind_line(lines.get(sku["id"]))
+            await ledger.remember(cur, body.idempotency_key, "inbound_manual", result)
+    except _NoFreeBin:
+        return no("no_free_bin", "Semua bin sementara terisi. Panggil SPV untuk tambah bin sementara. / "
+                                 "Every temporary bin is taken. Ask the SPV to add a temporary bin.",
+                  sku=common.sku_dict(sku))
+    return result
+
+
+@router.post("/inbound/receipts/{receipt_id}/manual-count/undo", response_model=ManualCountResult)
+async def manual_count_undo(receipt_id: int, body: ManualUndoIn,
+                            user: auth.User = Depends(auth.current_user)):
+    """*Batalkan ketikan terakhir*: takes back your own last typed entry as a whole
+    (good, held and damaged units), while its temporary bin is still being filled.
+    Works after Mode manual has ended too, so a wrong number can be corrected."""
+    replayed = await ledger.replay(body.idempotency_key, "inbound_manual_undo")
+    if replayed:
+        return replayed
+    r = await _receipt(receipt_id, user)
+    if r["status"] != "open":
+        raise HTTPException(409, "Penerimaan sudah ditutup. / The receipt is closed.")
+    site = await _site(r["site_id"])
+    if _locked(await _count_lock(receipt_id)):
+        raise HTTPException(409, COUNT_LOCKED_MSG)
+    async with db.tx() as cur:
+        await db.one(cur, "SELECT id FROM inbound_receipts WHERE id = %s FOR UPDATE", (receipt_id,))
+        await _assert_counting(cur, receipt_id)
+        last = await db.one(
+            cur, "SELECT u.code FROM inbound_units u WHERE u.receipt_id = %s AND u.actor_email = %s "
+                 "AND u.method = 'typed' AND u.qty > 0 "
+                 "AND NOT EXISTS (SELECT 1 FROM inbound_units x WHERE x.undo_of = u.id) "
+                 "ORDER BY u.id DESC LIMIT 1", (receipt_id, user.email))
+        if not last:
+            raise HTTPException(409, "Tidak ada ketikan untuk dibatalkan. / Nothing typed to undo.")
+        entry = (last["code"] or "").split(":hold")[0]
+        rows = await db.many(
+            cur, "SELECT u.* FROM inbound_units u WHERE u.receipt_id = %s AND u.method = 'typed' "
+                 "AND u.qty > 0 AND u.code IN (%s, %s) "
+                 "AND NOT EXISTS (SELECT 1 FROM inbound_units x WHERE x.undo_of = u.id) "
+                 "ORDER BY u.id", (receipt_id, entry, entry + ":hold"))
+        good = damaged = 0
+        sku_id = rows[0]["sku_id"]
+        for u in rows:
+            q = int(u["qty"])
+            if u["load_id"]:
+                load = await db.one(cur, "SELECT * FROM inbound_bin_loads WHERE id = %s FOR UPDATE",
+                                    (u["load_id"],))
+                if load["status"] not in ("filling", "full"):
+                    raise HTTPException(409, "Bin ini sudah masuk batch: tidak bisa dibatalkan. / "
+                                             "This bin is already in a batch.")
+                # The holds are worked out again below (_rehold): here only never
+                # more held than is left in the bin.
+                await db.run(
+                    cur, "UPDATE inbound_bin_loads SET qty = GREATEST(0, qty - %s), "
+                         "qty_hold = LEAST(qty_hold, qty), "
+                         "status = IF(qty = 0, 'done', status), done_at = IF(qty = 0, NOW(), done_at) "
+                         "WHERE id = %s", (q, load["id"]))
+            if u["difference_id"]:
+                await db.run(cur, "UPDATE inbound_differences SET qty = GREATEST(0, qty - %s) "
+                                  "WHERE id = %s", (q, u["difference_id"]))
+            if u["damaged"]:
+                damaged += q
+            else:
+                good += q
+            await db.run(
+                cur,
+                "INSERT INTO inbound_units (receipt_id, site_id, sku_id, load_id, difference_id, qty, "
+                "method, damaged, damage_to, code, undo_of, actor_email) "
+                "VALUES (%s,%s,%s,%s,%s,%s,'typed',%s,%s,%s,%s,%s)",
+                (receipt_id, r["site_id"], u["sku_id"], u["load_id"], u["difference_id"], -q,
+                 u["damaged"], u["damage_to"], u["code"], u["id"], user.email))
+        await db.run(
+            cur,
+            "UPDATE receipt_lines SET qty_received = GREATEST(0, qty_received - %s), "
+            "qty_damaged = GREATEST(0, qty_damaged - %s) WHERE receipt_id = %s AND sku_id = %s",
+            (good + damaged, damaged, receipt_id, sku_id))
+        # Held = received above the PO, from the entries that are left (another
+        # person's later entry may have been held because of the one taken back).
+        await _rehold(cur, r, sku_id)
+        await ledger.audit(cur, actor_email=user.email, entity="receipt", entity_id=receipt_id,
+                           action="manual_count_undo",
+                           after={"sku_id": sku_id, "good": good, "damaged": damaged,
+                                  "entry": entry, "manual": True})
+        sku = common.sku_dict(await common.sku_by_id(sku_id)) or {}
+        name = sku.get("name_display") or ""
+        tot = await db.one(cur, "SELECT COALESCE(SUM(qty_received), 0) AS n FROM receipt_lines "
+                                "WHERE receipt_id = %s", (receipt_id,))
+        lines = {x["sku_id"]: x for x in await _lines_cur(cur, r)}
+        result = {"accepted": True, "outcome": "undone", "sku": sku or None, "entry": entry,
+                  "message": (f"Dibatalkan: ketikan {name} ({good + damaged} unit). Ketik lagi kalau "
+                              f"perlu. / Taken back: the entry for {name} ({good + damaged} units). "
+                              "Type it again if needed."),
+                  "line": _blind_line(lines.get(sku_id)), "total_received": int(tot["n"]),
+                  "free_bins": len(await _free_bins(site, cur))}
+        await ledger.remember(cur, body.idempotency_key, "inbound_manual_undo", result)
+    return result
+
+
+@router.post("/inbound/receipts/{receipt_id}/count-lock", response_model=ReceiptOut)
+async def count_lock(receipt_id: int, user: auth.User = Depends(auth.current_user)):
+    """Mode manual: step 3 (*Cek selisih*) is opened, so the count is locked before
+    the differences show: no unit is added or taken back (typed or scanned) until
+    an SPV reopens it (/count-reopen). Only for a receipt counted in Mode manual
+    (a scanned receipt comes back unchanged); calling it again changes nothing."""
+    r = await _receipt(receipt_id, user)
+    if r["status"] != "open":
+        raise HTTPException(409, "Penerimaan sudah ditutup. / The receipt is closed.")
+    if not await _manual_receipt(r):
+        return await receipt_view(r, user)
+    async with db.tx() as cur:
+        await db.one(cur, "SELECT id FROM inbound_receipts WHERE id = %s FOR UPDATE", (receipt_id,))
+        if not _locked(await _count_lock(receipt_id, cur)):
+            n = await db.one(cur, "SELECT COALESCE(SUM(qty_received), 0) AS n FROM receipt_lines "
+                                  "WHERE receipt_id = %s", (receipt_id,))
+            if not int(n["n"]):
+                raise HTTPException(409, "Belum ada yang dihitung. Hitung dulu. / "
+                                         "Nothing is counted yet. Count first.")
+            await ledger.audit(cur, actor_email=user.email, entity="receipt", entity_id=receipt_id,
+                               action="count_lock", after={"units": int(n["n"]), "manual": True})
+    return await _view(receipt_id, user)
+
+
+@router.post("/inbound/receipts/{receipt_id}/count-reopen", response_model=ReceiptOut)
+async def count_reopen(receipt_id: int, body: CountReopenIn | None = None,
+                       user: auth.User = Depends(auth.require("supervisor"))):
+    """*Hitung ulang* (SPV and up): opens a locked Mode manual count again, with a
+    written reason, recorded with who and when. The count is blind again for the
+    staff until step 3 locks it once more."""
+    r = await _receipt(receipt_id, user)
+    if r["status"] != "open":
+        raise HTTPException(409, "Penerimaan sudah ditutup. / The receipt is closed.")
+    reason = ((body.reason if body else None) or "").strip()
+    if len(reason) < 10:
+        raise HTTPException(422, "Tulis alasannya, minimal 10 huruf. / "
+                                 "Write the reason, at least 10 characters.")
+    async with db.tx() as cur:
+        await db.one(cur, "SELECT id FROM inbound_receipts WHERE id = %s FOR UPDATE", (receipt_id,))
+        if not _locked(await _count_lock(receipt_id, cur)):
+            raise HTTPException(409, "Hitungan tidak dikunci. / The count is not locked.")
+        await ledger.audit(cur, actor_email=user.email, entity="receipt", entity_id=receipt_id,
+                           action="count_reopen", after={"reason": reason, "manual": True})
+    return await _view(receipt_id, user)
 
 
 async def _load(load_id: int, user: auth.User) -> dict:
@@ -1129,6 +1683,24 @@ async def scan_bin_label(load_id: int, body: BinLabelIn,
                                  f"Wrong label: take {l['bin_code']}.")
     await db.execute("UPDATE inbound_bin_loads SET label_scanned_at = NOW(), label_scanned_by = %s "
                      "WHERE id = %s", (user.email, load_id))
+    return _load_out(await _load(load_id, user))
+
+
+@router.post("/inbound/loads/{load_id}/bin-confirm", response_model=LoadOut)
+async def confirm_bin_manual(load_id: int, user: auth.User = Depends(auth.current_user)):
+    """Mode manual: *Sudah di bin sementara* tapped instead of the label scan.
+    Only while Mode manual is on; recorded as manual."""
+    l = await _load(load_id, user)
+    await _manual_on(l["site_id"])
+    if l["status"] not in ("filling", "full"):
+        raise HTTPException(409, "Bin ini tidak sedang diisi. / This bin is not being filled.")
+    async with db.tx() as cur:
+        await db.run(cur, "UPDATE inbound_bin_loads SET label_scanned_at = COALESCE(label_scanned_at, "
+                          "NOW()), label_scanned_by = COALESCE(label_scanned_by, %s) WHERE id = %s",
+                     (user.email, load_id))
+        await ledger.audit(cur, actor_email=user.email, entity="receipt", entity_id=l["receipt_id"],
+                           action="bin_confirm_manual",
+                           after={"load_id": load_id, "bin_code": l["bin_code"], "manual": True})
     return _load_out(await _load(load_id, user))
 
 
@@ -1311,15 +1883,19 @@ async def _sku_locations(site_id: int, sku_id: int) -> list[dict]:
 async def put_away(load_id: int, body: PutawayIn, user: auth.User = Depends(auth.current_user)):
     """*Pindai label bin* at the rack: the units become stock in that bin, sellable,
     and the new stock goes to Hiryu (ledger receipt_in, the pos_outbox path).
-    The rack bin must be one of the product's bins at this hub."""
+    The rack bin must be one of the product's bins at this hub. Mode manual
+    (manual=true): *Sudah ditaruh di bin* tapped instead of the scan, accepted
+    only while Mode manual is on, and recorded as manual."""
     replayed = await ledger.replay(body.idempotency_key, "inbound_putaway")
     if replayed:
         return replayed
     l = await _load(load_id, user)
+    if body.manual:
+        await _manual_on(l["site_id"])
     if l["status"] != "batched":
-        raise HTTPException(409, "Bin ini belum siap ditaruh: cetak slip putaway dulu, atau tunggu "
-                                 "Ops HQ. / This bin is not ready to put away: print the putaway "
-                                 "slips first, or wait for Ops HQ.")
+        raise HTTPException(409, "Bin ini belum siap ditaruh: cetak slip taruh di rak dulu, atau "
+                                 "tunggu Ops HQ. / This bin is not ready to put away: print the "
+                                 "putaway slips first, or wait for Ops HQ.")
     site = await _site(l["site_id"])
     loc = await _location(l["site_id"], body.location_code)
     allowed = {x["location_id"] for x in await _sku_locations(l["site_id"], l["sku_id"])}
@@ -1327,7 +1903,7 @@ async def put_away(load_id: int, body: PutawayIn, user: auth.User = Depends(auth
     if not loc or loc["id"] not in allowed:
         want = _short_code(target["location_code"], site["code"]) if target else None
         raise HTTPException(409, f"Bin salah. {l['name_display']} ke {want or 'bin rak (minta SPV)'}. "
-                                 f"/ Wrong bin" + (f": this goes to {want}." if want else "."))
+                                 f"/ Wrong bin" + (f": this goes to {want}." if want else ". Ask the SPV for a rack bin."))
     async with db.tx() as cur:
         cur_l = await db.one(cur, "SELECT * FROM inbound_bin_loads WHERE id = %s FOR UPDATE",
                              (load_id,))
@@ -1342,6 +1918,7 @@ async def put_away(load_id: int, body: PutawayIn, user: auth.User = Depends(auth
             cur, site_id=l["site_id"], sku_id=l["sku_id"], location_id=loc["id"], qty_delta=qty,
             movement_type="receipt_in", actor_email=user.email, ref_type="receipt",
             ref_id=l["receipt_id"], reason_code=f"putaway:{load_id}",
+            scan_source="manual" if body.manual else "scan",
             is_training=bool(site["is_training"]))
         await db.run(
             cur,
@@ -1365,6 +1942,11 @@ async def put_away(load_id: int, body: PutawayIn, user: auth.User = Depends(auth
                         f"baru dikirim ke Hiryu. / {qty} units in {loc['code']}: sellable, sent to "
                         "Hiryu."),
         }
+        if body.manual:
+            await ledger.audit(cur, actor_email=user.email, entity="receipt", entity_id=l["receipt_id"],
+                               action="putaway_manual",
+                               after={"load_id": load_id, "location_code": loc["code"], "qty": qty,
+                                      "manual": True})
         await ledger.remember(cur, body.idempotency_key, "inbound_putaway", result)
     return result
 
@@ -1604,9 +2186,23 @@ async def finish(receipt_id: int, body: FinishIn | None = None,
     tasks); differences wait for Ops HQ (24 h)."""
     r = await _receipt(receipt_id, user)
     view = await receipt_view(r)
+    reason = ((body.no_photo_reason if body else None) or "").strip()
+    missing = [b for b in view["finish_blockers"] if b.startswith(PHOTO_BLOCKERS)]
+    waived = False
     if not view["can_finish"]:
-        raise HTTPException(409, {"message": "Belum bisa selesai. / Not ready to finish.",
-                                  "blockers": view["finish_blockers"]})
+        rest = [b for b in view["finish_blockers"] if b not in missing]
+        if not reason or rest:
+            raise HTTPException(409, {"message": "Belum bisa selesai. / Not ready to finish.",
+                                      "blockers": view["finish_blockers"]})
+        # A proof photo that cannot be taken (camera blocked, phone storage full):
+        # an SPV or above may go on with a written reason, recorded with who and when.
+        if not user.at_least("supervisor"):
+            raise HTTPException(403, "Panggil SPV untuk melanjutkan tanpa foto. / "
+                                     "Call the SPV to continue without a photo.")
+        if len(reason) < 10:
+            raise HTTPException(422, "Tulis alasannya, minimal 10 huruf. / "
+                                     "Write the reason, at least 10 characters.")
+        waived = True
     signed = ((body.sj_signed_by if body else None) or user.email).strip()[:255]
     async with db.tx() as cur:
         await db.one(cur, "SELECT id FROM inbound_receipts WHERE id = %s FOR UPDATE",
@@ -1619,9 +2215,28 @@ async def finish(receipt_id: int, body: FinishIn | None = None,
             (user.email, signed, receipt_id))
         fresh = await db.one(cur, "SELECT * FROM inbound_receipts WHERE id = %s", (receipt_id,))
         await _after_finish(cur, fresh, user.email)
+        if waived:
+            await ledger.audit(cur, actor_email=user.email, entity="receipt",
+                               entity_id=receipt_id, action="finish_without_photo",
+                               after={"reason": reason, "missing": missing})
         await ledger.audit(cur, actor_email=user.email, entity="receipt", entity_id=receipt_id,
                            action="finish", after={"sj_signed_by": signed})
-    return await _view(receipt_id)
+    return await _view(receipt_id, user)
+
+
+@router.post("/inbound/receipts/{receipt_id}/paperwork")
+async def paperwork(receipt_id: int, body: PaperworkIn,
+                    user: auth.User = Depends(auth.current_user)):
+    """The two ticks of step 4 (quantities written, Surat Jalan signed), kept on the
+    receipt with who ticked, so changing phones keeps them."""
+    r = await _receipt(receipt_id, user)
+    if r["status"] != "open":
+        raise HTTPException(409, "Penerimaan sudah ditutup. / The receipt is closed.")
+    async with db.tx() as cur:
+        await ledger.audit(cur, actor_email=user.email, entity="receipt", entity_id=receipt_id,
+                           action="paperwork", after={"item": body.item, "done": body.done})
+    paper, _ = await _receipt_notes(receipt_id)
+    return {"ok": True, "paperwork": paper}
 
 
 @router.get("/inbound/no-po")
@@ -1681,7 +2296,8 @@ async def link_no_po(receipt_id: int, body: LinkIn, user: auth.User = Depends(au
         raise HTTPException(422, "Pilih permintaan dari dark store dan merek yang sama. / Choose a request "
                                  "of the same dark store and brand.")
     if rep["status"] not in ("po", "sent", "confirmed"):
-        raise HTTPException(409, f"{rep['reference']} sudah {rep['status']}. / already {rep['status']}.")
+        raise HTTPException(409, f"{rep['reference']} sudah {rep['status']}. / "
+                                 f"{rep['reference']} is already {rep['status']}.")
     async with db.tx() as cur:
         await db.one(cur, "SELECT id FROM inbound_receipts WHERE id = %s FOR UPDATE", (receipt_id,))
         expected = {x["sku_id"]: int(x["q"] or 0) for x in await db.many(
@@ -1728,7 +2344,7 @@ async def link_no_po(receipt_id: int, body: LinkIn, user: auth.User = Depends(au
             await _after_finish(cur, fresh, user.email)
         await ledger.audit(cur, actor_email=user.email, entity="receipt", entity_id=receipt_id,
                            action="link_no_po", after={"replenishment_id": rep["id"]})
-    return await _view(receipt_id)
+    return await _view(receipt_id, user)
 
 
 @router.get("/inbound/manual-picks")

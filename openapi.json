@@ -38,7 +38,7 @@
         ],
         "summary": "The browser's heartbeat",
         "description": "The browser's heartbeat.\n\nSame answer as /health, reachable through the ingress. Once a frontend/ is\nshipped the ingress routes everything except /api to nginx, so a browser\nasking for /health gets index.html back with a cheerful 200 — which would\nmake the connection indicator claim the app is up while the backend or the\ndatabase is down. The station app is online-only and blocks work loudly on a\ndropped connection, so that heartbeat has to reach the backend.\n\nHEAD is declared explicitly. Plain Starlette adds HEAD to any GET route, but\nFastAPI's APIRoute does not — and the frontend's heartbeat sends HEAD, so\nwithout this it collects a 405 every 20 s and reports the app as offline\nforever.",
-        "operationId": "api_health_api_health_get",
+        "operationId": "api_health_api_health_head",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -58,7 +58,7 @@
         ],
         "summary": "The browser's heartbeat",
         "description": "The browser's heartbeat.\n\nSame answer as /health, reachable through the ingress. Once a frontend/ is\nshipped the ingress routes everything except /api to nginx, so a browser\nasking for /health gets index.html back with a cheerful 200 — which would\nmake the connection indicator claim the app is up while the backend or the\ndatabase is down. The station app is online-only and blocks work loudly on a\ndropped connection, so that heartbeat has to reach the backend.\n\nHEAD is declared explicitly. Plain Starlette adds HEAD to any GET route, but\nFastAPI's APIRoute does not — and the frontend's heartbeat sends HEAD, so\nwithout this it collects a 405 every 20 s and reports the app as offline\nforever.",
-        "operationId": "api_health_api_health_get",
+        "operationId": "api_health_api_health_head",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1622,7 +1622,7 @@
           "locations"
         ],
         "summary": "Give a SKU its basket at a site — one SKU per basket, one basket per SKU",
-        "description": "Bind a SKU to a basket. One SKU per basket, one slot per SKU per site —\nboth enforced by unique constraint, not only by this check (M2.2.2).\n\nRacking a SKU is an SPV decision. Staff may do it only from the inbound flow,\nfor a known SKU that arrived at a hub where it has no rack yet — the audit\nrow marks it, so the SPV can move it later.",
+        "description": "Bind a SKU to a basket. One SKU per basket, one slot per SKU per site:\nboth enforced by unique constraint, not only by this check (M2.2.2).\n\nRacking a SKU is an SPV decision. Staff may do it only from the inbound flow,\nfor a known SKU that arrived at a hub where it has no rack yet: the audit\nrow marks it, so the SPV can move it later.",
         "operationId": "assign_slot_api_slots_post",
         "parameters": [
           {
@@ -2921,6 +2921,343 @@
         }
       }
     },
+    "/api/inbound/receipts/{receipt_id}/manual-count": {
+      "post": {
+        "tags": [
+          "inbound"
+        ],
+        "summary": "Mode manual: the units of one product counted by hand and typed, blind (the",
+        "description": "Mode manual: the units of one product counted by hand and typed, blind (the\nscreen never shows the expected number). Booked in one go, like that many\nscans: good units into the product's temporary bin (a first unit gets an\nempty bin, named in the answer; the tap *Sudah di bin sementara* replaces the\nlabel scan); units above the expected quantity stay in the same bin, held for\nOps HQ (qty_hold), so the answer does not give the expected number away.\nDamaged units follow the *Rusak* path (quarantine tray or back to the driver,\na difference for Ops HQ). Marks the receipt manual (inbound_receipts.manual_mode).\nOnly while Mode manual is on at the dark store.",
+        "operationId": "manual_count_api_inbound_receipts__receipt_id__manual_count_post",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Receipt Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualCountIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualCountResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inbound/receipts/{receipt_id}/manual-count/undo": {
+      "post": {
+        "tags": [
+          "inbound"
+        ],
+        "summary": "*Batalkan ketikan terakhir*: takes back your own last typed entry as a whole",
+        "description": "*Batalkan ketikan terakhir*: takes back your own last typed entry as a whole\n(good, held and damaged units), while its temporary bin is still being filled.\nWorks after Mode manual has ended too, so a wrong number can be corrected.",
+        "operationId": "manual_count_undo_api_inbound_receipts__receipt_id__manual_count_undo_post",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Receipt Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualUndoIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualCountResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inbound/receipts/{receipt_id}/count-lock": {
+      "post": {
+        "tags": [
+          "inbound"
+        ],
+        "summary": "Mode manual: step 3 (*Cek selisih*) is opened, so the count is locked before",
+        "description": "Mode manual: step 3 (*Cek selisih*) is opened, so the count is locked before\nthe differences show: no unit is added or taken back (typed or scanned) until\nan SPV reopens it (/count-reopen). Only for a receipt counted in Mode manual\n(a scanned receipt comes back unchanged); calling it again changes nothing.",
+        "operationId": "count_lock_api_inbound_receipts__receipt_id__count_lock_post",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Receipt Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inbound/receipts/{receipt_id}/count-reopen": {
+      "post": {
+        "tags": [
+          "inbound"
+        ],
+        "summary": "*Hitung ulang* (SPV and up): opens a locked Mode manual count again, with a",
+        "description": "*Hitung ulang* (SPV and up): opens a locked Mode manual count again, with a\nwritten reason, recorded with who and when. The count is blind again for the\nstaff until step 3 locks it once more.",
+        "operationId": "count_reopen_api_inbound_receipts__receipt_id__count_reopen_post",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Receipt Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/CountReopenIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/inbound/loads/{load_id}/bin-label": {
       "post": {
         "tags": [
@@ -2982,6 +3319,81 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoadOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inbound/loads/{load_id}/bin-confirm": {
+      "post": {
+        "tags": [
+          "inbound"
+        ],
+        "summary": "Mode manual: *Sudah di bin sementara* tapped instead of the label scan",
+        "description": "Mode manual: *Sudah di bin sementara* tapped instead of the label scan.\nOnly while Mode manual is on; recorded as manual.",
+        "operationId": "confirm_bin_manual_api_inbound_loads__load_id__bin_confirm_post",
+        "parameters": [
+          {
+            "name": "load_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Load Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3476,7 +3888,7 @@
           "inbound"
         ],
         "summary": "*Pindai label bin* at the rack: the units become stock in that bin, sellable,",
-        "description": "*Pindai label bin* at the rack: the units become stock in that bin, sellable,\nand the new stock goes to Hiryu (ledger receipt_in, the pos_outbox path).\nThe rack bin must be one of the product's bins at this hub.",
+        "description": "*Pindai label bin* at the rack: the units become stock in that bin, sellable,\nand the new stock goes to Hiryu (ledger receipt_in, the pos_outbox path).\nThe rack bin must be one of the product's bins at this hub. Mode manual\n(manual=true): *Sudah ditaruh di bin* tapped instead of the scan, accepted\nonly while Mode manual is on, and recorded as manual.",
         "operationId": "put_away_api_inbound_loads__load_id__putaway_post",
         "parameters": [
           {
@@ -4023,6 +4435,89 @@
                 "schema": {
                   "$ref": "#/components/schemas/ReceiptOut"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inbound/receipts/{receipt_id}/paperwork": {
+      "post": {
+        "tags": [
+          "inbound"
+        ],
+        "summary": "The two ticks of step 4 (quantities written, Surat Jalan signed), kept on the",
+        "description": "The two ticks of step 4 (quantities written, Surat Jalan signed), kept on the\nreceipt with who ticked, so changing phones keeps them.",
+        "operationId": "paperwork_api_inbound_receipts__receipt_id__paperwork_post",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Receipt Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaperworkIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -5072,7 +5567,7 @@
           "outbound"
         ],
         "summary": "Pindai label keranjang (board 6b): the picker takes an empty outbound",
-        "description": "Pindai label keranjang (board 6b): the picker takes an empty outbound\nbasket and scans it. This starts the order (the 2-minute rule is met) and\nthe basket belongs to the order until Selesai dikemas, or until a cancelled\norder's units are back on the rack. Only the holder. Scanning the order's\nown basket again (after Pindahkan) just starts it for the new holder.",
+        "description": "Pindai label keranjang (board 6b): the picker takes an empty outbound\nbasket and scans it. This starts the order (the 2-minute rule is met) and\nthe basket belongs to the order until Selesai dikemas, or until a cancelled\norder's units are back on the rack. Only the holder. Scanning the order's\nown basket again (after Pindahkan) just starts it for the new holder.\n\n`manual`: tapped from the list of free baskets (Mode manual), only while\nthe dark store is in it; the same checks, and the audit says so.",
         "operationId": "scan_basket_api_pick_tasks__task_id__basket_post",
         "parameters": [
           {
@@ -5307,7 +5802,7 @@
           "outbound"
         ],
         "summary": "Confirm a pick by scanning — blocks the wrong shade before it reaches the bag",
-        "description": "The shade-confusion gate. Shade 07 versus 08 is caught here and nowhere else.\n\nA wrong scan is blocking, with no staff-level override — an override that\nexists gets used, and then the gate has no value (M5.2.5, and E13 in §15).",
+        "description": "The shade-confusion gate. Shade 07 versus 08 is caught here and nowhere else.\n\nA wrong scan is blocking, with no staff-level override. An override that\nexists gets used, and then the gate has no value (M5.2.5, and E13 in §15).\n\n`manual` (Mode manual, V32): the dark store's scanners are broken, so the\npicker taps once per unit after matching it to the photo. Only while\nmanual_mode.active() for the order's dark store, else 409. It books\nexactly one unit like a scan, adds it to pick_lines.manual_units, and the\nledger and the audit mark it manual.",
         "operationId": "confirm_pick_api_pick_lines__line_id__confirm_post",
         "parameters": [
           {
@@ -5357,7 +5852,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PickConfirmIn"
+                "$ref": "#/components/schemas/PickConfirmV2In"
               }
             }
           }
@@ -5392,7 +5887,7 @@
           "outbound"
         ],
         "summary": "Finish a pick task and hand the order to the packing station",
-        "description": "Serahkan ke meja packing: the picker hands the basket to the pack bench.\n\nThis is \"Waiting to pack\" (§6.11), not \"ready\": nothing goes to Hiryu from\nhere any more. Message 4 (order_ready) is queued when the packer taps\nSelesai dikemas (routers/hiryu.py, `packed`). The picker is free the moment\nthis commits and the WMS gives them the next order.",
+        "description": "Serahkan ke meja kemas: the picker hands the basket to the pack bench.\n\nThis is \"Waiting to pack\" (§6.11), not \"ready\": nothing goes to Hiryu from\nhere any more. Message 4 (order_ready) is queued when the packer taps\nSelesai dikemas (routers/hiryu.py, `packed`). The picker is free the moment\nthis commits and the WMS gives them the next order.",
         "operationId": "complete_task_api_pick_tasks__task_id__complete_post",
         "parameters": [
           {
@@ -5672,7 +6167,7 @@
           "outbound"
         ],
         "summary": "Hand a held order back to the queue",
-        "description": "Hand a held order back to the queue.\n\nAnyone may release their own; releasing someone else's needs supervisor,\nbecause it takes work off a colleague who may simply be walking back from\nthe far rack. The order is given out again at once (§6.2), to the free\npicker waiting longest. The SPV's usual tool is Pindahkan (`reassign`),\nwhich names who gets it.\n\nLines already picked keep their progress — the stock has physically moved\nand the ledger says so. The next picker resumes at the first pending line\nrather than starting the order again.",
+        "description": "Hand a held order back to the queue.\n\nBerhenti ambil pesanan ini (the holder, board 6c): any time, also after\nthe first scan. Once started, a reason is required; it goes to the audit\nand to reassign_note, so the SPV's queue board says \"Dilepas oleh Rina:\nHP bermasalah\". The picker goes to Istirahat, not ready, so the same\norder is not handed straight back to them.\n\nReleasing someone else's needs supervisor, because it takes work off a\ncolleague who may simply be walking back from the far rack. The SPV's\nusual tool is Pindahkan (`reassign`), which names who gets it.\n\nThe order is given out again at once (§6.2). Lines already picked keep\ntheir progress: the stock has physically moved and the ledger says so.\nThe basket stays with the order when units are in it; the next picker is\nasked to scan that basket (board 6b) and resumes at the first line still\nto pick. A basket with nothing in it is let go, and the next picker takes\nany free one.",
         "operationId": "release_task_api_pick_tasks__task_id__release_post",
         "parameters": [
           {
@@ -5917,7 +6412,7 @@
           "outbound"
         ],
         "summary": "Barang tidak ada (board 6d)",
-        "description": "Barang tidak ada (board 6d). The picker looked in the bin and in every\nother place the WMS listed (/elsewhere) and says how many were there.\n\n  1. Every bin checked holds what the picker found (an unsigned write-off,\n     decided 30 Sep) and goes on the next count (bin_count_flags); Hiryu\n     hears the new stock (message 3) from the ledger.\n  2. The WMS follows the customer's instruction from message 1:\n     * replace: the line keeps what was found, and the replacement SKU and\n       units are added as a pick line at its bin, next in the walk. Message\n       5 `replaced` is queued when the replacement is in the basket;\n     * remove: the line keeps what was found, message 5 `removed`, go on;\n     * cancel_order, contact_customer or no instruction, an unknown\n       replacement, or a replacement that is itself missing: message 5\n       `cancel_order` and the whole order is cancelled here and now (holds\n       released, units already picked to Kembalikan ke rak). Hiryu then\n       cancels with 2001 and its message 2 finds it already cancelled.\n  3. pick_shortfalls names the picker and keeps what was done, for the SPV\n     (Perlu tindakan).\n\nFound units stay in the order when it goes on (they are scanned as usual);\nwhen it is cancelled they stay in the bin.",
+        "description": "Barang tidak ada (board 6d). The picker looked in the bin and in every\nother place the WMS listed (/elsewhere). From 8 Oct the phone scans every\nunit it finds (a normal pick confirm), so it sends qty_found 0 for the\nrest and each other place marked empty with 0. A typed count still works.\n\n  1. Every bin checked holds what the picker found (an unsigned write-off,\n     decided 30 Sep) and goes on the count (bin_count_flags, and today's\n     count plan through opname.add_missing_check); Hiryu hears the new\n     stock (message 3) from the ledger. Units scanned before this have\n     already left the bin and released their hold, so only the rest of\n     the hold is released here.\n  2. The WMS follows the customer's instruction from message 1:\n     * replace: the line keeps what was found, and the replacement SKU and\n       units are added as a pick line at its bin, next in the walk. Message\n       5 `replaced` is queued when the replacement is in the basket;\n     * remove: the line keeps what was found, message 5 `removed`, go on;\n     * cancel_order, contact_customer or no instruction, an unknown\n       replacement, or a replacement that is itself missing: message 5\n       `cancel_order` and the whole order is cancelled here and now (holds\n       released, units already picked to Kembalikan ke rak). Hiryu then\n       cancels with 2001 and its message 2 finds it already cancelled.\n  3. pick_shortfalls names the picker and keeps what was done, for the SPV\n     (Perlu tindakan).\n\nFound units stay in the order when it goes on (they are scanned as usual);\nwhen it is cancelled they stay in the bin.",
         "operationId": "declare_short_api_pick_lines__line_id__short_post",
         "parameters": [
           {
@@ -5979,6 +6474,91 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ShortPickV2Result"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pick-lines/{line_id}/damaged": {
+      "post": {
+        "tags": [
+          "outbound"
+        ],
+        "summary": "Barang rusak (board 6c): the picker found the unit, but it is damaged or",
+        "description": "Barang rusak (board 6c): the picker found the unit, but it is damaged or\nleaking. One unit per report, scanned, like every pick.\n\n  1. The unit goes to the quarantine tray (agent C's report_in_hub): it\n     leaves the bin's stock now, and Hiryu hears the lower number\n     (message 3). If the bin had no free unit on record, the quarantine\n     row is written without a ledger move and the bin goes on the count.\n  2. This line's hold on that unit is released first, then a good unit is\n     held again: from the same bin if one is free there (same_bin), else\n     from another place as a new pick line next in the walk (other_bin).\n  3. No free unit anywhere: Barang tidak ada for one unit, without writing\n     any bin off, and the customer's instruction is followed (short).\n\nThe order on Grab does not change in 1 and 2, so no message 5 then.\n\n`manual` (Mode manual, V32), only while the dark store is in it: no code\nmeans the picker confirmed the damaged unit from this bin by a tap (Mode B:\nthe oldest in_stock label in the bin, as a pick would take), and the tray\nwas tapped from the list. The audit marks it manual.",
+        "operationId": "report_damaged_api_pick_lines__line_id__damaged_post",
+        "parameters": [
+          {
+            "name": "line_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Line Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_report_damaged_api_pick_lines__line_id__damaged_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DamagedResult"
                 }
               }
             }
@@ -6762,7 +7342,7 @@
           "stock opname"
         ],
         "summary": "Scan a unit into the count",
-        "description": "Scan a unit into the count.\n\nA foreign SKU is recorded, not rejected — finding the wrong product in a\nbasket is a real and common outcome, and a system that refuses to hear it\njust loses the information (M6.2.5).",
+        "description": "Scan a unit into the count.\n\nA foreign SKU is recorded, not rejected: finding the wrong product in a\nbasket is a real and common outcome, and a system that refuses to hear it\njust loses the information (M6.2.5).",
         "operationId": "count_scan_api_opname_sessions__session_id__scan_post",
         "parameters": [
           {
@@ -6846,8 +7426,8 @@
         "tags": [
           "stock opname"
         ],
-        "summary": "Reveal expected vs counted",
-        "description": "Reveal expected vs counted — but a mismatch is recounted first.\n\nPRD 11.2.5: on a first mismatch the counter is told only that the count does\nnot match; the tally resets and they count the basket again. The system\nnumber is revealed after the second count, whatever it says. Asking for a\nrecount AFTER showing the number would defeat the blind count.",
+        "summary": "Reveal expected vs counted, but a mismatch is recounted first",
+        "description": "Reveal expected vs counted, but a mismatch is recounted first.\n\nPRD 11.2.5: on a first mismatch the counter is told only that the count does\nnot match; the tally resets and they count the basket again. The system\nnumber is revealed after the second count, whatever it says. Asking for a\nrecount AFTER showing the number would defeat the blind count.",
         "operationId": "finish_session_api_opname_sessions__session_id__finish_post",
         "parameters": [
           {
@@ -7577,7 +8157,7 @@
           "stock opname"
         ],
         "summary": "Scan the bin label: the count starts and the bin is locked for picking",
-        "description": "Scan the bin label: the count starts and the bin is locked for picking.\nThe expected number is never returned.",
+        "description": "Scan the bin label: the count starts and the bin is locked for picking.\nThe expected number is never returned. Mode manual (manual=true): the bin is\ntapped instead, the attempt starts as a count without scanning (method\n'blind') and the start is recorded as manual.",
         "operationId": "start_count_api_counts_start_post",
         "parameters": [
           {
@@ -7806,7 +8386,7 @@
           "stock opname"
         ],
         "summary": "Batalkan pindaian terakhir",
-        "description": "Batalkan pindaian terakhir.",
+        "description": "Batalkan pindaian terakhir. Sent again after a lost connection, the same key\nreplays the first answer instead of taking back a second scan.",
         "operationId": "undo_last_scan_api_counts_attempts__attempt_id__undo_post",
         "parameters": [
           {
@@ -7851,6 +8431,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/CountUndoIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -12624,7 +13221,7 @@
           "returns"
         ],
         "summary": "One unit back on the shelf",
-        "description": "One unit back on the shelf. Scan-verified, no override. With bin_code\n(board 6k) the bin label must be the task's bin.",
+        "description": "One unit back on the shelf. Scan-verified, no override. With bin_code\n(board 6k) the bin label must be the task's bin. With manual (Mode manual,\nonly while it is on) there is no code: the picker tapped the unit in the\nlist and confirmed the bin by a tap (or scanned only the bin).",
         "operationId": "scan_return_api_returns__task_id__scan_post",
         "parameters": [
           {
@@ -13112,8 +13709,8 @@
         "tags": [
           "racks"
         ],
-        "summary": "Stack a second bin on every position of a level, or take it away",
-        "description": "Stack a second bin on every position of a level, or take it away.\n\nTwo bins: the bin already there becomes the Bottom (...B) and a Top (...T) is\nadded above it. Back to one: the Top bins are removed -- refused while any\nholds a SKU or ever held stock -- and the Bottom bins get their plain code\nback. Bins are referenced by id everywhere, so a new code loses nothing.",
+        "summary": "Make every position of a level hold the same number of stacked bins (1 to 3)",
+        "description": "Make every position of a level hold the same number of stacked bins (1 to 3).\n\nMore: the bins already there stay where they are and new ones are stacked\non top. Fewer: the highest bins are removed (refused while any holds a SKU\nor ever held stock). Every bin then gets the code its stack needs: plain\nfor one bin, ...B and ...T for two, ...B, ...M and ...T for three. Bins are\nreferenced by id everywhere, so a new code loses nothing. Per position\nstacks are set with the rack builder (PUT /racks/{id}/build).",
         "operationId": "set_bin_rows_api_levels__level_id__bin_rows_put",
         "parameters": [
           {
@@ -13507,8 +14104,8 @@
         "tags": [
           "racks"
         ],
-        "summary": "Where one SKU lives, hub by hub",
-        "description": "Where one SKU lives, hub by hub — and which hubs still need to rack it.",
+        "summary": "Where one SKU lives, hub by hub, and which hubs still need to rack it",
+        "description": "Where one SKU lives, hub by hub, and which hubs still need to rack it.",
         "operationId": "sku_racks_api_skus__sku_id__racks_get",
         "parameters": [
           {
@@ -18104,8 +18701,8 @@
         "tags": [
           "hiryu"
         ],
-        "summary": "Sudah dibawa kembali ke meja packing (§7.2.4, §8.2 step 3): a bag (or a",
-        "description": "Sudah dibawa kembali ke meja packing (§7.2.4, §8.2 step 3): a bag (or a\nbasket at the bench) whose order was cancelled is back at the pack bench to\nbe unpacked. Clears its red row; its units are already on Kembalikan ke rak.",
+        "summary": "Sudah dibawa kembali ke meja kemas (§7.2.4, §8.2 step 3): a bag (or a",
+        "description": "Sudah dibawa kembali ke meja kemas (§7.2.4, §8.2 step 3): a bag (or a\nbasket at the bench) whose order was cancelled is back at the pack bench to\nbe unpacked. Clears its red row; its units are already on Kembalikan ke rak.",
         "operationId": "back_to_bench_api_hiryu_orders__order_id__back_to_bench_post",
         "parameters": [
           {
@@ -18330,7 +18927,7 @@
           "hiryu"
         ],
         "summary": "Everything at this hub the pack bench and the handover table must act on:",
-        "description": "Everything at this hub the pack bench and the handover table must act on:\n\n  * stage waiting / picking: not yet at the bench (shown for context);\n  * to_pack (Siap dikemas): handed to the pack bench, not packed;\n  * to_driver (Menunggu driver, board 6i): packed, not handed over, with\n    its wait, its pack (1 kantong kertas) and amber past the limit;\n  * cancelled: a basket at the bench or a packed bag whose order was\n    cancelled before it left. Red, until someone taps\n    Sudah dibawa kembali ke meja packing (`back-to-bench`).\n\nHanded-over orders drop off. Two days back at most, so orders from before\nthis screen existed do not linger.",
+        "description": "Everything at this hub the pack bench and the handover table must act on:\n\n  * stage waiting / picking: not yet at the bench (shown for context);\n  * to_pack (Siap dikemas): handed to the pack bench, not packed;\n  * to_driver (Menunggu driver, board 6i): packed, not handed over, with\n    its wait, its pack (1 kantong kertas) and amber past the limit;\n  * cancelled: a basket at the bench or a packed bag whose order was\n    cancelled before it left. Red, until someone taps\n    Sudah dibawa kembali ke meja kemas (`back-to-bench`).\n\nHanded-over orders drop off. Two days back at most, so orders from before\nthis screen existed do not linger.",
         "operationId": "active_orders_api_hiryu_active_orders_get",
         "parameters": [
           {
@@ -20984,6 +21581,70 @@
         }
       }
     },
+    "/api/reports/today": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Hari ini: one line per dark store the person may see, for the strip on",
+        "description": "Hari ini: one line per dark store the person may see, for the strip on\nPerlu tindakan (Ops HQ and the Ops Head see every dark store). Orders\nplaced today (WIB, tests left out), how many were ready within the Grab\ntarget, how many are late right now (not ready and past the target), and\ncancels for a missing item.",
+        "operationId": "today_api_reports_today_get",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/reports/end-of-day": {
       "get": {
         "tags": [
@@ -22087,8 +22748,8 @@
         "tags": [
           "pickers"
         ],
-        "summary": "Saya di meja packing: shown as Packer on the queue board (6j) and never",
-        "description": "Saya di meja packing: shown as Packer on the queue board (6j) and never\ngiven an order. Opening a pack or tapping Selesai dikemas also sets it\nfor someone who was off.",
+        "summary": "Saya di meja kemas: shown as Packer on the queue board (6j) and never",
+        "description": "Saya di meja kemas: shown as Packer on the queue board (6j) and never\ngiven an order. Opening a pack or tapping Selesai dikemas also sets it\nfor someone who was off.",
         "operationId": "at_pack_bench_api_pickers_pack_post",
         "parameters": [
           {
@@ -22664,6 +23325,380 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ResetPlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/demo/delivery": {
+      "get": {
+        "tags": [
+          "demo"
+        ],
+        "summary": "Kiriman demo: the latest demo delivery at this dark store (reference,",
+        "description": "Kiriman demo: the latest demo delivery at this dark store (reference,\nbrand PO, lines, status) and whether a new one can be made now.",
+        "operationId": "demo_delivery_state_api_demo_delivery_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoDeliveryState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "demo"
+        ],
+        "summary": "Kiriman demo baru (SPV and above, only in Mode demo): a fresh Labore",
+        "description": "Kiriman demo baru (SPV and above, only in Mode demo): a fresh Labore\nrestock request at this dark store, already confirmed, as if Ops HQ had\nmade the request, sent it and recorded the brand's answer. The reference\ncomes from the normal numbering (RPL-<hub>-<yymm>-<nnn>), the brand PO\nnumber is always PO/LBR/DEMO, the lines are LBR-0001 x3, LBR-0016 x2 and\nLBR-0019 x2 confirmed, arriving today.\n\nOnly one is open at a time: an earlier demo delivery here that is not\nreceived yet is cancelled the normal way (it leaves the lists); one being\nreceived (a receipt open on it) refuses this. No Hiryu message: a restock\nrequest sends none.",
+        "operationId": "new_demo_delivery_api_demo_delivery_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliveryIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoDeliveryState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/demo/needs-bin": {
+      "get": {
+        "tags": [
+          "demo"
+        ],
+        "summary": "Contoh: produk tanpa bin",
+        "description": "Contoh: produk tanpa bin. The current example at this dark store (the\nproduct, its bin size, the bin it had, and whether it is still in Perlu bin\nor already has a bin), and whether Mode demo allows setting up or putting back.",
+        "operationId": "needs_bin_state_api_demo_needs_bin_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeedsBinState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "demo"
+        ],
+        "summary": "Siapkan contoh (SPV and above, only in Mode demo): take one reference",
+        "description": "Siapkan contoh (SPV and above, only in Mode demo): take one reference\nproduct off its rack bin so it appears in Rak & bin, Perlu bin, and the\ntrainer can give it a bin again. Never a made-up product: first one of\nDEMO_NEEDS_BIN, then any other product whose bin is empty.\n\nIt must be safe to leave its bin: one primary bin and no other slot, no\nstock anywhere else, nothing held (qty_allocated 0), no open order or pick\nline, count task or count flag, no item waiting to go back to the rack or in\nquarantine, nothing on an unfinished delivery, restock request or transfer.\nA reference product's units in the bin are taken out first as an audited\nstock correction (reason demo_needs_bin) so that the bin holds 0 units; Put it\nback returns them. The slot is removed (the bin becomes free), audited as\ndemo_needs_bin with everything needed to restore it. Already set up and still\nwithout a bin: nothing changes and the same product comes back. If the\nearlier example was given a bin meanwhile, its units are returned to that bin\nfirst and the next reference product is used.",
+        "operationId": "needs_bin_setup_api_demo_needs_bin_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NeedsBinIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeedsBinState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/demo/needs-bin/reset": {
+      "post": {
+        "tags": [
+          "demo"
+        ],
+        "summary": "Kembalikan seperti semula (SPV and above, only in Mode demo): the example",
+        "description": "Kembalikan seperti semula (SPV and above, only in Mode demo): the example\nproduct gets its original bin back when it still has none and that bin is\nfree (409 when another product took it). If someone gave it a bin during the\ndemo, that bin stays. The units the set-up took out go back into its bin\nwhen the product holds no stock. Audited as demo_needs_bin_reset.",
+        "operationId": "needs_bin_reset_api_demo_needs_bin_reset_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NeedsBinIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeedsBinState"
                 }
               }
             }
@@ -24024,7 +25059,7 @@
           "quarantine and returns"
         ],
         "summary": "Step 1 of Laporkan masalah: the product scanned and the bins it can come",
-        "description": "Step 1 of Laporkan masalah: the product scanned and the bins it can come\nfrom (free units), the first one proposed.",
+        "description": "Step 1 of Laporkan masalah: the product scanned and the bins it can come\nfrom (free units), the first one proposed. Mode manual: the product picked\nfrom the list (sku_id) instead of scanned, only while Mode manual is on.",
         "operationId": "lookup_unit_api_quarantine_lookup_get",
         "parameters": [
           {
@@ -24039,10 +25074,33 @@
           {
             "name": "code",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "Code"
+            }
+          },
+          {
+            "name": "sku_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sku Id"
             }
           },
           {
@@ -24106,7 +25164,7 @@
           "quarantine and returns"
         ],
         "summary": "Laporkan masalah: the unit leaves sellable stock at once, Hiryu gets the",
-        "description": "Laporkan masalah: the unit leaves sellable stock at once, Hiryu gets the\nlower number, and the SPV gets it to decide. Reason driver_rusak (a parcel\nthe driver brought back damaged) takes no bin: those units left the stock\nwhen they were picked.",
+        "description": "Laporkan masalah: the unit leaves sellable stock at once, Hiryu gets the\nlower number, and the SPV gets it to decide. Reason driver_rusak (a parcel\nthe driver brought back damaged) takes no bin: those units left the stock\nwhen they were picked. Mode manual (manual=true): the product comes from the\nlist, the bin from the list and the tray by a tap; accepted only while Mode\nmanual is on and recorded as manual. A report sent again with the same\nidempotency key is answered from the first one.",
         "operationId": "report_problem_api_quarantine_report_post",
         "parameters": [
           {
@@ -24940,6 +25998,96 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ReturnScanIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/returns-to-brand/{note_id}/tap-all": {
+      "post": {
+        "tags": [
+          "quarantine and returns"
+        ],
+        "summary": "Mode manual: *Semua unit sudah dihitung keluar*",
+        "description": "Mode manual: *Semua unit sudah dihitung keluar*. Every line of the note is\ncounted out in front of the driver by hand and confirmed with one tap instead\nof a scan per unit. Only while Mode manual is on; recorded as manual. The\ndriver still ticks the lines and signs (/handover).",
+        "operationId": "tap_out_note_api_returns_to_brand__note_id__tap_all_post",
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ReturnTapIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -26852,6 +28000,149 @@
         }
       }
     },
+    "/api/manual-mode": {
+      "get": {
+        "tags": [
+          "mode manual"
+        ],
+        "summary": "Get State",
+        "operationId": "get_state_api_manual_mode_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          },
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "mode manual"
+        ],
+        "summary": "Set State",
+        "operationId": "set_state_api_manual_mode_put",
+        "parameters": [
+          {
+            "name": "x-forwarded-email",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-Email"
+            }
+          },
+          {
+            "name": "x-view-as",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-View-As"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualModeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/hiryu/v1/orders": {
       "post": {
         "tags": [
@@ -28498,7 +29789,7 @@
           "bin_rows": {
             "type": "integer",
             "title": "Bin Rows",
-            "description": "1, or 2 stacked bins at every position (Bottom ...B, Top ...T)",
+            "description": "1, or 2 to 3 stacked bins at every position (Bottom ...B, Middle ...M, Top ...T)",
             "default": 1
           }
         },
@@ -28529,7 +29820,7 @@
           "bin_rows": {
             "type": "integer",
             "title": "Bin Rows",
-            "description": "1, or 2 stacked bins at every position (Bottom ...B, Top ...T)",
+            "description": "1, or 2 to 3 stacked bins at every position (Bottom ...B, Middle ...M, Top ...T)",
             "default": 1
           }
         },
@@ -28802,6 +30093,12 @@
             "minLength": 1,
             "title": "Code",
             "description": "The scanned or typed basket label"
+          },
+          "manual": {
+            "type": "boolean",
+            "title": "Manual",
+            "description": "Tapped from the list of free baskets (Mode manual) instead of scanned",
+            "default": false
           }
         },
         "type": "object",
@@ -29055,7 +30352,7 @@
           "bin_rows": {
             "type": "integer",
             "title": "Bin Rows",
-            "description": "1, or 2 stacked bins per position (Bottom ...B, Top ...T)"
+            "description": "1, or 2 to 3 stacked bins per position (Bottom ...B, Middle ...M, Top ...T)"
           }
         },
         "type": "object",
@@ -29253,6 +30550,67 @@
         ],
         "title": "Body_raise_request_api_sku_requests_post"
       },
+      "Body_report_damaged_api_pick_lines__line_id__damaged_post": {
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code",
+            "description": "The damaged unit's barcode or label, as scanned; empty with manual"
+          },
+          "tray_code": {
+            "type": "string",
+            "title": "Tray Code",
+            "description": "The quarantine tray label scanned (MA5-QR-01), or the tray tapped from the list with manual"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "rusak | bocor",
+            "default": "rusak"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "manual": {
+            "type": "boolean",
+            "title": "Manual",
+            "description": "Mode manual: the unit (when no code) and the tray confirmed by a tap",
+            "default": false
+          },
+          "photo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "contentMediaType": "application/octet-stream"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tray_code"
+        ],
+        "title": "Body_report_damaged_api_pick_lines__line_id__damaged_post"
+      },
       "Body_report_problem_api_quarantine_report_post": {
         "properties": {
           "site_id": {
@@ -29338,6 +30696,23 @@
             ],
             "title": "Order Ref",
             "description": "Reason driver_rusak: the GM number"
+          },
+          "manual": {
+            "type": "boolean",
+            "title": "Manual",
+            "description": "Mode manual: product, bin and tray chosen by tap",
+            "default": false
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
           },
           "photo": {
             "anyOf": [
@@ -30601,6 +31976,25 @@
         "type": "object",
         "title": "CountRecountIn"
       },
+      "CountReopenIn": {
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason",
+            "description": "Why the count is opened again (at least 10 characters)"
+          }
+        },
+        "type": "object",
+        "title": "CountReopenIn"
+      },
       "CountScanIn": {
         "properties": {
           "code": {
@@ -30635,6 +32029,12 @@
             "type": "string",
             "title": "Bin Code",
             "description": "The bin label as scanned or typed (A-1-02 or MA5-A-1-02)"
+          },
+          "manual": {
+            "type": "boolean",
+            "title": "Manual",
+            "description": "Mode manual: the bin tapped in Bin saya, no label scan. Only while Mode manual is on; the count is typed (blind) and waits for the SPV.",
+            "default": false
           }
         },
         "type": "object",
@@ -30643,6 +32043,23 @@
           "bin_code"
         ],
         "title": "CountStartIn"
+      },
+      "CountUndoIn": {
+        "properties": {
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          }
+        },
+        "type": "object",
+        "title": "CountUndoIn"
       },
       "CycleIn": {
         "properties": {
@@ -30697,6 +32114,91 @@
           "every_n"
         ],
         "title": "CycleIn"
+      },
+      "DamagedResult": {
+        "properties": {
+          "accepted": {
+            "type": "boolean",
+            "title": "Accepted",
+            "default": true
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "same_bin (take another from the same bin) | other_bin (a new pick line at another bin) | short (no good unit left: the customer's instruction, see `short`)"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id",
+            "description": "The quarantine row"
+          },
+          "tray_code": {
+            "type": "string",
+            "title": "Tray Code"
+          },
+          "location_short": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Short",
+            "description": "Where the good unit is"
+          },
+          "location_words": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Words"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "short": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShortPickV2Result"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "task": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PickTaskV2"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "outcome",
+          "tray_code",
+          "message"
+        ],
+        "title": "DamagedResult",
+        "description": "Barang rusak (board 6c): the damaged unit is in quarantine; where the\ngood unit comes from now."
       },
       "DayColor": {
         "properties": {
@@ -30962,6 +32464,20 @@
         ],
         "title": "Delivery"
       },
+      "DeliveryIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "site_id"
+        ],
+        "title": "DeliveryIn"
+      },
       "DeliveryList": {
         "properties": {
           "today": {
@@ -31050,6 +32566,207 @@
         "additionalProperties": false,
         "type": "object",
         "title": "DemoCancelIn"
+      },
+      "DemoDelivery": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "brand_po_number": {
+            "type": "string",
+            "title": "Brand Po Number"
+          },
+          "brand_name": {
+            "type": "string",
+            "title": "Brand Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "eta_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta Date"
+          },
+          "receipt_open": {
+            "type": "boolean",
+            "title": "Receipt Open",
+            "description": "A receipt is open on it (mid-receipt)"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/DemoDeliveryLine"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "units": {
+            "type": "integer",
+            "title": "Units"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "brand_po_number",
+          "brand_name",
+          "status",
+          "receipt_open",
+          "lines",
+          "units"
+        ],
+        "title": "DemoDelivery"
+      },
+      "DemoDeliveryLine": {
+        "properties": {
+          "sku_code": {
+            "type": "string",
+            "title": "Sku Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "qty_confirmed": {
+            "type": "integer",
+            "title": "Qty Confirmed"
+          },
+          "qty_received": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qty Received"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_code",
+          "name",
+          "qty_confirmed"
+        ],
+        "title": "DemoDeliveryLine"
+      },
+      "DemoDeliveryState": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "demo_mode": {
+            "type": "boolean",
+            "title": "Demo Mode"
+          },
+          "brand_po_number": {
+            "type": "string",
+            "title": "Brand Po Number",
+            "default": "PO/LBR/DEMO"
+          },
+          "planned": {
+            "items": {
+              "$ref": "#/components/schemas/DemoDeliveryLine"
+            },
+            "type": "array",
+            "title": "Planned",
+            "description": "What a new one carries"
+          },
+          "delivery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DemoDelivery"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The latest demo delivery at this dark store, not cancelled"
+          },
+          "can_create": {
+            "type": "boolean",
+            "title": "Can Create"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Problems",
+            "description": "Indonesian / English"
+          },
+          "closed": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Closed",
+            "description": "Earlier demo deliveries this press cancelled"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "demo_mode",
+          "planned",
+          "can_create"
+        ],
+        "title": "DemoDeliveryState"
       },
       "DemoItem": {
         "properties": {
@@ -32717,6 +34434,19 @@
             ],
             "title": "Sj Signed By",
             "description": "Email of who signed the SJ; default the caller"
+          },
+          "no_photo_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "No Photo Reason",
+            "description": "SPV and up: finish without the missing photos (camera blocked, phone full). At least 10 characters."
           }
         },
         "type": "object",
@@ -32883,7 +34613,7 @@
           "bin_rows": {
             "type": "integer",
             "title": "Bin Rows",
-            "description": "1, or 2 stacked bins at every position (Bottom ...B, Top ...T)",
+            "description": "1, or 2 to 3 stacked bins at every position (Bottom ...B, Middle ...M, Top ...T)",
             "default": 1
           },
           "open_shelf_levels": {
@@ -34342,7 +36072,38 @@
           "bin_row": {
             "type": "integer",
             "title": "Bin Row",
+            "description": "1 = the only or Bottom bin, then upwards",
             "default": 1
+          },
+          "stack_rows": {
+            "type": "integer",
+            "title": "Stack Rows",
+            "description": "Bins stacked at this position (1 = a single bin, up to 3)",
+            "default": 1
+          },
+          "stack_word": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stack Word",
+            "description": "bawah | tengah | atas for a stacked bin, else null"
+          },
+          "stack_word_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stack Word En",
+            "description": "bottom | middle | top for a stacked bin, else null"
           },
           "basket_id": {
             "anyOf": [
@@ -34493,6 +36254,7 @@
           "bin_rows": {
             "type": "integer",
             "title": "Bin Rows",
+            "description": "The highest stack on the level (1 = no stacked bins)",
             "default": 1
           },
           "bins": {
@@ -34627,6 +36389,28 @@
             "type": "boolean",
             "title": "Has Barcode",
             "default": true
+          },
+          "photo_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Key"
+          },
+          "unit_size": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Size"
           },
           "qty_expected": {
             "anyOf": [
@@ -35665,6 +37449,12 @@
             "type": "integer",
             "title": "Position No"
           },
+          "bin_row": {
+            "type": "integer",
+            "title": "Bin Row",
+            "description": "1 = the only or Bottom bin of a stack, then upwards",
+            "default": 1
+          },
           "basket_id": {
             "anyOf": [
               {
@@ -35776,6 +37566,208 @@
           "found"
         ],
         "title": "LookupResult"
+      },
+      "ManualCountIn": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "good": {
+            "type": "integer",
+            "maximum": 9999.0,
+            "minimum": 0.0,
+            "title": "Good",
+            "description": "Good units counted",
+            "default": 0
+          },
+          "damaged": {
+            "type": "integer",
+            "maximum": 9999.0,
+            "minimum": 0.0,
+            "title": "Damaged",
+            "description": "Damaged units counted",
+            "default": 0
+          },
+          "damage_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Damage To",
+            "description": "quarantine | driver (damaged > 0)"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id"
+        ],
+        "title": "ManualCountIn",
+        "description": "Mode manual: one product counted by hand, typed blind (no expected number on screen)."
+      },
+      "ManualCountResult": {
+        "properties": {
+          "accepted": {
+            "type": "boolean",
+            "title": "Accepted"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "counted | undone | no_free_bin | needs_damage_place | wrong_brand | carton_check"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku"
+          },
+          "loads": {
+            "items": {
+              "$ref": "#/components/schemas/LoadOut"
+            },
+            "type": "array",
+            "title": "Loads",
+            "default": []
+          },
+          "line": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LineOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "difference_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difference Id"
+          },
+          "photo_needed": {
+            "type": "boolean",
+            "title": "Photo Needed",
+            "default": false
+          },
+          "free_bins": {
+            "type": "integer",
+            "title": "Free Bins",
+            "default": 0
+          },
+          "total_received": {
+            "type": "integer",
+            "title": "Total Received",
+            "default": 0
+          },
+          "entry": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry",
+            "description": "The typed entry, for its undo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "accepted",
+          "outcome",
+          "message"
+        ],
+        "title": "ManualCountResult"
+      },
+      "ManualModeIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "on": {
+            "type": "boolean",
+            "title": "On"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "until": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Until"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "on"
+        ],
+        "title": "ManualModeIn"
+      },
+      "ManualUndoIn": {
+        "properties": {
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          }
+        },
+        "type": "object",
+        "title": "ManualUndoIn"
       },
       "Me": {
         "properties": {
@@ -35998,6 +37990,157 @@
           "actor_email"
         ],
         "title": "MovementRow"
+      },
+      "NeedsBinExample": {
+        "properties": {
+          "sku_id": {
+            "type": "integer",
+            "title": "Sku Id"
+          },
+          "sku_code": {
+            "type": "string",
+            "title": "Sku Code",
+            "description": "The brand SKU code (KHF-0064)"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "bin_size": {
+            "type": "string",
+            "title": "Bin Size",
+            "description": "KECIL or BESAR: the size of bin the product needs"
+          },
+          "bin_size_label": {
+            "type": "string",
+            "title": "Bin Size Label",
+            "description": "Kecil or Besar"
+          },
+          "original_bin": {
+            "type": "string",
+            "title": "Original Bin",
+            "description": "The bin it had (D-4-06)"
+          },
+          "original_bin_free": {
+            "type": "boolean",
+            "title": "Original Bin Free",
+            "description": "That bin is still free"
+          },
+          "units_cleared": {
+            "type": "integer",
+            "title": "Units Cleared",
+            "description": "Units taken out of the bin by the set-up"
+          },
+          "waiting": {
+            "type": "boolean",
+            "title": "Waiting",
+            "description": "Still in Perlu bin: no bin yet"
+          },
+          "current_bin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Bin",
+            "description": "Its bin now, when someone assigned one"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sku_id",
+          "sku_code",
+          "name",
+          "bin_size",
+          "bin_size_label",
+          "original_bin",
+          "original_bin_free",
+          "units_cleared",
+          "waiting",
+          "current_bin"
+        ],
+        "title": "NeedsBinExample"
+      },
+      "NeedsBinIn": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "site_id"
+        ],
+        "title": "NeedsBinIn"
+      },
+      "NeedsBinState": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "demo_mode": {
+            "type": "boolean",
+            "title": "Demo Mode"
+          },
+          "can_setup": {
+            "type": "boolean",
+            "title": "Can Setup"
+          },
+          "can_reset": {
+            "type": "boolean",
+            "title": "Can Reset"
+          },
+          "example": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NeedsBinExample"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Problems",
+            "description": "Indonesian / English"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "demo_mode",
+          "can_setup",
+          "can_reset"
+        ],
+        "title": "NeedsBinState"
       },
       "NeedsRackList": {
         "properties": {
@@ -37835,6 +39978,42 @@
             "type": "array",
             "title": "Change Reasons"
           },
+          "ready_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ready By",
+            "description": "Grab order time + grab_ready_minutes (the 10-minute target)"
+          },
+          "order_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Time",
+            "description": "Grab's order time (UTC)"
+          },
+          "has_changes": {
+            "type": "boolean",
+            "title": "Has Changes",
+            "description": "A line was replaced, removed or is short of what was ordered: no Semua cocok tick, each line checked by hand",
+            "default": false
+          },
+          "manual_units": {
+            "type": "integer",
+            "title": "Manual Units",
+            "description": "Units picked by a tap, not a scan (Mode manual): the packer checks those with extra care",
+            "default": 0
+          },
           "server_time": {
             "type": "string",
             "title": "Server Time"
@@ -37947,6 +40126,12 @@
               }
             ],
             "title": "Replaces Units"
+          },
+          "manual_units": {
+            "type": "integer",
+            "title": "Manual Units",
+            "description": "Units picked by a tap (Mode manual)",
+            "default": 0
           }
         },
         "type": "object",
@@ -38201,6 +40386,26 @@
           "gm_number"
         ],
         "title": "PackedV2In"
+      },
+      "PaperworkIn": {
+        "properties": {
+          "item": {
+            "type": "string",
+            "pattern": "^(wrote|signed)$",
+            "title": "Item",
+            "description": "wrote | signed"
+          },
+          "done": {
+            "type": "boolean",
+            "title": "Done",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "item"
+        ],
+        "title": "PaperworkIn"
       },
       "Person": {
         "properties": {
@@ -38583,35 +40788,6 @@
         ],
         "title": "PhotoOut"
       },
-      "PickConfirmIn": {
-        "properties": {
-          "code": {
-            "type": "string",
-            "title": "Code"
-          },
-          "qty": {
-            "type": "integer",
-            "title": "Qty",
-            "default": 1
-          },
-          "idempotency_key": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Idempotency Key"
-          }
-        },
-        "type": "object",
-        "required": [
-          "code"
-        ],
-        "title": "PickConfirmIn"
-      },
       "PickConfirmResult": {
         "properties": {
           "accepted": {
@@ -38621,7 +40797,7 @@
           "outcome": {
             "type": "string",
             "title": "Outcome",
-            "description": "picked | wrong_sku | plate_error | short | error"
+            "description": "picked | wrong_sku | unknown_code | plate_error | short | error"
           },
           "expected_sku_name": {
             "anyOf": [
@@ -38682,6 +40858,41 @@
           "message"
         ],
         "title": "PickConfirmResult"
+      },
+      "PickConfirmV2In": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 64,
+            "title": "Code",
+            "description": "The scanned code; empty with manual",
+            "default": ""
+          },
+          "qty": {
+            "type": "integer",
+            "title": "Qty",
+            "default": 1
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "manual": {
+            "type": "boolean",
+            "title": "Manual",
+            "description": "Mode manual: one tap = one unit, no code. Refused while the dark store is not in it",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "PickConfirmV2In"
       },
       "PickLine": {
         "properties": {
@@ -39045,6 +41256,12 @@
             ],
             "title": "Qty Wanted",
             "description": "Units the order line asked for"
+          },
+          "manual_units": {
+            "type": "integer",
+            "title": "Manual Units",
+            "description": "Units confirmed by a tap (Mode manual)",
+            "default": 0
           }
         },
         "type": "object",
@@ -39876,6 +42093,12 @@
             "title": "Pick Start Seconds",
             "default": 120
           },
+          "timed_out": {
+            "type": "boolean",
+            "title": "Timed Out",
+            "description": "Off because the 2-minute rule took the order back: the phone shows a stop card and Siap ambil again",
+            "default": false
+          },
           "return_duty": {
             "anyOf": [
               {
@@ -39886,6 +42109,24 @@
               }
             ],
             "description": "My cancelled order whose basket I am emptying (board 6e)"
+          },
+          "manual_mode": {
+            "type": "boolean",
+            "title": "Manual Mode",
+            "description": "The dark store is in Mode manual now: taps instead of scans. Read on every poll, so the phone follows a switch without a reload",
+            "default": false
+          },
+          "manual_mode_until": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Mode Until",
+            "description": "When Mode manual ends by itself (UTC, ISO with Z); null while it is off"
           }
         },
         "type": "object",
@@ -40812,7 +43053,7 @@
           "location_code": {
             "type": "string",
             "title": "Location Code",
-            "description": "The rack bin label scanned"
+            "description": "The rack bin label scanned (or, manual, the bin tapped)"
           },
           "qty": {
             "anyOf": [
@@ -40826,6 +43067,12 @@
             ],
             "title": "Qty",
             "description": "Default: everything left to put"
+          },
+          "manual": {
+            "type": "boolean",
+            "title": "Manual",
+            "description": "Mode manual: the bin confirmed by a tap",
+            "default": false
           },
           "idempotency_key": {
             "anyOf": [
@@ -41764,6 +44011,12 @@
             "type": "boolean",
             "title": "Pack Wait Amber",
             "default": false
+          },
+          "manual_units": {
+            "type": "integer",
+            "title": "Manual Units",
+            "description": "Units picked by a tap (Mode manual): the Manual tag",
+            "default": 0
           }
         },
         "type": "object",
@@ -41821,8 +44074,38 @@
           "bin_row": {
             "type": "integer",
             "title": "Bin Row",
-            "description": "1 = the only or Bottom bin, 2 = the Top bin",
+            "description": "1 = the only or Bottom bin, then upwards; the highest is the Top bin",
             "default": 1
+          },
+          "stack_rows": {
+            "type": "integer",
+            "title": "Stack Rows",
+            "description": "Bins stacked at this position (1 = a single bin, up to 3)",
+            "default": 1
+          },
+          "stack_word": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stack Word",
+            "description": "bawah | tengah | atas for a stacked bin, else null"
+          },
+          "stack_word_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stack Word En",
+            "description": "bottom | middle | top for a stacked bin, else null"
           },
           "basket_id": {
             "anyOf": [
@@ -42037,6 +44320,7 @@
           "bin_rows": {
             "type": "integer",
             "title": "Bin Rows",
+            "description": "The highest stack on the level (1 = no stacked bins)",
             "default": 1
           },
           "removable": {
@@ -42071,13 +44355,23 @@
           "columns": {
             "items": {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ]
               },
               "type": "array"
             },
             "type": "array",
             "title": "Columns",
-            "description": "One list per kolom, left to right; each lists its bins left to right as KECIL or BESAR"
+            "description": "One list per kolom, left to right. Each item is one place on the kolom, left to right: a size (KECIL or BESAR) for a single bin, or a list of 2 to 3 sizes for bins stacked at that place, bottom first. Example: [[\"KECIL\", [\"BESAR\", \"KECIL\"], \"KECIL\"]] is one kolom with a Kecil bin, a Besar bin with a Kecil bin on top of it, and a Kecil bin. Bins of one stack share the place number: A-2-02B (bottom) and A-2-02T (top); three high: B, M (middle), T. A list of one size is a single bin."
           }
         },
         "type": "object",
@@ -42684,6 +44978,56 @@
             "type": "integer",
             "title": "Units To Put",
             "default": 0
+          },
+          "paperwork": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Paperwork",
+            "description": "The two ticks of step 4, kept on the server: {wrote|signed: {done, by, by_name, at}}"
+          },
+          "photo_waiver": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Waiver",
+            "description": "Finished without a proof photo by an SPV: {by, by_name, at, reason, missing}"
+          },
+          "manual_mode": {
+            "type": "boolean",
+            "title": "Manual Mode",
+            "description": "Counted by typed numbers (Mode manual, V32)",
+            "default": false
+          },
+          "count_locked": {
+            "type": "boolean",
+            "title": "Count Locked",
+            "description": "Mode manual: the count was locked when step 3 opened; no more units until an SPV reopens it",
+            "default": false
+          },
+          "count_lock": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count Lock",
+            "description": "The last lock or reopen: {action, by, by_name, at, reason}"
+          },
+          "blind": {
+            "type": "boolean",
+            "title": "Blind",
+            "description": "Mode manual, count not locked yet, role below SPV: every expected number is left out (qty_expected, state, holds)",
+            "default": false
           }
         },
         "type": "object",
@@ -44963,6 +47307,12 @@
           "open_units": {
             "type": "integer",
             "title": "Open Units"
+          },
+          "manual_mode": {
+            "type": "boolean",
+            "title": "Manual Mode",
+            "description": "The dark store is in Mode manual now",
+            "default": false
           }
         },
         "type": "object",
@@ -45120,7 +47470,10 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "maxLength": 64,
+            "title": "Code",
+            "description": "The unit scanned; empty with manual",
+            "default": ""
           },
           "idempotency_key": {
             "anyOf": [
@@ -45144,12 +47497,15 @@
             ],
             "title": "Bin Code",
             "description": "The bin label scanned after the unit (board 6k); checked against the task's bin before the unit counts"
+          },
+          "manual": {
+            "type": "boolean",
+            "title": "Manual",
+            "description": "Mode manual: the unit tapped in the list and the bin confirmed by a tap",
+            "default": false
           }
         },
         "type": "object",
-        "required": [
-          "code"
-        ],
         "title": "ReturnScanV2In"
       },
       "ReturnScanV2Result": {
@@ -45190,6 +47546,24 @@
           "message"
         ],
         "title": "ReturnScanV2Result"
+      },
+      "ReturnTapIn": {
+        "properties": {
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          }
+        },
+        "type": "object",
+        "title": "ReturnTapIn",
+        "description": "Mode manual: every unit of the note counted out in front of the driver, one tap."
       },
       "ReturnTaskListV2": {
         "properties": {
@@ -45648,6 +48022,14 @@
             "title": "Bins Zeroed",
             "description": "Bins set to what was found"
           },
+          "bins_today": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Bins Today",
+            "description": "Bins put on today's count plan (the SPV assigns the counter); empty when that helper is not there"
+          },
           "task": {
             "anyOf": [
               {
@@ -45915,6 +48297,22 @@
           "is_training": {
             "type": "boolean",
             "title": "Is Training"
+          },
+          "manual_mode": {
+            "type": "boolean",
+            "title": "Manual Mode",
+            "default": false
+          },
+          "manual_mode_until": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Mode Until"
           }
         },
         "type": "object",

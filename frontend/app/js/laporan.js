@@ -195,7 +195,13 @@
         '<div class="lp-kfoot"><div><b>' + n(d.units_sold) + '</b><span class="lp-sub" ' + biAttr('unit terjual', 'units sold') + '></span></div>' +
         '<div><b>' + esc(t(d.ready_10 + ' dari ' + d.orders, d.ready_10 + ' of ' + d.orders)) + '</b><span class="lp-sub">' + esc(t('siap dalam ' + d.ready_target_minutes + ' menit', 'ready within ' + d.ready_target_minutes + ' min')) + '</span></div>' +
         '<div><b>' + esc(d.avg_pick || '-') + '</b><span class="lp-sub" ' + biAttr('rata-rata ambil', 'average pick') + '></span></div>' +
-        '<div><b>' + esc(d.avg_pack || '-') + '</b><span class="lp-sub" ' + biAttr('rata-rata kemas', 'average pack') + '></span></div></div></div>';
+        '<div><b>' + esc(d.avg_pack || '-') + '</b><span class="lp-sub" ' + biAttr('rata-rata kemas', 'average pack') + '></span></div></div>' +
+        // Mode manual (V32): what was done without scanning that day, for the SPV to check.
+        (d.manual && (d.manual.pick_units || d.manual.receipts)
+          ? '<div class="k-note k-note--caution" style="margin-top:12px">' + icon('warn', 20) + '<span ' +
+            biAttr('Tanpa pindai (mode manual): ' + d.manual.pick_units + ' unit di ' + d.manual.pick_orders + ' pesanan, ' + d.manual.receipts + ' penerimaan. SPV memeriksanya.',
+              'Without scanning (manual mode): ' + d.manual.pick_units + ' units in ' + d.manual.pick_orders + ' orders, ' + d.manual.receipts + ' receipts. The SPV checks them.') + '></span></div>' : '') +
+        '</div>';
       const noteCard = '<div class="k-card k-card--pad k-stack k-stack--tight"><strong style="font-size:17px" ' + biAttr('Catatan untuk besok', 'Note for tomorrow') + '></strong>' +
         '<textarea class="k-textarea" id="lp-note" rows="6">' + esc(d.note ? d.note.text : '') + '</textarea>' +
         '<div class="k-line k-line--between"><span class="lp-sub">' + esc(d.note ? (d.note.by_name || d.note.by) + ', ' + S.fmt.dt(d.note.at) : '') + '</span>' +

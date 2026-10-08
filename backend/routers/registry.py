@@ -26,27 +26,30 @@ def _validate_thresholds(full, low, restock, safety=None) -> None:
     the point of entry where a person can still fix them.
     """
     if full is not None and full <= 0:
-        raise HTTPException(422, "Full threshold must be more than zero.")
+        raise HTTPException(422, "Batas penuh harus lebih dari nol. / The full threshold must be more than zero.")
     if low is not None and low < 0:
-        raise HTTPException(422, "Low threshold cannot be negative.")
+        raise HTTPException(422, "Batas rendah tidak boleh negatif. / The low threshold cannot be negative.")
     if full is not None and low is not None and low >= full:
         raise HTTPException(
             422,
+            f"Batas rendah ({low}) harus di bawah batas penuh ({full}). Kalau tidak, tugas isi ulang muncul terus. / "
             f"Low threshold ({low}) must be below the full threshold ({full}), "
             "or a replenishment task is raised permanently.",
         )
     if safety is not None and safety < 0:
-        raise HTTPException(422, "Safety stock cannot be negative.")
+        raise HTTPException(422, "Stok pengaman tidak boleh negatif. / Safety stock cannot be negative.")
     if safety is not None and restock is not None and safety > restock:
         raise HTTPException(
             422,
-            f"Safety stock ({safety}) must not be above the restock point ({restock}) — "
-            "the replenishment request has to go out before stock reaches the floor.")
+            f"Stok pengaman ({safety}) tidak boleh di atas titik restock ({restock}). Permintaan isi ulang harus keluar sebelum stok habis. / "
+            f"Safety stock ({safety}) must not be above the restock point ({restock}). "
+            "The replenishment request has to go out before stock reaches the floor.")
     if restock is not None and low is not None and restock < low:
         raise HTTPException(
             422,
-            f"Restock point ({restock}) sits below the low threshold ({low}) — "
-            "the hub would only be asked after the pick face has run dry.",
+            f"Titik restock ({restock}) di bawah batas rendah ({low}). Dark store baru diminta isi ulang setelah rak ambil kosong. / "
+            f"Restock point ({restock}) sits below the low threshold ({low}). "
+            "The dark store would only be asked after the pick face has run dry.",
         )
 
 
@@ -163,7 +166,7 @@ async def set_thresholds(
          body.site_id, sku_id),
     )
     if not updated:
-        raise HTTPException(404, "This SKU has no pick face at this site yet.")
+        raise HTTPException(404, "SKU ini belum punya rak ambil di dark store ini. / This SKU has no pick face at this dark store yet.")
 
     row = await _row(body.site_id, sku_id)
     await db.execute(
@@ -192,7 +195,7 @@ async def bulk_thresholds(
     _validate_thresholds(body.full_threshold, body.low_threshold, body.restock_point,
                          body.safety_stock)
     if not body.sku_ids:
-        raise HTTPException(422, "Select at least one product.")
+        raise HTTPException(422, "Pilih minimal satu produk. / Select at least one product.")
 
     n = 0
     for sku_id in body.sku_ids:
@@ -209,7 +212,7 @@ async def bulk_thresholds(
         "VALUES (%s,'registry.bulk','sites',%s,%s)",
         (user.email, body.site_id, f"{n} SKUs updated"),
     )
-    return {"ok": True, "message": f"{n} product(s) updated."}
+    return {"ok": True, "message": f"{n} produk diperbarui. / {n} products updated."}
 
 
 @router.get("/suggest/{sku_id}", response_model=models.RegistrySuggestion)
@@ -224,7 +227,7 @@ async def suggest_thresholds(
     await auth.assert_site_access(user, site_id)
     sku = await common.sku_by_id(sku_id)
     if not sku:
-        raise HTTPException(404, "SKU not found")
+        raise HTTPException(404, "SKU tidak ditemukan. / SKU not found.")
 
     size, _ = common.recommend_basket(sku.get("unit_cube_cm3"))
     cap = common.capacity_units(size, sku.get("unit_cube_cm3")) or 55
@@ -237,7 +240,9 @@ async def suggest_thresholds(
         "sku_id": sku_id, "basket_size": size, "capacity_units": cap,
         "full_threshold": full, "low_threshold": low, "restock_point": restock,
         "reason": (
+            f"Keranjang {size} muat sekitar {cap} unit. Penuh di 90% ({full}), "
+            f"isi ulang di seperempat ({low}), minta ke dark store di setengah ({restock}). / "
             f"Basket {size} holds about {cap} units. Full at 90% ({full}), "
-            f"replenish at a quarter ({low}), ask the hub at half ({restock})."
+            f"replenish at a quarter ({low}), ask the dark store at half ({restock})."
         ),
     }

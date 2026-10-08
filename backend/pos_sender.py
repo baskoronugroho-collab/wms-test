@@ -680,8 +680,8 @@ async def send_due(batch: int = 20) -> int:
             in_demo = bool(row["demo_mode"])
             try:
                 if row["is_training"] or (row["site_type"] or "darkstore") != "darkstore":
-                    raise Suppress("Lokasi latihan atau hub tidak pernah mengirim / "
-                                   "Training site or hub never sends")
+                    raise Suppress("Lokasi latihan atau gudang pusat tidak pernah mengirim / "
+                                   "A training site or the main warehouse never sends")
                 available = None
                 mtype = row["message_type"]
                 if mtype == "stock_level":

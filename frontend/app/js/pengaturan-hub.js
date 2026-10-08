@@ -7,7 +7,11 @@
  * Mulai operasi (2c): the kick-off guide, phases A to E; the WMS ticks what it
  * can see, the rest is ticked by hand (Tandai selesai).
  *
+ * Mode manual (V32): scanners or cameras broken, the dark store works by taps
+ * and typed blind numbers until a set time. Ops HQ only, with a reason.
+ *
  * API: GET /hubs, GET /hubs/{id}, GET /hubs/{id}/preview-codes,
+ *      GET|PUT /manual-mode
  *      PUT /hubs/{id}/complete, POST /hubs/{id}/link,
  *      GET /hubs/{id}/kickoff, POST|DELETE /hubs/{id}/kickoff/{step}/done
  */
@@ -68,13 +72,78 @@
       h += '<label class="k-field" style="max-width:340px"><span class="k-field__label">' + bis('Dark store', 'Dark store') + '</span><select class="k-select" id="ph-pick">' +
         list.hubs.map((x) => '<option value="' + x.id + '"' + (x.id === hub.id ? ' selected' : '') + '>' + esc(S.shortCode(x.code) + ' · ' + x.name + (x.new_from_hiryu ? ' (' + t('baru dari Hiryu', 'new from Hiryu') + ')' : '')) + '</option>').join('') + '</select></label>';
     }
-    h += '<div id="ph-hub"></div><div id="ph-ko"></div>';
+    h += '<div id="ph-hub"></div><div id="ph-manual" style="margin-top:16px"></div><div id="ph-ko"></div>';
     ctx.body.innerHTML = h;
     const sel = ctx.body.querySelector('#ph-pick');
     if (sel) sel.addEventListener('change', () => { const u = new URL(location.href); u.searchParams.set('hub', sel.value); history.replaceState(null, '', u.pathname + u.search); S.rerender(); });
     paintHub(ctx.body.querySelector('#ph-hub'), hub);
-    if (!hub.new_from_hiryu) await paintKickoff(ctx.body.querySelector('#ph-ko'), hub.id);
+    if (!hub.new_from_hiryu) {
+      await paintManual(ctx.body.querySelector('#ph-manual'), hub);
+      await paintKickoff(ctx.body.querySelector('#ph-ko'), hub.id);
+    }
   });
+
+  /* ---------------- Mode manual ---------------- */
+  async function paintManual(host, hub) {
+    let st;
+    try { st = await api().get('/manual-mode' + api().qs({ site_id: hub.id })); } catch (e) { host.innerHTML = ''; return; }
+    const code = S.shortCode(hub.code);
+    host.innerHTML = '<div class="k-card k-card--pad k-stack' + (st.on ? ' k-card--stop' : '') + '" id="manual">' +
+      '<div class="k-line k-line--between"><h2 class="k-h2">' + bis('Mode manual', 'Manual mode') + '</h2>' +
+        (st.on ? S.pill('stop', 'Aktif', 'On') : S.pill('', 'Mati', 'Off')) + '</div>' +
+      '<p class="k-caption">' + bis('Untuk saat pemindai atau kamera HP rusak. Ambil barang dengan ketuk per unit, barang masuk dan hitung stok dengan mengetik angka tanpa melihat angka seharusnya, taruh di rak dengan ketuk bin. Setiap entri manual ditandai dan terlihat di laporan akhir hari. Hanya Ops HQ yang bisa menyalakan atau mematikan.',
+        'For when the scanners or phone cameras are broken. Picking is a tap per unit; inbound and stock counts are typed numbers without seeing the expected one; putaway is a tap on the bin. Every manual entry is marked and shows in the end of day report. Only Ops HQ can switch it on or off.') + '</p>' +
+      (st.on
+        ? '<dl class="ph-kv"><dt>' + esc(t('Sampai', 'Until')) + '</dt><dd>' + esc(S.fmt.dt(st.until)) + ' WIB</dd>' +
+          '<dt>' + esc(t('Oleh', 'By')) + '</dt><dd>' + esc(st.by || '-') + ', ' + esc(S.fmt.dt(st.since)) + '</dd>' +
+          '<dt>' + esc(t('Alasan', 'Reason')) + '</dt><dd>' + esc(st.reason || '-') + '</dd></dl>' +
+          '<div class="k-line" style="gap:10px;flex-wrap:wrap"><button type="button" class="k-btn k-btn--primary" data-mm-off data-min-role="hq">' + icon('scan') + bis('Matikan, kembali memindai', 'Switch off, back to scanning') + '</button>' +
+          '<button type="button" class="k-btn k-btn--secondary" data-mm-on data-min-role="hq">' + bis('Perpanjang', 'Extend') + '</button></div>'
+        : '<div><button type="button" class="k-btn k-btn--danger" data-mm-on data-min-role="hq">' + icon('warn') + bis('Nyalakan mode manual di ' + code, 'Switch on manual mode at ' + code) + '</button></div>') +
+      '</div>';
+    S.applyLang(host);
+    S.lockAll(host);
+    const on = host.querySelector('[data-mm-on]');
+    if (on) on.addEventListener('click', () => manualModal(hub, st));
+    const off = host.querySelector('[data-mm-off]');
+    if (off) off.addEventListener('click', async () => {
+      if (!(await S.confirm({ title: ['Matikan mode manual di ' + code + '?', 'Switch off manual mode at ' + code + '?'],
+        text: ['Semua layar kembali memakai pindai. Pastikan pemindai atau kamera sudah bisa dipakai.', 'Every screen goes back to scanning. Make sure the scanners or cameras work again.'],
+        ok: ['Ya, matikan', 'Yes, switch off'] }))) return;
+      try { const r = await api().put('/manual-mode', { site_id: hub.id, on: false }); S.toast(S.pick(r.message), 'ok'); location.reload(); }
+      catch (e) { S.fail(e); }
+    });
+  }
+
+  /* Until: the end of today, tomorrow or the day after (WIB), at most 3 days. */
+  function manualModal(hub, st) {
+    const day = (n) => {
+      const d = new Date(Date.now() + 7 * 3600e3);          // now in WIB, read as UTC
+      d.setUTCDate(d.getUTCDate() + n);
+      return d.toISOString().slice(0, 10) + 'T23:59:00+07:00';
+    };
+    const opts = [[day(0), 'Sampai akhir hari ini (23:59)', 'Until the end of today (23:59)'],
+      [day(1), 'Sampai besok 23:59', 'Until tomorrow 23:59'], [day(2), 'Sampai lusa 23:59', 'Until the day after tomorrow 23:59']];
+    S.modal({
+      title: st.on ? ['Perpanjang mode manual', 'Extend manual mode'] : ['Nyalakan mode manual', 'Switch on manual mode'],
+      body: '<div class="k-stack">' +
+        '<label class="k-field"><span class="k-field__label" ' + biAttr('Alasan (wajib)', 'Reason (required)') + '></span>' +
+          '<textarea class="k-textarea" id="mm-reason" rows="3" placeholder="' + esc(t('Contoh: 3 pemindai rusak, kamera HP tidak fokus', 'For example: 3 scanners broken, phone cameras not focusing')) + '">' + esc(st.on ? st.reason || '' : '') + '</textarea></label>' +
+        '<label class="k-field"><span class="k-field__label" ' + biAttr('Sampai', 'Until') + '></span><select class="k-select" id="mm-until">' +
+          opts.map((o) => '<option value="' + o[0] + '">' + esc(t(o[1], o[2])) + '</option>').join('') + '</select>' +
+          '<span class="k-field__hint">' + esc(t('Mati sendiri pada waktu itu. Paling lama 3 hari; perpanjang kalau perlu.', 'It switches off by itself then. At most 3 days; extend it if needed.')) + '</span></label>' +
+        '<div class="k-note k-note--caution">' + icon('warn', 20) + '<span>' + esc(t('Tanpa pindai, salah ambil dan salah hitung lebih mungkin. SPV memeriksa entri manual di laporan akhir hari.',
+          'Without scanning, wrong picks and wrong counts are more likely. The SPV checks the manual entries in the end of day report.')) + '</span></div></div>',
+      actions: [{ label: ['Batal', 'Cancel'], kind: 'secondary' }, {
+        label: ['Nyalakan', 'Switch on'], kind: 'danger', minRole: 'hq',
+        onClick: async () => {
+          const r = await api().put('/manual-mode', { site_id: hub.id, on: true, reason: document.getElementById('mm-reason').value, until: document.getElementById('mm-until').value });
+          S.toast(S.pick(r.message), 'caution');
+          location.reload();
+        },
+      }],
+    });
+  }
 
   /* ---------------- 2a: the hub ---------------- */
   function paintHub(host, hub) {
@@ -103,7 +172,7 @@
       field('inbound_bins', 'Bin barang masuk sementara', 'Temporary inbound bins', t('Barang dari truk menunggu di sini sebelum ke rak.', 'Goods off the truck wait here before the rack.'), isNew ? 6 : hub.inbound_bins, ' type="number" min="1" max="99" inputmode="numeric"') +
       field('quarantine_trays', 'Baki karantina', 'Quarantine trays', t('Barang rusak atau ditahan, menunggu keputusan SPV.', 'Damaged or held goods wait for the SPV.'), isNew ? 1 : hub.quarantine_trays, ' type="number" min="1" max="99" inputmode="numeric"') +
       field('outbound_baskets', 'Keranjang pesanan', 'Order baskets', t('Satu keranjang untuk satu pesanan yang diambil.', 'One basket for one order being picked.'), isNew ? 6 : hub.outbound_baskets, ' type="number" min="1" max="99" inputmode="numeric"') +
-      '</div><div class="k-note k-note--navy" id="ph-codes">' + esc(hub.special_codes_text || '') + '</div>' +
+      '</div><div class="k-note k-note--navy" id="ph-codes">' + esc(S.pick(hub.special_codes_text || '')) + '</div>' +
       (!hub.code_editable ? '<p class="k-caption">' + bis('Kode dark store sudah dipakai di kode bin, jadi tetap.', 'The dark store code is on bin labels already, so it stays.') + '</p>' : '') +
       '<div class="k-line" style="gap:10px"><button type="button" class="k-btn k-btn--secondary" id="ph-cancel">' + bis('Batal', 'Cancel') + '</button>' +
       '<button type="submit" class="k-btn k-btn--primary k-grow" data-min-role="hq">' + icon('check') + bis('Simpan dark store', 'Save dark store') + '</button></div></form></div>';
@@ -129,7 +198,7 @@
         if (!code) { host.querySelector('#ph-codes').textContent = ''; return; }
         try {
           const r = await api().get('/hubs/' + hub.id + '/preview-codes' + api().qs({ code, inbound_bins: fd.get('inbound_bins'), quarantine_trays: fd.get('quarantine_trays'), outbound_baskets: fd.get('outbound_baskets') }));
-          host.querySelector('#ph-codes').textContent = r.text;
+          host.querySelector('#ph-codes').textContent = S.pick(r.text);
         } catch (e) { /* the preview is a nicety */ }
       }, 250);
     };
@@ -180,7 +249,7 @@
       let h = '<div class="k-card k-card--pad k-stack k-stack--tight" style="margin-top:16px"><div class="k-line k-line--between" style="flex-wrap:wrap;gap:8px">' +
         '<h2 class="k-h2">' + esc(t('Mulai operasi ', 'Go-live ')) + esc(S.shortCode(d.site.code)) + '</h2><span class="k-strong">' +
         esc(t(d.done + ' dari ' + d.total + ' langkah selesai', d.done + ' of ' + d.total + ' steps done')) + '</span></div>' +
-        '<p class="k-caption">' + esc(d.intro) + '</p><div class="k-progress"><span class="k-progress__bar" style="width:' + pct + '%"></span></div></div>' +
+        '<p class="k-caption">' + esc(S.pick(d.intro)) + '</p><div class="k-progress"><span class="k-progress__bar" style="width:' + pct + '%"></span></div></div>' +
         '<div class="ph-ko" style="margin-top:16px"><div class="k-card" style="overflow:hidden">' + d.phases.map((p) => {
           const steps = d.steps.filter((s) => s.phase === p.phase);
           const isOpen = open.has(p.phase);

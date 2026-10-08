@@ -51,7 +51,7 @@ KIND_LABEL = {"extra": ("lebih", "extra"), "short": ("kurang", "short"),
 
 async def _put(key: str, data: bytes, ctype: str) -> None:
     if not KEY_RE.match(key or ""):
-        raise HTTPException(400, "Invalid document key")
+        raise HTTPException(400, "Kunci dokumen tidak sah. / Invalid document key.")
     bucket = storage._gcs()
     if bucket is not None:
         blob = bucket.blob("docs/" + key)
@@ -135,7 +135,7 @@ async def upload_faktur(
     """
     receipt = await _receipt(receipt_id, user)
     if receipt["source_type"] != "from_brand":
-        raise HTTPException(422, "Faktur hanya untuk kiriman brand. / "
+        raise HTTPException(422, "Faktur hanya untuk kiriman merek. / "
                                  "A Faktur only comes with a brand delivery.")
     if receipt["status"] == "open":
         raise HTTPException(409, "Penerimaan masih berjalan. Selesaikan dulu, lalu unggah "
@@ -297,7 +297,7 @@ async def raise_issue(
     if body.sku_id:
         sku = await db.fetch_one("SELECT id, brand_id FROM skus WHERE id = %s", (body.sku_id,))
         if not sku or (receipt.get("brand_id") and sku["brand_id"] != receipt["brand_id"]):
-            raise HTTPException(422, "Produk itu bukan dari brand kiriman ini. / "
+            raise HTTPException(422, "Produk itu bukan dari merek kiriman ini. / "
                                      "That product is not from this delivery's brand.")
     dup = await db.fetch_one(
         "SELECT id FROM faktur_issues WHERE receipt_id = %s AND kind = %s AND status = 'open' "
@@ -370,7 +370,7 @@ async def settle_issue(
         raise HTTPException(409, "Selisih ini sudah diselesaikan. / Already settled.")
     outcome = (body.outcome or "").strip()
     if not outcome:
-        raise HTTPException(422, "Tulis hasilnya dengan brand. / "
+        raise HTTPException(422, "Tulis hasilnya dengan merek. / "
                                  "Write the outcome agreed with the brand.")
     async with db.tx() as cur:
         await db.run(

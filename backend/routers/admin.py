@@ -153,7 +153,7 @@ async def _site_ids_of(user_id: int) -> set[int]:
 def _check_grant(user: auth.User, role: str) -> None:
     """Refuse a role this person may not give, with the reason in both languages."""
     if role not in auth.ROLES:
-        raise HTTPException(422, f"Role must be one of {', '.join(auth.ROLES)}.")
+        raise HTTPException(422, f"Role harus salah satu dari: {', '.join(auth.ROLES)}. / Role must be one of {', '.join(auth.ROLES)}.")
     if role not in auth.grantable_roles(user.role):
         if role in ("ops_head", "superadmin"):
             raise HTTPException(
@@ -228,7 +228,9 @@ async def list_users(site_id: int | None = Query(default=None, description="One 
         "all_roles": list(auth.ROLES),
         "can_add": bool(auth.grantable_roles(user.role)) and user.real_role == user.role,
         "note": ("Orang yang keluar: tutup akun WMS dan cabut login Hiryu di hari yang sama. "
-                 "Pengganti ditambahkan sebagai akun baru."),
+                 "Pengganti ditambahkan sebagai akun baru. / "
+                 "When someone leaves: close their WMS account and revoke their Hiryu login the same day. "
+                 "Add the replacement as a new account."),
     }
 
 
@@ -309,7 +311,7 @@ async def update_user(
     the account (active false; the Hiryu login is revoked the same day)."""
     row = await db.fetch_one("SELECT * FROM users WHERE id = %s", (user_id,))
     if not row:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, "Pengguna tidak ditemukan. / User not found.")
 
     # Nobody changes their own role (§1.4.1), and nobody locks themselves out of
     # the only screen that can grant access back. Someone else has to do it.
@@ -442,10 +444,10 @@ async def update_site(
 ):
     row = await db.fetch_one("SELECT * FROM sites WHERE id = %s", (site_id,))
     if not row:
-        raise HTTPException(404, "Site not found")
+        raise HTTPException(404, "Dark store tidak ditemukan. / Dark store not found.")
     if row["is_training"] and body.active is False:
         raise HTTPException(
-            422, "Lokasi latihan tidak boleh dinonaktifkan — staf baru butuh ini."
+            422, "Lokasi latihan tidak boleh dinonaktifkan, staf baru butuh ini. / The training site cannot be switched off, new staff need it."
         )
 
     sets, params = [], []
@@ -458,7 +460,7 @@ async def update_site(
         sets.append("active = %s")
         params.append(1 if body.active else 0)
     if not sets:
-        return {"ok": True, "message": "Tidak ada perubahan."}
+        return {"ok": True, "message": "Tidak ada perubahan. / Nothing changed."}
     params.append(site_id)
     await db.execute(f"UPDATE sites SET {', '.join(sets)} WHERE id = %s", params)
     await db.execute(
@@ -466,4 +468,4 @@ async def update_site(
         "VALUES (%s,'site.update','sites',%s,%s)",
         (user.email, site_id, str(body.model_dump(exclude_none=True))),
     )
-    return {"ok": True, "message": f"{row['code']} diperbarui."}
+    return {"ok": True, "message": f"{row['code']} diperbarui. / {row['code']} updated."}

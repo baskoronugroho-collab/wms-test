@@ -4,12 +4,14 @@
  * days left, the last 7 days, the need, PR and receipt state; Ops HQ edits
  * items, minimums and usage, adds items and records the PR), terima (9b:
  * packs x pieces per pack; Ops HQ approves or sends back) and mingguan (the
- * weekly count, approved by Ops HQ).
+ * weekly count, approved by Ops HQ). The weekly count is blind like a bin
+ * count: nobody counting sees the system number; the SPV and Ops HQ see the
+ * difference once it is sent.
  * Since 7 Oct staff may also enter a receipt or the weekly count; theirs waits
  * for the SPV first (spv_pending: the SPV approves, on to Ops HQ as pending, or
  * returns it with a note, spv_returned). An SPV's entry goes straight to Ops HQ.
  * The stock moves only when Ops HQ approves.
- * Consumables are Ninja's own stock and never appear in brand reports.
+ * Packing supplies are Ninja's own stock and never appear in brand reports.
  *
  * API (backend/routers/consumables.py, /api/consumables):
  *   GET  ?site_id   GET|PUT /settings   POST / (add)   PUT /{id}
@@ -86,6 +88,8 @@
   }
 
   function stockCell(x) {
+    // Staff do not get the system stock (the weekly count is blind for them).
+    if (x.stock == null) return '<div><span class="bk-num">-</span> <span class="bk-sub">' + esc(x.unit) + '</span></div>';
     const mx = Math.max(x.stock, (x.min_qty || 0) * 2.5, 1);
     return '<div><span class="bk-num">' + q(x.stock) + '</span> <span class="bk-sub">' + esc(x.unit) + '</span>' +
       (x.below_min ? '<span class="bk-low" ' + biAttr('di bawah minimum', 'below minimum') + '></span>' : '') +
@@ -102,6 +106,7 @@
     if (x.request && x.request.kind === 'pr_submitted') return '<div style="text-align:right"><span class="k-pill k-pill--info">' + icon('truck', 14) + sp('PR diajukan', 'PR submitted') + '</span>' +
       '<div class="bk-sub"><span class="k-mono k-strong">' + esc(x.request.pr_number) + '</span> · ' + esc(S.fmt.date(x.request.at).replace(/ \d{4}$/, '')) + '</div></div>';
     if (x.below_min) return btn('k-btn--primary k-btn--sm', 'Ajukan ke Ops HQ', 'Raise to Ops HQ', 'data-raise="' + x.id + '" data-min-role="supervisor"');
+    if (x.below_min == null) return '';
     return '<div style="text-align:right">' + S.pill('ok', 'Cukup', 'Enough') + '</div>';
   }
 
@@ -149,7 +154,7 @@
       '<div class="k-line k-line--between" style="flex-wrap:wrap;gap:10px"><span class="k-line" style="gap:6px;flex-wrap:wrap">' + icon('list', 18) +
       '<span>' + esc(t('Dihitung otomatis dari ', 'Deducted automatically from ')) + '<b class="bk-num">' + d.packed_orders_7d + '</b>' + esc(t(' pesanan dikemas 7 hari terakhir', ' orders packed in the last 7 days')) + '</span>' +
       '<span class="bk-sub">' + esc(t('· logika: Ops HQ', '· logic: Ops HQ')) + '</span>' + pencil('data-settings') + '</span>' +
-      '<button type="button" class="k-btn k-btn--outline" data-add data-min-role="hq">' + icon('plus', 18) + sp('Tambah bahan kemas', 'Add a consumable') + ' <span class="k-chip k-chip--hq">Ops HQ</span></button></div>' +
+      '<button type="button" class="k-btn k-btn--outline" data-add data-min-role="hq">' + icon('plus', 18) + sp('Tambah bahan kemas', 'Add packing supplies') + ' <span class="k-chip k-chip--hq">Ops HQ</span></button></div>' +
       reqHtml + '<div class="k-laptop-only">' + table + '</div><div class="k-phone-only">' + cards + '</div>' +
       '<p class="k-caption">' + esc(t('Minimum = ' + d.settings.min_days + ' hari pada target Grab ' + d.settings.orders_per_month + ' pesanan per bulan per dark store (usulan, bisa diubah Ops HQ). Garis tegak pada batang = minimum. Ikon pensil: hanya Ops HQ yang mengubah minimum, pemakaian per pesanan dan logikanya.',
         'Minimum = ' + d.settings.min_days + ' days at Grab\'s target of ' + d.settings.orders_per_month + ' orders per dark store per month (a proposal Ops HQ can change). The tick on the bar = the minimum. Pencil: only Ops HQ changes minimums, usage per order and the logic.')) + '</p></div>';
@@ -177,10 +182,10 @@
   function itemModal(ctx, x) {
     const sugg = x ? x.min_suggested : null;
     S.modal({
-      title: x ? ['Ubah ' + x.name, 'Change ' + x.name] : ['Tambah bahan kemas', 'Add a consumable'],
+      title: x ? ['Ubah ' + x.name, 'Change ' + x.name] : ['Tambah bahan kemas', 'Add packing supplies'],
       body: '<div class="k-stack">' +
         '<label class="k-field"><span class="k-field__label" ' + biAttr('Nama', 'Name') + '></span><input class="k-input" id="bk-name" value="' + esc(x ? x.name : '') + '"></label>' +
-        '<div class="k-grid2"><label class="k-field"><span class="k-field__label" ' + biAttr('Satuan', 'Unit') + '></span><input class="k-input" id="bk-unit" value="' + esc(x ? x.unit : 'pcs') + '"></label>' +
+        '<div class="k-grid2"><label class="k-field"><span class="k-field__label" ' + biAttr('Satuan', 'Unit') + '></span><input class="k-input" id="bk-unit" value="' + esc(x ? x.unit : 'unit') + '"></label>' +
         '<label class="k-field"><span class="k-field__label" ' + biAttr('Isi per pak', 'Pieces per pack') + '></span><input class="k-input k-input--num" id="bk-pack" type="number" min="0" step="any" value="' + (x && x.pack_size != null ? x.pack_size : '') + '"></label></div>' +
         '<div class="k-grid2"><label class="k-field"><span class="k-field__label" ' + biAttr('Pemakaian', 'Usage') + '></span><input class="k-input k-input--num" id="bk-use" type="number" min="0" step="any" value="' + (x ? x.usage_qty : 1) + '"></label>' +
         '<label class="k-field"><span class="k-field__label" ' + biAttr('Dipakai', 'Used') + '></span><select class="k-select" id="bk-basis">' +
@@ -194,7 +199,7 @@
           label: ['Simpan', 'Save'], kind: 'primary', minRole: 'hq',
           onClick: async () => {
             const num = (id) => { const v = $(id).value; return v === '' ? null : +v; };
-            const body = { name: $('#bk-name').value.trim(), unit: $('#bk-unit').value.trim() || 'pcs', pack_size: num('#bk-pack'),
+            const body = { name: $('#bk-name').value.trim(), unit: $('#bk-unit').value.trim() || 'unit', pack_size: num('#bk-pack'),
               usage_basis: $('#bk-basis').value, usage_qty: num('#bk-use') || 0, min_qty: num('#bk-min') };
             if (!body.name) { S.toast(['Isi nama.', 'Enter the name.'], 'caution'); return false; }
             if (x) await api().put('/consumables/' + x.id, body);
@@ -231,7 +236,7 @@
       api().get('/consumables/receipts/pending' + api().qs({ site_id: ctx.siteId, recent_days: 7 })),
       api().get('/consumables/counts' + api().qs({ site_id: ctx.siteId, status: 'pending' })),
     ]);
-    if (!d.items.length) { ctx.body.innerHTML = '<div class="k-card k-empty">' + bis('Belum ada bahan kemas di dark store ini.', 'No consumable at this dark store yet.', 'k-empty__title') + '</div>'; return; }
+    if (!d.items.length) { ctx.body.innerHTML = '<div class="k-card k-empty">' + bis('Belum ada bahan kemas di dark store ini.', 'No packing supplies at this dark store yet.', 'k-empty__title') + '</div>'; return; }
     let item = d.items.find((x) => x.request && x.request.kind === 'pr_submitted') || d.items[0];
     let packs = 1, per = item.last_per_pack || item.pack_size || 1;
     ctx.body.innerHTML = '<div class="k-stack bk-wrap" id="bk-t"></div>';
@@ -279,8 +284,11 @@
         '<div class="bk-sub" ' + biAttr('Dari penerimaan terakhir. Ubah jika beda.', 'From the last delivery. Change it if different.') + '></div></div>' +
         '<span class="k-line" style="gap:8px"><input class="k-input k-input--num" id="bk-per" type="number" min="0" step="any" style="width:100px;font-size:22px;font-weight:800;text-align:center" value="' + per + '"><span class="k-strong">' + esc(item.unit) + '</span></span></div>' +
         '<div class="k-card k-card--pad"><span class="bk-step" ' + biAttr('Total diterima', 'Total received') + '></span><div class="k-line" style="gap:8px;align-items:baseline"><span class="bk-total">' + q(tot) + '</span><span class="k-strong">' + esc(item.unit) + '</span></div>' +
-        '<div>' + esc(t(packs + ' pak × ' + q(per) + ' ' + item.unit + '. Stok sekarang ' + q(item.stock) + ' ' + item.unit + '. Jadi ', packs + ' packs × ' + q(per) + ' ' + item.unit + '. Stock now ' + q(item.stock) + ' ' + item.unit + '. Becomes ')) +
-        '<b>' + esc(q(item.stock + tot) + ' ' + item.unit) + '</b>' + esc(spv ? t(' setelah Ops HQ menyetujui.', ' after Ops HQ approves.') : t(' setelah SPV lalu Ops HQ menyetujui.', ' after the SPV, then Ops HQ, approve.')) + '</div></div>' +
+        (item.stock == null
+          ? '<div>' + esc(t(packs + ' pak × ' + q(per) + ' ' + item.unit + '. Stok naik', packs + ' packs × ' + q(per) + ' ' + item.unit + '. The stock rises')) +
+            esc(spv ? t(' setelah Ops HQ menyetujui.', ' after Ops HQ approves.') : t(' setelah SPV lalu Ops HQ menyetujui.', ' after the SPV, then Ops HQ, approve.')) + '</div></div>'
+          : '<div>' + esc(t(packs + ' pak × ' + q(per) + ' ' + item.unit + '. Stok sekarang ' + q(item.stock) + ' ' + item.unit + '. Jadi ', packs + ' packs × ' + q(per) + ' ' + item.unit + '. Stock now ' + q(item.stock) + ' ' + item.unit + '. Becomes ')) +
+            '<b>' + esc(q(item.stock + tot) + ' ' + item.unit) + '</b>' + esc(spv ? t(' setelah Ops HQ menyetujui.', ' after Ops HQ approves.') : t(' setelah SPV lalu Ops HQ menyetujui.', ' after the SPV, then Ops HQ, approve.')) + '</div></div>') +
         '<div class="k-actionbar">' + btn('k-btn--primary k-btn--lg k-btn--block', to[0], to[1], 'id="bk-send"', 'check') + '</div>' +
         countWait +
         (entries.length ? '<div class="k-card k-card--pad k-stack k-stack--tight"><strong ' + biAttr('Penerimaan yang dimasukkan', 'Receipts entered') + '></strong>' +
@@ -349,13 +357,16 @@
     ctx.body.innerHTML = '<div class="k-stack bk-wrap" id="bk-m"></div>';
     const root = $('#bk-m', ctx.body);
     const counted = (c) => t('Dihitung ', 'Counted by ') + (c.counted_name || c.counted_by) + ', ' + S.fmt.dt(c.counted_at);
+    const showSys = S.atLeast('supervisor');
     if (pend) {
       const bySpv = pend.status === 'spv_pending';
       root.innerHTML = '<div class="k-card k-card--pad k-stack k-stack--tight"><div class="k-line" style="gap:8px;flex-wrap:wrap">' + statePill(pend.status) + '</div>' +
         '<div class="bk-sub">' + esc(counted(pend) + (!bySpv && pend.decided_by ? ' · ' + t('disetujui SPV ', 'approved by the SPV ') + (pend.decided_name || pend.decided_by) : '')) + '</div></div>' +
-        '<div class="k-tablewrap"><table class="k-table"><thead><tr><th ' + biAttr('Barang', 'Item') + '></th><th class="k-num" ' + biAttr('Sistem', 'System') + '></th><th class="k-num" ' + biAttr('Dihitung', 'Counted') + '></th><th class="k-num" ' + biAttr('Selisih', 'Difference') + '></th></tr></thead><tbody>' +
-        pend.lines.map((l) => '<tr class="' + (l.difference ? 'is-caution' : '') + '"><td class="k-strong">' + esc(l.name) + '</td><td class="k-num">' + q(l.qty_system) + '</td><td class="k-num k-strong">' + q(l.qty_counted) + '</td>' +
-          '<td class="k-num" style="' + (l.difference ? 'color:var(--stop);font-weight:800' : '') + '">' + (l.difference > 0 ? '+' : '') + q(l.difference) + '</td></tr>').join('') + '</tbody></table></div>' +
+        '<div class="k-tablewrap"><table class="k-table"><thead><tr><th ' + biAttr('Barang', 'Item') + '></th>' + (showSys ? '<th class="k-num" ' + biAttr('Sistem', 'System') + '></th>' : '') +
+          '<th class="k-num" ' + biAttr('Dihitung', 'Counted') + '></th>' + (showSys ? '<th class="k-num" ' + biAttr('Selisih', 'Difference') + '></th>' : '') + '</tr></thead><tbody>' +
+        pend.lines.map((l) => '<tr class="' + (showSys && l.difference ? 'is-caution' : '') + '"><td class="k-strong">' + esc(l.name) + '</td>' + (showSys ? '<td class="k-num">' + q(l.qty_system) + '</td>' : '') +
+          '<td class="k-num k-strong">' + q(l.qty_counted) + ' <span class="bk-sub">' + esc(l.unit) + '</span></td>' +
+          (showSys ? '<td class="k-num" style="' + (l.difference ? 'color:var(--stop);font-weight:800' : '') + '">' + (l.difference > 0 ? '+' : '') + q(l.difference) + '</td>' : '') + '</tr>').join('') + '</tbody></table></div>' +
         '<div class="k-line" style="gap:8px;justify-content:flex-end">' +
         (bySpv ? btn('k-btn--secondary', 'Kembalikan', 'Send back', 'data-spv-no="' + pend.id + '" data-min-role="supervisor"') +
           btn('k-btn--primary', 'Setujui hitungan', 'Approve the count', 'data-spv-ok="' + pend.id + '" data-min-role="supervisor"', 'check')
@@ -366,8 +377,8 @@
       root.innerHTML = (last ? '<div class="k-card k-card--pad k-stack k-stack--tight"><div class="k-line" style="gap:8px;flex-wrap:wrap"><span class="k-strong" ' + biAttr('Hitungan terakhir', 'Last count') + '></span>' + statePill(last.status) + '</div>' +
           '<div class="bk-sub">' + esc(counted(last) + (DONE[last.status] && last.decided_at ? ' · ' + t(DONE[last.status][0], DONE[last.status][1]) + (last.decided_name || last.decided_by || '') + ', ' + S.fmt.dt(last.decided_at) : '')) + '</div>' +
           ((last.status === 'returned' || last.status === 'spv_returned') ? '<div class="k-note k-note--stop">' + icon('undo', 18) + '<span>' + esc((last.note ? t('Catatan: ', 'Note: ') + last.note + ' ' : '') + t('Hitung lagi dan kirim.', 'Count again and send.')) + '</span></div>' : '') + '</div>' : '') +
-        '<div class="k-card" style="padding:4px 0">' + d.items.map((x) => '<label class="k-line k-line--between" style="padding:12px 16px;border-top:1px solid var(--rule);gap:12px"><span><span class="k-strong">' + esc(x.name) + '</span>' +
-          '<span class="bk-sub" style="display:block">' + esc(t('Menurut sistem: ', 'System: ') + q(x.stock) + ' ' + x.unit) + '</span></span>' +
+        '<div class="k-note k-note--info">' + icon('info', 20) + sp('Angka sistem tidak ditampilkan. Hitung yang ada di rak.', 'The system number is not shown. Count what is on the shelf.') + '</div>' +
+        '<div class="k-card" style="padding:4px 0">' + d.items.map((x) => '<label class="k-line k-line--between" style="padding:12px 16px;border-top:1px solid var(--rule);gap:12px"><span><span class="k-strong">' + esc(x.name) + '</span></span>' +
           '<span class="k-line" style="gap:6px"><input class="k-input k-input--num" type="number" min="0" step="any" data-cnt="' + x.id + '" style="width:100px;text-align:right"><span class="bk-sub">' + esc(x.unit) + '</span></span></label>').join('') + '</div>' +
         '<p class="k-caption" ' + biAttr('Sistem sudah mengurangi pemakaian per pesanan; hitungan ini menangkap yang terlewat (terbuang, rusak, takaran salah).', 'The system already deducts usage per order; this count catches what it misses (waste, damage, a wrong rate).') + '></p>' +
         '<div class="k-actionbar">' + btn('k-btn--primary k-btn--lg k-btn--block', to[0], to[1], 'id="bk-cs"', 'check') + '</div>';

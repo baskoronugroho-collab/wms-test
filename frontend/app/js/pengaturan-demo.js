@@ -17,6 +17,11 @@
  *   POST /api/demo/delivery              {site_id}: a fresh Labore restock request, already
  *        confirmed, brand PO PO/LBR/DEMO, arriving today; an earlier one not received
  *        yet is cancelled, one being received refuses it
+ *
+ * Contoh: produk tanpa bin (SPV and above, Mode demo on), to rehearse Rak & bin, Perlu bin:
+ *   GET  /api/demo/needs-bin?site_id=       the current example, or none
+ *   POST /api/demo/needs-bin                {site_id}: Siapkan contoh, a real product taken off its bin
+ *   POST /api/demo/needs-bin/reset          {site_id}: Kembalikan seperti semula
  */
 (function () {
   'use strict';
@@ -89,13 +94,63 @@
       '<p class="k-p" style="margin:0">' + span([
         'Membuat permintaan restock Labore baru di dark store ini yang sudah dikonfirmasi merek, dengan No. PO merek ' + po + ' dan tiba hari ini, supaya setiap latihan punya kiriman untuk diterima. Terima di Barang masuk dengan mengetik atau memindai nomor itu. Kiriman demo sebelumnya yang belum diterima dibatalkan.',
         'Makes a new Labore restock request at this dark store, already confirmed by the brand, with brand PO ' + po + ' and arriving today, so every rehearsal has a delivery to receive. Receive it in Inbound by typing or scanning that number. An earlier demo delivery not received yet is cancelled.']) + '</p>' +
-      (plan ? '<span class="k-caption">' + span(['Isi: ' + plan + ' (' + units + ' pcs). Tidak ada pesan ke Hiryu.', 'Lines: ' + plan + ' (' + units + ' pcs). No message to Hiryu.']) + '</span>' : '') +
+      (plan ? '<span class="k-caption">' + span(['Isi: ' + plan + ' (' + units + ' unit). Tidak ada pesan ke Hiryu.', 'Lines: ' + plan + ' (' + units + ' units). No message to Hiryu.']) + '</span>' : '') +
       problems.map((x) => '<div class="k-note k-note--caution">' + icon('warn') + '<span>' + esc(S.pick(x)) + '</span></div>').join('') +
       '<div class="k-line" style="gap:10px;flex-wrap:wrap">' +
       '<button type="button" class="k-btn k-btn--secondary" data-delivery data-min-role="supervisor"' + (on && dv && dv.can_create ? '' : ' disabled') + '>' + icon('plus') + span(['Kiriman demo baru', 'New demo delivery']) + '</button>' +
       '<a class="k-btn k-btn--secondary" href="barang-masuk.html">' + icon('inbound') + span(['Buka Barang masuk', 'Open Inbound']) + '</a>' +
       (on ? '' : '<span class="k-caption">' + span(['Nyalakan Mode demo dulu.', 'Switch Mode demo on first.']) + '</span>') + '</div>' +
       current + '</div>';
+  }
+
+  /* Contoh: produk tanpa bin. A real product is taken off its bin so it shows in Rak & bin,
+   * Perlu bin; the trainer gives it a bin again and prints the bin label. */
+  function needsBinCard(st, nb) {
+    const on = !!st.demo_mode;
+    const ex = nb && nb.example;
+    const sizeP = ex ? (ex.bin_size === 'KECIL' ? ['Kecil', 'Small'] : ['Besar', 'Large']) : null;
+    const prod = ex ? (ex.name || ex.sku_code) + ' (' + ex.sku_code + ')' : null;
+    const steps = [
+      ['Buka Rak & bin, tab Perlu bin.', 'Open Racks & bins, tab Need a bin.'],
+      [prod ? 'Pilih produk ' + prod + '.' : 'Pilih produk contoh.', prod ? 'Pick the product ' + prod + '.' : 'Pick the example product.'],
+      [sizeP ? 'Pilih bin kosong ukuran ' + sizeP[0] + ', tekan Simpan di.' : 'Pilih bin kosong seukuran produknya, tekan Simpan di.',
+        sizeP ? 'Pick an empty bin of size ' + sizeP[1] + ', press Save at.' : 'Pick an empty bin of the product\'s size, press Save at.'],
+      ['Cetak label bin kalau perlu.', 'Print the bin label if needed.'],
+    ];
+    const problems = ((nb && nb.problems) || []).filter((x) => on || x.indexOf('Mode demo') !== 0);
+    const current = ex
+      ? '<div class="k-stack k-stack--tight" style="margin-top:4px"><span class="k-eyebrow" ' + biAttr('Contoh sekarang', 'Current example') + '></span>' +
+        '<div class="k-line" style="gap:10px;flex-wrap:wrap;align-items:center">' +
+        '<span class="k-strong">' + esc(ex.name || ex.sku_code) + '</span>' +
+        '<span class="k-tag k-mono">' + esc(ex.sku_code) + '</span>' +
+        '<span class="k-tag">' + span(['Bin ' + sizeP[0], sizeP[1] + ' bin']) + '</span>' +
+        (ex.waiting ? S.pill('caution', 'Di Perlu bin', 'In Need a bin')
+          : S.pill('ok', 'Sudah punya bin ' + ex.current_bin, 'Has a bin: ' + ex.current_bin)) + '</div>' +
+        '<span class="k-caption">' + span([
+          'Tadinya di bin ' + ex.original_bin + (ex.original_bin_free ? ' (kosong sekarang)' : ' (sudah dipakai)') +
+            (ex.units_cleared ? '. ' + ex.units_cleared + ' unit stoknya dikosongkan dan kembali saat Kembalikan seperti semula.' : '.'),
+          'It was in bin ' + ex.original_bin + (ex.original_bin_free ? ' (free now)' : ' (in use now)') +
+            (ex.units_cleared ? '. Its ' + ex.units_cleared + ' units of stock were emptied and come back with Put it back as it was.' : '.')]) + '</span></div>'
+      : '<span class="k-caption">' + span(['Belum ada contoh di dark store ini.', 'No example at this dark store yet.']) + '</span>';
+    return '<div class="k-card k-card--pad k-stack">' +
+      '<span class="k-h2" style="font-size:18px">' + span(['Contoh: produk tanpa bin', 'Example: a product without a bin']) + '</span>' +
+      '<p class="k-p" style="margin:0">' + span([
+        'Melepas satu produk asli dari Hiryu dari binnya, supaya muncul di Rak & bin, tab Perlu bin. Lalu kamu memberinya bin lagi, bin yang sama atau yang lain. Stok produk itu dikosongkan dulu (dicatat sebagai koreksi stok).',
+        'Takes one real Hiryu product off its bin, so it shows in Racks & bins, tab Need a bin. Then you give it a bin again, the same one or another. Its stock is emptied first (recorded as a stock correction).']) + '</p>' +
+      '<ol class="k-stack" style="margin:0;padding-left:22px">' + steps.map((x) => '<li>' + span(x) + '</li>').join('') + '</ol>' +
+      problems.map((x) => '<div class="k-note k-note--caution">' + icon('warn') + '<span>' + esc(S.pick(x)) + '</span></div>').join('') +
+      '<div class="k-line" style="gap:10px;flex-wrap:wrap">' +
+      '<button type="button" class="k-btn k-btn--secondary" data-nb-setup data-min-role="supervisor"' + (on && nb && nb.can_setup ? '' : ' disabled') + '>' + icon('plus') + span(['Siapkan contoh', 'Set up the example']) + '</button>' +
+      '<button type="button" class="k-btn k-btn--secondary" data-nb-reset data-min-role="supervisor"' + (on && nb && nb.can_reset ? '' : ' disabled') + '>' + icon('count') + span(['Kembalikan seperti semula', 'Put it back as it was']) + '</button>' +
+      '<a class="k-btn k-btn--secondary" href="rak-bin.html?tab=perlu">' + icon('grid') + span(['Buka Perlu bin', 'Open Need a bin']) + '</a>' +
+      (on ? '' : '<span class="k-caption">' + span(['Nyalakan Mode demo dulu.', 'Switch Mode demo on first.']) + '</span>') + '</div>' +
+      current + '</div>';
+  }
+
+  async function loadNeedsBin() {
+    if (!S.atLeast('supervisor')) return null;
+    try { return await api().get('/demo/needs-bin' + api().qs({ site_id: S.siteId() })); }
+    catch (e) { return null; }
   }
 
   async function newDelivery(dv) {
@@ -120,7 +175,7 @@
     catch (e) { return null; }
   }
 
-  function html(st, dv) {
+  function html(st, dv, nb) {
     const on = !!st.demo_mode;
     return '<div class="k-stack k-stack--loose">' +
       '<div class="k-card k-card--pad k-stack' + (on ? ' k-card--focus' : '') + '">' +
@@ -148,6 +203,7 @@
       '<button type="button" class="k-btn k-btn--secondary" data-reset data-min-role="supervisor"' + (on ? '' : ' disabled') + '>' + icon('count') + span(['Reset stok demo', 'Reset demo stock']) + '</button>' +
       (on ? '' : '<span class="k-caption">' + span(['Nyalakan Mode demo dulu.', 'Switch Mode demo on first.']) + '</span>') + '</div></div>' +
       deliveryCard(st, dv) +
+      needsBinCard(st, nb) +
       '<div class="k-card k-card--pad k-stack"><span class="k-eyebrow" ' + biAttr('Alur demo', 'Demo flow') + '></span><ol class="k-stack" style="margin:0;padding-left:22px">' +
       STEPS.map((x) => '<li>' + span(x[0]) + (x[1] ? ' ' + x[1].split(' ').map((h) => '<span class="k-tag">' + esc(h) + '</span>').join(' ') : '') + '</li>').join('') +
       '</ol></div>' +
@@ -216,8 +272,9 @@
     }
     let st = await api().get('/demo/settings' + api().qs({ site_id: S.siteId() }));
     let dv = await loadDelivery();
+    let nb = await loadNeedsBin();
     function paint() {
-      body.innerHTML = html(st, dv);
+      body.innerHTML = html(st, dv, nb);
       const sw = body.querySelector('[data-demo]');
       S.lockAll(body);
       if (sw && !sw.closest('.k-lockwrap')) S.toggle(sw, async (on) => {
@@ -225,6 +282,7 @@
         st = Object.assign(st, r);
         S.toast(r.message || (on ? ['Mode demo menyala.', 'Mode demo on.'] : ['Mode demo mati.', 'Mode demo off.']), 'ok');
         dv = await loadDelivery();
+        nb = await loadNeedsBin();
         paint();
       });
       const rs = body.querySelector('[data-reset]');
@@ -242,6 +300,22 @@
           return;
         }
         nd.disabled = false;
+      });
+      [['[data-nb-setup]', '/demo/needs-bin', ['Contoh siap.', 'Example ready.']],
+        ['[data-nb-reset]', '/demo/needs-bin/reset', ['Contoh dikembalikan.', 'Example put back.']]].forEach((x) => {
+        const b = body.querySelector(x[0]);
+        if (b) b.addEventListener('click', async () => {
+          b.disabled = true;
+          try {
+            const r = await api().post(x[1], { site_id: S.siteId() });
+            S.toast(r.message || x[2], 'ok');
+            nb = r;
+          } catch (e) {
+            S.fail(e);
+            nb = await loadNeedsBin();
+          }
+          paint();
+        });
       });
       const mk = body.querySelector('[data-make]');
       if (mk) mk.addEventListener('click', async () => {

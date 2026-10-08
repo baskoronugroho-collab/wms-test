@@ -76,7 +76,7 @@ async def apply(
             if qty_delta < 0:
                 raise HTTPException(
                     status_code=409,
-                    detail="No stock recorded at this location.",
+                    detail="Tidak ada stok tercatat di lokasi ini. / No stock recorded at this location.",
                 )
             await db.run(
                 cur,
@@ -91,6 +91,7 @@ async def apply(
                 raise HTTPException(
                     status_code=409,
                     detail=(
+                        f"Stok tidak cukup: ada {existing['qty_on_hand']}, mau diambil {abs(qty_delta)}. / "
                         f"Not enough stock: {existing['qty_on_hand']} on hand, "
                         f"tried to remove {abs(qty_delta)}."
                     ),

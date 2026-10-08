@@ -82,8 +82,26 @@ def short_bin(code: str | None) -> str | None:
     return code
 
 
-def bin_words(rack_code: str | None, level_no: int | None, position_no: int | None) -> str | None:
-    """Rak A, level 3 dari bawah, bin ke-1 (board 6c)."""
+# A stacked bin's code ends in its place in the stack: A-2-03B (bottom),
+# A-2-03M (middle, three high), A-2-03T (top). A single bin ends in a digit.
+_STACK_CODE = re.compile(r"^(?:[A-Z0-9]+-)?[A-Z0-9]{1,4}-\d+-\d+([BMT])$")
+_STACK_WORDS = {"B": ("bawah", "bottom"), "M": ("tengah", "middle"), "T": ("atas", "top")}
+
+
+def stack_words(code: str | None) -> tuple[str, str] | None:
+    """('bawah', 'bottom') for MA5-A-2-03B or A-2-03B; None for a single bin."""
+    m = _STACK_CODE.match(re.sub(r"\s+", "", code or "").upper())
+    return _STACK_WORDS[m.group(1)] if m else None
+
+
+def bin_words(rack_code: str | None, level_no: int | None, position_no: int | None,
+              code: str | None = None) -> str | None:
+    """Rak A, level 3 dari bawah, bin ke-1 (board 6c).
+
+    With the bin's code, a stacked bin also says which one of its stack:
+    Rak A, level 2 dari bawah, bin ke-3, yang bawah di tumpukan. Callers that sort by
+    the code walk a stack bottom first (03B, 03M, 03T sort in that order).
+    """
     if not rack_code:
         return None
     rack = rack_code.split("-")[-1]
@@ -92,6 +110,9 @@ def bin_words(rack_code: str | None, level_no: int | None, position_no: int | No
         out += f", level {level_no} dari bawah"
     if position_no:
         out += f", bin ke-{position_no}"
+    word = stack_words(code)
+    if word:
+        out += f", yang {word[0]} di tumpukan"
     return out
 
 
@@ -187,6 +208,31 @@ async def free_basket(site_id: int) -> str | None:
 async def free_baskets(site_id: int) -> list[str]:
     """Every free outbound basket, in order: any of them is right on board 6b."""
     return [b["code"] for b in await baskets(site_id, "") if not b["busy"]]
+
+
+# --------------------------------------------------------------------------
+# Mode manual (V32): units confirmed by a tap instead of a scan
+# --------------------------------------------------------------------------
+
+async def fifo_plate(cur, *, site_id: int, sku_id: int, location_id: int) -> dict | None:
+    """Mode B in Mode manual: the label a scan would be accepted for first,
+    the oldest in_stock label of this product in this bin (FIFO), locked. The
+    tap counts as a scan of that label. None when the bin has no label on
+    record."""
+    return await db.one(
+        cur, "SELECT id, plate_code, sku_id FROM unit_plates "
+             "WHERE site_id = %s AND sku_id = %s AND location_id = %s AND state = 'in_stock' "
+             "ORDER BY bound_at IS NULL, bound_at, id LIMIT 1 FOR UPDATE",
+        (site_id, sku_id, location_id))
+
+
+async def manual_units(order_id: int) -> dict[int, int]:
+    """Units picked by a tap per order line of an order (only lines with any)."""
+    rows = await db.fetch_all(
+        "SELECT pl.order_line_id, SUM(pl.manual_units) AS n FROM pick_lines pl "
+        "JOIN pick_tasks pt ON pt.id = pl.pick_task_id "
+        "WHERE pt.order_id = %s AND pl.manual_units > 0 GROUP BY pl.order_line_id", (order_id,))
+    return {r["order_line_id"]: int(r["n"]) for r in rows}
 
 
 # --------------------------------------------------------------------------
@@ -321,6 +367,44 @@ async def bench_stock(site_id: int) -> list[dict]:
         q = float(r["stock_qty"] or 0)
         out.append({"name": r["name"], "qty": int(q) if q.is_integer() else q, "unit": r["unit"]})
     return out
+
+
+async def quarantine_trays(site_id: int) -> list[str]:
+    """The hub's quarantine trays (agent C's helper), or <HUB>-QR-01."""
+    fn = _helper("quarantine", "trays")
+    if fn:
+        return await fn(site_id)
+    site = await db.fetch_one("SELECT code FROM sites WHERE id = %s", (site_id,))
+    return [f"{str(site['code'] if site else '').split('-')[-1]}-QR-01"]
+
+
+async def damaged_to_quarantine(cur, *, site_id: int, sku_id: int, location_id: int,
+                                reason: str, actor: str, tray_code: str,
+                                photo_key: str | None, note: str | None,
+                                in_ledger: bool, is_training: bool) -> int | None:
+    """Barang rusak (board 6c): a unit the picker found damaged in its bin goes
+    to the quarantine tray. Cost Ninja, the SPV decides (7b).
+
+    in_ledger: the bin has a free unit on record, so it leaves the stock now
+    (agent C's report_in_hub: an `adjustment`, reason quarantine, and Hiryu
+    hears the lower number). Not in_ledger: the record already had no free unit
+    there, so only the quarantine row is written and the caller puts the bin
+    on the next count. Returns the quarantine id, or None when agent C's
+    helper is missing (nothing is written then)."""
+    if in_ledger:
+        fn = _helper("quarantine", "report_in_hub")
+        if not fn:
+            return None
+        return await fn(cur, site_id=site_id, sku_id=sku_id, location_id=location_id, qty=1,
+                        reason=reason, actor_email=actor, reason_note=note,
+                        tray_code=tray_code, photo_key=photo_key, is_training=is_training)
+    fn = _helper("quarantine", "_insert")
+    if not fn:
+        return None
+    return await fn(cur, site_id=site_id, sku_id=sku_id, qty=1, origin="hub", reason=reason,
+                    actor_email=actor, reason_note=note, location_id=location_id,
+                    tray_code=tray_code, photo_key=photo_key, in_ledger=0,
+                    is_training=is_training)
 
 
 async def to_quarantine(cur, *, site_id: int, sku_id: int, qty: int, order: dict,

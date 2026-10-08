@@ -18,6 +18,7 @@ Adding a row type: write ``async def rows_x(R, ids, rule, user)`` that calls
 (a table not there yet on this database) is skipped and logged; the list still
 loads. Links are relative to frontend/app/.
 """
+import json
 import logging
 from datetime import datetime, timedelta
 
@@ -453,6 +454,31 @@ async def rows_catalogue(R: _Rows, ids, rule, user):
                   "lengkapi")
 
 
+@provider("manual_mode")
+async def rows_manual_mode(R: _Rows, ids, rule, user):
+    """Mode manual (V32): the dark store works without scanning. The SPV and
+    Ops HQ see it while it lasts, with what was done by hand so far today."""
+    from routers import manual_mode
+    ph = _ph(ids)
+    for r in await db.fetch_all(
+            "SELECT id, manual_mode_until, manual_mode_since, manual_mode_reason FROM sites "
+            f"WHERE id IN ({ph}) AND manual_mode = 1", ids):
+        if not await manual_mode.active(r["id"]):
+            continue
+        c = await manual_mode.day_counts(r["id"])
+        until = (r["manual_mode_until"] + WIB).strftime("%d/%m %H:%M") if r["manual_mode_until"] else "-"
+        for role in ("supervisor", "hq"):
+            R.add("manual_mode", role, r["id"],
+                  (f"Mode manual aktif sampai {until}", f"Manual mode on until {until}"),
+                  (f"{r['manual_mode_reason'] or '-'} · hari ini {c['pick_units']} unit diambil tanpa pindai, "
+                   f"{c['receipts']} penerimaan manual",
+                   f"{r['manual_mode_reason'] or '-'} · today {c['pick_units']} units picked without scanning, "
+                   f"{c['receipts']} manual receipts"),
+                  r["manual_mode_since"], None, None,
+                  "pengaturan.html?tab=hub&hub=" + str(r["id"]) if role == "hq" else "laporan.html?tab=akhir",
+                  "lihat", urgent=False)
+
+
 @provider("link")
 async def rows_link(R: _Rows, ids, rule, user):
     """Link problems: the SPV sees held messages at their hubs, Ops HQ failures."""
@@ -561,18 +587,56 @@ async def rows_floor(R: _Rows, ids, rule, user):
         R.add("late_orders", "supervisor", r["site_id"], ("Pesanan lewat target siap", "Orders past their ready-by"),
               (f"{r['n']} belum selesai dikemas.", f"{r['n']} not packed yet."),
               r["since"], timedelta(minutes=0), None, "pesanan.html?tab=papan", "lihat")
+    # A missing item puts its bin on today's count (opname.add_missing_check):
+    # the row stays until that bin has been counted after the shortfall.
+    # Barang rusak with no good unit left (status 'damaged') is not a missing
+    # item: no bin goes on the count, and the unit is in quarantine.
     for r in await db.fetch_all(
             "SELECT ps.site_id, ps.created_at, ps.qty_required, ps.qty_found, ps.declared_by, "
-            "       s.name_display, u.name AS picker FROM pick_shortfalls ps "
+            "       s.name_display, u.name AS picker, l.code AS bin_code FROM pick_shortfalls ps "
             "JOIN skus s ON s.id = ps.sku_id LEFT JOIN users u ON u.email = ps.declared_by "
-            f"WHERE ps.site_id IN ({ph}) AND ps.created_at >= %s ORDER BY ps.created_at",
-            [*ids, wib_day_start_utc(wib_today())]):
+            "LEFT JOIN pick_lines pl ON pl.id = ps.pick_line_id "
+            "LEFT JOIN locations l ON l.id = pl.location_id "
+            f"WHERE ps.site_id IN ({ph}) AND ps.created_at >= %s AND ps.status <> 'damaged' "
+            "  AND NOT EXISTS (SELECT 1 FROM count_tasks ct WHERE ct.location_id = pl.location_id "
+            "                  AND ct.plan_date = %s AND ct.status = 'closed' "
+            "                  AND ct.closed_at >= ps.created_at) "
+            "ORDER BY ps.created_at",
+            [*ids, wib_day_start_utc(wib_today()), wib_today()]):
         who = r["picker"] or r["declared_by"] or "?"
         when = (r["created_at"] + WIB).strftime("%H:%M")
+        b = hub_short(r["bin_code"]) if r["bin_code"] else None
         R.add("missing_item", "supervisor", r["site_id"],
               (f"Barang tidak ada: {r['name_display']}", f"Missing item: {r['name_display']}"),
-              (f"{who}, {when} · ketemu {r['qty_found']} dari {r['qty_required']}",
-               f"{who}, {when} · found {r['qty_found']} of {r['qty_required']}"),
+              (f"{who}, {when} · ketemu {r['qty_found']} dari {r['qty_required']}"
+               + (f" · bin {b} masuk hitung stok" if b else ""),
+               f"{who}, {when} · found {r['qty_found']} of {r['qty_required']}"
+               + (f" · bin {b} is on the stock count" if b else "")),
+              r["created_at"], None, None, "hitung-stok.html", "lihat")
+
+    # A picker who stopped an order they had started (Berhenti ambil pesanan
+    # ini): the SPV should know why, and where the basket is.
+    for r in await db.fetch_all(
+            "SELECT a.created_at, a.after_json, a.actor_email, pt.site_id, o.hiryu_short_no, "
+            "       o.external_ref, u.name AS picker FROM audit_log a "
+            "JOIN pick_tasks pt ON pt.id = a.entity_id JOIN orders o ON o.id = pt.order_id "
+            "LEFT JOIN users u ON u.email = a.actor_email "
+            f"WHERE a.entity = 'pick_tasks' AND a.action = 'pick_task.release' AND pt.site_id IN ({ph}) "
+            "  AND a.created_at >= UTC_TIMESTAMP() - INTERVAL 12 HOUR ORDER BY a.created_at", ids):
+        try:
+            after = json.loads(r["after_json"] or "{}")
+        except ValueError:
+            after = {}
+        if not after.get("self"):
+            continue
+        gm = r["hiryu_short_no"] or r["external_ref"]
+        who = (r["picker"] or r["actor_email"] or "?").split(" ")[0]
+        reason = after.get("reason") or "-"
+        basket = after.get("basket")
+        R.add("pick_released", "supervisor", r["site_id"],
+              (f"{gm} dilepas oleh {who}", f"{gm} released by {who}"),
+              (f"Alasan: {reason}" + (f" · keranjang {basket} dengan {after.get('units_in_basket')} unit" if basket else ""),
+               f"Reason: {reason}" + (f" · basket {basket} with {after.get('units_in_basket')} units" if basket else "")),
               r["created_at"], None, None, "pesanan.html?tab=papan", "lihat")
 
 

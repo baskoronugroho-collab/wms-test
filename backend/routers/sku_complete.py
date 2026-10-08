@@ -106,6 +106,17 @@ _LABEL = {
 
 # --- settings ----------------------------------------------------------------
 
+def _join_bi(msgs: list[str]) -> str:
+    """Several "Indonesian / English" messages as one: the Indonesian halves, then
+    the English halves, so S.pick still splits it in two."""
+    ids, ens = [], []
+    for m in msgs:
+        a, sep, b = m.partition(" / ")
+        ids.append(a)
+        ens.append(b if sep else a)
+    return " ".join(ids) + " / " + " ".join(ens)
+
+
 async def _rule(key: str) -> dict | None:
     return await db.fetch_one(
         "SELECT enabled, value_num FROM alert_rules WHERE rule_key = %s", (key,))
@@ -685,14 +696,17 @@ async def update_sku(
     add, bc_errs = await _check_barcodes(sku_id, body.add_barcodes, user)
     errs += bc_errs
     if errs:
-        raise HTTPException(422, " ".join(errs))
+        raise HTTPException(422, _join_bi(errs))
     async with db.tx() as cur:
         moved = await _apply(cur, row, changed, user)
     added = await _add_barcodes(sku_id, add, user)
     fresh = await _one(sku_id)
-    msg = "Tersimpan." if changed or added else "Tidak ada perubahan."
+    msg = ("Tersimpan." if changed or added else "Tidak ada perubahan.")
+    msg_en = ("Saved." if changed or added else "Nothing changed.")
     if moved:
         msg += f" {moved} dark store ikut angka baru."
+        msg_en += f" {moved} dark store(s) follow the new numbers."
+    msg = msg + " / " + msg_en
     return {"row": fresh, "hubs_updated": moved, "barcodes_added": added, "message": msg}
 
 
@@ -709,7 +723,7 @@ async def add_barcode(sku_id: int, body: BarcodeAddIn,
                                  "scanned or pasted.")
     add, errs = await _check_barcodes(sku_id, [body.barcode], user)
     if errs:
-        raise HTTPException(409, " ".join(errs))
+        raise HTTPException(409, _join_bi(errs))
     if not add:
         return {"row": await _one(sku_id), "message": "Barcode ini sudah terdaftar di SKU ini. / "
                                                       "Already registered on this SKU."}
@@ -719,7 +733,7 @@ async def add_barcode(sku_id: int, body: BarcodeAddIn,
         raise HTTPException(409, f"Barcode {add[0]} baru saja dipakai SKU lain. / Barcode "
                                  f"{add[0]} was just taken by another SKU.")
     return {"row": await _one(sku_id), "barcodes_added": n,
-            "message": f"Barcode {add[0]} terdaftar."}
+            "message": f"Barcode {add[0]} terdaftar. / Barcode {add[0]} registered."}
 
 
 @router.put("/{sku_id}/hubs/{site_id}", response_model=SkuSavedOut)
@@ -762,7 +776,8 @@ async def update_hub(
                           restock_point=r, safety_stock=s),
         user,
     )
-    return {"row": await _one(sku_id), "message": "Angka dark store tersimpan."}
+    return {"row": await _one(sku_id), "message": "Angka dark store tersimpan. / "
+                                                  "Dark store numbers saved."}
 
 
 # --- CSV (§2.6.1) -------------------------------------------------------------------
@@ -1044,10 +1059,13 @@ async def import_csv(
     n_same = sum(1 for r in out if r["status"] == "same")
     n_err = sum(1 for r in out if r["status"] == "error")
     if commit:
-        msg = f"{saved} SKU tersimpan." + (f" {n_err} baris dilewati karena ada masalah."
-                                           if n_err else "")
+        msg = (f"{saved} SKU tersimpan." + (f" {n_err} baris dilewati karena ada masalah."
+                                            if n_err else "") +
+               f" / {saved} SKU(s) saved." + (f" {n_err} row(s) skipped because of a problem."
+                                             if n_err else ""))
     else:
         msg = (f"Pratinjau: {n_change} SKU berubah, {n_same} tetap, {n_err} bermasalah. "
-               "Periksa lalu tekan Simpan.")
+               f"Periksa lalu tekan Simpan. / Preview: {n_change} SKU(s) change, {n_same} "
+               f"stay, {n_err} with a problem. Check, then press Save.")
     return {"committed": bool(commit), "rows": out, "to_change": n_change,
             "unchanged": n_same, "errors": n_err, "saved": saved, "message": msg}

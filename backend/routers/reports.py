@@ -751,12 +751,20 @@ async def end_of_day_data(site: dict, day: date) -> dict:
 
     problems = []
     for o in oos:
+        # A real missing item first; 'damaged' is Barang rusak with no good
+        # unit left (the unit is in quarantine), not a missing item.
         sf = await db.fetch_one(
-            "SELECT ps.qty_required, ps.qty_found, s.name_display FROM pick_shortfalls ps "
+            "SELECT ps.qty_required, ps.qty_found, ps.status, s.name_display FROM pick_shortfalls ps "
             "JOIN pick_tasks pt ON pt.site_id = ps.site_id JOIN pick_lines pl ON pl.id = ps.pick_line_id "
-            "AND pl.pick_task_id = pt.id JOIN skus s ON s.id = ps.sku_id WHERE pt.order_id = %s LIMIT 1",
+            "AND pl.pick_task_id = pt.id JOIN skus s ON s.id = ps.sku_id WHERE pt.order_id = %s "
+            "ORDER BY ps.status = 'damaged', ps.id LIMIT 1",
             (o["id"],))
         gm = o["hiryu_short_no"] or o["external_ref"]
+        if sf and sf["status"] == "damaged":
+            problems.append({"kind": "cancel_damaged", "ref": gm,
+                             "title_id": f"Batal, barang rusak: {gm}",
+                             "detail_id": f"{sf['name_display']} · tidak ada unit lain yang baik"})
+            continue
         problems.append({"kind": "cancel_missing", "ref": gm,
                          "title_id": f"Batal, barang tidak ada: {gm}",
                          "detail_id": (f"{sf['name_display']} · ketemu {sf['qty_found']} dari {sf['qty_required']}"
@@ -795,9 +803,61 @@ async def end_of_day_data(site: dict, day: date) -> dict:
         "ready_10": ready10, "ready_target_minutes": target,
         "avg_pick": mmss(picks), "avg_pack": mmss(packt),
         "problems": problems, "sales": sku_rows,
+        "manual": await _manual_counts(sid, day),
         "note": ({"text": note["note"], "by": note["written_by"], "by_name": note["written_by_name"],
                   "at": iso(note["written_at"])} if note else None),
     }
+
+
+async def _manual_counts(site_id: int, day: date) -> dict | None:
+    """Mode manual (V32): units picked and receipts counted without scanning."""
+    try:
+        from routers import manual_mode
+        return await manual_mode.day_counts(site_id, day)
+    except Exception:      # before V32 on this database
+        return None
+
+
+@router.get("/today")
+async def today(user: auth.User = Depends(auth.require("supervisor"))):
+    """Hari ini: one line per dark store the person may see, for the strip on
+    Perlu tindakan (Ops HQ and the Ops Head see every dark store). Orders
+    placed today (WIB, tests left out), how many were ready within the Grab
+    target, how many are late right now (not ready and past the target), and
+    cancels for a missing item."""
+    hubs = await _live_hubs(user, [])
+    rule = await rule_values()
+    target = rule.get("grab_ready_minutes", 10)
+    out = {"day": str(wib_today()), "target_minutes": target, "sites": []}
+    if not hubs:
+        return out
+    ids = [h["id"] for h in hubs]
+    start_utc, now = to_utc(wib_today()), utcnow()
+    o_cols = await _columns("orders")
+    reason_col = "o.cancel_reason_code" if "cancel_reason_code" in o_cols else "NULL"
+    rows = await db.fetch_all(
+        "SELECT o.site_id, o.status, " + reason_col + " AS reason_code, COALESCE(o.placed_at, o.created_at) AS placed, "
+        "       o.marked_ready_at, "
+        "       (SELECT COUNT(*) FROM order_lines ol WHERE ol.order_id = o.id AND ol.status = 'short') AS shorts "
+        f"FROM orders o WHERE o.site_id IN ({_in(ids)}) " + await _test_filter() +
+        "  AND o.created_at >= %s AND COALESCE(o.placed_at, o.created_at) >= %s",
+        ids + [start_utc - timedelta(days=1), start_utc])
+    for h in hubs:
+        mine = [o for o in rows if o["site_id"] == h["id"]]
+        live = [o for o in mine if o["status"] != "cancelled"]
+        ready10 = sum(1 for o in mine if o["marked_ready_at"] and o["placed"]
+                      and (o["marked_ready_at"] - o["placed"]).total_seconds() <= target * 60)
+        out["sites"].append({
+            "site_id": h["id"], "site_code": hub_short(h["code"]), "name": h["name"],
+            "orders": len(mine), "ready_10": ready10,
+            "ready_share": ready10 / len(mine) if mine else None,
+            "in_progress": sum(1 for o in live if not o["marked_ready_at"]),
+            "late_now": sum(1 for o in live if not o["marked_ready_at"] and o["placed"]
+                            and (now - o["placed"]).total_seconds() > target * 60),
+            "cancelled_missing": sum(1 for o in mine if o["status"] == "cancelled"
+                                     and (o["shorts"] or str(o["reason_code"]) == "2001")),
+        })
+    return out
 
 
 @router.get("/end-of-day")

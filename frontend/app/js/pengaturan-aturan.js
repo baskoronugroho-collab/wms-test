@@ -29,7 +29,7 @@
     const host = ctx.body;
     function paint() {
       host.innerHTML = (d.can_edit ? '' : '<div class="k-note k-note--info">' + icon('lock', 18) + bis('Hanya Ops HQ yang bisa mengubah aturan.', 'Only Ops HQ can change the rules.') + '</div>') +
-        '<p class="k-caption">' + esc(d.note) + '</p><div class="pa-groups">' + d.groups.map((g) => '<div class="k-card k-card--pad"><h2 class="k-h2" ' + biAttr(g.title, g.title_en) + '></h2>' +
+        '<p class="k-caption">' + esc(S.pick(d.note)) + '</p><div class="pa-groups">' + d.groups.map((g) => '<div class="k-card k-card--pad"><h2 class="k-h2" ' + biAttr(g.title, g.title_en) + '></h2>' +
           g.rules.map((r) => '<div class="pa-rule' + (r.enabled ? '' : ' is-off') + '" data-key="' + esc(r.key) + '">' +
             '<button type="button" class="k-switch" data-sw aria-checked="' + r.enabled + '" aria-label="' + esc(t(r.label_id, r.label_en)) + '"' +
               (d.can_edit ? '' : ' disabled title="' + esc(t('Hanya Ops HQ', 'Ops HQ only')) + '"') + '></button>' +

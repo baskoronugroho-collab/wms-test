@@ -48,7 +48,7 @@ REQUESTS = ("Please: (1) make sure every unit carries the barcode in the Barcode
 BRAND_PO_PLACEHOLDER = "(filled by the brand)"
 HEADERS = ["No", "Brand SKU code", "Hiryu SKU code", "Barcode (EAN-13)", "Barcode (drawn bars)",
            "Product",
-           "Size", "Current stock", "Fill up to", "Quantity requested (pcs)",
+           "Size", "Current stock", "Fill up to", "Quantity requested (units)",
            "Brand's barcode (fill if different or missing)", "Notes"]
 WIDTHS = [5, 14, 14, 17, 26, 46, 9, 10, 10, 13, 24, 22]
 

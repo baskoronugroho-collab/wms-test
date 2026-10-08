@@ -100,7 +100,7 @@ async def list_rules(user: auth.User = Depends(auth.require("supervisor"))):
 async def set_rule(key: str, body: models.ReminderRuleIn,
                    user: auth.User = Depends(auth.require("hq"))):
     if key not in RULES:
-        raise HTTPException(404, "Unknown rule")
+        raise HTTPException(404, "Aturan tidak dikenal. / Unknown rule.")
     has_value = RULES[key][2] is not None
     top = 99 if key == "restock_default_pct" else 365
     if has_value and body.value is not None and not 1 <= body.value <= top:
@@ -270,7 +270,7 @@ async def compute_flags(user: auth.User, site_id: int | None) -> list[dict]:
         q, name = int(r["qty"] or 0), r["name_display"]
         ask = ((" · diminta di " + r["open_ref"]) if r["open_ref"] else " · belum diminta",
                (" · requested in " + r["open_ref"]) if r["open_ref"] else " · not requested yet")
-        safety = r["safety_stock"] if r["safety_stock"] is not None else "—"
+        safety = r["safety_stock"] if r["safety_stock"] is not None else "-"
         if on("safety_breach") and (q == 0 or (r["safety_stock"] is not None
                                                and q <= r["safety_stock"])):
             title = (("Habis: " if q == 0 else "Di bawah safety stock: ") + name,
@@ -338,8 +338,8 @@ async def compute_flags(user: auth.User, site_id: int | None) -> list[dict]:
         for r in reqs:
             out.append(_flag("sku_request_open", "warn", by_id[r["site_id"]],
                              (f"Permintaan SKU #{r['id']} belum dijawab", f"SKU request #{r['id']} unanswered"),
-                             (f"Barcode {r['barcode'] or '—'} · {r['h']} jam",
-                              f"Barcode {r['barcode'] or '—'} · {r['h']} h"),
+                             (f"Barcode {r['barcode'] or '-'} · {r['h']} jam",
+                              f"Barcode {r['barcode'] or '-'} · {r['h']} h"),
                              "permintaan-sku.html", str(r["id"]), r["h"]))
 
     # registered SKUs still without a rack at a hub

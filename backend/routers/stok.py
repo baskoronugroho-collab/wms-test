@@ -184,5 +184,5 @@ async def stock(
     return {
         "sites": [{"id": s["id"], "code": s["code"], "name": s["name"]} for s in sites],
         "rows": rows, "counts": counts, "stock_old_days": old_days,
-        "age_note": "Umur dihitung dari tanggal barang masuk (batch tertua yang masih ada).",
+        "age_note": "Umur dihitung dari tanggal barang masuk (batch tertua yang masih ada). / Age counts from the date the goods came in (the oldest batch still there).",
     }

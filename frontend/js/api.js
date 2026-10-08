@@ -13,6 +13,21 @@
   // ignores it for anyone else and refuses writes while it is set.
   function viewAs() { try { return localStorage.getItem('njw.viewAs') || ''; } catch (e) { return ''; } }
 
+  /* The server's detail as one sentence: a string as it is, a list of
+     field errors (422) or an object with a message as plain words. */
+  function detailText(d, status) {
+    if (typeof d === 'string' && d) return d;
+    if (d && typeof d === 'object' && !Array.isArray(d)) {
+      const m = d.message || d.detail || d.msg;
+      if (typeof m === 'string' && m) return m;
+    }
+    if (Array.isArray(d) || status === 422) {
+      return 'Data yang dikirim tidak lengkap atau salah. Muat ulang halaman, lalu coba lagi. / Some of the data sent is missing or wrong. Reload the page, then try again.';
+    }
+    if (status >= 500) return 'Server sedang bermasalah. Coba lagi sebentar lagi. / The server has a problem. Try again in a moment.';
+    return 'Ada masalah. Panggil supervisor. / Something went wrong. Call your supervisor.';
+  }
+
   async function req(path, opts) {
     const o = Object.assign({
       headers: { 'Content-Type': 'application/json' },
@@ -20,12 +35,26 @@
     }, opts || {});
     o.headers = Object.assign({}, o.headers);
     if (viewAs()) o.headers['X-View-As'] = viewAs();
-    const r = await fetch(BASE + path, o);
+    let r;
+    try { r = await fetch(BASE + path, o); }
+    catch (e) {
+      // No answer at all (no signal, server down): err.network, no status.
+      // The request may still have reached the server, so a scan is retried
+      // with the same idempotency key (NJW.shell.scanKey).
+      const err = new Error('Tidak tersambung ke server. Cek sinyal, lalu coba lagi. / No connection to the server. Check the signal, then try again.');
+      err.network = true;
+      try {
+        const k = o.body && typeof o.body === 'string' ? JSON.parse(o.body).idempotency_key : null;
+        if (k && window.NJW.scanNoAnswer) window.NJW.scanNoAnswer(k);
+      } catch (x) { /* not JSON */ }
+      throw err;
+    }
     if (!r.ok) {
-      let detail = r.statusText;
-      try { detail = (await r.json()).detail || detail; } catch (e) {}
-      const err = new Error(detail);
+      let detail = null;
+      try { detail = (await r.json()).detail; } catch (e) {}
+      const err = new Error(detailText(detail, r.status));
       err.status = r.status;
+      err.detail = detail;
       throw err;
     }
     return r.status === 204 ? null : r.json();

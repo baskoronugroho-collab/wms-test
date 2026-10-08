@@ -171,8 +171,8 @@ def recommend_basket(unit_cube_cm3: int | None, units_to_hold: int = 55) -> tupl
     An admin may override it, because the physical answer wins.
     """
     if not unit_cube_cm3:
-        return "BESAR", "Ukuran unit belum diketahui, pakai Besar."
+        return "BESAR", "Ukuran unit belum diketahui, pakai Besar. / Unit size is not known yet, use Besar."
     need_cbm = (unit_cube_cm3 * units_to_hold) / 1_000_000
     if need_cbm <= BASKET_CBM["KECIL"]:
-        return "KECIL", f"{units_to_hold} unit = {need_cbm:.4f} cbm, muat di bin Kecil."
-    return "BESAR", f"{units_to_hold} unit = {need_cbm:.4f} cbm, pakai bin Besar."
+        return "KECIL", f"{units_to_hold} unit = {need_cbm:.4f} cbm, muat di bin Kecil. / {units_to_hold} units = {need_cbm:.4f} cbm, fits a Kecil bin."
+    return "BESAR", f"{units_to_hold} unit = {need_cbm:.4f} cbm, pakai bin Besar. / {units_to_hold} units = {need_cbm:.4f} cbm, use a Besar bin."

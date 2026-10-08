@@ -1,0 +1,755 @@
+{
+ "version": 1,
+ "note": "Page help: the ? next to every page title (shell.js, helpPanel). One entry per page: what it is for, who uses it, what each tab or main button does, the Hiryu touchpoint, and the Guide sections (panduan.html?s=N). A part with \"tab\" takes its name from the page's tab label and is marked when that tab is open. \"min\" is the lowest role that may use that part; lower roles see it locked. Text may hold <em> for words on a screen. \"hiryu\" is in floor words; \"hiryu_msg\" holds the message numbers and is shown to Ops HQ and up only.",
+ "pages": {
+  "perlu-tindakan": {
+   "for": {
+    "id": "Daftar kerja Anda: semua yang menunggu Anda, yang paling mendesak di atas, dengan sisa waktu atau sudah lewat berapa lama. Ketuk baris untuk membuka layar tempat pekerjaan itu diselesaikan.",
+    "en": "Your work list: everything waiting for you, most urgent first, with the time left or how late it is. Tap a row to open the screen where the work gets done."
+   },
+   "who": [
+    "staff",
+    "supervisor",
+    "hq",
+    "ops_head"
+   ],
+   "parts": [
+    {
+     "name": {
+      "id": "Baris",
+      "en": "Rows"
+     },
+     "text": {
+      "id": "Setiap baris menyebut apa yang harus dikerjakan, di mana dan sampai kapan. Baris hilang sendiri setelah pekerjaannya selesai.",
+      "en": "Each row says what to do, where and by when. It disappears by itself once the work is done."
+     }
+    },
+    {
+     "name": {
+      "id": "Lewat waktu",
+      "en": "Late work"
+     },
+     "text": {
+      "id": "Pekerjaan yang lewat waktu tampil kuning dan naik satu tingkat: staf ke SPV, SPV ke Ops HQ, Ops HQ ke Ops Head. Tidak ada yang diputuskan otomatis.",
+      "en": "Work past its time turns amber and goes up one level: staff to the SPV, the SPV to Ops HQ, Ops HQ to the Ops Head. Nothing is decided automatically."
+     }
+    },
+    {
+     "name": {
+      "id": "Pekerjaan saya",
+      "en": "My work"
+     },
+     "text": {
+      "id": "Di HP, ubin di bawah daftar membuka pekerjaan harian Anda: ambil pesanan, barang masuk, hitung stok.",
+      "en": "On the phone, the tiles under the list open your daily jobs: picking, inbound, stock count."
+     }
+    }
+   ],
+   "guide": [
+    1
+   ]
+  },
+  "pesanan": {
+   "for": {
+    "id": "Semua pesanan Grab di dark store, dari ambil sampai diserahkan ke driver. Pesanan masuk dari Hiryu setelah dark store menerimanya di Hiryu.",
+    "en": "Every Grab order in the dark store, from picking to the driver. An order arrives from Hiryu after the dark store accepts it in Hiryu."
+   },
+   "who": [
+    "staff",
+    "supervisor"
+   ],
+   "parts": [
+    {
+     "tab": "ambil",
+     "text": {
+      "id": "Nyalakan <em>Siap ambil</em>. Saat HP berbunyi, ambil keranjang kosong dan pindai, lalu pindai setiap barang dari bin yang disebut layar. Kalau barang tidak ada, tekan <em>Barang tidak ada</em> dan ikuti instruksi pelanggan di layar.",
+      "en": "Switch on <em>Ready to pick</em>. When the phone rings, take an empty basket and scan it, then scan each item from the bin the screen names. If an item is not there, press <em>Item missing</em> and follow the customer's instruction on screen."
+     }
+    },
+    {
+     "tab": "kemas",
+     "text": {
+      "id": "Keranjang menunggu di sini, yang paling lama di atas. Periksa barangnya, kemas, lalu tekan <em>Selesai dikemas</em>.",
+      "en": "Baskets wait here, oldest on top. Check the items, pack them, then press <em>Packed</em>."
+     }
+    },
+    {
+     "tab": "serah",
+     "text": {
+      "id": "Paket yang menunggu driver, paket batal, dan paket yang dibawa kembali oleh driver.",
+      "en": "Parcels waiting for the driver, cancelled parcels, and parcels the driver brought back."
+     }
+    },
+    {
+     "tab": "papan",
+     "text": {
+      "id": "Semua pesanan dalam lima jalur, dan siapa yang sedang <em>Di shift</em>. SPV bisa memindahkan pesanan ke picker lain dan membuat pesanan uji.",
+      "en": "Every order in five lanes, and who is <em>On shift</em>. The SPV can move an order to another picker and create a test order."
+     }
+    },
+    {
+     "tab": "kembalikan",
+     "text": {
+      "id": "Unit dari pesanan batal menunggu di sini. Pindai unitnya, lalu bin tujuannya.",
+      "en": "Units from cancelled orders wait here. Scan the unit, then the bin it goes to."
+     }
+    }
+   ],
+   "hiryu": {
+    "id": "Pesanan datang dari Hiryu setelah dark store menerimanya di Hiryu. Kalau pelanggan membatalkan, layar Anda langsung berubah merah. Saat Anda menekan <em>Selesai dikemas</em>, Grab tahu pesanan siap. Nama dan alamat pelanggan tidak pernah ada di WMS.",
+    "en": "Orders come from Hiryu after the dark store accepts them in Hiryu. If the customer cancels, your screen turns red at once. When you press <em>Packed</em>, Grab knows the order is ready. Customer names and addresses are never in the WMS."
+   },
+   "guide": [
+    6
+   ],
+   "hiryu_msg": {
+    "id": "Pesan: pesanan baru = 1, batal = 2, <em>Selesai dikemas</em> = 4, <em>Barang tidak ada</em> = 5, stok berubah = 3.",
+    "en": "Messages: new order = 1, cancel = 2, <em>Packed</em> = 4, <em>Item missing</em> = 5, stock change = 3."
+   }
+  },
+  "barang-masuk": {
+   "for": {
+    "id": "Terima kiriman dari merek: hitung setiap unit ke bin sementara, cek dokumen, cetak slip putaway, lalu pindahkan isi setiap bin sementara ke rak.",
+    "en": "Receive a delivery from a brand: count every unit into a temporary bin, check the paperwork, print the putaway slips, then move each temporary bin to the racks."
+   },
+   "who": [
+    "staff",
+    "supervisor",
+    "hq"
+   ],
+   "parts": [
+    {
+     "name": {
+      "id": "1. Buka kiriman",
+      "en": "1. Open the delivery"
+     },
+     "text": {
+      "id": "Ketik atau pindai nomor PO merek (atau referensi Ninja), lalu cocokkan jumlah karton dengan Surat Jalan.",
+      "en": "Type or scan the brand's PO number (or Ninja's reference), then check the cartons against the Surat Jalan."
+     }
+    },
+    {
+     "name": {
+      "id": "2. Pindai",
+      "en": "2. Scan"
+     },
+     "text": {
+      "id": "Pindai setiap unit. Setiap produk menyebut bin sementaranya; pindai label bin itu sekali. Unit rusak dipindai dengan mode rusak.",
+      "en": "Scan every unit. Each product names its temporary bin; scan that bin's label once. Damaged units are scanned in damaged mode."
+     }
+    },
+    {
+     "name": {
+      "id": "3. Selisih",
+      "en": "3. Differences"
+     },
+     "text": {
+      "id": "Jumlah yang diharapkan dan yang dipindai, per produk. Kurang, lebih atau rusak diputuskan Ops HQ dalam 24 jam. Kelebihan ditahan dan belum dijual.",
+      "en": "Expected against scanned, per product. Short, extra or damaged units go to Ops HQ to decide within 24 hours. Extras are held and not sold yet."
+     }
+    },
+    {
+     "name": {
+      "id": "4. Dokumen",
+      "en": "4. Paperwork"
+     },
+     "text": {
+      "id": "Tulis jumlah yang diterima di Surat Jalan atau Faktur, tanda tangani, lalu ambil tiga foto POD.",
+      "en": "Write the received quantities on the Surat Jalan or Faktur, sign it, then take the three POD photos."
+     }
+    },
+    {
+     "name": {
+      "id": "5. Cetak slip",
+      "en": "5. Print slips"
+     },
+     "text": {
+      "id": "Satu slip putaway untuk setiap bin sementara, di printer thermal 80 mm.",
+      "en": "One putaway slip for each temporary bin, on the 80 mm thermal printer."
+     }
+    },
+    {
+     "name": {
+      "id": "6. Taruh di rak",
+      "en": "6. Put away"
+     },
+     "text": {
+      "id": "Satu tugas untuk setiap bin sementara: pindai bin rak yang disebut layar. Layar pertama juga menampilkan bin sementara yang masih menunggu.",
+      "en": "One task for each temporary bin: scan the rack bin the screen names. The first screen also lists temporary bins still waiting."
+     }
+    }
+   ],
+   "hiryu": {
+    "id": "Barang di bin sementara belum bisa dijual. Begitu Anda menaruhnya di rak, angka stok di Hiryu dan Grab ikut naik.",
+    "en": "Units in a temporary bin cannot be sold yet. As soon as you put them on the rack, the stock in Hiryu and on Grab goes up."
+   },
+   "guide": [
+    5,
+    4
+   ],
+   "hiryu_msg": {
+    "id": "Setiap unit yang masuk rak mengirim pesan 3.",
+    "en": "Every unit put on the rack sends message 3."
+   }
+  },
+  "hitung-stok": {
+   "for": {
+    "id": "Hitung bin supaya angka stok tetap benar. WMS membuat rencana setiap pagi, SPV menetapkan petugas, staf menghitung dengan pindai, lalu SPV dan Ops HQ memeriksa selisihnya.",
+    "en": "Count bins so the stock numbers stay right. The WMS makes a plan every morning, the SPV assigns counters, staff count by scanning, then the SPV and Ops HQ check the differences."
+   },
+   "who": [
+    "staff",
+    "supervisor",
+    "hq"
+   ],
+   "parts": [
+    {
+     "tab": "rencana",
+     "text": {
+      "id": "Bin yang dihitung hari ini dan alasannya: siklus wajib dari Ops HQ, atau barang tidak ada saat ambil hari ini. SPV menetapkan petugas dengan <em>Tetapkan petugas</em>, atau per bin dengan <em>Atur</em>. Di HP, <em>Bin saya hari ini</em> menampilkan bin Anda.",
+      "en": "The bins to count today and why: Ops HQ's mandatory cycles, or an item found missing at picking today. The SPV assigns counters with <em>Assign counters</em>, or one bin at a time with <em>Set</em>. On the phone, <em>My bins today</em> lists yours."
+     }
+    },
+    {
+     "name": {
+      "id": "Menghitung",
+      "en": "Counting"
+     },
+     "text": {
+      "id": "Ketuk bin Anda atau pindai labelnya, pindai setiap unit, lalu <em>Selesai hitung</em>. Angka yang seharusnya tidak pernah ditampilkan ke penghitung.",
+      "en": "Tap your bin or scan its label, scan every unit, then <em>Done counting</em>. The expected number is never shown to the person counting."
+     }
+    },
+    {
+     "tab": "hasil",
+     "text": {
+      "id": "Angka sistem dan hasil hitung per bin. Angka yang berbeda dihitung ulang oleh orang lain, lalu SPV menyetujui dan Ops HQ meninjau.",
+      "en": "System against counted, per bin. A number that differs is recounted by someone else, then the SPV approves and Ops HQ reviews."
+     }
+    }
+   ],
+   "hiryu": {
+    "id": "Saat SPV menyetujui selisih, angka stok di Hiryu dan Grab langsung ikut berubah.",
+    "en": "When the SPV approves a difference, the stock in Hiryu and on Grab changes straight away."
+   },
+   "guide": [
+    8
+   ],
+   "hiryu_msg": {
+    "id": "Persetujuan SPV mengirim pesan 3.",
+    "en": "SPV approval sends message 3."
+   }
+  },
+  "stok": {
+   "for": {
+    "id": "Berapa unit setiap produk dan di mana, per dark store, dan sudah berapa lama. Hanya untuk dilihat.",
+    "en": "How many units of each product there are and where, per dark store, and how old they are. For viewing only."
+   },
+   "who": [
+    "staff",
+    "supervisor",
+    "hq",
+    "ops_head"
+   ],
+   "parts": [
+    {
+     "name": {
+      "id": "Tabel",
+      "en": "The table"
+     },
+     "text": {
+      "id": "Satu baris per produk: unit di rak, di bin sementara, di karantina dan di keranjang, angka yang bisa dijual, dan umur sejak tanggal barang masuk.",
+      "en": "One row per product: units on the rack, in temporary bins, in quarantine and in baskets, the sellable number, and the age since the inbound date."
+     }
+    },
+    {
+     "name": {
+      "id": "Filter",
+      "en": "Filters"
+     },
+     "text": {
+      "id": "Stok lama, hampir habis, habis, di karantina, belum ada bin. Pilih <em>Semua dark store</em> di atas untuk melihat semuanya.",
+      "en": "Old stock, running low, out of stock, in quarantine, no bin yet. Choose <em>All dark stores</em> at the top to see them all."
+     }
+    },
+    {
+     "name": {
+      "id": "Kirim ulang semua angka stok ke Hiryu",
+      "en": "Send every stock number to Hiryu again"
+     },
+     "text": {
+      "id": "Setelah koreksi besar, Ops HQ bisa mengirim ulang semua angka yang bisa dijual ke Hiryu.",
+      "en": "After a big correction, Ops HQ can send every sellable number to Hiryu again."
+     },
+     "min": "hq"
+    }
+   ],
+   "hiryu": {
+    "id": "Angka <em>bisa dijual</em> sama persis dengan yang dilihat pelanggan di Grab: unit di bin rak dikurangi unit yang sedang ditahan untuk pesanan.",
+    "en": "The <em>sellable</em> number is exactly what customers see on Grab: units in rack bins minus units held for orders."
+   },
+   "guide": [
+    8,
+    11
+   ],
+   "hiryu_msg": {
+    "id": "Dikirim lewat pesan 3 setiap kali berubah, dan daftar lengkap setiap pukul 03:00 WIB.",
+    "en": "Sent in message 3 every time it changes, and as a full list at 03:00 WIB."
+   }
+  },
+  "rak-bin": {
+   "for": {
+    "id": "Rak dan bin dark store sesuai kondisi nyata, labelnya, dan bin khusus.",
+    "en": "The dark store's racks and bins as they really stand, their labels, and the special bins."
+   },
+   "who": [
+    "staff",
+    "supervisor",
+    "hq"
+   ],
+   "parts": [
+    {
+     "tab": "rak",
+     "text": {
+      "id": "Daftarkan setiap rak per tingkat dan kolom dengan bin Kecil atau Besar, cetak labelnya di A4 lalu cek dengan pindai. Bin bertumpuk: ketuk binnya, lalu <em>Tumpuk bin di atas</em> (sampai 3); kodenya berakhiran B (bawah), M (tengah) atau T (atas). Semua orang boleh mencetak dan mengecek label.",
+      "en": "Register each rack level by level and column by column with Kecil or Besar bins, print the labels on A4, then check them by scanning. Stacked bins: tap the bin, then <em>Tumpuk bin di atas</em> (up to 3); their codes end in B (bottom), M (middle) or T (top). Anyone may print and check labels."
+     }
+    },
+    {
+     "tab": "khusus",
+     "text": {
+      "id": "Bin sementara untuk barang masuk, baki karantina dan keranjang pesanan, dengan labelnya.",
+      "en": "Temporary inbound bins, quarantine trays and order baskets, with their labels."
+     }
+    },
+    {
+     "tab": "perlu",
+     "text": {
+      "id": "Produk yang sudah punya ukuran bin tapi belum punya bin. Berikan bin kosong untuk setiap produk.",
+      "en": "Products with a bin size but no bin yet. Give each one a free bin."
+     },
+     "min": "supervisor"
+    }
+   ],
+   "hiryu": {
+    "id": "Hanya unit di bin rak yang bisa dijual. Bin sementara, baki karantina dan keranjang tidak dihitung.",
+    "en": "Only units in rack bins can be sold. Temporary bins, quarantine trays and baskets do not count."
+   },
+   "guide": [
+    3
+   ]
+  },
+  "karantina-retur": {
+   "for": {
+    "id": "Unit yang tidak bisa dijual: rusak, bocor, hampir kedaluwarsa, atau dibawa kembali rusak oleh driver. Putuskan nasibnya, dan kirim retur ke merek.",
+    "en": "Units that cannot be sold: damaged, leaking, near expiry, or brought back damaged by the driver. Decide what happens to them, and send returns to the brand."
+   },
+   "who": [
+    "staff",
+    "supervisor",
+    "hq"
+   ],
+   "parts": [
+    {
+     "tab": "karantina",
+     "text": {
+      "id": "SPV memutuskan setiap unit dalam 24 jam: kembali ke rak, retur ke merek, atau dihapus.",
+      "en": "The SPV decides each unit within 24 hours: back to the rack, return to the brand, or write off."
+     }
+    },
+    {
+     "tab": "retur",
+     "text": {
+      "id": "Daftar retur per merek. Setiap retur punya surat retur A4 yang dicetak dua kali.",
+      "en": "The returns per brand. Each return has an A4 return note, printed twice."
+     }
+    },
+    {
+     "tab": "hapus",
+     "text": {
+      "id": "Ops HQ menyetujui atau menolak setiap penghapusan, untuk semua dark store.",
+      "en": "Ops HQ approves or rejects each write-off, for every dark store."
+     },
+     "min": "hq"
+    },
+    {
+     "tab": "lapor",
+     "text": {
+      "id": "Di HP: pindai unitnya, pilih masalahnya dan ambil foto. Unit masuk ke baki karantina. Staf membukanya dari menu <em>Laporkan barang rusak</em>.",
+      "en": "On the phone: scan the unit, choose the problem and take a photo. The unit goes to the quarantine tray. Staff open it from <em>Report a damaged item</em> in the menu."
+     }
+    },
+    {
+     "tab": "serahkan",
+     "text": {
+      "id": "Pindai surat retur saat driver merek mengambilnya.",
+      "en": "Scan the return note when the brand's driver collects it."
+     }
+    }
+   ],
+   "hiryu": {
+    "id": "Unit yang masuk karantina langsung tidak dijual lagi di Grab.",
+    "en": "A unit moved to quarantine stops being sold on Grab at once."
+   },
+   "guide": [
+    7
+   ],
+   "hiryu_msg": {
+    "id": "Pindah ke karantina mengirim pesan 3.",
+    "en": "Moving to quarantine sends message 3."
+   }
+  },
+  "bahan-kemas": {
+   "for": {
+    "id": "Bahan kemas milik Ninja per dark store: tas kertas, kardus dan label. Bukan stok merek, dan tidak pernah masuk laporan merek.",
+    "en": "Ninja's own packing supplies per dark store: paper bags, cartons and labels. Not brand stock, and never in brand reports."
+   },
+   "who": [
+    "staff",
+    "supervisor",
+    "hq"
+   ],
+   "parts": [
+    {
+     "tab": "stok",
+     "text": {
+      "id": "Pemakaian per pesanan, sisa stok, sisa hari dan batas minimum. Setiap pesanan yang dikemas mengurangi stok otomatis. SPV mengajukan kebutuhan, Ops HQ mencatat PR; pembelian di luar WMS.",
+      "en": "Use per order, stock left, days left and the minimum. Every packed order takes its supplies off automatically. The SPV asks for more and Ops HQ records the PR; buying happens outside the WMS."
+     }
+    },
+    {
+     "tab": "terima",
+     "text": {
+      "id": "Saat kiriman datang, isi jumlah pak dan isi per pak. Catatan staf disetujui SPV dulu, lalu Ops HQ.",
+      "en": "When a delivery arrives, enter the packs and pieces per pack. A staff entry is approved by the SPV first, then Ops HQ."
+     }
+    },
+    {
+     "tab": "mingguan",
+     "text": {
+      "id": "Hitung setiap barang seminggu sekali, dengan persetujuan yang sama. Stok baru berubah setelah Ops HQ menyetujui.",
+      "en": "Count every item once a week, with the same approvals. The stock changes only when Ops HQ approves."
+     }
+    }
+   ],
+   "guide": [
+    9
+   ]
+  },
+  "restock": {
+   "for": {
+    "id": "Permintaan restock ke merek, dari draf sampai kiriman selesai. Setiap tab adalah satu tahap.",
+    "en": "Restock requests to the brands, from draft to a finished delivery. Each tab is one stage."
+   },
+   "who": [
+    "supervisor",
+    "hq"
+   ],
+   "parts": [
+    {
+     "tab": "draft",
+     "text": {
+      "id": "WMS membuat draf saat produk mencapai titik pesan ulang. SPV atau Ops HQ juga bisa membuat atau mengubah draf.",
+      "en": "The WMS drafts a request when products reach their reorder point. The SPV or Ops HQ can also make or change a draft."
+     },
+     "min": "supervisor"
+    },
+    {
+     "tab": "raised",
+     "text": {
+      "id": "Draf yang sudah diajukan ke Ops HQ.",
+      "en": "Drafts sent on to Ops HQ."
+     }
+    },
+    {
+     "tab": "po",
+     "text": {
+      "id": "Ops HQ membuat permintaan dan mengunduh Excel PO dengan barcode.",
+      "en": "Ops HQ makes the request and downloads the PO Excel with barcodes."
+     },
+     "min": "hq"
+    },
+    {
+     "tab": "sent",
+     "text": {
+      "id": "Permintaan yang sudah dikirim ke merek lewat email.",
+      "en": "Requests emailed to the brand."
+     }
+    },
+    {
+     "tab": "confirmed",
+     "text": {
+      "id": "Nomor PO milik merek sudah dicatat. Kiriman ini bisa diterima di <em>Barang masuk</em>.",
+      "en": "The brand's own PO number is recorded. The delivery can now be received in <em>Inbound</em>."
+     }
+    },
+    {
+     "tab": "selisih",
+     "text": {
+      "id": "Kiriman yang kurang atau lebih. Ops HQ memutuskan dalam 24 jam.",
+      "en": "Deliveries that came short or over. Ops HQ decides within 24 hours."
+     },
+     "min": "hq"
+    },
+    {
+     "tab": "selesai",
+     "text": {
+      "id": "Permintaan yang sudah selesai.",
+      "en": "Finished requests."
+     }
+    }
+   ],
+   "guide": [
+    4
+   ]
+  },
+  "produk": {
+   "for": {
+    "id": "Setiap produk (SKU) dengan data gudangnya, dan daftar merek.",
+    "en": "Every product (SKU) with its warehouse data, and the brands."
+   },
+   "who": [
+    "staff",
+    "supervisor",
+    "hq"
+   ],
+   "parts": [
+    {
+     "tab": "sku",
+     "text": {
+      "id": "Produk datang dari Hiryu. Ops HQ melengkapi data gudang di tabel atau lewat CSV: ukuran bin (Kecil atau Besar, satu-satunya yang wajib), isi penuh dan titik pesan ulang, isi per pak, berat, dan barcode.",
+      "en": "Products arrive from Hiryu. Ops HQ completes the warehouse data in the table or by CSV: bin size (Kecil or Besar, the only required field), fill-to and reorder point, pack size, weight, and barcodes."
+     },
+     "min": "hq"
+    },
+    {
+     "tab": "merek",
+     "text": {
+      "id": "Setiap merek dengan akun merchant Grab-nya (milik merek atau milik Ninja Van).",
+      "en": "Each brand with its Grab merchant account (the brand's own, or Ninja Van's)."
+     },
+     "min": "hq"
+    }
+   ],
+   "hiryu": {
+    "id": "Nama produk dan kode SKU dibuat di Hiryu. WMS tidak pernah mengubahnya.",
+    "en": "Product names and SKU codes are made in Hiryu. The WMS never changes them."
+   },
+   "guide": [
+    2
+   ],
+   "hiryu_msg": {
+    "id": "Datang lewat tarikan katalog (pesan 6).",
+    "en": "They arrive by the catalogue pull (message 6)."
+   }
+  },
+  "menu-toko-hiryu": {
+   "for": {
+    "id": "Toko dan menu seperti yang ada di Hiryu. Hanya untuk dilihat, kecuali merek untuk toko baru.",
+    "en": "The stores and menus as they are in Hiryu. For viewing only, except the brand of a new store."
+   },
+   "who": [
+    "staff",
+    "supervisor",
+    "hq"
+   ],
+   "parts": [
+    {
+     "name": {
+      "id": "Sinkron ulang dari Hiryu",
+      "en": "Resync from Hiryu"
+     },
+     "text": {
+      "id": "Tarik katalog lengkap dari Hiryu sekarang. Sekali per 5 menit per dark store.",
+      "en": "Pull the full catalogue from Hiryu now. Once every 5 minutes per dark store."
+     }
+    },
+    {
+     "name": {
+      "id": "Toko baru",
+      "en": "New stores"
+     },
+     "text": {
+      "id": "Toko baru dari Hiryu menunggu Ops HQ memilih merek dan akun merchant Grab-nya.",
+      "en": "A new store from Hiryu waits for Ops HQ to choose its brand and Grab merchant account."
+     },
+     "min": "hq"
+    },
+    {
+     "name": {
+      "id": "Toko di Hiryu",
+      "en": "Stores in Hiryu"
+     },
+     "text": {
+      "id": "Setiap toko dengan mereknya, jumlah menu, dan <em>Status di Hiryu</em>.",
+      "en": "Each store with its brand, menu size and <em>Status in Hiryu</em>."
+     }
+    },
+    {
+     "name": {
+      "id": "Item menu",
+      "en": "Menu items"
+     },
+     "text": {
+      "id": "Semua item menu, dengan filter dark store, merek, toko dan SKU, dan <em>Ekspor CSV</em> untuk baris yang tampil.",
+      "en": "Every menu item, with filters for dark store, brand, store and SKU, and <em>Export CSV</em> of the rows shown."
+     }
+    }
+   ],
+   "hiryu": {
+    "id": "Toko, menu dan produk dibuat di Hiryu. Stok setiap toko yang aktif dikirim ke Hiryu.",
+    "en": "Stores, menus and products are made in Hiryu. Stock for every active store goes to Hiryu."
+   },
+   "guide": [
+    2,
+    11
+   ],
+   "hiryu_msg": {
+    "id": "Katalog datang lewat tarikan (pesan 6); stok keluar lewat pesan 3.",
+    "en": "The catalogue arrives by the pull (message 6); stock goes out in message 3."
+   }
+  },
+  "laporan": {
+   "for": {
+    "id": "Laporan harian dan bulanan, untuk satu dark store atau semuanya. Semua angka berasal dari WMS. Ops HQ mengunduh dan mengirim filenya lewat email secara manual.",
+    "en": "Daily and monthly reports, for one dark store or all of them. Every number comes from the WMS. Ops HQ downloads the files and emails them by hand."
+   },
+   "who": [
+    "supervisor",
+    "hq",
+    "ops_head"
+   ],
+   "parts": [
+    {
+     "tab": "akhir",
+     "text": {
+      "id": "Pesanan per status, masalah hari ini, penjualan, dan catatan SPV untuk besok. Bisa diunduh CSV.",
+      "en": "Orders by status, today's problems, sales, and the SPV's note for tomorrow. Download as CSV."
+     }
+    },
+    {
+     "tab": "penjualan",
+     "text": {
+      "id": "Excel mingguan atau bulanan untuk setiap merek, dengan pratinjau.",
+      "en": "The weekly or monthly Excel for each brand, with a preview."
+     }
+    },
+    {
+     "tab": "operasional",
+     "text": {
+      "id": "Angka untuk Grab dan manajemen, di samping periode sebelumnya.",
+      "en": "The numbers for Grab and management, next to the period before."
+     }
+    },
+    {
+     "tab": "selisih",
+     "text": {
+      "id": "Selisih dan klaim bulan ini dalam Excel. Ops HQ memfinalkannya.",
+      "en": "The month's differences and claims in Excel. Ops HQ finalises it."
+     }
+    }
+   ],
+   "guide": [
+    10
+   ]
+  },
+  "panduan": {
+   "for": {
+    "id": "Langkah demi langkah untuk setiap proses, dari membuka dark store sampai koneksi Hiryu.",
+    "en": "Step by step instructions for every process, from opening a dark store to the Hiryu link."
+   },
+   "who": [
+    "staff",
+    "supervisor",
+    "hq",
+    "ops_head"
+   ],
+   "parts": [
+    {
+     "name": {
+      "id": "Bagian",
+      "en": "Sections"
+     },
+     "text": {
+      "id": "Sebelas bagian, satu per proses. Setiap langkah menyebut siapa yang mengerjakan, di sistem mana, dan apa yang terlihat setelahnya.",
+      "en": "Eleven sections, one per process. Each step says who does it, in which system, and what you should see after."
+     }
+    },
+    {
+     "name": {
+      "id": "Bantuan halaman",
+      "en": "Page help"
+     },
+     "text": {
+      "id": "Di setiap halaman lain, tombol <em>?</em> di samping judul menjelaskan halaman itu dan membuka bagiannya di sini.",
+      "en": "On every other page, the <em>?</em> next to the title explains that page and opens its section here."
+     }
+    }
+   ],
+   "guide": []
+  },
+  "pengaturan": {
+   "for": {
+    "id": "Atur dark store, orang, aturan, printer dan koneksi Hiryu.",
+    "en": "Set up dark stores, people, rules, printers and the Hiryu link."
+   },
+   "who": [
+    "supervisor",
+    "hq",
+    "ops_head"
+   ],
+   "parts": [
+    {
+     "tab": "hub",
+     "text": {
+      "id": "Dark store datang dari Hiryu dengan nama, alamat dan jam buka. Ops HQ menambahkan kodenya dan jumlah bin sementara, baki karantina dan keranjang. Daftar periksa mulai operasi berjalan dari orang sampai pesanan pertama. Di sini juga <em>Mode manual</em> untuk saat pemindai rusak (hanya Ops HQ).",
+      "en": "A dark store arrives from Hiryu with its name, address and hours. Ops HQ adds its code and the number of temporary bins, quarantine trays and baskets. The go-live checklist runs from people to the first order. <em>Manual mode</em> for when the scanners are broken is here too (Ops HQ only)."
+     },
+     "min": "hq"
+    },
+    {
+     "tab": "orang",
+     "text": {
+      "id": "Buat login Hiryu dulu, lalu tambahkan orangnya di sini dengan email @ninjavan.co, peran dan dark store. Tidak ada undangan yang dikirim. SPV menambahkan staf di dark store-nya sendiri.",
+      "en": "Make the Hiryu login first, then add the person here by their @ninjavan.co email, with a role and dark stores. No invitation is sent. An SPV adds staff at their own dark stores."
+     },
+     "min": "supervisor"
+    },
+    {
+     "tab": "aturan",
+     "text": {
+      "id": "Semua batas waktu dan pengingat di satu tempat. Ops HQ mengubah angkanya tanpa perlu versi baru.",
+      "en": "Every deadline and reminder in one place. Ops HQ changes a number without a new build."
+     },
+     "min": "hq"
+    },
+    {
+     "tab": "printer",
+     "text": {
+      "id": "Printer thermal 80 mm dan printer A4 untuk perangkat ini, dengan cetak uji. Printer yang sama dengan Hiryu.",
+      "en": "The 80 mm thermal printer and the A4 printer for this device, with a test print. The same printers Hiryu uses."
+     }
+    },
+    {
+     "tab": "integrasi",
+     "text": {
+      "id": "Apakah koneksi berjalan, peta pesan dengan setiap kolom, dan log teknis untuk diunduh.",
+      "en": "Whether the link works, the message map with every field, and the technical log to download."
+     }
+    },
+    {
+     "tab": "demo",
+     "text": {
+      "id": "<em>Mode demo</em> per dark store, pesanan dummy, dan reset untuk latihan. Hanya untuk pelatihan; mati setelah Hiryu tersambung. Contoh produk tanpa bin melepas satu produk dari binnya supaya bisa dilatih di Rak dan bin, tab Perlu bin.",
+      "en": "<em>Mode demo</em> per dark store, dummy orders, and the resets for rehearsals. For training only; off once Hiryu is connected. The example product without a bin takes one product off its bin so you can rehearse it in Racks and bins, tab Need a bin."
+     },
+     "min": "supervisor"
+    }
+   ],
+   "guide": [
+    2,
+    11
+   ]
+  }
+ }
+}

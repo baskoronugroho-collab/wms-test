@@ -43,7 +43,7 @@ async def upload_sku_photo(
 ):
     """HQ sets a product photo: the picker's main way to tell 118 shades apart."""
     if not await common.sku_by_id(sku_id):
-        raise HTTPException(404, "SKU not found")
+        raise HTTPException(404, "SKU tidak ditemukan. / SKU not found.")
     key = await storage.save(f"sku/{sku_id}", file)
     async with db.tx() as cur:
         await db.run(cur, "UPDATE skus SET photo_key = %s WHERE id = %s", (key, sku_id))
@@ -67,7 +67,7 @@ async def _payload(request_id: int) -> dict:
         "LEFT JOIN inbound_receipts ir ON ir.id = q.receipt_id "
         "WHERE q.id = %s", (request_id,))
     if not r:
-        raise HTTPException(404, "Request not found")
+        raise HTTPException(404, "Permintaan tidak ditemukan. / Request not found.")
     out = {k: r[k] for k in (
         "id", "site_id", "site_code", "site_name", "receipt_id", "receipt_reference",
         "brand_id", "brand_name", "barcode", "qty_counted", "photo_key", "note", "status",
@@ -101,7 +101,7 @@ async def raise_request(
         rc = await db.fetch_one("SELECT site_id FROM inbound_receipts WHERE id = %s",
                                 (receipt_id,))
         if not rc or rc["site_id"] != site_id:
-            raise HTTPException(409, "That receipt belongs to another station.")
+            raise HTTPException(409, "Penerimaan itu milik dark store lain. / That receipt belongs to another dark store.")
     if code:
         dup = await db.fetch_one(
             "SELECT id FROM sku_requests WHERE site_id = %s AND barcode = %s AND status = 'open'",
@@ -140,7 +140,7 @@ async def list_requests(
         where.append("q.site_id = %s")
         params.append(site_id)
     elif not user.at_least("hq"):
-        raise HTTPException(422, "site_id is required.")
+        raise HTTPException(422, "Pilih dark store dulu. / Choose a dark store first.")
     if receipt_id:
         where.append("q.receipt_id = %s")
         params.append(receipt_id)
@@ -173,19 +173,19 @@ async def resolve_request(
     requesting station, so the staffer's next step is only "carry it there"."""
     req = await db.fetch_one("SELECT * FROM sku_requests WHERE id = %s", (request_id,))
     if not req:
-        raise HTTPException(404, "Request not found")
+        raise HTTPException(404, "Permintaan tidak ditemukan. / Request not found.")
     if req["status"] != "open":
         raise HTTPException(409, "Permintaan ini sudah dijawab. / Already answered.")
 
     sku_id = body.sku_id
     if not sku_id and not body.new_sku:
-        raise HTTPException(422, "Pilih SKU yang ada, atau daftarkan SKU baru.")
+        raise HTTPException(422, "Pilih SKU yang ada, atau daftarkan SKU baru. / Pick an existing SKU, or register a new one.")
     if body.new_sku:
         created = await _create_sku(body.new_sku, user)
         sku_id = created["id"]
     sku = await common.sku_by_id(sku_id)
     if not sku:
-        raise HTTPException(404, "SKU not found")
+        raise HTTPException(404, "SKU tidak ditemukan. / SKU not found.")
 
     owner = None
     if req["barcode"]:
@@ -194,7 +194,9 @@ async def resolve_request(
         if owner and owner["sku_id"] != sku_id:
             other = await common.sku_by_id(owner["sku_id"])
             raise HTTPException(409, f"Barcode {req['barcode']} sudah milik "
-                                     f"{other['name_display'] if other else 'SKU lain'}.")
+                                     f"{other['name_display'] if other else 'SKU lain'}. / "
+                                     f"Barcode {req['barcode']} already belongs to "
+                                     f"{other['name_display'] if other else 'another SKU'}.")
 
     # Rack before barcode: it is the step that can still fail (no free bin), and it
     # should fail before the barcode is bound for good.
@@ -237,7 +239,7 @@ async def reject_request(
     """Not a product we hold: the units go back to the brand, never into stock."""
     req = await db.fetch_one("SELECT status FROM sku_requests WHERE id = %s", (request_id,))
     if not req:
-        raise HTTPException(404, "Request not found")
+        raise HTTPException(404, "Permintaan tidak ditemukan. / Request not found.")
     if req["status"] != "open":
         raise HTTPException(409, "Permintaan ini sudah dijawab. / Already answered.")
     note = (body.note or "").strip()
@@ -257,7 +259,7 @@ async def put_away_request(
     """The staffer carried the units from the temporary bin to the rack HQ gave."""
     req = await db.fetch_one("SELECT * FROM sku_requests WHERE id = %s", (request_id,))
     if not req:
-        raise HTTPException(404, "Request not found")
+        raise HTTPException(404, "Permintaan tidak ditemukan. / Request not found.")
     site = await auth.assert_site_access(user, req["site_id"])
     if req["status"] == "put_away":
         return await _payload(request_id)
@@ -265,7 +267,7 @@ async def put_away_request(
         raise HTTPException(409, "HQ belum menjawab permintaan ini. / HQ has not answered yet.")
     qty = body.qty if body.qty is not None else req["qty_counted"]
     if qty < 0:
-        raise HTTPException(422, "Jumlah tidak boleh negatif.")
+        raise HTTPException(422, "Jumlah tidak boleh negatif. / The quantity cannot be negative.")
 
     async with db.tx() as cur:
         locked = await db.one(cur, "SELECT status FROM sku_requests WHERE id = %s FOR UPDATE",

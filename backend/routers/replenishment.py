@@ -996,8 +996,9 @@ async def confirm(rep_id: int, body: ConfirmIn, user: auth.User = Depends(auth.r
     row = await _get(rep_id, "sent", "confirmed")
     po = (body.brand_po_number or "").strip()
     if not BRAND_PO_RE.match(po):
-        raise HTTPException(422, "Isi No. PO merek (huruf, angka, / . - _ , sampai 64). / "
-                                 "Enter the brand's PO number.")
+        raise HTTPException(422, "Isi No. PO merek: huruf, angka dan tanda garis miring, titik, "
+                                 "minus atau garis bawah, sampai 64 tanda. / Enter the brand's PO "
+                                 "number: letters, digits and slash, dot, dash or underscore, up to 64.")
     clash = await db.fetch_one(
         "SELECT reference FROM replenishments WHERE brand_id = %s AND UPPER(brand_po_number) "
         "= UPPER(%s) AND id <> %s AND status <> 'cancelled'", (row["brand_id"], po, rep_id))

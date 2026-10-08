@@ -32,7 +32,7 @@ async def issue_range(
     """
     await auth.assert_site_access(user, body.site_id)
     if body.count < 1 or body.count > 20000:
-        raise HTTPException(400, "Issue between 1 and 20000 plates at a time.")
+        raise HTTPException(400, "Buat 1 sampai 20000 label sekaligus. / Issue between 1 and 20000 labels at a time.")
 
     last = await db.fetch_one("SELECT COALESCE(MAX(seq_to), 0) AS m FROM plate_ranges")
     start = int(last["m"]) + 1
@@ -109,12 +109,12 @@ async def bind_plate(
     site = await auth.assert_site_access(user, body.site_id)
     sku = await common.sku_by_id(body.sku_id)
     if not sku:
-        raise HTTPException(404, "SKU not found")
+        raise HTTPException(404, "SKU tidak ditemukan. / SKU not found.")
     if sku["identity_mode"] != "unit_label":
         raise HTTPException(
             400,
-            f"{sku['name_display']} uses the brand's own barcode. "
-            "Labelling is only for products with no barcode.",
+            f"{sku['name_display']} pakai barcode dari merek. Label hanya untuk produk tanpa barcode. / "
+            f"{sku['name_display']} uses the brand's own barcode. Labelling is only for products with no barcode.",
         )
 
     code = body.plate_code.strip()
@@ -125,21 +125,21 @@ async def bind_plate(
     )
     if not plate:
         return {"accepted": False, "outcome": "unknown_plate", "plate_code": code,
-                "message": "Label ini tidak ada di sistem."}
+                "message": "Label ini tidak ada di sistem. / This label is not in the system."}
     if plate["site_id"] != body.site_id:
         return {"accepted": False, "outcome": "wrong_site", "plate_code": code,
-                "message": "Label ini milik lokasi lain. Jangan dipakai di sini."}
+                "message": "Label ini milik dark store lain. Jangan dipakai di sini. / This label belongs to another dark store. Do not use it here."}
     if plate["state"] != "unbound":
         return {
             "accepted": False, "outcome": "already_bound", "plate_code": code,
-            "message": f"Label ini sudah dipakai untuk {plate['sku_name']}.",
+            "message": f"Label ini sudah dipakai untuk {plate['sku_name']}. / This label is already used for {plate['sku_name']}.",
         }
 
     slot = await common.slot_for(body.site_id, body.sku_id)
     if not slot:
         return {"accepted": False, "outcome": "no_slot", "plate_code": code,
                 "sku": common.sku_dict(sku),
-                "message": f"{sku['name_display']} belum punya keranjang di sini."}
+                "message": f"{sku['name_display']} belum punya keranjang di sini. / {sku['name_display']} has no bin here yet."}
 
     async with db.tx() as cur:
         await db.run(
@@ -166,7 +166,7 @@ async def bind_plate(
             "accepted": True, "outcome": "bound", "plate_code": code,
             "sku": common.sku_dict(sku), "location_code": slot["location_code"],
             "bound_count": int(count["n"]),
-            "message": f"Simpan di {slot['location_code']}.",
+            "message": f"Simpan di {slot['location_code']}. / Put it away in {slot['location_code']}.",
         }
         await ledger.remember(cur, body.idempotency_key, "plate_bind", result)
     return result
@@ -181,9 +181,9 @@ async def unbind_plate(
     """Undo — peel the label and rebind it cleanly (M1.4.2.6)."""
     plate = await db.fetch_one("SELECT * FROM unit_plates WHERE plate_code = %s", (code,))
     if not plate:
-        raise HTTPException(404, "Plate not found")
+        raise HTTPException(404, "Label tidak ditemukan. / Label not found.")
     if plate["state"] != "in_stock":
-        raise HTTPException(409, f"Plate is {plate['state']} and cannot be unbound.")
+        raise HTTPException(409, f"Label berstatus {plate['state']}, jadi tidak bisa dilepas. / Label is {plate['state']} and cannot be unbound.")
     site = await auth.assert_site_access(user, plate["site_id"])
 
     async with db.tx() as cur:
@@ -204,14 +204,14 @@ async def unbind_plate(
                            entity_id=plate["id"], action="unbind",
                            before=dict(plate, bound_at=str(plate.get("bound_at"))),
                            after={"reason": reason})
-    return {"ok": True, "message": f"{code} dilepas."}
+    return {"ok": True, "message": f"{code} dilepas. / {code} unbound."}
 
 
 @router.get("/plates/{code}", response_model=models.Plate)
 async def get_plate(code: str, user: auth.User = Depends(auth.current_user)):
     plate = await common.plate_by_code(code)
     if not plate:
-        raise HTTPException(404, "Plate not found")
+        raise HTTPException(404, "Label tidak ditemukan. / Label not found.")
     return {
         "plate_code": plate["plate_code"], "state": plate["state"],
         "site_id": plate["site_id"], "sku_id": plate.get("sku_id"),

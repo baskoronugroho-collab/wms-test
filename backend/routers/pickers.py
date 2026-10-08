@@ -15,7 +15,7 @@ import auth
 import db
 import floor
 import models
-from routers import outbound
+from routers import manual_mode, outbound
 
 router = APIRouter(prefix="/api/pickers", tags=["pickers"])
 
@@ -47,8 +47,18 @@ class PickerMeV2(models.PickerMe):
                                   "no order is waiting for a basket")
     today_count: int = Field(default=0, description="Hari ini: orders I handed to the bench today")
     pick_start_seconds: int = 120
+    timed_out: bool = Field(
+        default=False, description="Off because the 2-minute rule took the order back: the "
+                                   "phone shows a stop card and Siap ambil again")
     return_duty: ReturnDuty | None = Field(
         default=None, description="My cancelled order whose basket I am emptying (board 6e)")
+    manual_mode: bool = Field(
+        default=False, description="The dark store is in Mode manual now: taps instead of "
+                                   "scans. Read on every poll, so the phone follows a switch "
+                                   "without a reload")
+    manual_mode_until: str | None = Field(
+        default=None, description="When Mode manual ends by itself (UTC, ISO with Z); null "
+                                  "while it is off")
 
 
 async def _me(site_id: int, email: str) -> dict:
@@ -101,6 +111,7 @@ async def _me(site_id: int, email: str) -> dict:
         "free_baskets": free,
         "today_count": int(today["n"] or 0),
         "pick_start_seconds": 60 * await assign.rule("pick_start_minutes", 2),
+        "timed_out": assign.timed_out(row["state"] if row else None, row["note"] if row else None),
         "return_duty": ({
             "order_id": duty["order_id"],
             "order_label": duty["hiryu_short_no"] or duty["external_ref"],
@@ -108,7 +119,19 @@ async def _me(site_id: int, email: str) -> dict:
             "cancel_reason": duty["cancel_reason"],
             "cancelled_at": str(duty["cancelled_at"]) if duty["cancelled_at"] else None,
         } if duty else None),
+        **(await _manual(site_id)),
     }
+
+
+async def _manual(site_id: int) -> dict:
+    """Mode manual for the poll: on or off, and its end time (UTC, ISO with Z)."""
+    on = await manual_mode.active(site_id)
+    until = None
+    if on:
+        row = await db.fetch_one("SELECT manual_mode_until FROM sites WHERE id = %s", (site_id,))
+        if row and row["manual_mode_until"]:
+            until = row["manual_mode_until"].replace(tzinfo=None, microsecond=0).isoformat() + "Z"
+    return {"manual_mode": on, "manual_mode_until": until}
 
 
 @router.get("/me", response_model=PickerMeV2)
@@ -140,22 +163,33 @@ async def ready(body: models.PickerStateIn, user: auth.User = Depends(auth.curre
 
 async def _step_away(site_id: int, user: auth.User, state: str) -> dict:
     """Istirahat or off. An order in hand that has not been started goes back
-    to the queue for someone else; one already started must be finished (or
-    moved by the SPV) first, or its basket would be stranded half-picked."""
+    to the queue for someone else. One already started is refused here: the
+    phone then offers Berhenti ambil pesanan ini (POST /pick-tasks/{id}/release
+    with a reason), which tells the picker what to do with the basket."""
     await auth.assert_site_access(user, site_id)
     held = await assign.held_task(site_id, user.email)
     if held:
         label = await assign.order_label(held["id"])
         if held["started_at"]:
             raise HTTPException(
-                409, f"Selesaikan dulu {label}, lalu istirahat. / Finish {label} first, then take a break.")
-        who = await assign.return_to_queue(held["id"], actor=user.email,
-                                           note=f"{user.email} stepped away before starting")
+                409, f"Selesaikan dulu {label}, atau tekan Berhenti ambil pesanan ini. / "
+                     f"Finish {label} first, or tap Stop picking this order.")
+        note = (f"Anda istirahat sebelum mulai; {label} kembali ke antrean. / "
+                f"You took a break before starting; {label} went back to the queue."
+                if state == "break" else
+                f"Anda berhenti sebelum mulai; {label} kembali ke antrean. / "
+                f"You stopped before starting; {label} went back to the queue.")
+        who = await assign.return_to_queue(held["id"], actor=user.email, note=note)
         if not who:
             # The first scan landed in the same instant: it is being picked now.
             raise HTTPException(
-                409, f"Selesaikan dulu {label}, lalu istirahat. / Finish {label} first, then take a break.")
-        await assign.free_picker(site_id, user.email, held["id"])
+                409, f"Selesaikan dulu {label}, atau tekan Berhenti ambil pesanan ini. / "
+                     f"Finish {label} first, or tap Stop picking this order.")
+        await assign.free_picker(site_id, user.email, held["id"], note=note)
+        # set_state writes the note too: pass it, or the phone forgets why.
+        await assign.set_state(site_id, user.email, state, note=note)
+        await assign.assign_site(site_id)
+        return await _me(site_id, user.email)
     await assign.set_state(site_id, user.email, state)
     await assign.assign_site(site_id)
     return await _me(site_id, user.email)
@@ -175,7 +209,7 @@ async def go_off(body: models.PickerStateIn, user: auth.User = Depends(auth.curr
 
 @router.post("/pack", response_model=PickerMeV2)
 async def at_pack_bench(body: models.PickerStateIn, user: auth.User = Depends(auth.current_user)):
-    """Saya di meja packing: shown as Packer on the queue board (6j) and never
+    """Saya di meja kemas: shown as Packer on the queue board (6j) and never
     given an order. Opening a pack or tapping Selesai dikemas also sets it
     for someone who was off."""
     return await _step_away(body.site_id, user, "pack")

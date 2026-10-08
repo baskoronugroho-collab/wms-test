@@ -29,6 +29,7 @@ router = APIRouter(prefix="/api", tags=["racks"])
 # (alert_rules bin_kecil_*, bin_besar_bottle_ml), shown on Produk.
 SIZES = ("KECIL", "BESAR")
 SIZE_LABEL = {"KECIL": "Kecil", "BESAR": "Besar"}
+SIZE_LABEL_EN = {"KECIL": "Small", "BESAR": "Large"}
 # Older names still accepted on input, so a stale client never writes a third size.
 _SIZE_ALIASES = {"KECIL": "KECIL", "K": "KECIL", "S": "KECIL", "SMALL": "KECIL",
                  "BESAR": "BESAR", "B": "BESAR", "M": "BESAR", "L": "BESAR",
@@ -44,17 +45,38 @@ def _prefix(site_code: str) -> str:
     return site_code.split("-")[-1]
 
 
+MAX_STACK = 3
+
+
+def stack_letter(row: int, rows: int) -> str:
+    """'' for a single bin; B (bottom), M (middle), T (top) in a stack."""
+    if rows < 2:
+        return ""
+    if row <= 1:
+        return "B"
+    return "T" if row >= rows else "M"
+
+
 def bin_code(site_code: str, rack_code: str, level_no: int, position: int,
              row: int = 1, rows: int = 1) -> str:
     """UT5-A-3-02 on a level with one bin per position.
 
-    With two bins stacked at a position the code says which one: UT5-A-3-02B
-    for the Bottom bin (row 1) and UT5-A-3-02T for the Top bin (row 2).
+    With bins stacked at a position the code says which one: UT5-A-3-02B for
+    the Bottom bin (row 1) and UT5-A-3-02T for the Top bin (the highest row);
+    a stack of three has UT5-A-3-02M (Middle, row 2) between them.
     """
     base = f"{_prefix(site_code)}-{rack_code}-{level_no}-{position:02d}"
-    if rows < 2:
-        return base
-    return base + ("T" if row == 2 else "B")
+    return base + stack_letter(row, rows)
+
+
+# What a stacked bin is called on screens and labels, by its letter.
+STACK_WORD = {"B": ("bawah", "bottom"), "M": ("tengah", "middle"), "T": ("atas", "top")}
+
+
+def stack_word(row: int, rows: int) -> tuple[str, str] | None:
+    """('bawah', 'bottom') for the bottom bin of a stack; None for a single bin."""
+    letter = stack_letter(row, rows)
+    return STACK_WORD.get(letter) if letter else None
 
 
 async def _rack(rack_id: int) -> dict:
@@ -62,7 +84,7 @@ async def _rack(rack_id: int) -> dict:
         "SELECT r.*, s.code AS site_code FROM racks r JOIN sites s ON s.id = r.site_id "
         "WHERE r.id = %s", (rack_id,))
     if not rack:
-        raise HTTPException(404, "Rack not found")
+        raise HTTPException(404, "Rak tidak ditemukan. / Rack not found.")
     return rack
 
 
@@ -127,8 +149,9 @@ async def set_inbound_bins(
         await db.run(cur, "UPDATE sites SET inbound_bins = %s WHERE id = %s", (n, site_id))
         await ledger.audit(cur, actor_email=user.email, entity="site", entity_id=site_id,
                            action="inbound_bins", after={"inbound_bins": n})
-    return {"ok": True, "message": (f"{n} bin inbound sementara." if n
-                                    else "Bin inbound sementara tidak dibatasi.")}
+    return {"ok": True, "message": (f"{n} bin barang masuk sementara. / {n} temporary inbound bins." if n
+                                    else "Bin barang masuk sementara tidak dibatasi. / "
+                                         "Temporary inbound bins are not limited.")}
 
 
 @router.get("/racks/{rack_id}", response_model=models.RackDetail)
@@ -176,6 +199,8 @@ async def rack_detail(rack_id: int, user: auth.User = Depends(auth.current_user)
             "removable": not r["sku_id"] and not int(r["used"] or 0),
         })
     out_levels = list(levels.values())
+    for lv in out_levels:
+        _mark_stacks(lv["bins"])
     top = out_levels[-1] if out_levels else None
     for lv in out_levels:
         lv["removable"] = (lv is top and all(b["removable"] for b in lv["bins"]))
@@ -186,6 +211,22 @@ async def rack_detail(rack_id: int, user: auth.User = Depends(auth.current_user)
         # Top level first: the screen reads like the rack standing in front of you.
         "levels": list(reversed(out_levels)),
     }
+
+
+def _mark_stacks(bins: list[dict], pos_key: str = "position_no",
+                 row_key: str = "bin_row") -> None:
+    """Give every bin of one level `stack_rows` (how many bins share its
+    position: 1 = a single bin) and `stack_word` (bawah / tengah / atas, or None)."""
+    height: dict = {}
+    for b in bins:
+        p = b.get(pos_key)
+        height[p] = max(height.get(p, 0), int(b.get(row_key) or 1))
+    for b in bins:
+        rows = height.get(b.get(pos_key), 1)
+        b["stack_rows"] = rows
+        w = stack_word(int(b.get(row_key) or 1), rows)
+        b["stack_word"] = w[0] if w else None
+        b["stack_word_en"] = w[1] if w else None
 
 
 async def add_bin_row(cur, *, site_id: int, site_code: str, rack_code: str,
@@ -208,7 +249,7 @@ async def add_bin_row(cur, *, site_id: int, site_code: str, rack_code: str,
 async def _add_bins(cur, *, site_id: int, site_code: str, rack_code: str,
                     level_id: int, level_no: int, start: int, count: int,
                     size: str, rows: int = 1, kolom_no: int | None = 1) -> int:
-    """`count` positions, each with `rows` bins (1, or 2 stacked: Bottom and Top)."""
+    """`count` positions, each with `rows` bins (1, or 2 to 3 stacked: Bottom up to Top)."""
     for p in range(start, start + count):
         for row in range(1, rows + 1):
             await add_bin_row(cur, site_id=site_id, site_code=site_code, rack_code=rack_code,
@@ -218,10 +259,23 @@ async def _add_bins(cur, *, site_id: int, site_code: str, rack_code: str,
 
 
 def _rows(n: int) -> int:
-    if n not in (1, 2):
-        raise HTTPException(422, "Satu tingkat memuat 1 atau 2 bin per posisi. / "
-                                 "A level holds 1 or 2 bins per position.")
+    if not 1 <= n <= MAX_STACK:
+        raise HTTPException(422, f"Satu posisi memuat 1 sampai {MAX_STACK} bin bertumpuk. / "
+                                 f"A position holds 1 to {MAX_STACK} stacked bins.")
     return n
+
+
+async def _recode_spot(cur, *, site_code: str, rack_code: str, level_id: int,
+                       level_no: int, position: int) -> None:
+    """Give the bins left at one position the codes their stack now needs
+    (plain for one bin; B, T or B, M, T for a stack). Bins are referenced by id
+    everywhere, so a new code loses nothing."""
+    rows = await db.many(cur, "SELECT id, bin_row FROM locations WHERE level_id = %s "
+                              "AND position_no = %s ORDER BY bin_row", (level_id, position))
+    for i, r in enumerate(rows, start=1):
+        await db.run(cur, "UPDATE locations SET bin_row = %s, code = %s WHERE id = %s",
+                     (i, bin_code(site_code, rack_code, level_no, position, i, len(rows)),
+                      r["id"]))
 
 
 def _size(size: str) -> str:
@@ -241,7 +295,7 @@ async def add_level(
     rack = await _rack(rack_id)
     await auth.assert_site_access(user, rack["site_id"])
     if not 1 <= body.bins <= 30:
-        raise HTTPException(422, "A level holds 1 to 30 bins.")
+        raise HTTPException(422, "Satu tingkat berisi 1 sampai 30 bin. / A level holds 1 to 30 bins.")
     size = _size(body.basket_size)
     rows = 1 if body.open_shelf else _rows(body.bin_rows)
     top = await db.fetch_one(
@@ -260,7 +314,8 @@ async def add_level(
         await ledger.audit(cur, actor_email=user.email, entity="rack", entity_id=rack_id,
                            action="add_level",
                            after={"level_no": level_no, "bins": body.bins, "size": size})
-    return {"ok": True, "message": f"Rak {rack['code']} tingkat {level_no}: {body.bins} bin."}
+    return {"ok": True, "message": f"Rak {rack['code']} tingkat {level_no}: {body.bins} bin. / "
+                                   f"Rack {rack['code']} level {level_no}: {body.bins} bin(s)."}
 
 
 @router.post("/levels/{level_id}/bins", response_model=models.Ok, status_code=201)
@@ -274,10 +329,10 @@ async def add_bins(
         "FROM levels lv JOIN racks r ON r.id = lv.rack_id JOIN sites s ON s.id = r.site_id "
         "WHERE lv.id = %s", (level_id,))
     if not level:
-        raise HTTPException(404, "Level not found")
+        raise HTTPException(404, "Tingkat tidak ditemukan. / Level not found.")
     await auth.assert_site_access(user, level["site_id"])
     if not 1 <= body.count <= 30:
-        raise HTTPException(422, "Add 1 to 30 bins at a time.")
+        raise HTTPException(422, "Tambah 1 sampai 30 bin sekali jalan. / Add 1 to 30 bins at a time.")
     size = _size(body.basket_size)
     last = await db.fetch_one(
         "SELECT COALESCE(MAX(position_no), 0) AS n, COALESCE(MAX(kolom_no), 1) AS k "
@@ -292,7 +347,8 @@ async def add_bins(
         await ledger.audit(cur, actor_email=user.email, entity="level", entity_id=level_id,
                            action="add_bins", after={"count": body.count, "size": size})
     return {"ok": True,
-            "message": f"{body.count} bin ditambahkan di {level['rack_code']}-{level['level_no']}."}
+            "message": f"{body.count} bin ditambahkan di {level['rack_code']}-{level['level_no']}. / "
+                       f"{body.count} bin(s) added at {level['rack_code']}-{level['level_no']}."}
 
 
 @router.put("/levels/{level_id}/bin-rows", response_model=models.Ok)
@@ -300,60 +356,72 @@ async def set_bin_rows(
     level_id: int, body: models.BinRowsIn,
     user: auth.User = Depends(auth.require("supervisor")),
 ):
-    """Stack a second bin on every position of a level, or take it away.
+    """Make every position of a level hold the same number of stacked bins (1 to 3).
 
-    Two bins: the bin already there becomes the Bottom (...B) and a Top (...T) is
-    added above it. Back to one: the Top bins are removed -- refused while any
-    holds a SKU or ever held stock -- and the Bottom bins get their plain code
-    back. Bins are referenced by id everywhere, so a new code loses nothing.
+    More: the bins already there stay where they are and new ones are stacked
+    on top. Fewer: the highest bins are removed (refused while any holds a SKU
+    or ever held stock). Every bin then gets the code its stack needs: plain
+    for one bin, ...B and ...T for two, ...B, ...M and ...T for three. Bins are
+    referenced by id everywhere, so a new code loses nothing. Per position
+    stacks are set with the rack builder (PUT /racks/{id}/build).
     """
     level = await db.fetch_one(
         "SELECT lv.*, r.code AS rack_code, r.site_id, s.code AS site_code "
         "FROM levels lv JOIN racks r ON r.id = lv.rack_id JOIN sites s ON s.id = r.site_id "
         "WHERE lv.id = %s", (level_id,))
     if not level:
-        raise HTTPException(404, "Level not found")
+        raise HTTPException(404, "Tingkat tidak ditemukan. / Level not found.")
     await auth.assert_site_access(user, level["site_id"])
     rows = _rows(body.bin_rows)
-    if level["is_open_shelf"] and rows == 2:
+    if level["is_open_shelf"] and rows > 1:
         raise HTTPException(422, "Rak terbuka tidak memakai bin bertumpuk. / "
                                  "Open shelves do not take stacked bins.")
     positions = await db.fetch_all(
-        "SELECT position_no, MAX(bin_row) AS max_row, MIN(bk.basket_size) AS size "
+        "SELECT l.position_no, MAX(l.bin_row) AS max_row, MIN(bk.basket_size) AS size, "
+        "       MIN(l.kolom_no) AS kolom_no "
         "FROM locations l LEFT JOIN baskets bk ON bk.location_id = l.id "
-        "WHERE l.level_id = %s GROUP BY position_no ORDER BY position_no", (level_id,))
-    b_bins = await db.fetch_all(
-        "SELECT id FROM locations WHERE level_id = %s AND bin_row = 2", (level_id,))
-    if rows == 1:
-        for b in b_bins:
-            await _assert_unused(b["id"])
-    bottoms = await db.fetch_all(
-        "SELECT id, position_no FROM locations WHERE level_id = %s AND bin_row = 1", (level_id,))
+        "WHERE l.level_id = %s GROUP BY l.position_no ORDER BY l.position_no", (level_id,))
+    extra = await db.fetch_all(
+        "SELECT id FROM locations WHERE level_id = %s AND bin_row > %s", (level_id, rows))
+    for b in extra:
+        await _assert_unused(b["id"])
     async with db.tx() as cur:
-        if rows == 1:
-            for b in b_bins:
-                await db.run(cur, "DELETE FROM baskets WHERE location_id = %s", (b["id"],))
-                await db.run(cur, "DELETE FROM locations WHERE id = %s", (b["id"],))
-        # The bin already at each position becomes the Bottom one (...B), or plain again.
-        for b in bottoms:
-            if b["position_no"]:
-                await db.run(cur, "UPDATE locations SET code = %s WHERE id = %s",
-                             (bin_code(level["site_code"], level["rack_code"], level["level_no"],
-                                       b["position_no"], 1, rows), b["id"]))
-        if rows == 2:
-            for p in positions:
-                if int(p["max_row"] or 1) < 2:
+        for b in extra:
+            await db.run(cur, "DELETE FROM baskets WHERE location_id = %s", (b["id"],))
+            await db.run(cur, "DELETE FROM locations WHERE id = %s", (b["id"],))
+        for p in positions:
+            if not p["position_no"]:
+                continue
+            # The bins that stay get their new codes first, so a Top (...T) that
+            # becomes a Middle (...M) frees its code before a new Top is added.
+            await _recode_spot(cur, site_code=level["site_code"], rack_code=level["rack_code"],
+                               level_id=level_id, level_no=level["level_no"],
+                               position=p["position_no"])
+            have = min(int(p["max_row"] or 1), rows)
+            if have < rows:
+                for row in range(1, have + 1):
+                    await db.run(
+                        cur, "UPDATE locations SET code = %s WHERE level_id = %s "
+                             "AND position_no = %s AND bin_row = %s",
+                        (bin_code(level["site_code"], level["rack_code"], level["level_no"],
+                                  p["position_no"], row, rows),
+                         level_id, p["position_no"], row))
+                for row in range(have + 1, rows + 1):
                     await add_bin_row(cur, site_id=level["site_id"], site_code=level["site_code"],
                                       rack_code=level["rack_code"], level_id=level_id,
                                       level_no=level["level_no"], position=p["position_no"],
-                                      row=2, size=p["size"] or "BESAR", rows=2)
+                                      row=row, size=p["size"] or "BESAR", rows=rows,
+                                      kolom_no=p["kolom_no"] or 1)
         await db.run(cur, "UPDATE levels SET bin_rows = %s WHERE id = %s", (rows, level_id))
         await ledger.audit(cur, actor_email=user.email, entity="level", entity_id=level_id,
                            action="bin_rows", after={"bin_rows": rows})
-    return {"ok": True, "message": (
-        f"{level['rack_code']}-{level['level_no']}: " +
-        ("2 bin bertumpuk per posisi: atas (T) dan bawah (B)." if rows == 2
-         else "1 bin per posisi."))}
+    where = f"{level['rack_code']}-{level['level_no']}: "
+    if rows == 1:
+        return {"ok": True, "message": where + "1 bin per posisi. / " + where + "1 bin per position."}
+    letters = "bawah (B) dan atas (T)" if rows == 2 else "bawah (B), tengah (M) dan atas (T)"
+    letters_en = "bottom (B) and top (T)" if rows == 2 else "bottom (B), middle (M) and top (T)"
+    return {"ok": True, "message": f"{where}{rows} bin bertumpuk per posisi: {letters}. / "
+                                   f"{where}{rows} stacked bins per position: {letters_en}."}
 
 
 async def _assert_unused(location_id: int) -> dict:
@@ -361,15 +429,17 @@ async def _assert_unused(location_id: int) -> dict:
         "SELECT l.*, bk.id AS basket_id FROM locations l "
         "LEFT JOIN baskets bk ON bk.location_id = l.id WHERE l.id = %s", (location_id,))
     if not loc:
-        raise HTTPException(404, "Bin not found")
+        raise HTTPException(404, "Bin tidak ditemukan. / Bin not found.")
     if loc["basket_id"] and await db.fetch_one(
             "SELECT 1 AS x FROM slot_assignments WHERE basket_id = %s", (loc["basket_id"],)):
-        raise HTTPException(409, f"{loc['code']} masih dipakai produk. Pindahkan dulu.")
+        raise HTTPException(409, f"{loc['code']} masih dipakai produk. Pindahkan dulu. / "
+                                 f"{loc['code']} still holds a product. Move it first.")
     if await db.fetch_one("SELECT 1 AS x FROM stock_movements WHERE location_id = %s LIMIT 1",
                           (location_id,)):
         raise HTTPException(
             409, f"{loc['code']} pernah menyimpan stok, jadi riwayatnya harus tetap ada. "
-                 "Bin ini tidak bisa dihapus.")
+                 f"Bin ini tidak bisa dihapus. / {loc['code']} has held stock, so its history "
+                 "must stay. This bin cannot be removed.")
     return loc
 
 
@@ -378,13 +448,23 @@ async def remove_bin(location_id: int, user: auth.User = Depends(auth.require("s
     """Remove a bin that was never used."""
     loc = await _assert_unused(location_id)
     await auth.assert_site_access(user, loc["site_id"])
+    spot = await db.fetch_one(
+        "SELECT lv.level_no, r.code AS rack_code, s.code AS site_code FROM levels lv "
+        "JOIN racks r ON r.id = lv.rack_id JOIN sites s ON s.id = r.site_id "
+        "WHERE lv.id = %s", (loc["level_id"],)) if loc.get("level_id") else None
     async with db.tx() as cur:
         await db.run(cur, "DELETE FROM baskets WHERE location_id = %s", (location_id,))
         await db.run(cur, "DELETE FROM locations WHERE id = %s", (location_id,))
+        if spot and loc.get("position_no"):
+            # A stacked bin was removed: the bins left at that position get the
+            # codes of their smaller stack (one left = the plain code again).
+            await _recode_spot(cur, site_code=spot["site_code"], rack_code=spot["rack_code"],
+                               level_id=loc["level_id"], level_no=spot["level_no"],
+                               position=loc["position_no"])
         await ledger.audit(cur, actor_email=user.email, entity="location",
                            entity_id=location_id, action="remove_bin",
                            before={"code": loc["code"]})
-    return {"ok": True, "message": f"Bin {loc['code']} dihapus."}
+    return {"ok": True, "message": f"Bin {loc['code']} dihapus. / Bin {loc['code']} removed."}
 
 
 @router.delete("/levels/{level_id}", response_model=models.Ok)
@@ -394,12 +474,13 @@ async def remove_level(level_id: int, user: auth.User = Depends(auth.require("su
         "SELECT lv.*, r.code AS rack_code, r.site_id FROM levels lv "
         "JOIN racks r ON r.id = lv.rack_id WHERE lv.id = %s", (level_id,))
     if not level:
-        raise HTTPException(404, "Level not found")
+        raise HTTPException(404, "Tingkat tidak ditemukan. / Level not found.")
     await auth.assert_site_access(user, level["site_id"])
     top = await db.fetch_one("SELECT MAX(level_no) AS n FROM levels WHERE rack_id = %s",
                              (level["rack_id"],))
     if level["level_no"] != top["n"]:
-        raise HTTPException(409, "Hanya tingkat paling atas yang bisa dihapus.")
+        raise HTTPException(409, "Hanya tingkat paling atas yang bisa dihapus. / "
+                                 "Only the top level can be removed.")
     locs = await db.fetch_all("SELECT id FROM locations WHERE level_id = %s", (level_id,))
     for l in locs:
         await _assert_unused(l["id"])
@@ -414,7 +495,8 @@ async def remove_level(level_id: int, user: auth.User = Depends(auth.require("su
                            action="remove_level",
                            before={"rack": level["rack_code"], "level_no": level["level_no"]})
     return {"ok": True,
-            "message": f"Tingkat {level['level_no']} rak {level['rack_code']} dihapus."}
+            "message": f"Tingkat {level['level_no']} rak {level['rack_code']} dihapus. / "
+                       f"Level {level['level_no']} of rack {level['rack_code']} removed."}
 
 
 @router.patch("/baskets/{basket_id}", response_model=models.Ok)
@@ -427,14 +509,15 @@ async def set_basket_size(
         "SELECT bk.*, l.code FROM baskets bk JOIN locations l ON l.id = bk.location_id "
         "WHERE bk.id = %s", (basket_id,))
     if not bk:
-        raise HTTPException(404, "Basket not found")
+        raise HTTPException(404, "Keranjang tidak ditemukan. / Basket not found.")
     await auth.assert_site_access(user, bk["site_id"])
     size = _size(body.basket_size)
     await db.execute("UPDATE baskets SET basket_size = %s WHERE id = %s", (size, basket_id))
     await db.execute(
         "INSERT INTO audit_log (actor_email, action, entity, entity_id, after_json) "
         "VALUES (%s,'basket.size','baskets',%s,%s)", (user.email, basket_id, size))
-    return {"ok": True, "message": f"{bk['code']}: bin {SIZE_LABEL[size]}."}
+    return {"ok": True, "message": f"{bk['code']}: bin {SIZE_LABEL[size]}. / "
+                                   f"{bk['code']}: {SIZE_LABEL_EN[size].lower()} bin."}
 
 
 # --- needs a rack -------------------------------------------------------------
@@ -495,9 +578,9 @@ async def needs_rack(site_id: int, user: auth.User = Depends(auth.current_user))
 
 @router.get("/skus/{sku_id}/racks", response_model=models.SkuRackList)
 async def sku_racks(sku_id: int, user: auth.User = Depends(auth.current_user)):
-    """Where one SKU lives, hub by hub — and which hubs still need to rack it."""
+    """Where one SKU lives, hub by hub, and which hubs still need to rack it."""
     if not await common.sku_by_id(sku_id):
-        raise HTTPException(404, "SKU not found")
+        raise HTTPException(404, "SKU tidak ditemukan. / SKU not found.")
     rows = await db.fetch_all(
         "SELECT st.id AS site_id, st.code AS site_code, st.name AS site_name, "
         "       st.is_training, l.code AS location_code, sa.restock_point, "
@@ -641,6 +724,9 @@ async def layout_map(site_id: int, user: auth.User = Depends(auth.current_user))
             "restock_point": r["restock_point"], "full_threshold": r["full_threshold"],
             "safety_stock": r["safety_stock"], "status": status,
         })
+    for rk in racks.values():
+        for lv in rk["levels"].values():
+            _mark_stacks(lv["bins"])
     return {
         "site": {"id": site["id"], "code": site["code"], "name": site["name"],
                  "site_type": site["site_type"], "is_training": bool(site["is_training"])},
@@ -662,13 +748,24 @@ async def layout_map(site_id: int, user: auth.User = Depends(auth.current_user))
 # level 2 of rack A is A-2-01 to A-2-06. The stored code carries the hub
 # (MA5-A-2-01, unique across hubs, and what the label's barcode holds); screens
 # show the short code (A-2-01) and the label shows the kolom on a small line.
+#
+# Stacked bins: one place on a kolom may hold 2 or 3 bins on top of each other.
+# They share the place's number and are told apart by a letter, bottom first:
+# A-2-03B (bawah) and A-2-03T (atas), or A-2-03B, A-2-03M (tengah), A-2-03T.
+# locations.bin_row is 1 for the bottom bin; levels.bin_rows is the highest
+# stack on the level (1 = no stacks).
 
 _BULAN = ("Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus",
           "September", "Oktober", "November", "Desember")
 _ORDINAL = ("pertama", "kedua", "ketiga", "keempat", "kelima", "keenam", "ketujuh",
             "kedelapan", "kesembilan", "kesepuluh")
 _RACK_CODE = re.compile(r"^[A-Z0-9]{1,4}$")
-MAX_LEVELS, MAX_KOLOM, MAX_PER_KOLOM, MAX_PER_LEVEL = 10, 10, 20, 40
+MAX_LEVELS, MAX_KOLOM = 10, 10
+# Places (side by side) and bins (stacked bins counted one by one). Before stacks
+# a kolom took 20 bins and a level 40; the place limits keep that, and the bin
+# limits leave room for stacks (30 bins = 10 places of 3).
+MAX_SPOTS_PER_KOLOM, MAX_SPOTS_PER_LEVEL = 20, 40
+MAX_PER_KOLOM, MAX_PER_LEVEL = 30, 60
 LABELS_PER_PAGE = 12
 # Suggested level for a new bin: waist height first (canvas 3e).
 LEVEL_PREFERENCE = (3, 2, 4, 1, 5)
@@ -680,6 +777,8 @@ LABEL_CUT_NOTE = ("Cetak di kertas A4 biasa. Gunting di garis putus-putus, tempe
 LABEL_FOOTER = "SatSet WMS · Rak & bin · Cetak label"
 LABEL_LOST_NOTE = "Label hilang? Cetak ulang dari bin itu di Rak & bin."
 
+SPECIAL_TEXT_EN = {"IN": "Temporary inbound bins", "QR": "Quarantine trays (QR)",
+                   "OUT": "Order baskets"}
 SPECIAL_TEXT = {
     "IN": ("Bin barang masuk sementara",
            "Barang dari truk menunggu di sini sampai disimpan ke rak."),
@@ -740,8 +839,45 @@ def level_size_text(sizes: list[str]) -> str:
     return "campur"
 
 
+def _stacked_groups(bins: list[dict]) -> list[list[dict]]:
+    """The stacks among some bins (each bottom first); single bins left out.
+    A bin dict needs level_no, index (its place) and rows (bins at that place)."""
+    groups: dict = {}
+    for b in bins:
+        if int(b.get("rows") or 1) > 1:
+            groups.setdefault((b["level_no"], b["index"]), []).append(b)
+    return [sorted(g, key=lambda x: x.get("row") or 1) for g in groups.values()]
+
+
+def _and(words: list[str], word: str) -> str:
+    return words[0] if len(words) == 1 else ", ".join(words[:-1]) + f" {word} " + words[-1]
+
+
+def stacks_text(bins: list[dict], short_after: int = 2) -> tuple[str, str] | None:
+    """('A-2-03B dan A-2-03T bertumpuk', 'A-2-03B and A-2-03T are stacked'), or
+    for more stacks the places and what the letters mean. None without stacks."""
+    groups = _stacked_groups(bins)
+    if not groups:
+        return None
+    if len(groups) <= short_after:
+        return ("; ".join(_and([b["short_code"] for b in g], "dan") + " bertumpuk"
+                          for g in groups),
+                "; ".join(_and([b["short_code"] for b in g], "and") + " are stacked"
+                          for g in groups))
+    tall = any(len(g) > 2 for g in groups)
+    key_id = "B bawah, M tengah, T atas" if tall else "B bawah, T atas"
+    key_en = "B bottom, M middle, T top" if tall else "B bottom, T top"
+    places = [g[0]["short_code"][:-1] for g in groups]
+    if len(places) > 4:
+        return (f"{len(groups)} tempat bertumpuk ({key_id})",
+                f"{len(groups)} stacked places ({key_en})")
+    return (f"bertumpuk di {_and(places, 'dan')} ({key_id})",
+            f"stacked at {_and(places, 'and')} ({key_en})")
+
+
 def strip_text(bins: list[dict]) -> str:
-    """'A-5-01 sampai A-5-06 · bin Kecil, kecuali A-5-03 Besar' for a level strip."""
+    """'A-5-01 sampai A-5-06 · bin Kecil, kecuali A-5-03 Besar' for a level strip,
+    plus the stacks: '· A-5-04B dan A-5-04T bertumpuk'."""
     if not bins:
         return ""
     head = f"{bins[0]['short_code']} sampai {bins[-1]['short_code']}" if len(bins) > 1 \
@@ -750,21 +886,45 @@ def strip_text(bins: list[dict]) -> str:
     kecil = sizes.count("KECIL")
     major = "KECIL" if kecil * 2 >= len(sizes) else "BESAR"
     other = [b for b in bins if b["size"] != major]
+    stacks = stacks_text(bins, short_after=1)
+    tail = f" · {stacks[0]}" if stacks else ""
     if not other:
-        return f"{head} · bin {SIZE_LABEL[major]}"
+        return f"{head} · bin {SIZE_LABEL[major]}{tail}"
     if len(other) <= 3:
         codes = ", ".join(b["short_code"] for b in other)
-        return f"{head} · bin {SIZE_LABEL[major]}, kecuali {codes} {SIZE_LABEL[other[0]['size']]}"
-    return f"{head} · bin Kecil dan Besar campur"
+        return (f"{head} · bin {SIZE_LABEL[major]}, kecuali {codes} "
+                f"{SIZE_LABEL[other[0]['size']]}{tail}")
+    return f"{head} · bin Kecil dan Besar campur{tail}"
+
+
+def rack_summary(bins: list[dict]) -> tuple[str, str]:
+    """'30 bin, A-1-01 sampai A-5-06 · 17 Kecil, 13 Besar' (and the English),
+    with the stacks named when there are any."""
+    if not bins:
+        return "0 bin", "0 bins"
+    kecil = sum(1 for b in bins if b["size"] == "KECIL")
+    first, last = bins[0]["short_code"], bins[-1]["short_code"]
+    s_id = f"{len(bins)} bin, {first} sampai {last} · {kecil} Kecil, {len(bins) - kecil} Besar"
+    s_en = f"{len(bins)} bins, {first} to {last} · {kecil} small, {len(bins) - kecil} large"
+    stacks = stacks_text(bins, short_after=1)
+    if stacks:
+        s_id += f" · {stacks[0]}"
+        s_en += f" · {stacks[1]}"
+    return s_id, s_en
 
 
 # --- request models (kept here, not in models.py) ------------------------------
 
 class RackLevelIn(BaseModel):
     level_no: int = Field(description="1 = the bottom shelf")
-    columns: list[list[str]] = Field(
-        description="One list per kolom, left to right; each lists its bins left to right "
-                    "as KECIL or BESAR")
+    columns: list[list[str | list[str]]] = Field(
+        description="One list per kolom, left to right. Each item is one place on the kolom, "
+                    "left to right: a size (KECIL or BESAR) for a single bin, or a list of "
+                    "2 to 3 sizes for bins stacked at that place, bottom first. Example: "
+                    "[[\"KECIL\", [\"BESAR\", \"KECIL\"], \"KECIL\"]] is one kolom with "
+                    "a Kecil bin, a Besar bin with a Kecil bin on top of it, and a Kecil bin. "
+                    "Bins of one stack share the place number: A-2-02B (bottom) and A-2-02T "
+                    "(top); three high: B, M (middle), T. A list of one size is a single bin.")
 
 
 class RackBuildIn(BaseModel):
@@ -819,36 +979,61 @@ def plan_rack(site_code: str, body: RackBuildIn) -> dict:
                                      f"Level {lv.level_no} must have {k} kolom.")
         idx, lv_bins = 0, []
         for kolom_no, col in enumerate(lv.columns, start=1):
-            if len(col) > MAX_PER_KOLOM:
-                raise HTTPException(422, f"Paling banyak {MAX_PER_KOLOM} bin per kolom. / "
-                                         f"At most {MAX_PER_KOLOM} bins per kolom.")
+            if len(col) > MAX_SPOTS_PER_KOLOM:
+                raise HTTPException(422, f"Paling banyak {MAX_SPOTS_PER_KOLOM} tempat bin per "
+                                         f"kolom. / At most {MAX_SPOTS_PER_KOLOM} bin places "
+                                         "per kolom.")
+            in_kolom = 0
             for raw in col:
-                size = norm_size(raw)
-                if size is None:
+                stack = raw if isinstance(raw, list) else [raw]
+                if not 1 <= len(stack) <= MAX_STACK:
+                    raise HTTPException(422, f"Satu tumpukan berisi 1 sampai {MAX_STACK} bin. / "
+                                             f"A stack holds 1 to {MAX_STACK} bins.")
+                sizes = [norm_size(x) for x in stack]
+                if None in sizes:
                     raise HTTPException(422, "Ukuran bin harus Kecil atau Besar. / "
                                              "Bin size must be Kecil or Besar.")
                 idx += 1
-                full = bin_code(site_code, code, lv.level_no, idx)
-                b = {"level_no": lv.level_no, "index": idx, "kolom_no": kolom_no,
-                     "size": size, "code": full, "short_code": short_code(full, site_code)}
-                lv_bins.append(b)
-        if not 1 <= idx <= MAX_PER_LEVEL:
-            raise HTTPException(422, f"Level {lv.level_no}: 1 sampai {MAX_PER_LEVEL} bin. / "
-                                     f"Level {lv.level_no}: 1 to {MAX_PER_LEVEL} bins.")
+                rows = len(sizes)
+                for row, size in enumerate(sizes, start=1):
+                    full = bin_code(site_code, code, lv.level_no, idx, row, rows)
+                    word = stack_word(row, rows)
+                    lv_bins.append({"level_no": lv.level_no, "index": idx, "kolom_no": kolom_no,
+                                    "row": row, "rows": rows,
+                                    "stack_word": word[0] if word else None,
+                                    "size": size, "code": full,
+                                    "short_code": short_code(full, site_code)})
+                in_kolom += rows
+            if in_kolom > MAX_PER_KOLOM:
+                raise HTTPException(422, f"Paling banyak {MAX_PER_KOLOM} bin per kolom, bin "
+                                         f"bertumpuk ikut dihitung. / At most {MAX_PER_KOLOM} "
+                                         "bins per kolom, stacked bins included.")
+        if not 1 <= idx <= MAX_SPOTS_PER_LEVEL:
+            raise HTTPException(422, f"Level {lv.level_no}: 1 sampai {MAX_SPOTS_PER_LEVEL} "
+                                     f"tempat bin. / Level {lv.level_no}: 1 to "
+                                     f"{MAX_SPOTS_PER_LEVEL} bin places.")
+        if len(lv_bins) > MAX_PER_LEVEL:
+            raise HTTPException(422, f"Level {lv.level_no}: paling banyak {MAX_PER_LEVEL} bin, "
+                                     f"bin bertumpuk ikut dihitung. / Level {lv.level_no}: at "
+                                     f"most {MAX_PER_LEVEL} bins, stacked bins included.")
         bins += lv_bins
-        out_levels.append({"level_no": lv.level_no, "bins": idx,
+        out_levels.append({"level_no": lv.level_no, "bins": len(lv_bins), "places": idx,
+                           "stacks": len(_stacked_groups(lv_bins)),
+                           "bin_rows": max(b["rows"] for b in lv_bins),
                            "kecil": sum(1 for b in lv_bins if b["size"] == "KECIL"),
                            "besar": sum(1 for b in lv_bins if b["size"] == "BESAR"),
                            "size_text": level_size_text([b["size"] for b in lv_bins]),
                            "strip_text": strip_text(lv_bins)})
     kecil = sum(1 for b in bins if b["size"] == "KECIL")
     first, last = bins[0]["short_code"], bins[-1]["short_code"]
+    summary, summary_en = rack_summary(bins)
     return {
         "code": code, "kolom_count": k, "levels": out_levels, "bins": bins,
         "total": len(bins), "kecil": kecil, "besar": len(bins) - kecil,
+        "stacks": len(_stacked_groups(bins)),
         "first": first, "last": last,
-        "summary": f"{len(bins)} bin, {first} sampai {last} · {kecil} Kecil, "
-                   f"{len(bins) - kecil} Besar",
+        "summary": summary,
+        "summary_en": summary_en,
     }
 
 
@@ -880,14 +1065,17 @@ async def _write_layout(cur, site: dict, rack_id: int, plan: dict) -> None:
     for b in plan["bins"]:
         by_level.setdefault(b["level_no"], []).append(b)
     for level_no, lv_bins in sorted(by_level.items()):
+        # bin_rows = the highest stack on the level (1 = no stacks); the older
+        # per-level calls (add bins, bin-rows) read it.
         level_id = await db.run(
             cur, "INSERT INTO levels (rack_id, level_no, is_open_shelf, bin_rows) "
-                 "VALUES (%s,%s,0,1)", (rack_id, level_no))
+                 "VALUES (%s,%s,0,%s)",
+            (rack_id, level_no, max(int(b.get("rows") or 1) for b in lv_bins)))
         for b in lv_bins:
             await add_bin_row(cur, site_id=site["id"], site_code=site["code"],
                               rack_code=plan["code"], level_id=level_id, level_no=level_no,
-                              position=b["index"], row=1, size=b["size"], rows=1,
-                              kolom_no=b["kolom_no"])
+                              position=b["index"], row=b.get("row") or 1, size=b["size"],
+                              rows=b.get("rows") or 1, kolom_no=b["kolom_no"])
 
 
 @router.post("/sites/{site_id}/racks/preview", tags=["rak & bin"])
@@ -927,7 +1115,8 @@ async def build_rack(site_id: int, body: RackBuildIn,
                                                   "kecil": plan["kecil"],
                                                   "besar": plan["besar"]})
     return {"ok": True, "rack_id": rack_id, "summary": plan["summary"],
-            "message": f"Rak {plan['code']} tersimpan: {plan['summary']}."}
+            "message": f"Rak {plan['code']} tersimpan: {plan['summary']}. / "
+                       f"Rack {plan['code']} saved: {plan['summary_en']}."}
 
 
 async def _rack_used(rack_id: int) -> list[str]:
@@ -937,7 +1126,7 @@ async def _rack_used(rack_id: int) -> list[str]:
         "WHERE lv.rack_id = %s AND (EXISTS (SELECT 1 FROM slot_assignments sa "
         "      WHERE sa.basket_id = bk.id) "
         "  OR EXISTS (SELECT 1 FROM stock_movements m WHERE m.location_id = l.id)) "
-        "ORDER BY lv.level_no, l.position_no LIMIT 5", (rack_id,))
+        "ORDER BY lv.level_no, l.position_no, l.bin_row LIMIT 5", (rack_id,))
     return [r["code"] for r in rows]
 
 
@@ -977,7 +1166,8 @@ async def rebuild_rack(rack_id: int, body: RackBuildIn,
         await ledger.audit(cur, actor_email=user.email, entity="rack", entity_id=rack_id,
                            action="rebuild", after={"code": plan["code"], "bins": plan["total"]})
     return {"ok": True, "rack_id": rack_id, "summary": plan["summary"],
-            "message": f"Rak {plan['code']} diubah: {plan['summary']}. Cetak label lagi."}
+            "message": f"Rak {plan['code']} diubah: {plan['summary']}. Cetak label lagi. / "
+                       f"Rack {plan['code']} changed: {plan['summary_en']}. Print the labels again."}
 
 
 @router.delete("/racks/{rack_id}", response_model=models.Ok, tags=["rak & bin"])
@@ -994,7 +1184,7 @@ async def delete_rack(rack_id: int, user: auth.User = Depends(auth.require("supe
         await db.run(cur, "DELETE FROM racks WHERE id = %s", (rack_id,))
         await ledger.audit(cur, actor_email=user.email, entity="rack", entity_id=rack_id,
                            action="delete", before={"code": rack["code"]})
-    return {"ok": True, "message": f"Rak {rack['code']} dihapus."}
+    return {"ok": True, "message": f"Rak {rack['code']} dihapus. / Rack {rack['code']} removed."}
 
 
 @router.patch("/locations/{location_id}/size", response_model=models.Ok, tags=["rak & bin"])
@@ -1019,7 +1209,8 @@ async def set_bin_size(location_id: int, body: BinSizeIn,
                      (size, loc["basket_id"]))
         await ledger.audit(cur, actor_email=user.email, entity="location",
                            entity_id=location_id, action="size", after={"size": size})
-    return {"ok": True, "message": f"{loc['code']}: bin {SIZE_LABEL[size]}."}
+    return {"ok": True, "message": f"{loc['code']}: bin {SIZE_LABEL[size]}. / "
+                                   f"{loc['code']}: {SIZE_LABEL_EN[size].lower()} bin."}
 
 
 # --- reading a rack ----------------------------------------------------------------
@@ -1029,7 +1220,7 @@ async def rack_bins(rack_id: int) -> tuple[dict, list[dict]]:
     rack = await _rack(rack_id)
     rows = await db.fetch_all(
         "SELECT lv.id AS level_id, lv.level_no, l.id AS location_id, l.code, l.position_no, "
-        "       l.kolom_no, l.label_check_state, l.label_check_scanned, l.label_checked_at, "
+        "       l.bin_row, l.kolom_no, l.label_check_state, l.label_check_scanned, l.label_checked_at, "
         "       l.label_checked_by, bk.id AS basket_id, bk.basket_size, bk.label_printed_at, "
         "       sa.sku_id, sa.slot_role, s.name_display AS sku_name, s.bin_size AS sku_bin_size, "
         "       COALESCE(ib.qty_on_hand, 0) AS qty_on_hand, "
@@ -1047,6 +1238,7 @@ async def rack_bins(rack_id: int) -> tuple[dict, list[dict]]:
             "location_id": r["location_id"], "basket_id": r["basket_id"],
             "level_id": r["level_id"], "level_no": r["level_no"],
             "index": r["position_no"], "kolom_no": r["kolom_no"] or 1,
+            "row": int(r["bin_row"] or 1),
             "code": r["code"], "short_code": short_code(r["code"], rack["site_code"]),
             "size": norm_size(r["basket_size"]) or "BESAR",
             "sku_id": r["sku_id"], "sku_name": r["sku_name"], "slot_role": r["slot_role"],
@@ -1058,6 +1250,17 @@ async def rack_bins(rack_id: int) -> tuple[dict, list[dict]]:
             "label_check_scanned": short_code(r["label_check_scanned"], rack["site_code"]),
             "label_checked_at": iso(r["label_checked_at"]),
         })
+    # How many bins share each place (1 = a single bin), and what each one is
+    # called in its stack: bawah, tengah, atas.
+    height: dict = {}
+    for b in bins:
+        key = (b["level_id"], b["index"])
+        height[key] = max(height.get(key, 0), b["row"])
+    for b in bins:
+        b["rows"] = height[(b["level_id"], b["index"])]
+        w = stack_word(b["row"], b["rows"])
+        b["stack_word"] = w[0] if w else None
+        b["stack_word_en"] = w[1] if w else None
     return rack, bins
 
 
@@ -1074,10 +1277,27 @@ def _group_levels(bins: list[dict], kolom_count: int) -> list[dict]:
         for b in lv["bins"]:
             cols[b["kolom_no"] - 1].append(b)
         sizes = [b["size"] for b in lv["bins"]]
+        spots = [_spots(c) for c in cols]
         out.append(dict(lv, size_text=level_size_text(sizes) if sizes else None,
                         strip_text=strip_text(lv["bins"]),
-                        columns=[[b["size"] for b in c] for c in cols],
-                        kolom=[{"kolom_no": i + 1, "bins": c} for i, c in enumerate(cols)]))
+                        bin_rows=max([b.get("rows") or 1 for b in lv["bins"]] or [1]),
+                        # The builder's shape: a size per single bin, a list of
+                        # sizes (bottom first) per stack.
+                        columns=[[sp[0]["size"] if len(sp) == 1 else [b["size"] for b in sp]
+                                  for sp in c] for c in spots],
+                        kolom=[{"kolom_no": i + 1, "bins": c, "spots": spots[i]}
+                               for i, c in enumerate(cols)]))
+    return out
+
+
+def _spots(bins: list[dict]) -> list[list[dict]]:
+    """Bins of one kolom grouped by place, left to right; each place bottom first."""
+    out: list[list[dict]] = []
+    for b in sorted(bins, key=lambda x: (x["index"] or 0, x.get("row") or 1)):
+        if out and out[-1][0]["index"] == b["index"]:
+            out[-1].append(b)
+        else:
+            out.append([b])
     return out
 
 
@@ -1088,7 +1308,7 @@ async def rak_overview(site_id: int, user: auth.User = Depends(auth.current_user
     site = await auth.assert_site_access(user, site_id)
     rows = await db.fetch_all(
         "SELECT r.id AS rack_id, r.code, r.sort_order, r.kolom_count, r.labels_printed_at, "
-        "       lv.level_no, l.id AS location_id, bk.basket_size, l.label_check_state, "
+        "       lv.level_no, l.id AS location_id, l.bin_row, bk.basket_size, l.label_check_state, "
         "       (SELECT COUNT(*) FROM slot_assignments sa WHERE sa.basket_id = bk.id) AS slots "
         "FROM racks r LEFT JOIN levels lv ON lv.rack_id = r.id "
         "LEFT JOIN locations l ON l.level_id = lv.id "
@@ -1098,7 +1318,7 @@ async def rak_overview(site_id: int, user: auth.User = Depends(auth.current_user
     for r in rows:
         rk = racks_out.setdefault(r["rack_id"], {
             "rack_id": r["rack_id"], "code": r["code"], "kolom_count": r["kolom_count"] or 1,
-            "levels": set(), "bins": 0, "kecil": 0, "besar": 0, "used": 0,
+            "levels": set(), "bins": 0, "kecil": 0, "besar": 0, "used": 0, "stacks": 0,
             "free_kecil": 0, "free_besar": 0, "labels_printed_at": iso(r["labels_printed_at"]),
             "label_ok": 0, "label_wrong": 0})
         if r["location_id"] is None:
@@ -1107,6 +1327,8 @@ async def rak_overview(site_id: int, user: auth.User = Depends(auth.current_user
         size = norm_size(r["basket_size"]) or "BESAR"
         rk["bins"] += 1
         rk["kecil" if size == "KECIL" else "besar"] += 1
+        if int(r["bin_row"] or 1) == 2:  # every stack has exactly one second bin
+            rk["stacks"] += 1
         if int(r["slots"] or 0):
             rk["used"] += 1
         else:
@@ -1142,6 +1364,7 @@ async def rack_layout(rack_id: int, user: auth.User = Depends(auth.current_user)
     rack, bins = await rack_bins(rack_id)
     await auth.assert_site_access(user, rack["site_id"])
     kecil = sum(1 for b in bins if b["size"] == "KECIL")
+    summary, summary_en = rack_summary(bins)
     return {
         "rack": {"rack_id": rack["id"], "code": rack["code"], "site_id": rack["site_id"],
                  "site_code": rack["site_code"], "kolom_count": rack.get("kolom_count") or 1,
@@ -1150,9 +1373,8 @@ async def rack_layout(rack_id: int, user: auth.User = Depends(auth.current_user)
                  "used": sum(1 for b in bins if b["occupied"]),
                  "labels_printed_at": iso(rack.get("labels_printed_at")),
                  "in_use": any(not b["removable"] for b in bins),
-                 "summary": (f"{len(bins)} bin, {bins[0]['short_code']} sampai "
-                             f"{bins[-1]['short_code']} · {kecil} Kecil, {len(bins) - kecil} Besar"
-                             if bins else "0 bin")},
+                 "stacks": len(_stacked_groups(bins)),
+                 "summary": summary, "summary_en": summary_en},
         "levels": _group_levels(bins, rack.get("kolom_count") or 1),
     }
 
@@ -1160,9 +1382,14 @@ async def rack_layout(rack_id: int, user: auth.User = Depends(auth.current_user)
 # --- labels (canvas 3b) ---------------------------------------------------------------
 
 def _bin_label(b: dict, hub: str) -> dict:
+    """One bin label. A stacked bin also says where it sits in its stack, in
+    capitals on its own line: BAWAH / BOTTOM, TENGAH / MIDDLE, ATAS / TOP."""
+    word = stack_word(b.get("row") or 1, b.get("rows") or 1)
     return {"location_id": b["location_id"], "code": b["short_code"], "barcode": b["code"],
             "kolom_no": b["kolom_no"], "kolom_text": f"Kolom {b['kolom_no']}",
             "level_no": b["level_no"], "size": b["size"], "size_label": SIZE_LABEL[b["size"]],
+            "stack_no": b.get("row") or 1, "stack_rows": b.get("rows") or 1,
+            "stack_text": f"{word[0].upper()} / {word[1].upper()}" if word else None,
             "line": f"{hub} · Level {b['level_no']} · bin {SIZE_LABEL[b['size']]}"}
 
 
@@ -1244,13 +1471,16 @@ async def rack_labels_printed(rack_id: int, user: auth.User = Depends(auth.curre
                           "WHERE lv.rack_id = %s", (rack_id,))
         await ledger.audit(cur, actor_email=user.email, entity="rack", entity_id=rack_id,
                            action="labels_printed")
-    return {"ok": True, "message": f"Label rak {rack['code']} dicetak."}
+    return {"ok": True, "message": f"Label rak {rack['code']} dicetak. / "
+                                   f"Labels of rack {rack['code']} printed."}
 
 
 async def _location_label(location_id: int, user: auth.User) -> dict:
     loc = await db.fetch_one(
-        "SELECT l.id, l.code, l.site_id, l.level_id, l.position_no, l.kolom_no, lv.level_no, "
-        "       bk.basket_size, s.code AS site_code, sb.kind AS special_kind "
+        "SELECT l.id, l.code, l.site_id, l.level_id, l.position_no, l.bin_row, l.kolom_no, "
+        "       lv.level_no, bk.basket_size, s.code AS site_code, sb.kind AS special_kind, "
+        "       (SELECT MAX(l2.bin_row) FROM locations l2 WHERE l2.level_id = l.level_id "
+        "         AND l2.position_no = l.position_no) AS stack_rows "
         "FROM locations l JOIN sites s ON s.id = l.site_id "
         "LEFT JOIN levels lv ON lv.id = l.level_id "
         "LEFT JOIN baskets bk ON bk.location_id = l.id "
@@ -1264,6 +1494,7 @@ async def _location_label(location_id: int, user: auth.User) -> dict:
     b = {"location_id": loc["id"], "code": loc["code"],
          "short_code": short_code(loc["code"], loc["site_code"]),
          "kolom_no": loc["kolom_no"] or 1, "level_no": loc["level_no"],
+         "row": int(loc["bin_row"] or 1), "rows": int(loc["stack_rows"] or 1),
          "size": norm_size(loc["basket_size"]) or "BESAR"}
     return _bin_label(b, hub)
 
@@ -1291,7 +1522,8 @@ async def reprint_label(location_id: int, user: auth.User = Depends(auth.current
         await ledger.audit(cur, actor_email=user.email, entity="location",
                            entity_id=location_id, action="label_reprint")
     return {"label": label, "cut_note": LABEL_CUT_NOTE, "footer": LABEL_FOOTER,
-            "message": f"Label {label['code']} siap dicetak ulang."}
+            "message": f"Label {label['code']} siap dicetak ulang. / "
+                       f"Label {label['code']} is ready to print again."}
 
 
 # --- Cek label (canvas 3c) ------------------------------------------------------------
@@ -1310,6 +1542,20 @@ async def resolve_bin_code(scanned: str, site_code: str | None = None) -> dict |
     return row
 
 
+def _check_hint(b: dict) -> str:
+    """Where the next bin of Cek label is, in words: 'Indonesian / English'.
+    Bins are asked level 1 first, left to right, and in a stack bottom first."""
+    lv, i = b["level_no"], b["index"]
+    tail_id = "Label di depan bin, kiri bawah."
+    tail_en = "The label is on the front of the bin, bottom left."
+    if b.get("stack_word"):
+        return (f"Level {lv}, bin {ordinal_id(i)} dari kiri, yang {b['stack_word']} di "
+                f"tumpukan. {tail_id} / Level {lv}, bin {i} from the left, the "
+                f"{b['stack_word_en']} one of the stack. {tail_en}")
+    return (f"Level {lv}, bin {ordinal_id(i)} dari kiri. {tail_id} / "
+            f"Level {lv}, bin {i} from the left. {tail_en}")
+
+
 async def _check_state(rack_id: int) -> dict:
     rack, bins = await rack_bins(rack_id)
     ok = [b for b in bins if b["label_check"] == "ok"]
@@ -1325,14 +1571,16 @@ async def _check_state(rack_id: int) -> dict:
         "wrong": len(wrong), "done": bool(bins) and len(ok) == len(bins),
         "next": ({"location_id": nxt["location_id"], "code": nxt["short_code"],
                   "level_no": nxt["level_no"], "index": nxt["index"],
-                  "kolom_no": nxt["kolom_no"],
-                  "hint": (f"Level {nxt['level_no']}, bin {ordinal_id(nxt['index'])} dari kiri. "
-                           "Label di depan bin, kiri bawah.")} if nxt else None),
+                  "kolom_no": nxt["kolom_no"], "stack_no": nxt["row"],
+                  "stack_rows": nxt["rows"], "stack_word": nxt["stack_word"],
+                  "hint": _check_hint(nxt)} if nxt else None),
         "to_fix": [{"location_id": b["location_id"], "code": b["short_code"],
                     "belongs_to": b["label_check_scanned"],
                     "message": f"Label ini milik {b['label_check_scanned']}, bukan "
-                               f"{b['short_code']}",
-                    "action": "Sobek label yang salah. Tempel label baru, lalu pindai lagi."}
+                               f"{b['short_code']}. / This label belongs to "
+                               f"{b['label_check_scanned']}, not {b['short_code']}.",
+                    "action": "Sobek label yang salah. Tempel label baru, lalu pindai lagi. / "
+                              "Tear off the wrong label. Stick a new one, then scan again."}
                    for b in wrong],
         "recent": [{"location_id": b["location_id"], "code": b["short_code"],
                     "result": "cocok" if b["label_check"] == "ok" else "salah",
@@ -1368,13 +1616,14 @@ async def label_check_scan(rack_id: int, body: LabelCheckIn,
                                  "lagi. / Unknown code, scan the bin label again.")
     if found["id"] == expected["id"]:
         state, scanned, result = "ok", None, "cocok"
-        message = f"Cocok: {exp_short}."
+        message = f"Cocok: {exp_short}. / Matches: {exp_short}."
     else:
         state, scanned, result = "wrong", found["code"], "salah"
         belongs = short_code(found["code"], rack["site_code"])
         if found["site_id"] != rack["site_id"]:
             belongs = found["code"]
-        message = f"Label ini milik {belongs}, bukan {exp_short}."
+        message = (f"Label ini milik {belongs}, bukan {exp_short}. / "
+                   f"This label belongs to {belongs}, not {exp_short}.")
     await db.execute(
         "UPDATE locations SET label_check_state = %s, label_check_scanned = %s, "
         "label_checked_at = NOW(), label_checked_by = %s WHERE id = %s",
@@ -1466,9 +1715,13 @@ async def set_special_count(site_id: int, kind: str, body: SpecialCountIn,
         removed.append(await locations.remove_last_special_bin(site_id, kind, user.email))
         have -= 1
     msg = f"{SPECIAL_TEXT[kind][0]}: {want}."
+    msg_en = f"{SPECIAL_TEXT_EN[kind]}: {want}."
     if added:
         msg += f" Baru: {added[0]['code']}" + (f" sampai {added[-1]['code']}" if len(added) > 1
                                                 else "") + ". Cetak labelnya."
+        msg_en += f" New: {added[0]['code']}" + (f" to {added[-1]['code']}" if len(added) > 1
+                                                 else "") + ". Print the labels."
+    msg += " / " + msg_en
     return {"ok": True, "message": msg, "added": added, "removed": removed}
 
 
@@ -1486,7 +1739,8 @@ async def add_one_special(site_id: int, kind: str,
     return {"ok": True, "bin": b,
             "label": dict(special_label(b["code"], b["kind"], _prefix(site["code"])),
                           location_id=b["location_id"]),
-            "message": f"{b['code']} ditambahkan. Labelnya dicetak sekarang."}
+            "message": f"{b['code']} ditambahkan. Labelnya dicetak sekarang. / "
+                       f"{b['code']} added. Its label prints now."}
 
 
 @router.get("/sites/{site_id}/special-bins/labels", tags=["rak & bin"])
@@ -1516,7 +1770,7 @@ async def special_labels_printed(site_id: int, kind: str | None = None,
         sql += " AND kind = %s"
         params.append(locations._special_kind(kind))
     await db.execute(sql, params)
-    return {"ok": True, "message": "Label dicetak."}
+    return {"ok": True, "message": "Label dicetak. / Label printed."}
 
 
 @router.get("/special-bins/resolve", tags=["rak & bin"])
@@ -1540,9 +1794,10 @@ def _level_rank(level_no: int) -> int:
 
 
 async def _free_bins(site_id: int, size: str) -> list[dict]:
-    """Free rack bins of one size at a hub, best first: level 3, 2, 4, 1, 5."""
+    """Free rack bins of one size at a hub, best first: level 3, 2, 4, 1, 5; on a
+    level left to right, and in a stack the bottom bin first."""
     rows = await db.fetch_all(
-        "SELECT l.id AS location_id, l.code, l.position_no, l.kolom_no, lv.level_no, "
+        "SELECT l.id AS location_id, l.code, l.position_no, l.bin_row, l.kolom_no, lv.level_no, "
         "       r.id AS rack_id, r.code AS rack_code, r.sort_order, bk.basket_size "
         "FROM racks r JOIN levels lv ON lv.rack_id = r.id "
         "JOIN locations l ON l.level_id = lv.id JOIN baskets bk ON bk.location_id = l.id "
@@ -1551,7 +1806,7 @@ async def _free_bins(site_id: int, size: str) -> list[dict]:
         (site_id,))
     rows = [r for r in rows if (norm_size(r["basket_size"]) or "BESAR") == size]
     rows.sort(key=lambda r: (_level_rank(r["level_no"]), r["sort_order"], r["rack_code"],
-                             r["position_no"]))
+                             r["position_no"], r["bin_row"] or 1))
     return rows
 
 
@@ -1621,6 +1876,7 @@ async def needs_bin_options(site_id: int, sku_id: int, rack_id: int | None = Non
                 b["state"] = "lain"
         levels = _group_levels(bins, rack.get("kolom_count") or 1)
         picture = {"rack_id": rack["id"], "code": rack["code"],
+                   "stacks": len(_stacked_groups(bins)),
                    "levels": list(reversed(levels))}
     return {
         "sku": {"sku_id": sku["id"], "name": sku["name_display"], "bin_size": size,
@@ -1634,7 +1890,9 @@ async def needs_bin_options(site_id: int, sku_id: int, rack_id: int | None = Non
                           "code": best["code"]} if best else None),
         "order_note": ("Urutan saran: level 3 dulu, lalu 2, 4, 1, 5 (setinggi pinggang lebih "
                        "cepat diambil)."),
-        "legend": "Biru: kosong, ukuran cocok. Dipakai: sudah ada produk.",
+        "legend": "Biru: kosong, ukuran cocok. Dipakai: sudah ada produk." + (
+            " Bin bertumpuk digambar satu di atas yang lain: B bawah, M tengah, T atas."
+            if picture and picture["stacks"] else ""),
     }
 
 
@@ -1653,7 +1911,9 @@ async def assign_needed_bin(site_id: int, sku_id: int, body: AssignBinIn,
         raise HTTPException(409, "Isi ukuran bin produk ini dulu di Produk. / Set the "
                                  "product's bin size first.")
     loc = await db.fetch_one(
-        "SELECT l.id, l.code, l.site_id, bk.id AS basket_id, bk.basket_size "
+        "SELECT l.id, l.code, l.site_id, l.bin_row, bk.id AS basket_id, bk.basket_size, "
+        "       (SELECT MAX(l2.bin_row) FROM locations l2 WHERE l2.level_id = l.level_id "
+        "         AND l2.position_no = l.position_no) AS stack_rows "
         "FROM locations l JOIN levels lv ON lv.id = l.level_id "
         "JOIN baskets bk ON bk.location_id = l.id WHERE l.id = %s", (body.location_id,))
     if not loc or loc["site_id"] != site_id:
@@ -1666,6 +1926,10 @@ async def assign_needed_bin(site_id: int, sku_id: int, body: AssignBinIn,
     slot = await locations.assign_slot(
         models.SlotIn(site_id=site_id, sku_id=sku_id, basket_id=loc["basket_id"],
                       slot_role="primary"), user)
+    word = stack_word(int(loc["bin_row"] or 1), int(loc["stack_rows"] or 1))
+    where_id = f"{short} (bin {word[0]} di tumpukan)" if word else short
+    where_en = f"{short} (the {word[1]} bin of the stack)" if word else short
     return {"ok": True, "slot": slot, "code": short,
-            "message": f"{sku['name_display']} disimpan di {short}.",
+            "message": f"{sku['name_display']} disimpan di {where_id}. / "
+                       f"{sku['name_display']} is kept in {where_en}.",
             "needs_bin": await _needs_rack(site_id, count_only=True)}

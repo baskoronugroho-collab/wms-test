@@ -35,8 +35,25 @@ log = logging.getLogger("wms.assign")
 SEEN_SECONDS = 90
 
 # "pack": at the pack bench and the handover table (board 6j, Di shift). Never
-# given an order; set by Saya di meja packing or by opening the pack screen.
+# given an order; set by Saya di meja kemas or by opening the pack screen.
 STATES = ("ready", "break", "off", "pack")
+
+# The words the 2-minute rule leaves in a picker's note (see `sweep_all`). The
+# phone reads them back through `timed_out` to show why Siap ambil went off.
+TIMEOUT_MARK = "belum dimulai dalam"
+
+
+def timeout_note(label: str, minutes: int) -> str:
+    """What the phone says after the 2-minute rule took the order back. Under
+    255 characters: picker_presence.note is cut there."""
+    return (f"{label} {TIMEOUT_MARK} {minutes} menit. Pesanan kembali ke antrean dan Siap "
+            f"ambil dimatikan. / {label} was not started within {minutes} min. It went back "
+            "to the queue and Ready to pick was switched off.")
+
+
+def timed_out(state: str | None, note: str | None) -> bool:
+    """The picker is off because the 2-minute rule switched them off."""
+    return state == "off" and bool(note) and TIMEOUT_MARK in note
 
 
 class _Lost(Exception):
@@ -78,7 +95,7 @@ async def set_state(site_id: int, email: str, state: str, note: str | None = Non
     state really changes, so tapping Siap ambil twice does not send a picker to
     the back of the line."""
     if state not in STATES:
-        raise ValueError(state)
+        raise ValueError(f"Status tidak dikenal: {state}. / Unknown state: {state}.")
     await db.execute(
         "INSERT INTO picker_presence (site_id, user_email, state, since, idle_since, "
         "last_seen_at, note) VALUES (%s,%s,%s,NOW(),NOW(),NOW(),%s) "
@@ -103,10 +120,11 @@ async def seen(site_id: int, email: str) -> None:
 
 
 async def free_picker(site_id: int, email: str | None, task_id: int,
-                      note: str | None = None, state: str | None = None) -> None:
+                      note: str | None = None, state: str | None = None, *, cur=None) -> None:
     """The picker no longer holds `task_id` (handed to pack, cancelled, moved,
     returned). They go to the back of the free line; `note` is what their phone
-    tells them. Only touches the row if it still points at that task."""
+    tells them. Only touches the row if it still points at that task. `cur`:
+    inside the caller's transaction, so the change lands with the caller's."""
     if not email:
         return
     sets = ["current_task_id = NULL", "idle_since = NOW()"]
@@ -117,11 +135,13 @@ async def free_picker(site_id: int, email: str | None, task_id: int,
     if state:
         sets += ["since = IF(state = %s, since, NOW())", "state = %s"]
         params += [state, state]
-    await db.execute(
-        f"UPDATE picker_presence SET {', '.join(sets)} "
-        "WHERE site_id = %s AND user_email = %s "
-        "AND (current_task_id = %s OR current_task_id IS NULL)",
-        (*params, site_id, email, task_id))
+    sql = (f"UPDATE picker_presence SET {', '.join(sets)} "
+           "WHERE site_id = %s AND user_email = %s "
+           "AND (current_task_id = %s OR current_task_id IS NULL)")
+    if cur is not None:
+        await db.run(cur, sql, (*params, site_id, email, task_id))
+    else:
+        await db.execute(sql, (*params, site_id, email, task_id))
 
 
 async def held_task(site_id: int, email: str) -> dict | None:
@@ -309,7 +329,8 @@ async def sweep_all() -> int:
     """Every 5 seconds, at every darkstore: take back orders nobody started in
     time, then give out whatever is waiting. Returns orders given out.
 
-    A picker whose order went back is set to OFF, not left ready. They did not
+    A picker whose order went back is set to OFF, not left ready (`timeout_note`
+    says so on their phone). They did not
     scan for two minutes, so they are most likely not at the phone (asleep,
     in the toilet, phone in a pocket). Left ready, they would be given the next
     order at once and lose that one too, while Grab's clock runs on every order
@@ -332,12 +353,11 @@ async def sweep_all() -> int:
                 "AND claimed_at < NOW() - INTERVAL %s MINUTE", (site["id"], minutes))
             for t in stale:
                 label = await order_label(t["id"])
-                note = (f"{label} belum dimulai dalam {minutes} menit, dikembalikan ke antrean. "
-                        f"Tekan Siap ambil kalau sudah siap. / {label} was not started within "
-                        f"{minutes} min and went back to the queue. Tap Siap ambil when ready.")
+                note = timeout_note(label, minutes)
                 who = await return_to_queue(
                     t["id"], actor="wms", older_than_minutes=minutes,
-                    note=f"not started within {minutes} min by {t['claimed_by']}")
+                    note=(f"Tidak dimulai dalam {minutes} menit oleh {t['claimed_by']}. / "
+                          f"Not started within {minutes} min by {t['claimed_by']}."))
                 if who:
                     await free_picker(site["id"], who, t["id"], note=note, state="off")
             total += await assign_site(site["id"])

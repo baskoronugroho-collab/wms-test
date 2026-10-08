@@ -49,7 +49,7 @@ async def save(prefix: str, file: UploadFile) -> str:
 
     key = f"{prefix}-{uuid.uuid4().hex[:10]}.{ext}"
     if not KEY_RE.match(key):
-        raise HTTPException(400, "Invalid photo key")
+        raise HTTPException(400, "Kode foto tidak valid. / Invalid photo key.")
     bucket = _gcs()
     if bucket is not None:
         blob = bucket.blob("photos/" + key)
@@ -64,15 +64,15 @@ async def save(prefix: str, file: UploadFile) -> str:
 
 async def load(key: str) -> tuple[bytes, str]:
     if not KEY_RE.match(key or ""):
-        raise HTTPException(404, "Photo not found")
+        raise HTTPException(404, "Foto tidak ditemukan. / Photo not found.")
     ctype = next((t for t, e in TYPES.items() if key.endswith("." + e)), "application/octet-stream")
     bucket = _gcs()
     if bucket is not None:
         blob = bucket.blob("photos/" + key)
         if not await asyncio.to_thread(blob.exists):
-            raise HTTPException(404, "Photo not found")
+            raise HTTPException(404, "Foto tidak ditemukan. / Photo not found.")
         return await asyncio.to_thread(blob.download_as_bytes), ctype
     path = _LOCAL / key
     if not path.is_file():
-        raise HTTPException(404, "Photo not found")
+        raise HTTPException(404, "Foto tidak ditemukan. / Photo not found.")
     return path.read_bytes(), ctype

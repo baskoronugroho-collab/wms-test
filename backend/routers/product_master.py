@@ -62,7 +62,7 @@ async def import_master(
     reader = csv.DictReader(io.StringIO(raw))
     rows = list(reader)
     if not rows:
-        raise HTTPException(400, "File kosong atau tidak terbaca.")
+        raise HTTPException(400, "File kosong atau tidak terbaca. / The file is empty or cannot be read.")
 
     results, ok_count = [], 0
     async with db.tx() as cur:
@@ -72,7 +72,7 @@ async def import_master(
 
             if not brand_name or not product_name:
                 results.append({"row_no": i, "ok": False,
-                                 "message": "brand atau product name kosong."})
+                                 "message": "Merek atau nama produk kosong. / The brand or product name is empty."})
                 continue
 
             brand = await db.one(cur, "SELECT id FROM brands WHERE name = %s", (brand_name,))
@@ -106,7 +106,7 @@ async def import_master(
                 "VALUES (%s,%s) ON DUPLICATE KEY UPDATE sku_id = VALUES(sku_id)",
                 (brand_id, sku_id),
             )
-            results.append({"row_no": i, "ok": True, "message": "Tersimpan."})
+            results.append({"row_no": i, "ok": True, "message": "Tersimpan. / Saved."})
             ok_count += 1
 
         await ledger.audit(
@@ -117,7 +117,7 @@ async def import_master(
     return {
         "rows_total": len(rows), "rows_saved": ok_count,
         "results": results,
-        "message": f"{ok_count} dari {len(rows)} baris tersimpan.",
+        "message": f"{ok_count} dari {len(rows)} baris tersimpan. / {ok_count} of {len(rows)} rows saved.",
     }
 
 
@@ -178,7 +178,7 @@ async def delete_master(
     user: auth.User = Depends(auth.require("hq")),
 ):
     if not body.ids:
-        raise HTTPException(400, "Pilih minimal satu baris.")
+        raise HTTPException(400, "Pilih minimal satu baris. / Select at least one row.")
     async with db.tx() as cur:
         await db.run(
             cur, f"DELETE FROM product_default_locations WHERE id IN ({db.placeholders(body.ids)})",
@@ -188,4 +188,4 @@ async def delete_master(
             cur, actor_email=user.email, entity="product_default_location", entity_id=None,
             action="bulk_delete", after={"ids": body.ids},
         )
-    return {"ok": True, "message": f"{len(body.ids)} baris dihapus."}
+    return {"ok": True, "message": f"{len(body.ids)} baris dihapus. / {len(body.ids)} rows deleted."}
